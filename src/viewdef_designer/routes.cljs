@@ -1,17 +1,17 @@
-(ns client.routes
+(ns viewdef-designer.routes
   (:require
    [bidi.bidi :as bidi]
    [pushy.core :as pushy]
    [re-frame.core :as re-frame]
-   [client.events :as events]))
+   [viewdef-designer.components.layout.events :as events]))
 
 (defmulti panels identity)
 (defmethod panels :default [] [:div "No panel found for this route."])
 
 (def routes
   (atom
-    ["/" {""      :home
-          "about" :about}]))
+   ["/" {""      :home
+         "about" :about}]))
 
 (defn parse
   [url]
@@ -38,6 +38,6 @@
   (pushy/start! history))
 
 (re-frame/reg-fx
-  :navigate
-  (fn [handler]
-    (navigate! handler)))
+ :navigate
+ (fn [handler]
+   (navigate! handler)))

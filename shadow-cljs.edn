@@ -8,7 +8,7 @@
  :builds
  {:app
   {:target :browser
-   :modules {:app {:init-fn client.core/init}}
+   :modules {:app {:init-fn viewdef-designer.core/init}}
    :build-hooks [(stylo.shadow/reload "public/out/stylo/css/stylo.css")
                  (stylo.shadow/add-version-env "public/out/app.js")]
    :output-dir "public/out"
@@ -16,9 +16,9 @@
 
    :devtools {:preloads [re-frisk.preload
                          devtools.preload]
-              :after-load client.core/render}
+              :after-load viewdef-designer.core/render}
 
    :dev
    {:devtools {:preloads [re-frisk.preload]
-               :after-load client.core/render}
+               :after-load viewdef-designer.core/render}
     :compiler-options {:optimizations :none}}}}}

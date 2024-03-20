@@ -1,13 +1,12 @@
-(ns client.events
+(ns viewdef-designer.components.layout.controller
   (:require
    [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx]]
-   [client.debounce]
-   [client.db :as db]))
+   [viewdef-designer.utils.debounce]))
 
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
-   {:db db/default-db
+   {:db {:active-panel :home-panel}
     #_#_:fx [[:dispatch  [::some-event]]]}))
 
 (reg-event-fx
@@ -19,6 +18,6 @@
  ::add-value
  (fn [{:keys [db]} [_]]
    {:db (update db :value (fn [vv]
-                           (if vv
-                            (not vv)
-                            true)))}))
+                            (if vv
+                              (not vv)
+                              true)))}))

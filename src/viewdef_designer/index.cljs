@@ -1,12 +1,12 @@
-(ns client.core
+(ns viewdef-designer.index
   (:require
    [reagent.dom :as rdom]
    [reagent.core :as r]
    [re-frame.core :as re-frame]
-   [client.events :as events]
-   [client.routes :as routes]
-   [client.views.core :as views]
-   [client.config :as config]))
+   [viewdef-designer.components.layout.events :as events]
+   [viewdef-designer.routes :as routes]
+   [viewdef-designer.components.layout.view.layout.core :as views]
+   [viewdef-designer.config :as config]))
 
 (defn dev-setup []
   (when config/debug?

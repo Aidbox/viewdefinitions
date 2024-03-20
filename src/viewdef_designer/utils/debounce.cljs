@@ -1,4 +1,4 @@
-(ns client.debounce
+(ns viewdef-designer.utils.debounce
   (:require [re-frame.core  :refer [reg-fx dispatch] :as rf]))
 
 (defn now [] (.getTime (js/Date.)))

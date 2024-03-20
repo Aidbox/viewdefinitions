@@ -1,13 +1,12 @@
-(ns client.views.core
+(ns viewdef-designer.components.layout.view
   (:require
    [re-frame.core :as re-frame :refer [dispatch subscribe]]
-   [client.routes :as routes]
+   [viewdef-designer.routes :as routes]
    [suitkin.core :as ui]
-   [client.events :as e]
-   [client.subs :as s]
+   [viewdef-designer.components.layout.controllerents.layout.events :as e]
+   [viewdef-designer.components.layout.model :as s]
    [suitkin.utils :as su]
-   #_[suitkin.button :as button]
-   )
+   #_[suitkin.button :as button])
   (:require-macros [stylo.core :refer [c]]))
 
 (defn home-panel []
