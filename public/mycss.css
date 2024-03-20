@@ -1,0 +1,20 @@
+.layout {
+  display: flex;
+  flex-direction: row;
+  color: #212636;
+}
+
+.layout .sidebar {
+  flex-grow: 0;
+  flex-shrink: 0;
+}
+
+.layout .content {
+  flex-grow: 1;
+}
+
+.content {
+  max-height: 100vh;
+  overflow: scroll;
+  position: relative;
+}

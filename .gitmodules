@@ -1,0 +1,3 @@
+[submodule "libs/suitkin"]
+	path = libs/suitkin
+	url = https://github.com/HealthSamurai/suitkin

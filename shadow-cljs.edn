@@ -1,0 +1,24 @@
+{:deps true
+ :nrepl {:port 8777}
+
+ :dev-http
+ {8280 "public"
+  #_#_8290 "target/browser-test"}
+
+ :builds
+ {:app
+  {:target :browser
+   :modules {:app {:init-fn client.core/init}}
+   :build-hooks [(stylo.shadow/reload "public/out/stylo/css/stylo.css")
+                 (stylo.shadow/add-version-env "public/out/app.js")]
+   :output-dir "public/out"
+   :compiler-options {:infer-externs :auto}
+
+   :devtools {:preloads [re-frisk.preload
+                         devtools.preload]
+              :after-load client.core/render}
+
+   :dev
+   {:devtools {:preloads [re-frisk.preload]
+               :after-load client.core/render}
+    :compiler-options {:optimizations :none}}}}}
