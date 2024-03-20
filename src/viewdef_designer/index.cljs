@@ -1,14 +1,10 @@
 (ns viewdef-designer.index
-  (:require [re-frame.core :as re-frame :refer [reg-event-fx]]
+  (:require [re-frame.core :as re-frame :refer [reg-event-fx reg-sub]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [viewdef-designer.config :as config]
             [viewdef-designer.routes :as routes]
-            [viewdef-designer.pages.main :as pages]))
-
-(defn dev-setup []
-  (when config/debug?
-    (println "dev mode")))
+            [viewdef-designer.pages.main.view :as main])
+  (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
 
 (def compiler
   (r/create-compiler {:function-components true}))
@@ -17,23 +13,23 @@
   (re-frame/clear-subscription-cache!)
   (let [root-el (.getElementById js/document "app")]
     (rdom/unmount-component-at-node root-el)
-    (rdom/render [pages/main-page] root-el compiler)))
-
+    (rdom/render [main/main-view] root-el compiler)))
 
 ;;;; Initialization
 
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
-   {:db {:active-page :main-page}
+   {:db {:active-page :main-page
+         :patients (->
+                     (.parse js/JSON (inline-resource "mock_patients.json"))
+                     (js->clj :keywordize-keys true))}
     #_#_:fx [[:dispatch  [::some-event]]]}))
 
 
 (defn init []
   (routes/start!)
-
   (re-frame/dispatch [::initialize-db])
-  (dev-setup)
   (mount-root))
 
 (init)
