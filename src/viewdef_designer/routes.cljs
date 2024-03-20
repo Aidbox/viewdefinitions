@@ -1,17 +1,25 @@
 (ns viewdef-designer.routes
-  (:require
-   [bidi.bidi :as bidi]
-   [pushy.core :as pushy]
-   [re-frame.core :as re-frame]
-   [viewdef-designer.components.layout.events :as events]))
+  (:require [bidi.bidi :as bidi]
+            [pushy.core :as pushy]
+            [re-frame.core :as re-frame :refer [reg-event-fx reg-sub]]))
 
-(defmulti panels identity)
-(defmethod panels :default [] [:div "No panel found for this route."])
+(defmulti pages identity)
+(defmethod pages :default [] [:div "No page found for this route."])
 
 (def routes
   (atom
-   ["/" {""      :home
-         "about" :about}]))
+   ["/" {""      :home}]))
+
+(reg-sub
+ ::active-page
+ (fn [db _]
+   (:active-page db)))
+
+(reg-event-fx
+ ::set-active-page
+ (fn [{:keys [db]} [_ active-page]]
+   {:db (assoc db :active-page active-page)}))
+
 
 (defn parse
   [url]
@@ -23,8 +31,8 @@
 
 (defn dispatch
   [route]
-  (let [panel (keyword (str (name (:handler route)) "-panel"))]
-    (re-frame/dispatch [::events/set-active-panel panel])))
+  (let [page (keyword (str (name (:handler route)) "-page"))]
+    (re-frame/dispatch [::set-active-page page])))
 
 (defonce history
   (pushy/pushy dispatch parse))
