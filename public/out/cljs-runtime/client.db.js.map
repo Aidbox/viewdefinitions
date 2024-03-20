@@ -1,1 +1,0 @@
-{"version":3,"sources":["client/db.cljs"],"mappings":";AAEA,uBAAA,2CAAA,sEAAA,xIAAKA","names":["client.db/default-db"],"sourcesContent":["(ns client.db)\n\n(def default-db\n  {:active-panel :home-panel})\n"]}
