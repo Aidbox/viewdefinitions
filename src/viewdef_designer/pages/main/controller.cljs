@@ -1,11 +1,8 @@
 (ns viewdef-designer.pages.main.controller
   (:require
+    [clojure.string :as str]
     [re-frame.core :refer [reg-event-fx reg-event-db]]))
 
-
-{:patients []
- :current {:name "vd"}
- }
 
 (reg-event-db
  ::select-view-definition-name
@@ -14,12 +11,7 @@
 
 (reg-event-db
  ::select-resource
- (fn [db [_ resource]]
-   (assoc-in db [:current :resource] resource)))
-
-(reg-event-db
- ::select-constants
- (fn [db [_ constants]]
-   (assoc-in db [:current :constants] constants)))
+ (fn [db [_ input]]
+   (assoc db :resource input)))
 
 

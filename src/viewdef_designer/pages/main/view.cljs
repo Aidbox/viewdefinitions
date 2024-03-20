@@ -10,43 +10,25 @@
   (:require-macros
    [stylo.core :refer [c]]))
 
-(defn resource-dropdown [_items]
-  (let [selected-resource @(subscribe [::model/resource])]
+(defn resource-dropdown []
+  (let [suggested-resources @(subscribe [::model/suggested-resources])
+        selected-resource @(subscribe [::model/selected-resource])]
     [:div
      {:class (c :grid :grid-flow-col)}
      [:h1 "Resource"]
      [ui/dropdown
-      {:id     "resource-dropdown"
-       :value selected-resource
+      {:id "resource-dropdown"
+       :value (:value selected-resource)
        :search {:id "resource-search"
                 :s/invalid? false
                 :placeholder "ResourceType"
+                #_#_:on-click  (fn [_e] (dispatch [::c/select-resource nil]))
+                :on-change (fn [e] (dispatch [::c/select-resource (su/target-value e)]))
                 :readOnly false}
        :menu   {:not-found "No resource found"
                 :on-select (fn [_event item]
                              (dispatch [::c/select-resource item]))
-                :items     [{:id "Patient" :value "patient" :title "Patient"}
-                            {:id "Observation" :value "observation" :title "Observation"}
-                            {:id "Practitioner" :value "practitioner" :title "Practitioner"}]}}]]))
-
-(defn constants-dropdown [_items]
-  (let [selected-constant @(subscribe [::model/constants])]
-    [:div
-     {:class (c :grid :grid-flow-col)}
-     [:h1 "Constants"]
-     [ui/dropdown
-      {:id     "constants-dropdown"
-       :value selected-constant
-       :search {:id "constants-search"
-                :s/invalid? false
-                :placeholder "Constants"
-                :readOnly false}
-       :menu   {:not-found "No constant found"
-                :on-select (fn [_event item]
-                             (dispatch [::c/select-constants item]))
-                :items     [{:id "c1" :value "c1" :title "c1"}
-                            {:id "c2" :value "c2" :title "c2"}
-                            {:id "c3" :value "c3" :title "c3"}]}}]]))
+                :items suggested-resources}}]]))
 
 (defn form []
   [:div
@@ -54,7 +36,7 @@
               :s/invalid? false
               :placeholder "ViewDefinition1"
               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
-   [resource-dropdown []]
+   [resource-dropdown]
    [:div {:class (c [:ml 10])}
     ]
 

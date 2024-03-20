@@ -17,10 +17,14 @@
 
 ;;;; Initialization
 
+(def resources
+  #{"Patient" "Observation" "Practitioner"})
+
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
    {:db {:active-page :main-page
+         :resources resources
          :patients (->
                      (.parse js/JSON (inline-resource "mock_patients.json"))
                      (js->clj :keywordize-keys true))}
