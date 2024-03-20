@@ -1,1 +1,11 @@
 ViewDefinition Designer
+
+
+## Contributions
+
+Each commit should adhere a variation of [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/#summary), with only requirements:
+- use commit type prefix (eg `feat: ...`)
+- specify issue ref (eg `feat(#1): ...`)
+- body is optional
+
+NOTE: each commit should not address more than one issue!
