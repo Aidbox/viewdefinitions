@@ -10,6 +10,20 @@
   (:require-macros
    [stylo.core :refer [c]]))
 
+(def label-component-style
+  (c {:color "#7972D3"
+      :font-family "Inter"
+      :margin-left "1px"
+      :padding-left "12px"
+      :padding-right "12px"
+      :padding-top "4px"
+      :padding-bottom "4px"
+      :font-size   "14px"
+      :font-weight "400"
+      :line-height "20px"
+      :margin-bottom "6px"}
+     [:bg "#7972D31A"] :border-none [:rounded :md]))
+
 (defn form []
   [:div
    {:class (c :w-max-sm)}
@@ -18,9 +32,12 @@
               :placeholder "ViewDefinition1"
               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
    [resource-select]
-   [ui/button {:s/use "secondary"} "constants"]
-   [ui/button {:s/use "secondary"} "where"]
-   [ui/button {:s/use "secondary"} "select"]])
+   [:div
+    [:label {:class label-component-style} "CONSTANTS"]]
+   [:div
+    [:label {:class label-component-style} "WHERE"]]
+   [:div
+    [:label {:class label-component-style} "SELECT"]]])
 
 (reg-event-fx
  ::go-to-vd-page
