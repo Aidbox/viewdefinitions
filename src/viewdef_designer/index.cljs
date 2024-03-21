@@ -1,10 +1,8 @@
 (ns viewdef-designer.index
-  (:require [re-frame.core :as re-frame :refer [reg-event-fx reg-sub subscribe]]
+  (:require [re-frame.core :as re-frame :refer [reg-event-fx subscribe]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [viewdef-designer.routes :as routes]
-            [viewdef-designer.pages.main.view]
-            [viewdef-designer.pages.view-definitions.view])
+            [viewdef-designer.routes :as routes])
   (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
 
 (def compiler
@@ -25,7 +23,7 @@
 ;;;; Initialization
 
 (def resources
-  #{"Patient" "Observation" "Practitioner"})
+  ["Patient" "Observation" "Practitioner"])
 
 (reg-event-fx
  ::initialize-db
@@ -33,8 +31,8 @@
    {:db {:active-page :main-page
          :resources resources
          :patients (->
-                     (.parse js/JSON (inline-resource "mock_patients.json"))
-                     (js->clj :keywordize-keys true))}
+                    (.parse js/JSON (inline-resource "mock_patients.json"))
+                    (js->clj :keywordize-keys true))}
     #_#_:fx [[:dispatch  [::some-event]]]}))
 
 
