@@ -1,6 +1,6 @@
 (ns viewdef-designer.pages.main.view
   (:require
-   [re-frame.core :refer [subscribe dispatch]]
+   [re-frame.core :refer [subscribe dispatch reg-event-fx]]
    [viewdef-designer.components.table :as table]
    [viewdef-designer.pages.main.model :as model]
    [viewdef-designer.pages.main.controller :as c]
@@ -48,12 +48,19 @@
 
    ])
 
+
+(reg-event-fx
+ ::go-to-vd-page
+ (fn [_ [_]]
+   {::routes/navigate :vd}))
+
 (defn header []
-  [:div "ViewDefinitions /"])
+  [ui/button
+   {:on-click (fn [_e] (dispatch [::go-to-vd-page])) }
+   "ViewDefinitions /"])
 
 (defn main-view []
-  (let [patients
-        @(subscribe [::model/patients])]
+  (let [patients @(subscribe [::model/patients])]
     [:div.layout
      [header]
      [:div {:class (c :grid :grid-flow-col [:gap 5]

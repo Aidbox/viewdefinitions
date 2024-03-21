@@ -25,7 +25,6 @@
  ::suggested-resources
  (fn [db [_]]
    (let [s (search-resource db (get db :resource))]
-     (js/console.log "s" (str s))
      (if (vector? s)
        s
        [s]))))

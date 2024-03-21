@@ -8,7 +8,8 @@
 
 (def routes
   (atom
-   ["/" {""      :home}]))
+   ["/" {""   :main
+         "vd" :vd}]))
 
 (reg-sub
  ::active-page
@@ -19,7 +20,6 @@
  ::set-active-page
  (fn [{:keys [db]} [_ active-page]]
    {:db (assoc db :active-page active-page)}))
-
 
 (defn parse
   [url]
@@ -46,6 +46,6 @@
   (pushy/start! history))
 
 (re-frame/reg-fx
- :navigate
+ ::navigate
  (fn [handler]
    (navigate! handler)))
