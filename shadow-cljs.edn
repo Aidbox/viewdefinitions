@@ -2,23 +2,21 @@
 ;;  :nrepl {:port 8777}
 
  :dev-http
- {8280 "public"
+ {8280 ["resources/public" #_"classpath:public"]
   #_#_8290 "target/browser-test"}
 
  :builds
  {:app
   {:target :browser
+   :output-dir "resources/public/assets/js"
+   :asset-path "/assets/js"
+   :build-hooks [(stylo.shadow/reload "resources/public/stylo/css/stylo.css")
+                 #_(stylo.shadow/reload "resources/public/suitkin/vd/stylo.css")]
+   :compiler-options {:warnings {:fn-deprecated false}}
    :modules {:app {:init-fn viewdef-designer.index/init}}
-   :build-hooks [(stylo.shadow/reload "public/out/stylo/css/stylo.css")
-                 (stylo.shadow/add-version-env "public/out/app.js")]
-   :output-dir "public/out"
-   :compiler-options {:infer-externs :auto}
-
-   :devtools {:preloads [re-frisk.preload
-                         devtools.preload]
+   :devtools {:preloads [re-frisk.preload devtools.preload]
               :after-load viewdef-designer/render}
 
    :dev
-   {:devtools {:preloads [re-frisk.preload]
-               :after-load viewdef-designer/render}
+   {:devtools {:preloads [re-frisk.preload devtools.preload]}
     :compiler-options {:optimizations :none}}}}}

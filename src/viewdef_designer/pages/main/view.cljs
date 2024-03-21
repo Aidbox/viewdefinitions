@@ -10,23 +10,17 @@
   (:require-macros
    [stylo.core :refer [c]]))
 
-
 (defn form []
   [:div
+   {:class (c :w-max-sm)}
    [ui/input {:id          "view-def-name"
               :s/invalid? false
               :placeholder "ViewDefinition1"
               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
    [resource-select]
-
-   [:div {:class (c [:ml 10])}]
-
-   [:div {:class (c [:ml 10])}
-    "where "]
-
-   [:div {:class (c [:ml 10])}
-    "select "]])
-
+   [ui/button {:s/use "secondary"} "constants"]
+   [ui/button {:s/use "secondary"} "where"]
+   [ui/button {:s/use "secondary"} "select"]])
 
 (reg-event-fx
  ::go-to-vd-page
@@ -35,12 +29,13 @@
 
 (defn header []
   [ui/button
-   {:on-click (fn [_e] (dispatch [::go-to-vd-page]))}
+   {:s/use "tertiary"
+    :on-click (fn [_e] (dispatch [::go-to-vd-page]))}
    "ViewDefinitions /"])
 
 (defn main-view []
   (let [patients @(subscribe [::model/patients])]
-    [:div.layout
+    [:div
      [header]
      [:div {:class (c :grid :grid-flow-col [:gap 5]
                       {:grid-template-columns "40% 60%"}

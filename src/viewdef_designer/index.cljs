@@ -2,6 +2,11 @@
   (:require [re-frame.core :as re-frame :refer [reg-event-fx subscribe]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
+
+            ; register pages
+            [viewdef-designer.pages.main.view]
+            [viewdef-designer.pages.view-definitions.view]
+
             [viewdef-designer.routes :as routes])
   (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
 

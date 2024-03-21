@@ -16,7 +16,8 @@
 
 (defn vd-view []
   [:div
-   [ui/button {:on-click #(dispatch [::go-to-main-page])} "Go back"]
+   [ui/button {:s/use "secondary"
+               :on-click #(dispatch [::go-to-main-page])} "Go back"]
    [:div "vd-view"]])
 
 (defmethod routes/pages :vd-page [] [vd-view])
