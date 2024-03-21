@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [dispatch reg-event-fx subscribe]]
             [suitkin.core :as ui]
             [suitkin.utils :as su]
+            [viewdef-designer.components.table :as table]
             [viewdef-designer.pages.main.components.resource-select :refer [resource-select]]
             [viewdef-designer.pages.main.controller :as c]
             [viewdef-designer.pages.main.model :as model]
@@ -16,7 +17,7 @@
               :s/invalid? false
               :placeholder "ViewDefinition1"
               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
-   [resource-select @(subscribe [::model/supported-resources])]
+   [resource-select]
 
    [:div {:class (c [:ml 10])}]
 
@@ -45,6 +46,6 @@
                       {:grid-template-columns "40% 60%"}
                       [:m 5])}
       [form]
-      #_[table/table patients]]]))
+      [table/table patients]]]))
 
 (defmethod routes/pages :main-page [] [main-view])

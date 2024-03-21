@@ -6,7 +6,6 @@
   thheller/shadow-cljs {:mvn/version "2.27.5"}
   reagent/reagent {:mvn/version "1.2.0"}
   re-frame/re-frame {:mvn/version "1.4.3"}
-  ;; cheshire/cheshire {:mvn/version "5.12.0"}
   healthsamurai/suitkin     {:local/root "libs/suitkin"}
   com.health-samurai/macrocss {:mvn/version "0.4.0"}
 
@@ -17,7 +16,8 @@
   ;; org.clojars.arthurbarroso/re-frame-cljs-http {:mvn/version "0.1.0"}
 
   binaryage/devtools {:mvn/version "1.0.7"}
-  re-frisk/re-frisk {:mvn/version "1.6.0"}}
+  re-frisk/re-frisk {:mvn/version "1.6.0"}
+  re-com/re-com {:mvn/version "2.19.0"}}
 
  :aliases {:shadow
            {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
