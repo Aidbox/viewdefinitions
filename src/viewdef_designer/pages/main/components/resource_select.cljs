@@ -4,19 +4,14 @@
   (:require-macros [stylo.core :refer [c]]))
 
 (defn resource-select []
-  (fn []
-    (js/console.log (str @(subscribe [::selected-resource])))
-    [:div
-     {:class (c :grid :grid-flow-col)}
-     [:h1 "Resource"]
-
-     [single-dropdown
-      :filter-box? true
-      :auto-complete? true
-      :placeholder "ResourceType"
-      :choices @(subscribe [::supported-resources])
-      :model @(subscribe [::selected-resource])
-      :on-change #(dispatch [::select-resource %])]]))
+ (fn []
+  [single-dropdown
+   :filter-box? true
+   :auto-complete? true
+   :placeholder "ResourceType"
+   :choices @(subscribe [::supported-resources])
+   :model @(subscribe [::selected-resource])
+   :on-change #(dispatch [::select-resource %])]))
 
 (reg-sub
  ::supported-resources

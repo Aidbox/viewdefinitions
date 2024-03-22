@@ -1,5 +1,5 @@
 (ns viewdef-designer.pages.main.view
-  (:require [re-frame.core :refer [dispatch reg-event-fx subscribe]]
+  (:require [re-frame.core :refer [dispatch reg-event-fx subscribe reg-sub]]
             [suitkin.core :as ui]
             [suitkin.utils :as su]
             [viewdef-designer.components.table :as table]
@@ -31,9 +31,13 @@
               :s/invalid? false
               :placeholder "ViewDefinition1"
               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
-   [resource-select]
    [:div
-    [:label {:class label-component-style} "CONSTANTS"]]
+    {:class (c :grid :grid-flow-col [:pt 5] )}
+    [:div
+     [:label {:class label-component-style} "RESOURCE"]]
+    [resource-select]]
+   [:div
+    [:label {:class label-component-style} "CONSTANT"]]
    [:div
     [:label {:class label-component-style} "WHERE"]]
    [:div
@@ -44,11 +48,17 @@
  (fn [_ [_]]
    {::routes/navigate :vd}))
 
+(reg-sub
+  ::chosen-vd-name
+  (fn [db _]
+    (:vd-name db)))
+
 (defn header []
-  [ui/button
-   {:s/use "tertiary"
-    :on-click (fn [_e] (dispatch [::go-to-vd-page]))}
-   "ViewDefinitions /"])
+  (let [vd-id @(subscribe [::chosen-vd-name])]
+    [ui/button
+     {:s/use "tertiary"
+      :on-click (fn [_e] (dispatch [::go-to-vd-page]))}
+     (str "ViewDefinitions/" vd-id)]))
 
 (defn main-view []
   (let [patients @(subscribe [::model/patients])]

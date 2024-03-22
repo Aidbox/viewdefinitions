@@ -8,8 +8,10 @@
 
 (def routes
   (atom
-   ["/" {""   :main
-         "vd" :vd}]))
+    ["/" {
+          ""   :vd
+          "vd" :main
+          }]))
 
 (reg-sub
  ::active-page

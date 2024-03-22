@@ -12,8 +12,9 @@
   ;; routing
   bidi/bidi {:mvn/version "2.1.6"}
   clj-commons/pushy {:mvn/version "0.3.10"}
-  ;; cljs-http/cljs-http {:mvn/version "0.1.46"}
+  ;; cljs-http/cljs-http {:mvn/version "0.1.48"}
   ;; org.clojars.arthurbarroso/re-frame-cljs-http {:mvn/version "0.1.0"}
+  day8.re-frame/http-fx {:mvn/version "0.2.4"}
 
   binaryage/devtools {:mvn/version "1.0.7"}
   re-frisk/re-frisk {:mvn/version "1.6.0"}
