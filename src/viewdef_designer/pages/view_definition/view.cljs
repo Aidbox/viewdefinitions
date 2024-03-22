@@ -1,12 +1,12 @@
-(ns viewdef-designer.pages.main.view
+(ns viewdef-designer.pages.view-definition.view
   (:require [re-frame.core :refer [dispatch reg-event-fx subscribe reg-sub]]
             [suitkin.core :as ui]
             [suitkin.utils :as su]
             [viewdef-designer.utils.http :as http]
             [viewdef-designer.components.table :as table]
-            [viewdef-designer.pages.main.components.resource-select :refer [resource-select]]
-            [viewdef-designer.pages.main.controller :as c]
-            [viewdef-designer.pages.main.model :as model]
+            [viewdef-designer.pages.view-definition.components.resource-select :refer [resource-select]]
+            [viewdef-designer.pages.view-definition.controller :as c]
+            [viewdef-designer.pages.view-definition.model :as model]
             [viewdef-designer.routes :as routes])
   (:require-macros
    [stylo.core :refer [c]]))
@@ -48,11 +48,6 @@
    [:div
     [:label {:class label-component-style} "SELECT"]]])
 
-(reg-event-fx
- ::go-to-vd-page
- (fn [_ [_]]
-   {::routes/navigate :vd}))
-
 (reg-sub
   ::chosen-vd-name
   (fn [db _]
@@ -62,10 +57,10 @@
   (let [vd-id @(subscribe [::chosen-vd-name])]
     [ui/button
      {:s/use "tertiary"
-      :on-click (fn [_e] (dispatch [::go-to-vd-page]))}
+      :on-click (fn [_e] (dispatch [::routes/navigate :viewdef-designer.pages.view-definitions.controller/main]))}
      (str "ViewDefinitions/" vd-id)]))
 
-(defn main-view []
+(defn viewdefinition-view []
   (let [resources @(subscribe [::model/view-definition-data])]
     [:div
      [header]
@@ -75,4 +70,4 @@
       [form]
       [table/table resources]]]))
 
-(defmethod routes/pages :main-page [] [main-view])
+(defmethod routes/pages ::c/main [] [viewdefinition-view])

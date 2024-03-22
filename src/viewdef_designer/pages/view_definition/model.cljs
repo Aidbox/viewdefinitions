@@ -1,4 +1,4 @@
-(ns viewdef-designer.pages.main.model
+(ns viewdef-designer.pages.view-definition.model
   (:require [re-frame.core :refer [reg-sub]]))
 
 (reg-sub
