@@ -9,8 +9,8 @@
 (def routes
   (atom
     ["/" {
-          ""   :vd
-          "vd" :main
+          "vd" :viewdef-designer.pages.view-definition.controller/main
+          "" :viewdef-designer.pages.view-definitions.controller/main
           }]))
 
 (reg-sub
@@ -21,7 +21,9 @@
 (reg-event-fx
  ::set-active-page
  (fn [{:keys [db]} [_ active-page]]
-   {:db (assoc db :active-page active-page)}))
+   {:db (assoc db :active-page active-page)
+    :fx [[:dispatch [(:active-page db) :deinit]]
+         [:dispatch [active-page :init]]]}))
 
 (defn parse
   [url]
@@ -33,8 +35,7 @@
 
 (defn dispatch
   [route]
-  (let [page (keyword (str (name (:handler route)) "-page"))]
-    (re-frame/dispatch [::set-active-page page])))
+  (re-frame/dispatch [::set-active-page (:handler route)]))
 
 (defonce history
   (pushy/pushy dispatch parse))
@@ -51,3 +52,8 @@
  ::navigate
  (fn [handler]
    (navigate! handler)))
+
+(re-frame/reg-event-fx
+ ::navigate
+ (fn [_ [_ handler]]
+   {::navigate handler}))
