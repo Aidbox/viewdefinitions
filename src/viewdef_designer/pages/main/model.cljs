@@ -2,6 +2,6 @@
   (:require [re-frame.core :refer [reg-sub]]))
 
 (reg-sub
- ::patients
+ ::view-definition-data
  (fn [db _]
-   (:patients db)))
+   (:view-definition/data db)))
