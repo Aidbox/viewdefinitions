@@ -1,19 +1,15 @@
 (ns viewdef-designer.index
-  (:require [re-frame.core :as re-frame :refer [reg-event-fx subscribe reg-sub dispatch reg-event-db]]
+  (:require [re-frame.core :as re-frame :refer [reg-event-fx subscribe reg-sub dispatch]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [suitkin.core :as ui]
-            [suitkin.utils :as su]
             [day8.re-frame.http-fx]
-            [ajax.core :as ajax]
             ; register pages
             [viewdef-designer.pages.view-definition.view]
             [viewdef-designer.pages.view-definitions.view]
             [viewdef-designer.pages.view-definitions.controller :as viewdefinition-list]
 
             [viewdef-designer.routes :as routes])
-  (:require-macros [viewdef-designer.interop :refer [inline-resource]]
-                   [stylo.core :refer [c]]))
+  (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
 
 (def compiler
   (r/create-compiler {:function-components true}))
@@ -41,19 +37,19 @@
 
 (defn sidebar []
   (let [data @(subscribe [::sidebar])]
-    [:div {:data-object :ig-sidebar :class (c {:z-index 100})}
-     [ui/sidebar (assoc data
-                        #_#_:class (c [:w "350px !important"]
-                                      {:position "fixed"})
-                        :logo [:img {:src (su/public-src "/assets/img/hs-logo.svg")}])]]))
+    [:div {:data-object :ig-sidebar}
+     #_[ui/sidebar (assoc data
+                          #_#_:class (c [:w "350px !important"]
+                                        {:position "fixed"})
+                          :logo [:img {:src (su/public-src "/assets/img/hs-logo.svg")}])]]))
 
 (defn find-page
   []
   (let [route @(subscribe [::routes/active-page])]
-    [:div {:class (c :flex [:mb 80]) :data-object ::main}
+    [:div
      [sidebar]
      (if route
-       [:div {:class (c [:ml "350px"])}
+       [:div
         (routes/pages route)]
        [:div "Page not found"])]))
 

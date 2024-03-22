@@ -7,6 +7,7 @@
     "@codemirror/state": "^6.0.1",
     "@codemirror/view": "^6.0.1",
     "@monaco-editor/react": "^4.5.0",
+    "antd": "^5.15.3",
     "codemirror": "^6.0.1",
     "codemirror-latest": "npm:codemirror@^6.0.1",
     "codemirror-sql": "^0.0.2",
