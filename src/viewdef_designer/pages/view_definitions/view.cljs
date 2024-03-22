@@ -22,7 +22,7 @@
  (fn [db [_ vd-id]]
   (assoc db :vd-name vd-id)))
 
-(defn vd-view []
+(defn viewdefinition-list-view []
  (let [view-defs @(subscribe [::view-defs])]
   [:div
    [ui/h1 {} "View Definitions"]
@@ -35,10 +35,10 @@
         {:s/use "tertiary"
          :on-click
          (fn [_e]
-          (dispatch-sync [::routes/set-active-page :main-page])
+          (dispatch-sync [:viewdef-designer.routes/navigate :viewdef-designer.pages.view-definition.controller/main])
           (dispatch-sync [::choose-vd nm]))}
         (str (or nm id))]
        [:div
         (str (:resource v))]]))]))
 
-(defmethod routes/pages :vd-page [] [vd-view])
+(defmethod routes/pages ::c/main [] [viewdefinition-list-view])

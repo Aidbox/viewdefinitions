@@ -1,4 +1,4 @@
-(ns viewdef-designer.pages.main.components.resource-select
+(ns viewdef-designer.pages.view-definition.components.resource-select
   (:require [re-com.core :refer [single-dropdown]]
             [re-frame.core :refer [dispatch reg-event-db reg-sub subscribe]])
   (:require-macros [stylo.core :refer [c]]))

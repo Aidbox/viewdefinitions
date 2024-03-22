@@ -7,8 +7,9 @@
             [day8.re-frame.http-fx]
             [ajax.core :as ajax]
             ; register pages
-            [viewdef-designer.pages.main.view]
+            [viewdef-designer.pages.view-definition.view]
             [viewdef-designer.pages.view-definitions.view]
+            [viewdef-designer.pages.view-definitions.controller :as viewdefinition-list]
 
             [viewdef-designer.routes :as routes])
   (:require-macros [viewdef-designer.interop :refer [inline-resource]]
@@ -16,35 +17,6 @@
 
 (def compiler
   (r/create-compiler {:function-components true}))
-
-(reg-event-db
- ::got-view-definitions
- (fn [db [_ result]]
-  (assoc db
-         :view-definitions result
-         :loading false)))
-
-(reg-event-fx
-  ::get-view-definitions
-  (fn [{:keys [db]} _]
-   {:db (assoc db :loading true)
-     :http-xhrio {:method          :get
-                  :uri             "https://viewdefs1.aidbox.app/fhir/ViewDefinition"
-                  :timeout         8000
-                  :with-credentials true
-                  :headers  {:Authorization
-                             "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
-                  :response-format (ajax/json-response-format {:keywords? true})
-                  :on-success      [::got-view-definitions]
-                  :on-failure      [:bad-http-result]}}))
-
-(reg-event-fx
-  ::go-to-vd-page-and-load
-  (fn [{:keys [db]} _]
-   {:db (assoc db :loading true)
-    ::routes/navigate :vd
-    :dispatch-n [[::get-view-definitions]
-                 #_[::routes/set-active-page :vd-page]] }))
 
 (reg-sub
  ::sidebar
@@ -57,7 +29,7 @@
       {:title "FHIR servers"
        :img   "/suitkin/img/icon/ic-database-16.svg"
        :items [{:title "ViewDefinitions" :img "/suitkin/img/icon/ic-database-code-16.svg"
-                :on-click #(dispatch [::go-to-vd-page-and-load])}
+                :on-click #(dispatch [::routes/navigate ::viewdefinition-list/main])}
                {:title "Resources" :img "/suitkin/img/icon/ic-table-16.svg"}]}
 
       {:divider true}
@@ -72,17 +44,18 @@
     [:div {:data-object :ig-sidebar :class (c {:z-index 100})}
      [ui/sidebar (assoc data
                         #_#_:class (c [:w "350px !important"]
-                                  {:position "fixed"})
+                                      {:position "fixed"})
                         :logo [:img {:src (su/public-src "/assets/img/hs-logo.svg")}])]]))
 
 (defn find-page
   []
-  (if-let [route @(subscribe [::routes/active-page])]
+  (let [route @(subscribe [::routes/active-page])]
     [:div {:class (c :flex [:mb 80]) :data-object ::main}
      [sidebar]
-     [:div {:class (c [:ml "350px"])}
-      (routes/pages route)]]
-    [:div "Page not found"]))
+     (if route
+       [:div {:class (c [:ml "350px"])}
+        (routes/pages route)]
+       [:div "Page not found"])]))
 
 (defn ^:dev/after-load mount-root []
   (re-frame/clear-subscription-cache!)
@@ -98,13 +71,11 @@
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
-   {:db {:active-page :vd-page
+   {:db {:active-page ::viewdefinition-list/main
          :resources resources
          :patients (->
                     (.parse js/JSON (inline-resource "mock_patients.json"))
-                    (js->clj :keywordize-keys true))}
-    :fx [#_[:dispatch  [::some-event]]
-         [:dispatch [::get-view-definitions]]]}))
+                    (js->clj :keywordize-keys true))}}))
 
 (defn init []
   (re-frame/dispatch-sync [::initialize-db])
