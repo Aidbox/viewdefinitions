@@ -4,4 +4,4 @@
 (reg-sub
  ::view-definition-data
  (fn [db _]
-   (:view-definition/data db)))
+   (::data db)))

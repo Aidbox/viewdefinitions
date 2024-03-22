@@ -2,7 +2,7 @@
   (:require [re-frame.core :refer [dispatch reg-event-fx subscribe reg-sub]]
             [suitkin.core :as ui]
             [suitkin.utils :as su]
-            [viewdef-designer.utils.http :as http]
+            [viewdef-designer.pages.view-definition.http :as http]
             [viewdef-designer.components.table :as table]
             [viewdef-designer.pages.view-definition.components.resource-select :refer [resource-select]]
             [viewdef-designer.pages.view-definition.controller :as c]
@@ -68,6 +68,6 @@
                       {:grid-template-columns "40% 60%"}
                       [:m 5])}
       [form]
-      [table/table resources]]]))
+      [table/table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])
