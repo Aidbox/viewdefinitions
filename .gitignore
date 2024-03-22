@@ -10,3 +10,6 @@ public/out/
 resources/public/assets/js/
 
 resources/public/stylo/css/stylo.css
+.idea/*
+*.iml
+.vscode/*
