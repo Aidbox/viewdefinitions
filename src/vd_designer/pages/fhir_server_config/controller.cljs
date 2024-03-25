@@ -1,8 +1,8 @@
-(ns viewdef-designer.pages.fhir-server-config.controller
+(ns vd-designer.pages.fhir-server-config.controller
   (:require
     [ajax.core :as ajax]
     [re-frame.core :refer [reg-event-fx reg-event-db]]
-    [viewdef-designer.pages.view-definitions.controller :as view-defs.controller]))
+    [vd-designer.pages.vd-list.controller :as vd-list.controller]))
 
 (def identifier ::main)
 
@@ -25,7 +25,7 @@
                   :headers          {:Authorization token}
                   :response-format  (ajax/json-response-format {:keywords? true})
                   ;; TODO: use own effect
-                  :on-success       [::view-defs.controller/got-view-definitions]
+                  :on-success       [::vd-list.controller/got-view-definitions]
                   ;; TODO: add case on failure
                   }}))
 

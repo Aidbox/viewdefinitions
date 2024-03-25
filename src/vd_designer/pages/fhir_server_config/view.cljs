@@ -1,9 +1,9 @@
-(ns viewdef-designer.pages.fhir-server-config.view
+(ns vd-designer.pages.fhir-server-config.view
   (:require
     [re-frame.core :refer [dispatch]]
     [reagent.core :as r]
-    [viewdef-designer.routes :as routes]
-    [viewdef-designer.pages.fhir-server-config.controller :as c]))
+    [vd-designer.routes :as routes]
+    [vd-designer.pages.fhir-server-config.controller :as c]))
 
 (defn form []
   (let [server-name (r/atom nil)
