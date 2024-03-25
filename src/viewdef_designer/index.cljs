@@ -38,9 +38,7 @@
 
       {:title "Settings"
        :img "/suitkin/img/icon/ic-users-16.svg"
-       :on-click #(do
-                    (println "HellO!")
-                    (dispatch [::routes/navigate ::fhir-server-conf/main]))}
+       :on-click #(dispatch [::routes/navigate ::fhir-server-conf/main])}
 
       {:title "Docs"
        :img   "/suitkin/img/icon/ic-notebook-play-16.svg"}
