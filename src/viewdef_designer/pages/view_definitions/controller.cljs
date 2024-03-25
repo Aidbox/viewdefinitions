@@ -1,7 +1,8 @@
 (ns viewdef-designer.pages.view-definitions.controller
   (:require
    [ajax.core :as ajax]
-   [re-frame.core :refer [reg-event-fx reg-event-db]]))
+   [re-frame.core :refer [reg-event-fx reg-event-db]]
+   [viewdef-designer.routes :as routes]))
 
 (def identifier ::main)
 
@@ -18,7 +19,7 @@
  ::got-view-definitions
  (fn [db [_ result]]
    (assoc db
-          :view-definitions result
+          :view-definitions (:entry result)
           :loading false)))
 
 (reg-event-fx
@@ -34,3 +35,14 @@
                  :response-format (ajax/json-response-format {:keywords? true})
                  :on-success      [::got-view-definitions]
                  :on-failure      [:bad-http-result]}}))
+
+(reg-event-fx
+ ::add-view-definition
+ (fn [{:keys [db]} _]
+   {:dispatch [::routes/navigate :viewdef-designer.pages.view-definition.controller/main]}))
+
+;; TODO: Add backend call
+(reg-event-db
+ ::delete-view-definition
+ (fn [db [_ id]]
+   (update db :view-definitions #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
