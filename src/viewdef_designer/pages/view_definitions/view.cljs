@@ -37,14 +37,12 @@
          (fn [_e]
            (dispatch-sync [::routes/navigate :viewdef-designer.pages.view-definition.controller/main])
            (dispatch-sync [::choose-vd nm]))}
-        (str (or nm id))]
+        (str (or nm id) " " (-> v :resource :resource) " " (-> v :resource :meta :lastUpdated))]
        [:button
         {:on-click
          (fn [_e]
            (dispatch [::c/delete-view-definition id]))}
-        "Delete"]
-       [:div
-        (str (:resource v))]]))
+        "Delete"]]))
    [:button {:on-click (fn [e] (dispatch [::c/add-view-definition]))} "+"]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-list-view])
