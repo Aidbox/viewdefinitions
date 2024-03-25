@@ -1,11 +1,9 @@
-(ns viewdef-designer.pages.view-definition.view
-  (:require [re-frame.core :refer [dispatch reg-event-fx subscribe reg-sub]]
-            [viewdef-designer.pages.view-definition.http :as http]
-            [viewdef-designer.pages.view-definition.components.resource-select :refer [resource-select]]
-            [viewdef-designer.pages.view-definition.controller :as c]
-            [viewdef-designer.pages.view-definition.model :as model]
-            [viewdef-designer.routes :as routes]
-            [viewdef-designer.utils.event :as u]))
+(ns vd-designer.pages.vd-form.view
+  (:require [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.pages.vd-form.controller :as c]
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.routes :as routes]
+            [vd-designer.utils.event :as u]))
 
 (def label-component-style
   {:color "#7972D3"
@@ -30,13 +28,13 @@
              :s/invalid?  false
              :placeholder "ViewDefinition1"
              :on-change   (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
-    [:button {:on-click (fn [e] (dispatch [::http/eval-view-definition]))}
+    [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition]))}
      "Run"]]
 
    [:div
     [:div
      [:label {:class label-component-style} "RESOURCE"]]
-    [resource-select]]
+    "Not found"]
    [:div
     [:label {:class label-component-style} "CONSTANT"]]
    [:div
@@ -44,19 +42,14 @@
    [:div
     [:label {:class label-component-style} "SELECT"]]])
 
-(reg-sub
- ::chosen-vd-name
- (fn [db _]
-   (:vd-name db)))
-
 (defn header []
-  (let [vd-id @(subscribe [::chosen-vd-name])]
+  (let [vd-id @(subscribe [::m/chosen-vd-name])]
     [:button
-     {:on-click (fn [_e] (dispatch [::routes/navigate :viewdef-designer.pages.view-definitions.controller/main]))}
+     {:on-click (fn [_e] (dispatch [::routes/navigate [:vd-designer.pages.vd-list.controller/main]]))}
      (str "ViewDefinitions/" vd-id)]))
 
 (defn viewdefinition-view []
-  (let [resources @(subscribe [::model/view-definition-data])]
+  (let [resources @(subscribe [::m/view-definition-data])]
     [:div
      [header]
      [:div

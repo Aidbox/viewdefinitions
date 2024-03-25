@@ -1,4 +1,4 @@
-(ns viewdef-designer.utils.event)
+(ns vd-designer.utils.event)
 
 (defn target-value
   [event]

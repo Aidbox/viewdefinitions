@@ -1,4 +1,4 @@
-(ns viewdef-designer.index
+(ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
             [day8.re-frame.http-fx]
             [re-frame.core :as re-frame :refer [dispatch dispatch-sync
@@ -6,12 +6,11 @@
                                                 reg-sub subscribe]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [viewdef-designer.components.layout :as components]
-            [viewdef-designer.pages.view-definition.view]
-            [viewdef-designer.pages.view-definitions.controller :as viewdefinition-list]
-            [viewdef-designer.pages.view-definitions.view]
-            [viewdef-designer.routes :as routes])
-  (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
+            [vd-designer.components.layout :as components]
+            [vd-designer.pages.vd-form.view]
+            [vd-designer.pages.vd-list.controller :as vd-list.controller]
+            [vd-designer.pages.vd-list.view]
+            [vd-designer.routes :as routes]))
 
 ;;;; Layout
 
@@ -35,7 +34,7 @@
       :on-collapse #(dispatch [::toggle-side-menu])
       :on-menu-click (fn [key] (dispatch [::routes/navigate key]))
       :menu-active-key (subs (str route) 1)
-      :menu [{:key (prepare-menu-key viewdefinition-list/identifier)
+      :menu [{:key (prepare-menu-key vd-list.controller/identifier)
               :label "ViewDefinitions"
               :icon (r/create-element icons/DatabaseOutlined)}
              {:key "2" :label "Settings" :icon (r/create-element icons/SettingOutlined)}
@@ -55,11 +54,8 @@
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
-   {:db {:active-page ::viewdefinition-list/main
+   {:db {:active-page ::vd-list.controller/main
          :resources resources
-         :patients (->
-                    (.parse js/JSON (inline-resource "mock_patients.json"))
-                    (js->clj :keywordize-keys true))
          :side-menu-collapsed false}}))
 
 (def compiler

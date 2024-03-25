@@ -1,4 +1,4 @@
-(ns viewdef-designer.routes
+(ns vd-designer.routes
   (:require [bidi.bidi :as bidi]
             [pushy.core :as pushy]
             [re-frame.core :as re-frame :refer [reg-event-fx reg-fx reg-sub]]))
@@ -8,8 +8,9 @@
 
 (def routes
   (atom
-   ["/" {"vd" :viewdef-designer.pages.view-definition.controller/main
-         "" :viewdef-designer.pages.view-definitions.controller/main}]))
+    ["/" {"vd/" :vd-designer.pages.vd-form.controller/main
+          ["vd/" :id] :vd-designer.pages.vd-form.controller/main
+          "" :vd-designer.pages.vd-list.controller/main}]))
 
 (reg-sub
  ::active-page
@@ -18,8 +19,10 @@
 
 (reg-event-fx
  ::set-active-page
- (fn [{:keys [db]} [_ active-page]]
-   {:db (assoc db :active-page active-page)
+ (fn [{:keys [db]} [_ {active-page :handler route-params :route-params}]]
+   {:db (assoc db
+               :active-page active-page
+               :route-params route-params)
     :fx [[:dispatch [(:active-page db) :deinit]]
          [:dispatch [active-page :init]]]}))
 
@@ -33,14 +36,14 @@
 
 (defn dispatch
   [route]
-  (re-frame/dispatch [::set-active-page (:handler route)]))
+  (re-frame/dispatch [::set-active-page route]))
 
 (defonce history
   (pushy/pushy dispatch parse))
 
 (defn navigate!
   [handler]
-  (pushy/set-token! history (url-for handler)))
+  (pushy/set-token! history (apply url-for handler)))
 
 (defn start!
   []

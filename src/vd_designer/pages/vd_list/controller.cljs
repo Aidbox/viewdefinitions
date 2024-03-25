@@ -1,15 +1,11 @@
-(ns viewdef-designer.pages.view-definitions.controller
+(ns vd-designer.pages.vd-list.controller
   (:require
+   #_[vd-designer.pages.vd-list.model :as m]
    [ajax.core :as ajax]
    [re-frame.core :refer [reg-event-fx reg-event-db]]
-   [viewdef-designer.routes :as routes]))
+   [vd-designer.routes :as routes]))
 
 (def identifier ::main)
-
-(reg-event-db
- ::choose-vd
- (fn [db [_ vd-id]]
-   (assoc db :vd-name vd-id)))
 
 (reg-event-fx
  identifier
@@ -20,19 +16,12 @@
           #_#_(= :deinit phase)
             (conj [:dispatch [::deinit]]))}))
 
-(reg-event-db
- ::got-view-definitions
- (fn [db [_ result]]
-   (assoc db
-          :view-definitions (:entry result)
-          :loading false)))
-
 (reg-event-fx
  ::get-view-definitions
- (fn [{:keys [db]} _]
+ (fn [{:keys [db]} [_]]
    {:db (assoc db :loading true)
     :http-xhrio {:method          :get
-                 :uri             "https://viewdefs1.aidbox.app/fhir/ViewDefinition"
+                 :uri             "https://viewdefs1.aidbox.app/fhir/ViewDefinition/"
                  :timeout         8000
                  :with-credentials true
                  :headers  {:Authorization
@@ -42,12 +31,21 @@
                  :on-failure      [:bad-http-result]}}))
 
 (reg-event-fx
+ ::got-view-definitions
+ (fn [{:keys [db]} [_ result]]
+   {:db (assoc db
+               :view-definitions (:entry result)
+               :loading false)}))
+
+(reg-event-fx
  ::add-view-definition
- (fn [{:keys [db]} _]
-   {:dispatch [::routes/navigate :viewdef-designer.pages.view-definition.controller/main]}))
+ (fn [{:keys [_db]} _]
+   {:dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id ""]]}))
 
 ;; TODO: Add backend call
 (reg-event-db
  ::delete-view-definition
  (fn [db [_ id]]
    (update db :view-definitions #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
+
+
