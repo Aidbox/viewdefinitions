@@ -1,63 +1,51 @@
 (ns viewdef-designer.index
-  (:require [re-frame.core :as re-frame :refer [reg-event-fx subscribe reg-sub dispatch]]
+  (:require ["@ant-design/icons" :as icons]
+            [day8.re-frame.http-fx]
+            [re-frame.core :as re-frame :refer [dispatch dispatch-sync
+                                                reg-event-db reg-event-fx
+                                                reg-sub subscribe]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [day8.re-frame.http-fx]
-            ; register pages
+            [viewdef-designer.components.layout :as components]
             [viewdef-designer.pages.view-definition.view]
-            [viewdef-designer.pages.view-definitions.view]
             [viewdef-designer.pages.view-definitions.controller :as viewdefinition-list]
-
+            [viewdef-designer.pages.view-definitions.view]
             [viewdef-designer.routes :as routes])
   (:require-macros [viewdef-designer.interop :refer [inline-resource]]))
 
-(def compiler
-  (r/create-compiler {:function-components true}))
+;;;; Layout
+
+(reg-event-db
+ ::toggle-side-menu
+ (fn [db []]
+   (assoc-in db [:side-menu-collapsed] (not (:side-menu-collapsed db)))))
 
 (reg-sub
- ::sidebar
- (fn [_ _]
-   {:menu
-    {:items
-     [#_{:title "Resources"
-         :img   "/suitkin/img/icon/ic-workflow-16.svg"}
+ ::side-menu-collapsed
+ (fn [db _]
+   (:side-menu-collapsed db)))
 
-      {:title "FHIR servers"
-       :img   "/suitkin/img/icon/ic-database-16.svg"
-       :items [{:title "ViewDefinitions" :img "/suitkin/img/icon/ic-database-code-16.svg"
-                :on-click #(dispatch [::routes/navigate ::viewdefinition-list/main])}
-               {:title "Resources" :img "/suitkin/img/icon/ic-table-16.svg"}]}
+(defn prepare-menu-key [s]
+  (str (namespace s) "/" (name s)))
 
-      {:divider true}
-      {:title "Settings" :img "/suitkin/img/icon/ic-users-16.svg"}
-
-      {:title "Docs"
-       :img   "/suitkin/img/icon/ic-notebook-play-16.svg"}
-      {:space true}]}}))
-
-(defn sidebar []
-  (let [data @(subscribe [::sidebar])]
-    [:div {:data-object :ig-sidebar}
-     #_[ui/sidebar (assoc data
-                          #_#_:class (c [:w "350px !important"]
-                                        {:position "fixed"})
-                          :logo [:img {:src (su/public-src "/assets/img/hs-logo.svg")}])]]))
-
-(defn find-page
-  []
+(defn find-page []
   (let [route @(subscribe [::routes/active-page])]
-    [:div
-     [sidebar]
+    [components/layout
+     {:collapsed @(subscribe [::side-menu-collapsed])
+      :on-collapse #(dispatch [::toggle-side-menu])
+      :on-menu-click (fn [key] (dispatch [::routes/navigate key]))
+      :menu-active-key (subs (str route) 1)
+      :menu [{:key (prepare-menu-key viewdefinition-list/identifier)
+              :label "ViewDefinitions"
+              :icon (r/create-element icons/DatabaseOutlined)}
+             {:key "2" :label "Settings" :icon (r/create-element icons/SettingOutlined)}
+             {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
+      :breadcrumbs [{:title "Home" :href "/"}
+                    {:title "TODO"}]}
      (if route
        [:div
         (routes/pages route)]
        [:div "Page not found"])]))
-
-(defn ^:dev/after-load mount-root []
-  (re-frame/clear-subscription-cache!)
-  (let [root-el (.getElementById js/document "app")]
-    (rdom/unmount-component-at-node root-el)
-    (rdom/render [find-page] root-el compiler)))
 
 ;;;; Initialization
 
@@ -71,7 +59,17 @@
          :resources resources
          :patients (->
                     (.parse js/JSON (inline-resource "mock_patients.json"))
-                    (js->clj :keywordize-keys true))}}))
+                    (js->clj :keywordize-keys true))
+         :side-menu-collapsed false}}))
+
+(def compiler
+  (r/create-compiler {:function-components true}))
+
+(defn ^:dev/after-load mount-root []
+  (re-frame/clear-subscription-cache!)
+  (let [root-el (.getElementById js/document "app")]
+    (rdom/unmount-component-at-node root-el)
+    (rdom/render [find-page] root-el compiler)))
 
 (defn init []
   (re-frame/dispatch-sync [::initialize-db])

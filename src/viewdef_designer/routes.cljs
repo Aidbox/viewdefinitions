@@ -1,17 +1,15 @@
 (ns viewdef-designer.routes
   (:require [bidi.bidi :as bidi]
             [pushy.core :as pushy]
-            [re-frame.core :as re-frame :refer [reg-event-fx reg-sub]]))
+            [re-frame.core :as re-frame :refer [reg-event-fx reg-fx reg-sub]]))
 
 (defmulti pages identity)
 (defmethod pages :default [] [:div "No page found for this route."])
 
 (def routes
   (atom
-    ["/" {
-          "vd" :viewdef-designer.pages.view-definition.controller/main
-          "" :viewdef-designer.pages.view-definitions.controller/main
-          }]))
+   ["/" {"vd" :viewdef-designer.pages.view-definition.controller/main
+         "" :viewdef-designer.pages.view-definitions.controller/main}]))
 
 (reg-sub
  ::active-page
@@ -48,12 +46,12 @@
   []
   (pushy/start! history))
 
-(re-frame/reg-fx
+(reg-fx
  ::navigate
  (fn [handler]
    (navigate! handler)))
 
-(re-frame/reg-event-fx
+(reg-event-fx
  ::navigate
  (fn [_ [_ handler]]
    {::navigate handler}))

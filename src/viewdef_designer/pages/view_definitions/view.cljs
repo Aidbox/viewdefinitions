@@ -1,10 +1,9 @@
 (ns viewdef-designer.pages.view-definitions.view
-  (:require
-   [re-frame.core :refer [subscribe dispatch reg-event-fx reg-event-db reg-sub
-                          dispatch-sync]]
-   [viewdef-designer.pages.view-definitions.controller :as c]
-   [day8.re-frame.http-fx]
-   [viewdef-designer.routes :as routes]))
+  (:require [day8.re-frame.http-fx]
+            [re-frame.core :refer [dispatch-sync reg-event-db reg-sub
+                                   subscribe]]
+            [viewdef-designer.pages.view-definitions.controller :as c]
+            [viewdef-designer.routes :as routes]))
 
 (reg-sub
  ::view-defs
