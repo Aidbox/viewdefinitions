@@ -1,4 +1,4 @@
-(ns viewdef-designer.components.layout
+(ns vd-designer.components.layout
   (:require [antd :refer [Breadcrumb Layout Menu]]))
 
 (defn layout

@@ -1,4 +1,4 @@
-(ns viewdef-designer.interop
+(ns vd-designer.interop
   (:require
     #?(:clj [clojure.java.io :as io])))
 
