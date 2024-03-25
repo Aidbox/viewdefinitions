@@ -6,8 +6,7 @@
   thheller/shadow-cljs {:mvn/version "2.27.5"}
   reagent/reagent {:mvn/version "1.2.0"}
   re-frame/re-frame {:mvn/version "1.4.3"}
-  healthsamurai/suitkin     {:local/root "libs/suitkin"}
-  com.health-samurai/macrocss {:mvn/version "0.4.0"}
+  babashka/process {:mvn/version "0.5.22"}
 
   ;; routing
   bidi/bidi {:mvn/version "2.1.6"}
@@ -17,8 +16,7 @@
   day8.re-frame/http-fx {:mvn/version "0.2.4"}
 
   binaryage/devtools {:mvn/version "1.0.7"}
-  re-frisk/re-frisk {:mvn/version "1.6.0"}
-  re-com/re-com {:mvn/version "2.19.0"}}
+  re-frisk/re-frisk {:mvn/version "1.6.0"}}
 
  :aliases {:shadow
            {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}

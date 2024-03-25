@@ -4,12 +4,14 @@
 .lsp/
 .nrepl-port
 .shadow-cljs
+*.iml
 
 node_modules/
-public/out/
-resources/public/assets/js/
+resources/public/
+!resources/public/assets/*
+!resources/public/index.html
 
-resources/public/stylo/css/stylo.css
+resources/public/stylo/css/
 .idea/*
 *.iml
 .vscode/*
