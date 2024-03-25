@@ -6,6 +6,11 @@
 
 (def identifier ::main)
 
+(reg-event-db
+ ::choose-vd
+ (fn [db [_ vd-id]]
+   (assoc db :vd-name vd-id)))
+
 (reg-event-fx
  identifier
  (fn [{db :db} [_ phase]]
@@ -13,7 +18,7 @@
           (= :init phase)
           (conj [:dispatch [::get-view-definitions]])
           #_#_(= :deinit phase)
-          (conj [:dispatch [::deinit]]))}))
+            (conj [:dispatch [::deinit]]))}))
 
 (reg-event-db
  ::got-view-definitions

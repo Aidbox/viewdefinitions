@@ -1,17 +1,17 @@
 (ns viewdef-designer.pages.view-definition.components.resource-select
-  (:require [re-com.core :refer [single-dropdown]]
-            [re-frame.core :refer [dispatch reg-event-db reg-sub subscribe]])
-  (:require-macros [stylo.core :refer [c]]))
+  (:require
+   [re-frame.core :refer [dispatch reg-event-db reg-sub subscribe]]))
 
 (defn resource-select []
- (fn []
-  [single-dropdown
-   :filter-box? true
-   :auto-complete? true
-   :placeholder "ResourceType"
-   :choices @(subscribe [::supported-resources])
-   :model @(subscribe [::selected-resource])
-   :on-change #(dispatch [::select-resource %])]))
+  (fn []
+    [:div]
+    #_[single-dropdown
+       :filter-box? true
+       :auto-complete? true
+       :placeholder "ResourceType"
+       :choices @(subscribe [::supported-resources])
+       :model @(subscribe [::selected-resource])
+       :on-change #(dispatch [::select-resource %])]))
 
 (reg-sub
  ::supported-resources
