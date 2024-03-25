@@ -1,11 +1,12 @@
 (ns vd-designer.pages.vd-form.view
-  (:require [re-frame.core :refer [dispatch subscribe]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.routes :as routes]
-            [vd-designer.utils.event :as u]
-            [antd :refer [Col Row]]
+  (:require [antd :refer [Col Row]]
+            [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [derive-columns table]]
-            [vd-designer.pages.vd-form.model :as model]))
+            [vd-designer.pages.vd-form.controller :as c]
+            [vd-designer.pages.vd-form.model :as model]
+            [vd-designer.routes :as routes]
+            [vd-designer.utils.event :as u]))
 
 (def label-component-style
   {:color "#7972D3"
@@ -35,8 +36,10 @@
 
    [:div
     [:div
-     [:label {:class label-component-style} "RESOURCE"]]
-    "Not found"]
+     [:label {:class label-component-style} "RESOURCE"]
+     [select {:options @(subscribe [::model/get-all-supported-resources])
+              :value @(subscribe [::model/get-selected-resource])
+              :on-select #(dispatch [::c/select-resource %])}]]]
    [:div
     [:label {:class label-component-style} "CONSTANT"]]
    [:div

@@ -60,24 +60,34 @@
     :db (assoc db :current-vd vd-id)}))
 
 (reg-event-fx
-  ::eval-view-definition-data
-  (fn [{:keys [db]} _]
-    (let [view-definition (:current-vd db)]
-      {:db         (assoc db :loading true)
-       :http-xhrio {:method           :post
-                    :uri             "https://viewdefs1.aidbox.app/rpc"
-                    :timeout          8000
-                    :with-credentials true
-                    :headers          {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
-                    :response-format  (ajax/json-response-format {:keywords? true})
-                    :on-success       [::on-eval-view-definitions-success]
+ ::eval-view-definition-data
+ (fn [{:keys [db]} _]
+   (let [view-definition (:current-vd db)]
+     {:db         (assoc db :loading true)
+      :http-xhrio {:method           :post
+                   :uri             "https://viewdefs1.aidbox.app/rpc"
+                   :timeout          8000
+                   :with-credentials true
+                   :headers          {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
+                   :response-format  (ajax/json-response-format {:keywords? true})
+                   :on-success       [::on-eval-view-definitions-success]
                     ;:on-failure      [:bad-http-result]
-                    :params           {:method 'sof/eval-view
-                                       :params {:limit 100
-                                                :view view-definition}}
-                    :format           (ajax/json-request-format)}})))
+                   :params           {:method 'sof/eval-view
+                                      :params {:limit 100
+                                               :view view-definition}}
+                   :format           (ajax/json-request-format)}})))
 
 (reg-event-db
  ::on-eval-view-definitions-success
  (fn [db [_ result]]
    (assoc db ::m/resource-data (:result result))))
+
+(reg-event-db
+ ::select-view-definition-name
+ (fn [db [_ vd-name]]
+   (assoc-in db [:current :vd-name] vd-name)))
+
+(reg-event-db
+ ::select-resource
+ (fn [db [_ input]]
+   (assoc-in db [:current :resource] input)))
