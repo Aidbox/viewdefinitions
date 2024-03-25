@@ -1,9 +1,11 @@
 (ns vd-designer.pages.vd-form.view
   (:require [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
-            [vd-designer.utils.event :as u]))
+            [vd-designer.utils.event :as u]
+            [antd :refer [Col Row]]
+            [vd-designer.components.table :refer [derive-columns table]]
+            [vd-designer.pages.vd-form.model :as model]))
 
 (def label-component-style
   {:color "#7972D3"
@@ -27,7 +29,7 @@
     [:input {:id          "view-def-name"
              :s/invalid?  false
              :placeholder "ViewDefinition1"
-             :on-change   (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
+             :on-change (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
     [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition]))}
      "Run"]]
 
@@ -43,17 +45,17 @@
     [:label {:class label-component-style} "SELECT"]]])
 
 (defn header []
-  (let [vd-id @(subscribe [::m/chosen-vd-name])]
-    [:button
-     {:on-click (fn [_e] (dispatch [::routes/navigate [:vd-designer.pages.vd-list.controller/main]]))}
-     (str "ViewDefinitions/" vd-id)]))
+  (let [vd-id @(subscribe [::model/chosen-vd-name])]
+    [:h1 vd-id]))
 
 (defn viewdefinition-view []
-  (let [resources @(subscribe [::m/view-definition-data])]
+  (let [resources @(subscribe [::model/view-definition-data])
+        data (:data resources)
+        columns (derive-columns data)]
     [:div
      [header]
-     [:div
-      [form]
-      #_[table/table (:data resources)]]]))
+     [:> Row
+      [:>  Col {:span 12} [form]]
+      [:>  Col {:span 12} [table {:loading false :columns columns :dataSource data}]]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])
