@@ -1,22 +1,12 @@
 (ns viewdef-designer.pages.view-definitions.view
   (:require [day8.re-frame.http-fx]
-            [re-frame.core :refer [dispatch-sync reg-event-db reg-sub
-                                   subscribe]]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [viewdef-designer.pages.view-definitions.controller :as c]
+            [viewdef-designer.pages.view-definitions.model :as model]
             [viewdef-designer.routes :as routes]))
 
-(reg-sub
- ::view-defs
- (fn [db _]
-   (:view-definitions db)))
-
-(reg-event-db
- ::choose-vd
- (fn [db [_ vd-id]]
-   (assoc db :vd-name vd-id)))
-
 (defn viewdefinition-list-view []
-  (let [view-defs @(subscribe [::view-defs])]
+  (let [view-defs @(subscribe [::model/view-defs])]
     [:div
      [:h1 {} "View Definitions"]
      (for [v view-defs]
