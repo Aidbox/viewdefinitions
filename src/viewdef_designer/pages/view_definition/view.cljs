@@ -2,6 +2,7 @@
   (:require [re-frame.core :refer [dispatch reg-event-fx subscribe reg-sub]]
             [suitkin.core :as ui]
             [suitkin.utils :as su]
+            [viewdef-designer.pages.view-definition.http :as http]
             [viewdef-designer.components.table :as table]
             [viewdef-designer.pages.view-definition.components.resource-select :refer [resource-select]]
             [viewdef-designer.pages.view-definition.controller :as c]
@@ -27,10 +28,14 @@
 (defn form []
   [:div
    {:class (c :w-max-sm)}
-   [ui/input {:id          "view-def-name"
-              :s/invalid? false
-              :placeholder "ViewDefinition1"
-              :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
+   [:div
+    [ui/input {:id          "view-def-name"
+               :s/invalid?  false
+               :placeholder "ViewDefinition1"
+               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (su/target-value e)]))}]
+    [ui/button {:on-click (fn [e] (dispatch [::http/eval-view-definition]))}
+     "Run"]]
+
    [:div
     {:class (c :grid :grid-flow-col [:pt 5] )}
     [:div
@@ -56,13 +61,13 @@
      (str "ViewDefinitions/" vd-id)]))
 
 (defn viewdefinition-view []
-  (let [patients @(subscribe [::model/patients])]
+  (let [resources @(subscribe [::model/view-definition-data])]
     [:div
      [header]
      [:div {:class (c :grid :grid-flow-col [:gap 5]
                       {:grid-template-columns "40% 60%"}
                       [:m 5])}
       [form]
-      [table/table patients]]]))
+      [table/table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])

@@ -26,7 +26,7 @@
  (let [view-defs @(subscribe [::view-defs])]
   [:div
    [ui/h1 {} "View Definitions"]
-   (for [v (:entry view-defs)]
+   (for [v view-defs]
      (let [id (-> v :resource :id)
            nm (-> v :resource :name)]
       ^{:key id}
@@ -35,10 +35,14 @@
         {:s/use "tertiary"
          :on-click
          (fn [_e]
-          (dispatch-sync [:viewdef-designer.routes/navigate :viewdef-designer.pages.view-definition.controller/main])
-          (dispatch-sync [::choose-vd nm]))}
-        (str (or nm id))]
-       [:div
-        (str (:resource v))]]))]))
+           (dispatch-sync [::routes/navigate :viewdef-designer.pages.view-definition.controller/main])
+           (dispatch-sync [::choose-vd nm]))}
+        (str (or nm id) " " (-> v :resource :resource) " " (-> v :resource :meta :lastUpdated))]
+       [:button
+        {:on-click
+         (fn [_e]
+           (dispatch [::c/delete-view-definition id]))}
+        "Delete"]]))
+   [:button {:on-click (fn [e] (dispatch [::c/add-view-definition]))} "+"]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-list-view])
