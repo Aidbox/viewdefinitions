@@ -8,6 +8,7 @@
  {:app
   {:target :browser
    :output-dir "resources/public"
+   :asset-path "/"
 
    :compiler-options {:warnings {:fn-deprecated false}}
    :devtools {:preloads [re-frisk.preload devtools.preload]
