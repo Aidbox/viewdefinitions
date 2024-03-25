@@ -9,7 +9,9 @@
             ; register pages
             [viewdef-designer.pages.view-definition.view]
             [viewdef-designer.pages.view-definitions.view]
+            [viewdef-designer.pages.fhir-server-config.view]
             [viewdef-designer.pages.view-definitions.controller :as viewdefinition-list]
+            [viewdef-designer.pages.fhir-server-config.controller :as fhir-server-conf]
 
             [viewdef-designer.routes :as routes])
   (:require-macros [viewdef-designer.interop :refer [inline-resource]]
@@ -33,7 +35,12 @@
                {:title "Resources" :img "/suitkin/img/icon/ic-table-16.svg"}]}
 
       {:divider true}
-      {:title "Settings" :img "/suitkin/img/icon/ic-users-16.svg"}
+
+      {:title "Settings"
+       :img "/suitkin/img/icon/ic-users-16.svg"
+       :on-click #(do
+                    (println "HellO!")
+                    (dispatch [::routes/navigate ::fhir-server-conf/main]))}
 
       {:title "Docs"
        :img   "/suitkin/img/icon/ic-notebook-play-16.svg"}

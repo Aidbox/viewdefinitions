@@ -11,6 +11,7 @@
     ["/" {
           "vd" :viewdef-designer.pages.view-definition.controller/main
           "" :viewdef-designer.pages.view-definitions.controller/main
+          "settings" :viewdef-designer.pages.fhir-server-config.controller/main
           }]))
 
 (reg-sub
