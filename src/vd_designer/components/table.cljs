@@ -17,5 +17,4 @@
      For more details see: https://ant.design/components/table#api
      "
   [props]
-  (fn [props]
-    [:> Table props]))
+  [:> Table props])

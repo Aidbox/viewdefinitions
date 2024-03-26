@@ -10,22 +10,6 @@
             [vd-designer.routes :as routes]
             [vd-designer.utils.event :as u]))
 
-(def label-component-style
-  {:color "#7972D3"
-   :font-family "Inter"
-   :margin-left "1px"
-   :padding-left "12px"
-   :padding-right "12px"
-   :padding-top "4px"
-   :padding-bottom "4px"
-   :font-size   "14px"
-   :font-weight "400"
-   :line-height "20px"
-   :margin-bottom "6px"
-   :bg "#7972D31A"
-   :border-none true
-   :rounded true})
-
 (defn form []
   [:div
    [:div

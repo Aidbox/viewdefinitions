@@ -1,5 +1,4 @@
-(ns vd-designer.components.tag
-  (:require [antd :refer [Tag]]))
+(ns vd-designer.components.tag)
 
 (defn tag [text text-color bg-color]
   [:label
