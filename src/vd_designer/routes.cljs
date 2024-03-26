@@ -8,8 +8,7 @@
 
 (def routes
   (atom
-    ["/" {"vd/" :vd-designer.pages.vd-form.controller/main
-          ["vd/" :id] :vd-designer.pages.vd-form.controller/main
+    ["/" {["vd/" :id] :vd-designer.pages.vd-form.controller/main
           "" :vd-designer.pages.vd-list.controller/main}]))
 
 (reg-sub

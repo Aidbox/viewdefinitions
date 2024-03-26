@@ -10,3 +10,8 @@
   ::chosen-vd-name
   (fn [db _]
     (:vd-name db)))
+
+(reg-sub
+  ::current-vd
+  (fn [db _]
+    (:current-vd db)))
