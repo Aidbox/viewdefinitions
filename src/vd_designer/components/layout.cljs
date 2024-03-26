@@ -1,5 +1,5 @@
 (ns vd-designer.components.layout
-  (:require [antd :refer [Breadcrumb Flex Layout Menu]]))
+  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]))
 
 (defn layout
   "Base layout for pages, first argument is props, second - content.
@@ -12,19 +12,25 @@
        :breadcrumbs .. }
    "
   [props content]
+
   [:> Layout {:style {:minHeight "100vh"}}
    [:> Layout.Sider
-    {:theme "light"
+    {:theme       "light"
      :collapsible true
-     :collapsed (:collapsed props)
-     :onCollapse (:on-collapse props)}
+     :collapsed   (:collapsed props)
+     :onCollapse  (:on-collapse props)}
 
     [:> Flex {:style {:justify-conent "center" :padding 10}}
      [:img {:src "/img/hs-logo.svg" :style {:width 120}}]]
-    [:> Menu {:mode "inline"
-              :defaultSelectedKeys [(:menu-active-key props)]
-              :onClick (fn [e] ((:on-menu-click props) (keyword (.-key e))))
-              :items (:menu props)}]]
+    [:> ConfigProvider {:theme {:components {:Menu {:itemSelectedBg    "#E6F7FF"
+                                                    :itemSelectedColor "#1890FF"
+                                                    :itemBorderRadius  0
+                                                    :itemMarginInline  0
+                                                    :itemMarginBlock   0}}}}
+     [:> Menu {:mode                "inline"
+               :defaultSelectedKeys [(:menu-active-key props)]
+               :onClick             (fn [e] ((:on-menu-click props) (keyword (.-key e))))
+               :items               (:menu props)}]]]
    [:> Layout
     [:> Layout.Content {:style {:background "#fff"}}
      [:> Breadcrumb
