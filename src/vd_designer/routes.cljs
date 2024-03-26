@@ -11,7 +11,7 @@
     ["/" {"vd/" :vd-designer.pages.vd-form.controller/main
           ["vd/" :id] :vd-designer.pages.vd-form.controller/main
           "" :vd-designer.pages.vd-list.controller/main
-          "settings" :viewdef-designer.pages.fhir-server-config.controller/main}]))
+          "settings" :vd-designer.pages.fhir-server-config.controller/main}]))
 
 (reg-sub
  ::active-page
