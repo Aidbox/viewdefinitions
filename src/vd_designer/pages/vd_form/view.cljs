@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.view
   (:require [antd :refer [Col Row]]
+            [vd-designer.components.tag :as tag]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [derive-columns table]]
@@ -36,16 +37,14 @@
 
    [:div
     [:div
-     [:label {:class label-component-style} "RESOURCE"]
+     [tag/resource]
      [select {:options @(subscribe [::model/get-all-supported-resources])
               :value @(subscribe [::model/get-selected-resource])
               :on-select #(dispatch [::c/select-resource %])}]]]
-   [:div
-    [:label {:class label-component-style} "CONSTANT"]]
-   [:div
-    [:label {:class label-component-style} "WHERE"]]
-   [:div
-    [:label {:class label-component-style} "SELECT"]]])
+
+   [:div [tag/constant]]
+   [:div [tag/where]]
+   [:div [tag/select]]])
 
 (defn header []
   (let [vd-id @(subscribe [::model/chosen-vd-name])]
