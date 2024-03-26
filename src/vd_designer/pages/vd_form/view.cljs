@@ -36,6 +36,7 @@
                                                       "datatype" "string"},
                                      "forEach" {"type" "http://fhir.aidbox.app/fhir/StructureDefinition/string|1.0.0",
                                                 "datatype" "string"},
+
                                      "unionAll" {"array" true
                                                  "elementReference" ["http://fhir.aidbox.app/fhir/StructureDefinition/ViewDefinition|1.0.0"
                                                                      "elements"
@@ -43,10 +44,10 @@
                                      "column" {"array" true
                                                "elements" {"name" {"type" "http://fhir.aidbox.app/fhir/StructureDefinition/string|1.0.0",
                                                                    "datatype" "string"}
-                                                           "path" {"type" "http://fhir.aidbox.app/fhir/StructureDefinition/string|1.0.0",
-                                                                   "datatype" "string"}
                                                            "hello" {"type" "http://fhir.aidbox.app/fhir/StructureDefinition/string|1.0.0",
-                                                                    "datatype" "string"}}},
+                                                                    "datatype" "string"}
+                                                           "path" {"type" "http://fhir.aidbox.app/fhir/StructureDefinition/string|1.0.0",
+                                                                   "datatype" "string"}}},
                                      "select" {"elementReference" ["http://fhir.aidbox.app/fhir/StructureDefinition/ViewDefinition|1.0.0"
                                                                    "elements"
                                                                    "select"]}},
@@ -120,39 +121,61 @@
 
 (declare render-block)
 
-(defn render-column [column-spec column]
+(defn render-column [_column-spec column]
   [:div column])
 
 (defn render-field [ctx name value]
   [:div
    [:span name]
-   [:input {:value value}]])
+   [:span (str (:value-path ctx))]
+   [:input {:on-change
+            #(dispatch [::c/change-input-value (conj (:value-path ctx) name) (u/target-value %)])
+            :value value}]])
+
+(defn add-value-path [ctx k]
+  (update ctx :value-path conj k))
 
 (defn render-map [ctx map-key map-value]
-  [:div map-key 
+  [:div map-key
    (for [[k _] (spec->elements ctx)]
      (when-not (get map-value (keyword k))
-       [:button k]))
+       [:button
+        {:on-click #(dispatch [::c/add-element-into-map
+                               (:value-path ctx)
+                               (keyword k)
+                               (cond
+                                 (spec-map? ctx k) {}
+                                 (spec-array? ctx k) []
+                                 :else "")])}
+        (str k)]))
    [:<>
     (for [[k v] map-value]
-      [render-block (add-spec-path ctx "elements") k v])]])
+      [render-block (add-spec-path ctx "elements")
+       k v])]])
 
-(defn render-array [ctx name value]
-  [:div name
-   (for [element value]
-     (render-map ctx name element))])
+(defn render-array [ctx k value]
+  [:div k
+   (map-indexed
+     (fn [idx element]
+       (render-map (add-value-path ctx idx) k element))
+     value)
+   [:button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])} (str k)]])
 
 (defn render-block [ctx k v]
-  (cond 
+  (cond
     (spec-array? ctx (name k))
-    [render-array (add-spec-path ctx (name k)) k v]
+    [render-array (-> ctx
+                      (add-spec-path (name k))
+                      (add-value-path (keyword k))) k v]
 
     (spec-map? ctx (name k))
-    [render-map (add-spec-path ctx (name k)) k v]
+    [render-map (-> ctx
+                    (add-spec-path (name k))
+                    (add-value-path (keyword k))) k v]
 
     (spec-field? ctx (name k))
     [render-field (add-spec-path ctx (name k)) k v]
-    
+
     :else
     [:div "not found"]))
 
@@ -171,13 +194,12 @@
                :s/invalid?  false
                :placeholder "ViewDefinition1"
                :on-change   (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
-      [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition]))}
+      [:button {:on-click #(dispatch [::c/eval-view-definition])}
        "Run"]]
 
      [:div
       [:div
-       [:label {:class label-component-style} "RESOURCE"]]
-      "Not found"]
+       [:label {:class label-component-style} "RESOURCE"]]]
      [:div
       [:label {:class label-component-style} "CONSTANT"]]
      [:div

@@ -59,3 +59,18 @@
  ::on-eval-view-definitions-success
  (fn [db [_ result]]
    (assoc db ::m/resource-data (:result result))))
+
+(reg-event-db
+ ::change-input-value
+ (fn [db [_ path value]]
+   (assoc-in db (into [:current-vd] path) value)))
+
+(reg-event-db
+ ::add-element-into-array
+ (fn [db [_ path]]
+   (update-in db (into [:current-vd] path) conj {})))
+
+(reg-event-db
+ ::add-element-into-map
+ (fn [db [_ path k default-value]]
+   (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
