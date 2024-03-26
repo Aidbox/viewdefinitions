@@ -3,6 +3,8 @@
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
+            [vd-designer.utils.yaml :as yaml]
+            [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.utils.event :as u]))
 
 (def vd-spec
@@ -133,7 +135,7 @@
 (defn render-field [ctx name value]
   [:div
    [:span name]
-   [:span (str (:value-path ctx))]
+   #_[:span (str (:value-path ctx))]
    [:input {:on-change
             #(dispatch [::c/change-input-value (conj (:value-path ctx) name) (u/target-value %)])
             :value value}]])
@@ -216,18 +218,25 @@
      [:div
       [render-block ctx "select" (:select vd-form)]]]))
 
-(defn header []
-  (let [vd-id @(subscribe [::m/chosen-vd-name])]
-    [:button
-     {:on-click (fn [_e] (dispatch [::routes/navigate [:vd-designer.pages.vd-list.controller/main]]))}
-     (str "ViewDefinitions/" vd-id)]))
+(defn vd-input []
+  (let [current-vd @(subscribe [::m/current-vd])]
+    [:div
+     {:style {:height "500px" :width "500px"}}
+     [monaco/monaco {:id "vd-yaml"
+                     :value (yaml/edn->yaml current-vd)
+                     :schemas []
+                     #_#_:onChange (fn [value & _] (dispatch [::c/set-schema value]))
+                     #_#_:onValidate (fn [markers] (dispatch [::c/set-monaco-markers (js->clj markers)]))}]]))
 
 (defn viewdefinition-view []
-  (let [resources @(subscribe [::m/view-definition-data])]
+  (let [resources @(subscribe [::m/view-definition-data])
+        mode @(subscribe [::m/mode])]
     [:div
-     [header]
+     [:button {:on-click #(dispatch [::c/change-mode :form])}  "Form"]
+     [:button {:on-click #(dispatch [::c/change-mode :yaml])}"YAML"]
      [:div
-      [form]
+      (when (= mode :form) [form])
+      (when (= mode :yaml) [vd-input])
       #_[table/table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])

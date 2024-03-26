@@ -56,6 +56,7 @@
  (fn [_ _]
    {:db {:active-page ::vd-list.controller/main
          :resources resources
+         :mode :form
          :side-menu-collapsed false}}))
 
 (def compiler

@@ -74,3 +74,8 @@
  ::add-element-into-map
  (fn [db [_ path k default-value]]
    (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
+
+(reg-event-db
+  ::change-mode
+  (fn [db [_ mode]]
+    (assoc db :mode mode)))
