@@ -10,7 +10,14 @@
 (reg-event-fx
   identifier
   (fn [{db :db} [_ phase]]
-    {:db db}))
+    {:db (cond-> db
+                 (-> db :fhir-server :base-url nil?)
+                 (assoc-in [:fhir-server :base-url]
+                           "https://viewdefs1.aidbox.app")
+
+                 (-> db :fhir-server :token nil?)
+                 (assoc-in [:fhir-server :token]
+                           "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="))}))
 
 (reg-event-fx
   ::reset-fhir-server-config
@@ -33,3 +40,8 @@
 
 ;; TODO: save to local storage if connected successfully
 ;; TODO: save to backend if connected successfully
+
+(reg-event-db
+  ::update-fhir-server-input
+  (fn [db [_ path new-val]]
+    (assoc-in db [:fhir-server path] new-val)))
