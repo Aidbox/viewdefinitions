@@ -9,13 +9,13 @@
  identifier
  (fn [{db :db} [_ phase]]
    (let [vd-id (-> db :route-params :id)]
-     {:db db
-      :fx (cond-> []
-            (and (= :init phase) vd-id)
-            (conj
-             [:dispatch [::get-view-definition (-> db :route-params :id)]])
-            #_#_(= :deinit phase)
-              (conj [:dispatch [::deinit]]))})))
+     (if (= :init phase)
+       {:db db
+        :fx (cond-> []
+              (and (= :init phase) vd-id)
+              (conj
+               [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
+       {:db (dissoc db :current-vd)}))))
 
 (reg-event-fx
  ::get-view-definition

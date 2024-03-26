@@ -93,16 +93,22 @@
    :border-none true
    :rounded true})
 
+(defn resolve-reference [{spec-map :spec-map} spec]
+  (if-let [ref (get spec "elementReference")]
+    (get-in spec-map ref)
+    spec))
+
 (defn resolve-path [ctx & next-steps]
-  (reduce
-   (fn [spec step]
-     (if-let [next-spec (get spec step)]
-       next-spec
-       (if-let [ref (get spec "elementReference")]
-         (get (get-in (:spec-map ctx) ref) step)
-         nil)))
-   (:spec ctx)
-   (into (:spec-path ctx) next-steps)))
+  (resolve-reference
+   ctx
+   (reduce
+    (fn [spec step]
+      (if-let [next-spec (get spec step)]
+        next-spec
+        (some-> (resolve-reference ctx spec)
+                (get step))))
+    (:spec ctx)
+    (into (:spec-path ctx) next-steps))))
 
 (defn spec-map? [ctx next-step]
   (resolve-path ctx next-step "elements"))
@@ -139,25 +145,28 @@
   [:div map-key
    (for [[k _] (spec->elements ctx)]
      (when-not (get map-value (keyword k))
-       [:button
-        {:on-click #(dispatch [::c/add-element-into-map
-                               (:value-path ctx)
-                               (keyword k)
-                               (cond
-                                 (spec-map? ctx k) {}
-                                 (spec-array? ctx k) []
-                                 :else "")])}
-        (str k)]))
+       (let [element (resolve-path ctx "elements" k)]
+         ^{:key (conj (:value-path :ctx) k)}
+         [:button
+          {:on-click #(dispatch [::c/add-element-into-map
+                                 (:value-path ctx)
+                                 (keyword k)
+                                 (cond
+                                   (get element "array") [{}]
+                                   (get element "elements") {}
+                                   :else "")])}
+          (str k)])))
    [:<>
     (for [[k v] map-value]
-      [render-block (add-spec-path ctx "elements")
-       k v])]])
+      ^{:key (conj (:spec-path ctx) k)}
+      [render-block (add-spec-path ctx "elements") k v])]])
 
 (defn render-array [ctx k value]
   [:div k
    (map-indexed
      (fn [idx element]
-       (render-map (add-value-path ctx idx) k element))
+       ^{:key (conj (:value-path ctx) idx)}
+       [render-map (add-value-path ctx idx) k element])
      value)
    [:button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])} (str k)]])
 
