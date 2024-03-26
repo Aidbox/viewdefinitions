@@ -2,6 +2,7 @@
   (:require [antd :refer [Col Row]]
             [vd-designer.components.tag :as tag]
             [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.dropdown :as dropdown]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [derive-columns table]]
             [vd-designer.pages.vd-form.controller :as c]
@@ -44,7 +45,8 @@
 
    [:div [tag/constant]]
    [:div [tag/where]]
-   [:div [tag/select]]])
+   [:div [tag/select]]
+   [dropdown/new-select (fn [e] (js/console.log "Click on menu item." e))]])
 
 (defn header []
   (let [vd-id @(subscribe [::model/chosen-vd-name])]
