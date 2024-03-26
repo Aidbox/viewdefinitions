@@ -1,7 +1,7 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [dispatch dispatch-sync
+            [re-frame.core :as re-frame :refer [dispatch
                                                 reg-event-db reg-event-fx
                                                 reg-sub subscribe]]
             [reagent.core :as r]
@@ -56,6 +56,7 @@
  ::initialize-db
  (fn [_ _]
    {:db {:active-page ::vd-list.controller/main
+         :view-definitions []
          :side-menu-collapsed false}}))
 
 (def compiler
