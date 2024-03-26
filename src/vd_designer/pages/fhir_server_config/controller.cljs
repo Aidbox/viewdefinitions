@@ -1,7 +1,8 @@
 (ns vd-designer.pages.fhir-server-config.controller
   (:require
     [ajax.core :as ajax]
-    [re-frame.core :refer [reg-event-fx reg-event-db]]
+    [lambdaisland.uri :as uri]
+    [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.pages.vd-list.controller :as vd-list.controller]))
 
 (def identifier ::main)
@@ -18,8 +19,9 @@
                                          :base-url    base-url
                                          :token       token})
      :http-xhrio {:method           :get
-                  ;; TODO: build uri via https://github.com/lambdaisland/uri
-                  :uri              (str base-url "/fhir/ViewDefinition")
+                  :uri              (-> (uri/uri base-url)
+                                        (assoc :path "/fhir/ViewDefinition")
+                                        uri/uri-str)
                   :timeout          8000
                   :with-credentials true
                   :headers          {:Authorization token}

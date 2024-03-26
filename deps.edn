@@ -16,7 +16,11 @@
   day8.re-frame/http-fx {:mvn/version "0.2.4"}
 
   binaryage/devtools {:mvn/version "1.0.7"}
-  re-frisk/re-frisk {:mvn/version "1.6.0"}}
+  re-frisk/re-frisk {:mvn/version "1.6.0"}
+
+  lambdaisland/uri {:mvn/version "1.19.155"
+                    :why "URI building"
+                    :github "https://github.com/lambdaisland/uri"}}
 
  :aliases {:shadow
            {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
