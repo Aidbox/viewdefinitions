@@ -31,6 +31,6 @@
                              {:type "divider"}
                              (dropdown-item "forEachOrNull" "/img/form/forEach.svg")
                              {:type "divider"}
-                             (dropdown-item "unionAll"      "/img/form/union.svg")]
+                             (dropdown-item "unionAll"      "/img/form/unionAll.svg")]
                    :onClick handle-click}
             opts))
