@@ -20,6 +20,11 @@
        :style {:color      "#B37804"
                :background "#F8CE3B1A"}))
 
+(defn foreach-or-null []
+  (tag "foreach or null"
+       :style {:color      "#B37804"
+               :background "#F8CE3B1A"}))
+
 (defn select []
   (tag "select"
        :style {:color      "#7972D3"
