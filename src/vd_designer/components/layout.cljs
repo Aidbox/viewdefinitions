@@ -1,5 +1,6 @@
 (ns vd-designer.components.layout
-  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]))
+  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]
+            [reagent.core :as r]))
 
 (defn layout
   "Base layout for pages, first argument is props, second - content.
@@ -12,7 +13,6 @@
        :breadcrumbs .. }
    "
   [props content]
-
   [:> Layout {:style {:minHeight "100vh"}}
    [:> Layout.Sider
     {:theme       "light"

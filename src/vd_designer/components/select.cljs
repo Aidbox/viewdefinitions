@@ -4,13 +4,15 @@
 (defn options-from-vec [o]
   (map #(hash-map :value % :label %) o))
 
-(defn select [props]
-  [:> Select
-   {:showSearch true
-    :style {:width 200}
-    :placeholder "Resource type"
-    :allowClear true
-    :filterOption true
-    :optionFilterProp "label"
-    :options (:options props)
-    :onSelect (:on-select props)}])
+(defn select
+  "Select with sealch
+   For more details see: https://ant.design/components/select#api"
+  [& {:as opts}]
+  [:> Select (merge-with
+              into
+              {:showSearch       true
+               :style            {:width 200}
+               :allowClear       true
+               :filterOption     true
+               :optionFilterProp "label"}
+              opts)])

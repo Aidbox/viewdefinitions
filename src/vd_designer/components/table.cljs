@@ -5,16 +5,15 @@
   (->> data
        first
        keys
-       (map #(hash-map :title (subs (str %) 1) :dataIndex % :key %))
-       vec))
+       (mapv #(hash-map :title (subs (str %) 1) :dataIndex % :key %))))
 
 (defn table
   "Table with data.
-     Example of props:
-       { :loading ..,
-         :columns ..,
-         :dataSource .. }
-     For more details see: https://ant.design/components/table#api
-     "
-  [props]
-  [:> Table props])
+  For more details see: https://ant.design/components/table#api"
+  [data & {:as opts}]
+  (let [columns (derive-columns data)]
+    [:> Table (merge-with
+               into
+               {:columns    columns
+                :dataSource data}
+               opts)]))

@@ -8,6 +8,6 @@
    (:view-definitions db)))
 
 (reg-sub
- ::is-view-defs-loading
+ ::view-defs-loading?
  (fn [db _]
    (:loading db)))

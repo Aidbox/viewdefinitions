@@ -7,7 +7,5 @@
 
 (defn js-obj->clj-map [js-obj]
   (-> js-obj
-      js/JSON.stringify
-      js/JSON.parse
       js->clj
       walk/keywordize-keys))
