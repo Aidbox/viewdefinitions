@@ -129,11 +129,9 @@
 
 (declare render-block)
 
-(defn render-column [_column-spec column]
-  [:div column])
-
 (defn render-field [ctx name value]
   [:div
+   [:button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)]) } "DELETE FIELD"]
    [:span name]
    #_[:span (str (:value-path ctx))]
    [:input {:on-change
@@ -144,7 +142,9 @@
   (update ctx :value-path conj k))
 
 (defn render-map [ctx map-key map-value]
-  [:div map-key
+  [:div
+   [:button {:on-click #(dispatch [::c/delete-node (:value-path ctx)]) } "DELETE NODE"]
+   map-key
    (for [[k _] (spec->elements ctx)]
      (when-not (get map-value (keyword k))
        (let [element (resolve-path ctx "elements" k)]
@@ -164,12 +164,16 @@
       [render-block (add-spec-path ctx "elements") k v])]])
 
 (defn render-array [ctx k value]
-  [:div k
+  [:div
+   (when-not (= [:select] (:value-path ctx))
+     [:button {:on-click #(dispatch [::c/delete-node (:value-path ctx)]) } "DELETE ARRAY"])
+   k
    (map-indexed
      (fn [idx element]
        ^{:key (conj (:value-path ctx) idx)}
        [render-map (add-value-path ctx idx) k element])
      value)
+
    [:button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])} (str k)]])
 
 (defn render-block [ctx k v]
@@ -214,7 +218,9 @@
      [:div
       [:label {:class label-component-style} "CONSTANT"]]
      [:div
-      [:label {:class label-component-style} "WHERE"]]
+      [:label {:class label-component-style} "WHERE"]
+      [render-block ctx "where" (:where vd-form)]
+      ]
      [:div
       [render-block ctx "select" (:select vd-form)]]]))
 

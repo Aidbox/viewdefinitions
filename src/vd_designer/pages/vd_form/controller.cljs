@@ -38,22 +38,22 @@
     :db (assoc db :current-vd vd-id)}))
 
 (reg-event-fx
-  ::eval-view-definition-data
-  (fn [{:keys [db]} _]
-    (let [view-definition (:current-vd db)]
-      {:db         (assoc db :loading true)
-       :http-xhrio {:method           :post
-                    :uri             "https://viewdefs1.aidbox.app/rpc"
-                    :timeout          8000
-                    :with-credentials true
-                    :headers          {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
-                    :response-format  (ajax/json-response-format {:keywords? true})
-                    :on-success       [::on-eval-view-definitions-success]
+ ::eval-view-definition-data
+ (fn [{:keys [db]} _]
+   (let [view-definition (:current-vd db)]
+     {:db         (assoc db :loading true)
+      :http-xhrio {:method           :post
+                   :uri             "https://viewdefs1.aidbox.app/rpc"
+                   :timeout          8000
+                   :with-credentials true
+                   :headers          {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
+                   :response-format  (ajax/json-response-format {:keywords? true})
+                   :on-success       [::on-eval-view-definitions-success]
                     ;:on-failure      [:bad-http-result]
-                    :params           {:method 'sof/eval-view
-                                       :params {:limit 100
-                                                :view view-definition}}
-                    :format           (ajax/json-request-format)}})))
+                   :params           {:method 'sof/eval-view
+                                      :params {:limit 100
+                                               :view view-definition}}
+                   :format           (ajax/json-request-format)}})))
 
 (reg-event-db
  ::on-eval-view-definitions-success
@@ -76,6 +76,31 @@
    (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
 
 (reg-event-db
-  ::change-mode
-  (fn [db [_ mode]]
-    (assoc db :mode mode)))
+ ::change-mode
+ (fn [db [_ mode]]
+   (assoc db :mode mode)))
+
+(update-in {:current-vd {:select [{:column {1 1}}]}}
+           (into [:current-vd]
+                 (butlast [:select 0 :column]))
+           dissoc (last [:select 0 :column]))
+
+(defn vec-remove
+  "remove elem in coll"
+  [pos coll]
+  (into (subvec coll 0 pos) (subvec coll (inc pos))))
+
+(defn remove-node [node key]
+  (cond
+    (map? node)
+    (dissoc node key)
+
+    (vector? node)
+    (vec-remove key node)))
+
+(reg-event-db
+ ::delete-node
+ (fn [db [_ path]]
+   (update-in db
+              (into [:current-vd] (butlast path))
+              remove-node (last path))))
