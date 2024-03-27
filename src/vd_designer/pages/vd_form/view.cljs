@@ -205,22 +205,22 @@
         ctx (create-render-context)]
     [:div
      [:div
-      [:input {:id          "view-def-name"
-               :s/invalid?  false
+      [:input {:value (:name vd-form)
                :placeholder "ViewDefinition1"
-               :on-change   (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
+               :on-change   (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]
       [:button {:on-click #(dispatch [::c/eval-view-definition])}
        "Run"]]
 
      [:div
       [:div
-       [:label {:class label-component-style} "RESOURCE"]]]
+       [:label {:class label-component-style} "RESOURCE"]
+       [:input {:value (:resource vd-form)
+                :on-change (fn [e] (dispatch [::c/change-vd-resource (u/target-value e)]))}]]]
      [:div
-      [:label {:class label-component-style} "CONSTANT"]]
+      [render-block ctx "constant" (:constant vd-form)]]
      [:div
       [:label {:class label-component-style} "WHERE"]
-      [render-block ctx "where" (:where vd-form)]
-      ]
+      [render-block ctx "where" (:where vd-form)] ]
      [:div
       [render-block ctx "select" (:select vd-form)]]]))
 

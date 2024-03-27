@@ -68,7 +68,7 @@
 (reg-event-db
  ::add-element-into-array
  (fn [db [_ path]]
-   (update-in db (into [:current-vd] path) conj {})))
+   (update-in db (into [:current-vd] path) (fnil conj []) {})))
 
 (reg-event-db
  ::add-element-into-map
@@ -79,11 +79,6 @@
  ::change-mode
  (fn [db [_ mode]]
    (assoc db :mode mode)))
-
-(update-in {:current-vd {:select [{:column {1 1}}]}}
-           (into [:current-vd]
-                 (butlast [:select 0 :column]))
-           dissoc (last [:select 0 :column]))
 
 (defn vec-remove
   "remove elem in coll"
@@ -97,6 +92,16 @@
 
     (vector? node)
     (vec-remove key node)))
+
+(reg-event-db
+ ::change-vd-resource
+ (fn [db [_ value]]
+   (assoc-in db [:current-vd :resource] value)))
+
+(reg-event-db
+ ::change-vd-name
+ (fn [db [_ value]]
+   (assoc-in db [:current-vd :name] value)))
 
 (reg-event-db
  ::delete-node
