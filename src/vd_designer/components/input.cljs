@@ -1,20 +1,26 @@
 (ns vd-designer.components.input
   (:require
-    [antd :refer [Input]]))
+    [antd :refer [Button Input Space]]
+    [vd-designer.utils.react :refer [create-react-image]]))
 
-(def width "170px")
+(defn search [& {:as opts}]
+  [:> Input.Search (merge-with into
+                               {:style {:width "170px"}}
+                               opts)])
 
-(defn search [& {:keys [placeholder loading]}]
-  [:> Input.Search {:placeholder placeholder
-                    :loading     loading
-                    :style       {:width width}}])
+(defn fhir-path [input-overrides button-overrides]
+  [:> Space {:direction :horizontal}
+   [:> Input (merge-with into
+                         {:classNames {:input "default-input fhir-path-input"}
+                          :style      {:width "170px"}}
+                         input-overrides)]
+   [:> Button (merge-with into
+                          {:style {:border :none}}
+                          button-overrides)
+    (create-react-image "/img/expand.svg")]])
 
-(defn fhir-path [& {:keys [placeholder]}]
-  [:> Input {:placeholder placeholder
-             :addon-after "expand"
-             :style       {:width      "170px"
-                           :font-style "italic"}}])
-
-(defn col-name []
-  [:> Input {:addon-before "||"
-             :style        {:width width}}])
+(defn col-name [& {:as opts}]
+  [:> Input (merge-with into
+                        {:classNames {:input "default-input"}
+                         :style      {:width "170px"}}
+                        opts)])
