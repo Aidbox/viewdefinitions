@@ -52,14 +52,10 @@
 
 ;;;; Initialization
 
-(def resources
-  ["Patient" "Observation" "Practitioner"])
-
 (reg-event-fx
  ::initialize-db
  (fn [_ _]
    {:db {:active-page ::vd-list.controller/main
-         :resources resources
          :side-menu-collapsed false}}))
 
 (def compiler
