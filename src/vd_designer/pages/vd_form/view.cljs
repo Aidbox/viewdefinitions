@@ -1,25 +1,15 @@
 (ns vd-designer.pages.vd-form.view
-  (:require [re-frame.core :refer [dispatch subscribe]]
+  (:require [antd :refer [Col Row]]
+            [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.collapse :refer [collapse collapse-item]]
+            [vd-designer.components.dropdown :as dropdown]
+            [vd-designer.components.select :refer [select]]
+            [vd-designer.components.table :refer [table]]
+            [vd-designer.components.tag :as tag]
             [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.model :as model]
             [vd-designer.routes :as routes]
             [vd-designer.utils.event :as u]))
-
-(def label-component-style
-  {:color "#7972D3"
-   :font-family "Inter"
-   :margin-left "1px"
-   :padding-left "12px"
-   :padding-right "12px"
-   :padding-top "4px"
-   :padding-bottom "4px"
-   :font-size   "14px"
-   :font-weight "400"
-   :line-height "20px"
-   :margin-bottom "6px"
-   :bg "#7972D31A"
-   :border-none true
-   :rounded true})
 
 (defn form []
   [:div
@@ -27,33 +17,37 @@
     [:input {:id          "view-def-name"
              :s/invalid?  false
              :placeholder "ViewDefinition1"
-             :on-change   (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
-    [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition]))}
+             :on-change (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
+    [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition-data]))}
      "Run"]]
 
    [:div
     [:div
-     [:label {:class label-component-style} "RESOURCE"]]
-    "Not found"]
-   [:div
-    [:label {:class label-component-style} "CONSTANT"]]
-   [:div
-    [:label {:class label-component-style} "WHERE"]]
-   [:div
-    [:label {:class label-component-style} "SELECT"]]])
+     [tag/resource]
+     [select :placeholder "Resource type"
+      :options  @(subscribe [::model/get-all-supported-resources])
+      :value    @(subscribe [::model/get-selected-resource])
+      :onSelect #(dispatch  [::c/select-resource %])]]]
+
+   [collapse
+    :items [(collapse-item [tag/constant] [:p "text"])
+            (collapse-item [tag/where]    [:p "text"])
+            (collapse-item [tag/select]   [:p "text"])]]
+
+   [dropdown/new-select (fn [e] (js/console.log "Click on menu item." e))]])
 
 (defn header []
-  (let [vd-id @(subscribe [::m/chosen-vd-name])]
-    [:button
-     {:on-click (fn [_e] (dispatch [::routes/navigate [:vd-designer.pages.vd-list.controller/main]]))}
-     (str "ViewDefinitions/" vd-id)]))
+  (let [vd-id @(subscribe [::model/chosen-vd-name])]
+    [:h1 vd-id]))
 
 (defn viewdefinition-view []
-  (let [resources @(subscribe [::m/view-definition-data])]
+  (let [resources @(subscribe [::model/view-definition-data])]
     [:div
      [header]
-     [:div
-      [form]
-      #_[table/table (:data resources)]]]))
+     [:> Row
+      [:>  Col {:span 12}
+       [form]]
+      [:>  Col {:span 12}
+       [table (:data resources) :loading false]]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])

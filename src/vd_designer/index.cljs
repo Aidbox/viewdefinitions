@@ -1,12 +1,12 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [dispatch dispatch-sync
+            [re-frame.core :as re-frame :refer [dispatch
                                                 reg-event-db reg-event-fx
                                                 reg-sub subscribe]]
             [reagent.core :as r]
             [reagent.dom :as rdom]
-            [vd-designer.components.layout :as components]
+            [vd-designer.components.layout :refer [layout]]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.controller :as vd-list.controller]
             [vd-designer.pages.vd-list.view]
@@ -31,7 +31,7 @@
 
 (defn find-page []
   (let [route @(subscribe [::routes/active-page])]
-    [components/layout
+    [layout
      {:collapsed @(subscribe [::side-menu-collapsed])
       :on-collapse #(dispatch [::toggle-side-menu])
       :on-menu-click (fn [key] (dispatch [::routes/navigate [key]]))
@@ -56,6 +56,7 @@
  ::initialize-db
  (fn [_ _]
    {:db {:active-page ::vd-list.controller/main
+         :view-definitions []
          :side-menu-collapsed false}}))
 
 (def compiler

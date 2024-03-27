@@ -1,5 +1,5 @@
 (ns vd-designer.components.layout
-  (:require [antd :refer [Breadcrumb Layout Menu]]))
+  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]))
 
 (defn layout
   "Base layout for pages, first argument is props, second - content.
@@ -12,23 +12,28 @@
        :breadcrumbs .. }
    "
   [props content]
-  (fn [props content]
-    [:> Layout {:style {:minHeight "100vh"}}
-     [:> Layout.Sider
-      {:collapsible true
-       :collapsed (:collapsed props)
-       :onCollapse (:on-collapse props)}
+  [:> Layout {:style {:minHeight "100vh"}}
+   [:> Layout.Sider
+    {:theme       "light"
+     :collapsible true
+     :collapsed   (:collapsed props)
+     :onCollapse  (:on-collapse props)}
 
-      [:div {:class "demo-logo-vertical"}]
-      [:> Menu {:theme "dark"
-                :mode "inline"
-                :defaultSelectedKeys [(:menu-active-key props)]
-                :onClick (fn [e] ((:on-menu-click props) (keyword (.-key e))))
-                :items (:menu props)}]]
-     [:> Layout
-      [:> Layout.Content {:style {:background "#fff"}}
-       [:> Breadcrumb
-        {:items (:breadcrumbs props)
-         :style {:margin "16px"}}]
+    [:> Flex {:style {:justify-content "center" :padding 10}}
+     [:img {:src "/img/hs-logo.svg" :style {:width 120}}]]
+    [:> ConfigProvider {:theme {:components {:Menu {:itemSelectedBg    "#E6F7FF"
+                                                    :itemSelectedColor "#1890FF"
+                                                    :itemBorderRadius  0
+                                                    :itemMarginInline  0
+                                                    :itemMarginBlock   0}}}}
+     [:> Menu {:mode                "inline"
+               :defaultSelectedKeys [(:menu-active-key props)]
+               :onClick             (fn [e] ((:on-menu-click props) (keyword (.-key e))))
+               :items               (:menu props)}]]]
+   [:> Layout
+    [:> Layout.Content {:style {:background "#fff"}}
+     [:> Breadcrumb
+      {:items (:breadcrumbs props)
+       :style {:margin "16px"}}]
 
-       [:div {:style {:padding 24}} content]]]]))
+     [:div {:style {:padding 24}} content]]]])
