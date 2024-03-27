@@ -1,18 +1,29 @@
+.git/
+.github/
+.gitignore
+.DS_Store
+.calva/
 .clj-kondo/
 .cpcache/
-.calva/
 .lsp/
+.vscode/
+.idea/
 .nrepl-port
-.shadow-cljs
+
+*.code-workspace
 *.iml
+.DS_Store
+.cpcache
+.clj-kondo
+.lsp
+.shadow-cljs
 
 node_modules/
-
-# generated
 resources/public/cljs-runtime/
 resources/public/manifest.edn
 resources/public/app.css
 resources/public/app.js
 
-.idea/*
-.vscode/*
+dev/
+LICENSE
+README.md
