@@ -1,21 +1,20 @@
-(ns vd-designer.components.input)
+(ns vd-designer.components.input
+  (:require
+    [antd :refer [Input]]))
 
-(defn expandable-input [placeholder]
-  [:div {:style {:height "29px"}}
+(def width "170px")
 
-   [:input {:style       {:type           :text
+(defn search [& {:keys [placeholder loading]}]
+  [:> Input.Search {:placeholder placeholder
+                    :loading     loading
+                    :style       {:width width}}])
 
-                          :height         "16px"
-                          :width          "170px"
-                          :padding-left   "6px"
-                          :padding-bottom "4px"
-                          :padding-top    "4px"
+(defn fhir-path [& {:keys [placeholder]}]
+  [:> Input {:placeholder placeholder
+             :addon-after "expand"
+             :style       {:width      "170px"
+                           :font-style "italic"}}])
 
-                          :border         "0"
-                          :border-bottom  "1px solid #7972D3"
-
-                          :font-size      "10px"
-                          :font-style     "italic"}
-            :placeholder placeholder}]
-   ;; TODO: add button to expand into text area
-   ])
+(defn col-name []
+  [:> Input {:addon-before "||"
+             :style        {:width width}}])
