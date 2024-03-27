@@ -1,6 +1,5 @@
 (ns vd-designer.components.layout
-  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]
-            [reagent.core :as r]))
+  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]))
 
 (defn layout
   "Base layout for pages, first argument is props, second - content.
@@ -20,7 +19,7 @@
      :collapsed   (:collapsed props)
      :onCollapse  (:on-collapse props)}
 
-    [:> Flex {:style {:justify-conent "center" :padding 10}}
+    [:> Flex {:style {:justify-content "center" :padding 10}}
      [:img {:src "/img/hs-logo.svg" :style {:width 120}}]]
     [:> ConfigProvider {:theme {:components {:Menu {:itemSelectedBg    "#E6F7FF"
                                                     :itemSelectedColor "#1890FF"
