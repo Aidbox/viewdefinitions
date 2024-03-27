@@ -19,9 +19,7 @@
    :dev
    {:devtools {:preloads [re-frisk.preload devtools.preload]}
     :compiler-options {:optimizations :none}
-    ;; uncomment this to enable postcss for tailwind
-    #_#_:build-hooks [(postcss/watch "src/main.css" "resources/public/app.css")]}
+    :build-hooks [(postcss/watch "src/main.css" "resources/public/app.css")]}
 
    :release
-   {;; uncomment this to enable postcss for tailwind
-    #_#_:build-hooks [(postcss/release "src/main.css" "resources/public/app.css")]}}}}
+   {:build-hooks [(postcss/release "src/main.css" "resources/public/app.css")]}}}}

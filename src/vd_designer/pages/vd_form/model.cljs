@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.model
-  (:require [re-frame.core :refer [reg-sub]]))
+  (:require [re-frame.core :refer [reg-sub]]
+            [vd-designer.components.select :refer [options-from-vec]]))
 
 (reg-sub
  ::view-definition-data

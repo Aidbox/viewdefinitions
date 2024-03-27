@@ -1,3 +1,25 @@
-@tailwind base;
+/* @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
+
+body {
+  margin: 0;
+}
+
+.ant-menu-item-selected {
+  border-right: 3px solid #1890FF;
+}
+
+.default-input {
+  font-style: italic;
+  border: none;
+  border-radius: 0;
+}
+
+.default-input:focus {
+  box-shadow: none;
+}
+
+.fhir-path-input:focus {
+  border-bottom: 1px solid #7972D3;
+}
