@@ -10,6 +10,7 @@
             [vd-designer.components.input :refer [col-name fhir-path search]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tag :as tag]
+            [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
@@ -160,18 +161,20 @@
 
 (defn render-field [ctx name value]
   [:div {:class "vd-form-row"
-         }
+         :style {:padding-left "12px"
+                 :border-top "1px solid #E4E4E4"
+                 :padding-top "4px"
+                 :padding-bottom "4px"}}
    [:> Row {:align "middle"
-            :style {:margin-left "12px"}
             :justify "space-between"}
+    [select-field-render name]
     [:> Row {:align "middle"}
-     [select-field-render name]
      [fhir-path {:on-change
                  #(dispatch [::c/change-input-value
                              (conj (:value-path ctx) name)
                              (u/target-value %)])
-                 :value value}]]
-    [delete-button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]])
+                 :value value}]
+     [delete-button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
 
 (defn key->tag [key]
   (get {:select [tag/select]
@@ -184,58 +187,66 @@
   (update ctx :value-path conj k))
 
 (defn render-map [ctx map-key map-value]
-  [:div
-   [:div {:style {:margin-left "12px"}}
-    [:> Row {:justify "space-between"
-            :align "middle"}
-    [:> Row {:align "middle"}
-     (key->tag map-key)
-     (let [elements (filter #(not (get map-value %))
-                            (map keyword (keys (spec->elements ctx))))]
-       (when (seq elements)
-         (new-select {:items (map keyword elements)
-                      :on-select (fn [e]
-                                   (let [k (keyword (:key (js-obj->clj-map e)))
-                                         default-value (cond
-                                                         (-> map-value (get (name k)) (get "array")) [{}]
-                                                         (-> map-value (get (name k)) (get "elements")) {}
-                                                         :else "")]
-                                     (dispatch [::c/add-element-into-map (:value-path ctx) k default-value])))})))]
-    [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}]]]
-   [:<>
-    (for [[k v] map-value]
-      ^{:key (conj (:spec-path ctx) k)}
-      [render-block (add-spec-path ctx "elements") k v])]])
+  [:div {:style {:padding-left "12px"}}
+   [collapse
+    {:items
+     [(collapse-item
+       [:> Row {:justify "space-between"
+                :align "middle"
+                :class "vd-form-row"
+                :style {:padding-top "4px"
+                        :padding-bottom "4px"
+                        :border-top "1px solid #E4E4E4"}}
+        [:> Row {:align "middle"}
+         (key->tag map-key)
+         (let [elements (filter #(not (get map-value %))
+                                (map keyword (keys (spec->elements ctx))))]
+           (when (seq elements)
+             (new-select {:items (map keyword elements)
+                          :on-select (fn [e]
+                                       (let [k (:key (js-obj->clj-map e))
+                                             elements (resolve-path ctx "elements" k)
+                                             default-value (cond
+                                                             (get elements "array") [{}]
+                                                             (get elements "elements") {}
+                                                             :else "")]
+                                         (dispatch [::c/add-element-into-map (:value-path ctx) (keyword k) default-value])))})))]
+        [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}]]
+       [:<>
+        (for [[k v] map-value]
+          ^{:key (conj (:spec-path ctx) k)}
+          [render-block (add-spec-path ctx "elements") k v])])]}]])
 
 (defn render-array [ctx k value]
-  [:div
-   [:> Row {:justify "space-between"
-            :align "middle"
-            :style (when (not= 1 (count (:value-path ctx))) {:margin-left "12px"})}
-    (key->tag k)
-    (when-not (= [:select] (:value-path ctx))
-      [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}])]
-   (map-indexed
-    (fn [idx element]
-      ^{:key (conj (:value-path ctx) idx)}
-      [render-map (add-value-path ctx idx) idx element])
-    value)
-   [:> ConfigProvider {:theme {:components {:Button {:textHoverBg "#FAFAFA"
-                                                     :defaultHoverBg "#FAFAFA"
-                                                     :defaultActiveBg "#FAFAFA"
-                                                     :defaultColor "#B5B5BC;"
-                                                     :defaultActiveBorderColor "transparent"
-                                                     :defaultBorderColor "transparent"
-                                                     :defaultHoverBorderColor "#FAFAFA"
-                                                     :colorText "#B5B5BC"}}}}
-    [:> Button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])
-                :type "text"
-                :classNames "vd-form-button-append-array"
-                :colorText "red"
-                :size "small"
-                :icon (r/create-element icons/PlusOutlined)}
-     (name k)]]
-   ])
+  [:div {:style {:padding-left "12px"}}
+   [:div {:style {:padding-top "4px"
+                  :padding-bottom "4px"
+                  :border-top "1px solid #E4E4E4"}}
+    [:> Row {:justify "space-between"
+             :align "middle"}
+     (key->tag k)
+     (when-not (= [:select] (:value-path ctx))
+       [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}])]
+    (map-indexed
+     (fn [idx element]
+       ^{:key (conj (:value-path ctx) idx)}
+       [render-map (add-value-path ctx idx) "ITEM" element])
+     value)
+    [:> ConfigProvider {:theme {:components {:Button {:textHoverBg "#FAFAFA"
+                                                      :defaultHoverBg "#FAFAFA"
+                                                      :defaultActiveBg "#FAFAFA"
+                                                      :defaultColor "#B5B5BC;"
+                                                      :defaultActiveBorderColor "transparent"
+                                                      :defaultBorderColor "transparent"
+                                                      :defaultHoverBorderColor "#FAFAFA"
+                                                      :colorText "#B5B5BC"}}}}
+     [:> Button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])
+                 :type "text"
+                 :classNames "vd-form-button-append-array"
+                 :colorText "red"
+                 :size "small"
+                 :icon (r/create-element icons/PlusOutlined)}
+      (name k)]]]])
 
 (defn render-block [ctx k v]
   (cond
