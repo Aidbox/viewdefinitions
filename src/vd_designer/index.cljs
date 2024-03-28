@@ -42,7 +42,6 @@
 
 (defn find-page []
   (let [route @(subscribe [::routes/active-page])]
-    (println "route " route)
     [layout
      {:collapsed @(subscribe [::side-menu-collapsed])
       :on-collapse #(dispatch [::toggle-side-menu])

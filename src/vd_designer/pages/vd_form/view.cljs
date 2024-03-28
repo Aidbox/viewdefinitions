@@ -45,9 +45,9 @@
     [:div
      [header]
      [:> Row
-      [:>  Col {:span 12}
+      [:> Col {:span 12}
        [form]]
-      [:>  Col {:span 12}
+      [:> Col {:span 12}
        [table (:data resources) :loading false]]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])
