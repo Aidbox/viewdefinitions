@@ -4,7 +4,7 @@
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.dropdown :refer [dropdown dropdown-item]]
-            [vd-designer.components.input :refer [col-name fhir-path]]
+            [vd-designer.components.input :as input]
             [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [table]]
@@ -157,18 +157,18 @@
 (defn render-field [ctx name value]
   [:div {:class "vd-form-row"
          :style {:padding-left "12px"
-                 :border-top "1px solid #E4E4E4"
+                 #_#_:border-top "1px solid #E4E4E4"
                  :padding-top "4px"
                  :padding-bottom "4px"}}
    [:> Row {:align "middle"
             :justify "space-between"}
     [select-field-render name]
     [:> Row {:align "middle"}
-     [fhir-path {:on-change
-                 #(dispatch [::c/change-input-value
-                             (conj (:value-path ctx) name)
-                             (u/target-value %)])
-                 :value value}]
+     [input/fhir-path {:on-change
+                       #(dispatch [::c/change-input-value
+                                   (conj (:value-path ctx) name)
+                                   (u/target-value %)])
+                       :value value}]
      [button/delete {:onClick #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
 
 (defn key->tag [key]
@@ -191,7 +191,7 @@
                 :class "vd-form-row"
                 :style {:padding-top "4px"
                         :padding-bottom "4px"
-                        :border-top "1px solid #E4E4E4"}}
+                        #_#_:border-top "1px solid #E4E4E4"}}
         [:> Row {:align "middle"}
          (key->tag map-key)
          (let [elements (filter #(not (get map-value %))
@@ -216,7 +216,7 @@
   [:div {:style {:padding-left "12px"}}
    [:div {:style {:padding-top "4px"
                   :padding-bottom "4px"
-                  :border-top "1px solid #E4E4E4"}}
+                  #_#_:border-top "1px solid #E4E4E4"}}
     [:> Row {:justify "space-between"
              :align "middle"}
      (key->tag k)
@@ -254,54 +254,37 @@
    :spec-map (hash-map (get vd-spec "url") vd-spec)
    :value-path []})
 
-(defn form* []
-  [:div
-   [:div
-    [:input {:id          "view-def-name"
-             :s/invalid?  false
-             :placeholder "ViewDefinition1"
-             :on-change (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
-    [button/button {:onClick (fn [e] (dispatch [::c/eval-view-definition-data]))}
-     "Run"]]
-
-   [:div
-    [:div
-     [tag/resource]
-     [select :placeholder "Resource type"
-      :options  @(subscribe [::m/get-all-supported-resources])
-      :value    @(subscribe [::m/get-selected-resource])
-      :onSelect #(dispatch  [::c/select-resource %])]]]
-
-   [collapse
-    :items [(collapse-item [tag/constant] [:p "text"])
-            (collapse-item [tag/where]    [:p "text"])
-            (collapse-item [tag/select]   [:p "text"])]]
-
-   #_[new-select (fn [e] (js/console.log "Click on menu item." e))]])
-
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)]
-    [:div {:style {:width "500px"}}
-     [:div
-      [col-name {:value (:name vd-form)
-                 :placeholder "ViewDefinition1"
-                 :on-change   (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]
-      [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]]
+    [:div
+     [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
 
-     [:div
-      [:div
-       [tag/resource]
+     [:> Row {:align "middle" :class "vd-form-row"}
+      [:> Col {:span 8}
+       [tag/default "name"]]
+      [:> Col {:span 16}
+       [input/col-name {:value       (:name vd-form)
+                        :placeholder "ViewDefinition1"
+                        :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]]
+
+     [:> Row {:align "middle" :class "vd-form-row"}
+      [:> Col {:span 8}
+       [tag/resource]]
+      [:> Col {:span 16}
        [select :placeholder "Resource type"
         :options @(subscribe [::m/get-all-supported-resources])
         :value (:resource vd-form)
         :onSelect #(dispatch [::c/change-vd-resource %])]]]
-     [:div
-      [render-block ctx "constant" (:constant vd-form)]]
-     [:div
-      [render-block ctx "where" (:where vd-form)]]
-     [:div
-      [render-block ctx "select" (:select vd-form)]]]))
+
+     [collapse
+      :items [(collapse-item [tag/constant] [render-block ctx "constant" (:constant vd-form)])]]
+
+     [collapse
+      :items [(collapse-item [tag/where]    [render-block ctx "where" (:where vd-form)])]]
+
+     [collapse
+      :items [(collapse-item [tag/select]   [render-block ctx "select" (:select vd-form)])]]]))
 
 (defn vd-input []
   (let [current-vd @(subscribe [::m/current-vd])]

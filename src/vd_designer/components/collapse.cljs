@@ -12,6 +12,8 @@
   [& {:as opts}]
   [:> Collapse (merge-with
                 into
-                {:style    {:background-color "transparent"}
-                 :bordered false}
+                {:style {:background-color "transparent"
+                         :border-bottom    "1px solid #F2F4F7"
+                         :border-radius    0}
+                 :ghost true}
                 opts)])

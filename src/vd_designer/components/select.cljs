@@ -11,7 +11,7 @@
   [:> Select (merge-with
               into
               {:showSearch       true
-               :style            {:width 200}
+               :style            {:width "100%"}
                :allowClear       true
                :filterOption     true
                :optionFilterProp "label"}
