@@ -18,7 +18,8 @@
                 {:arrow true
                  :style {:width "55px" :height "18px" :flex-shrink 0}}
                 opts)
-   [:> Button {:style {:color "#7972D3" :border "1px solid #7972D399"}}
+   [:> Button {:size "small"
+               :style {:color "#7972D3" :border "1px solid #7972D399"}}
     [:> Space (r/create-element icons/PlusOutlined) text]]])
 
 (defn new-select

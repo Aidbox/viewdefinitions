@@ -6,10 +6,10 @@
                {:style {:display        "inline-flex"
                         :padding        "3px 7px"
                         :text-transform "uppercase"
-                        :height         "18px"
+                        :height         "20px"
                         :border-radius  "4px"
                         :align-items    "center"
-                        :font-size      "10px"
+                        :font-size      "12px"
                         :font-family    "var(--ant-font-family)"
                         :font-weight    400}}
                opts)
