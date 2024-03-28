@@ -1,6 +1,8 @@
 (ns vd-designer.pages.vd-form.view
-  (:require [antd :refer [Col Row]]
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [Col Row]]
             [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.dropdown :refer [dropdown dropdown-item]]
@@ -8,6 +10,7 @@
             [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [table]]
+            [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
@@ -263,8 +266,6 @@
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)]
     [:div
-     [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
-
      [vd-row
       [tag/default "name"]
       [input/col-name {:value       (:name vd-form)
@@ -290,7 +291,7 @@
 (defn editor []
   (let [current-vd @(subscribe [::m/current-vd])]
     [:div
-     {:style {:height "500px" :width "500px"}}
+     {:style {:height "600px" :width "100%"}}
      [monaco/monaco {:id "vd-yaml"
                      :value (yaml/edn->yaml current-vd)
                      :schemas []
@@ -298,19 +299,19 @@
                      #_#_:onValidate (fn [markers] (dispatch [::c/set-monaco-markers (js->clj markers)]))}]]))
 
 (defn viewdefinition-view []
-  (let [resources @(subscribe [::m/view-definition-data])
-        mode @(subscribe [::m/mode])]
-    [:div
-     ;; TODO: rework for tabs
-     [:button {:on-click #(dispatch [::c/change-mode :form])}  "Form"]
-     [:button {:on-click #(dispatch [::c/change-mode :yaml])} "YAML"]
-
-     [:> Row {:gutter 32}
-      [:> Col {:span 12}
-       (condp = mode
-         :form [form]
-         :yaml [editor])]
-      [:> Col {:span 12}
-       [table (:data resources)]]]]))
+  (let [resources @(subscribe [::m/view-definition-data])]
+    [:> Row {:gutter 32}
+     [:> Col {:span 12}
+      [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
+      [tabs {:items [(tab-item {:key      "form"
+                                :label    "Form"
+                                :children [form]
+                                :icon     (r/create-element icons/EditOutlined)})
+                     (tab-item {:key      "yaml"
+                                :label    "YAML"
+                                :children [editor]
+                                :icon     (r/create-element icons/CodeOutlined)})]}]]
+     [:> Col {:span 12}
+      [table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])

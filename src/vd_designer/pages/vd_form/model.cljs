@@ -8,14 +8,9 @@
    (::resource-data db)))
 
 (reg-sub
-  ::current-vd
-  (fn [db _]
-    (:current-vd db)))
-
-(reg-sub
-  ::mode
-  (fn [db _]
-    (:mode db)))
+ ::current-vd
+ (fn [db _]
+   (:current-vd db)))
 
 (reg-sub
  ::get-all-supported-resources
