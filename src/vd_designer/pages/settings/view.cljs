@@ -1,12 +1,12 @@
-(ns vd-designer.pages.fhir-server-config.view
+(ns vd-designer.pages.settings.view
   (:require
     [re-frame.core :refer [dispatch subscribe]]
-    [vd-designer.pages.fhir-server-config.controller :as c]
-    [vd-designer.pages.fhir-server-config.model :as m]
+    [vd-designer.pages.settings.controller :as c]
+    [vd-designer.pages.settings.model :as m]
     [vd-designer.routes :as routes]
     [vd-designer.utils.event :refer [target-value]]))
 
-(defn form []
+(defn fhir-config-form []
   (let [{:keys [server-name base-url token]} @(subscribe [::m/fhir-server-config])]
     [:div
      [:div
@@ -31,11 +31,6 @@
                :placeholder "top secret"
                :value       token
                :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :token (target-value %)])}]]
+                                        :token (target-value %)])}]]]))
 
-     [:button {:on-click (fn [_]
-                           (dispatch [::c/reset-fhir-server-config
-                                      server-name base-url token]))}
-      "Save"]]))
-
-(defmethod routes/pages ::c/main [] [form])
+(defmethod routes/pages ::c/main [] [fhir-config-form])
