@@ -1,22 +1,21 @@
 (ns vd-designer.pages.vd-form.view
-  (:require [antd :refer [Col Row Button Space ConfigProvider]]
-            ["@ant-design/icons" :as icons]
-            [reagent.core :as r]
+  (:require [antd :refer [Col Row]]
             [re-frame.core :refer [dispatch subscribe]]
-            [vd-designer.utils.react :refer [create-react-image js-obj->clj-map]]
+            [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.dropdown :refer [dropdown dropdown-item]]
+            [vd-designer.components.input :refer [col-name fhir-path]]
+            [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.components.select :refer [select]]
-            [vd-designer.components.input :refer [col-name fhir-path search]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tag :as tag]
-            [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
-            [vd-designer.utils.yaml :as yaml]
-            [vd-designer.components.monaco-editor :as monaco]
-            [vd-designer.utils.event :as u]))
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.react :refer [create-react-image
+                                             js-obj->clj-map]]
+            [vd-designer.utils.yaml :as yaml]))
 
 (def vd-spec
   {"url" "http://fhir.aidbox.app/fhir/StructureDefinition/ViewDefinition|1.0.0",
@@ -153,11 +152,7 @@
      (create-react-image "/img/form/column.svg")
      [:span name]]))
 
-(defn delete-button [& {on-click :on-click}]
-  [:> Button {:on-click on-click
-              :type "text"
-              :class "vd-form-row-delete-button"
-              :icon (r/create-element icons/CloseOutlined)}])
+
 
 (defn render-field [ctx name value]
   [:div {:class "vd-form-row"
@@ -174,7 +169,7 @@
                              (conj (:value-path ctx) name)
                              (u/target-value %)])
                  :value value}]
-     [delete-button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
+     [button/delete {:onClick #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
 
 (defn key->tag [key]
   (get {:select [tag/select]
@@ -211,7 +206,7 @@
                                                              (get elements "elements") {}
                                                              :else "")]
                                          (dispatch [::c/add-element-into-map (:value-path ctx) (keyword k) default-value])))})))]
-        [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}]]
+        [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]]
        [:<>
         (for [[k v] map-value]
           ^{:key (conj (:spec-path ctx) k)}
@@ -226,45 +221,32 @@
              :align "middle"}
      (key->tag k)
      (when-not (= [:select] (:value-path ctx))
-       [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}])]
+       [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}])]
     (map-indexed
      (fn [idx element]
        ^{:key (conj (:value-path ctx) idx)}
        [render-map (add-value-path ctx idx) "ITEM" element])
      value)
-    [:> ConfigProvider {:theme {:components {:Button {:textHoverBg "#FAFAFA"
-                                                      :defaultHoverBg "#FAFAFA"
-                                                      :defaultActiveBg "#FAFAFA"
-                                                      :defaultColor "#B5B5BC;"
-                                                      :defaultActiveBorderColor "transparent"
-                                                      :defaultBorderColor "transparent"
-                                                      :defaultHoverBorderColor "#FAFAFA"
-                                                      :colorText "#B5B5BC"}}}}
-     [:> Button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])
-                 :type "text"
-                 :classNames "vd-form-button-append-array"
-                 :colorText "red"
-                 :size "small"
-                 :icon (r/create-element icons/PlusOutlined)}
-      (name k)]]]])
+    [button/add (name k)
+     {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}]]])
 
 (defn render-block [ctx k v]
   (cond
-     (spec-array? ctx (name k))
-     [render-array (-> ctx
-                       (add-spec-path (name k))
-                       (add-value-path (keyword k))) k v]
+    (spec-array? ctx (name k))
+    [render-array (-> ctx
+                      (add-spec-path (name k))
+                      (add-value-path (keyword k))) k v]
 
-     (spec-map? ctx (name k))
-     [render-map (-> ctx
-                     (add-spec-path (name k))
-                     (add-value-path (keyword k))) k v]
+    (spec-map? ctx (name k))
+    [render-map (-> ctx
+                    (add-spec-path (name k))
+                    (add-value-path (keyword k))) k v]
 
-     (spec-field? ctx (name k))
-     [render-field (add-spec-path ctx (name k)) k v]
+    (spec-field? ctx (name k))
+    [render-field (add-spec-path ctx (name k)) k v]
 
-     :else
-     [:div "not found"]))
+    :else
+    [:div "not found"]))
 
 (defn create-render-context []
   {:spec-path ["elements"]
@@ -279,7 +261,7 @@
              :s/invalid?  false
              :placeholder "ViewDefinition1"
              :on-change (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
-    [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition-data]))}
+    [button/button {:onClick (fn [e] (dispatch [::c/eval-view-definition-data]))}
      "Run"]]
 
    [:div
@@ -305,7 +287,7 @@
       [col-name {:value (:name vd-form)
                  :placeholder "ViewDefinition1"
                  :on-change   (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]
-      [:> Button {:on-click #(dispatch [::c/eval-view-definition])} "Run"]]
+      [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]]
 
      [:div
       [:div
@@ -317,7 +299,7 @@
      [:div
       [render-block ctx "constant" (:constant vd-form)]]
      [:div
-      [render-block ctx "where" (:where vd-form)] ]
+      [render-block ctx "where" (:where vd-form)]]
      [:div
       [render-block ctx "select" (:select vd-form)]]]))
 
@@ -335,8 +317,9 @@
   (let [resources @(subscribe [::m/view-definition-data])
         mode @(subscribe [::m/mode])]
     [:div
+     ;; TODO: rework for tabs
      [:button {:on-click #(dispatch [::c/change-mode :form])}  "Form"]
-     [:button {:on-click #(dispatch [::c/change-mode :yaml])}"YAML"]
+     [:button {:on-click #(dispatch [::c/change-mode :yaml])} "YAML"]
 
      [:> Row
       [:> Col {:span 12}

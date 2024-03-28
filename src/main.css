@@ -25,30 +25,23 @@ body {
 }
 
 
-.vd-form-row-delete-button {
-  visibility: hidden;
-  opacity: 0;
-  transition: opacity 0.1s linear;
-  color: #BFBFBF;
-}
-
-.vd-form-row {
-}
-
 .vd-form-row:hover {
   background: #FAFAFA;
   transition: background .3s;
   border-radius: 4px;
 }
 
-.vd-form-row:hover .vd-form-row-delete-button {
-  visibility: visible;
-  opacity: 1;
-  transition: opacity .3s;
+
+
+
+/* BUTTONS */
+
+.delete-button {
+  visibility: hidden;
+  opacity: 0;
 }
 
-.vd-form-button-append-array:hover {
-  background: #FAFAFA;
-  transition: background .3s;
-  border-radius: 4px;
+*:hover>.delete-button {
+  visibility: visible;
+  opacity: 1;
 }
