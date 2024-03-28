@@ -254,28 +254,29 @@
    :spec-map (hash-map (get vd-spec "url") vd-spec)
    :value-path []})
 
+(defn vd-row [col1 col2]
+  [:> Row {:align "middle" :class "vd-form-row"}
+   [:> Col {:span 8} col1]
+   [:> Col {:span 16} col2]])
+
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)]
     [:div
      [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
 
-     [:> Row {:align "middle" :class "vd-form-row"}
-      [:> Col {:span 8}
-       [tag/default "name"]]
-      [:> Col {:span 16}
-       [input/col-name {:value       (:name vd-form)
-                        :placeholder "ViewDefinition1"
-                        :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]]
+     [vd-row
+      [tag/default "name"]
+      [input/col-name {:value       (:name vd-form)
+                       :placeholder "ViewDefinition1"
+                       :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]
 
-     [:> Row {:align "middle" :class "vd-form-row"}
-      [:> Col {:span 8}
-       [tag/resource]]
-      [:> Col {:span 16}
-       [select :placeholder "Resource type"
-        :options @(subscribe [::m/get-all-supported-resources])
-        :value (:resource vd-form)
-        :onSelect #(dispatch [::c/change-vd-resource %])]]]
+     [vd-row
+      [tag/resource]
+      [select :placeholder "Resource type"
+       :options @(subscribe [::m/get-all-supported-resources])
+       :value (:resource vd-form)
+       :onSelect #(dispatch [::c/change-vd-resource %])]]
 
      [collapse
       :items [(collapse-item [tag/constant] [render-block ctx "constant" (:constant vd-form)])]]
@@ -286,7 +287,7 @@
      [collapse
       :items [(collapse-item [tag/select]   [render-block ctx "select" (:select vd-form)])]]]))
 
-(defn vd-input []
+(defn editor []
   (let [current-vd @(subscribe [::m/current-vd])]
     [:div
      {:style {:height "500px" :width "500px"}}
@@ -304,11 +305,11 @@
      [:button {:on-click #(dispatch [::c/change-mode :form])}  "Form"]
      [:button {:on-click #(dispatch [::c/change-mode :yaml])} "YAML"]
 
-     [:> Row
+     [:> Row {:gutter 32}
       [:> Col {:span 12}
-       [:div
-        (when (= mode :form) [form])
-        (when (= mode :yaml) [vd-input])]]
+       (condp = mode
+         :form [form]
+         :yaml [editor])]
       [:> Col {:span 12}
        [table (:data resources)]]]]))
 
