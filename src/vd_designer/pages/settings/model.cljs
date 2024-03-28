@@ -1,4 +1,4 @@
-(ns vd-designer.pages.fhir-server-config.model
+(ns vd-designer.pages.settings.model
   (:require
     [re-frame.core :refer [reg-sub]]))
 

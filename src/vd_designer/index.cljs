@@ -10,8 +10,8 @@
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.controller :as vd-list.controller]
             [vd-designer.pages.vd-list.view]
-            [vd-designer.pages.fhir-server-config.view]
-            [vd-designer.pages.fhir-server-config.controller :as fhir-conf.controller]
+            [vd-designer.pages.settings.view]
+            [vd-designer.pages.settings.controller :as settings.controller]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
@@ -39,7 +39,7 @@
       :menu [{:key (prepare-menu-key vd-list.controller/identifier)
               :label "ViewDefinitions"
               :icon (r/create-element icons/DatabaseOutlined)}
-             {:key (prepare-menu-key fhir-conf.controller/identifier)
+             {:key (prepare-menu-key settings.controller/identifier)
               :label "Settings"
               :icon (r/create-element icons/SettingOutlined)}
              {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
@@ -52,12 +52,16 @@
 
 ;;;; Initialization
 
+(def default-server {:server-name "Aidbox"
+                     :base-url "https://viewdefs1.aidbox.app/fhir"
+                     :token    "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="})
 (reg-event-fx
- ::initialize-db
- (fn [_ _]
-   {:db {:active-page ::vd-list.controller/main
-         :view-definitions []
-         :side-menu-collapsed false}}))
+  ::initialize-db
+  (fn [_ _]
+    {:db {:active-page         ::vd-list.controller/main
+          :view-definitions    []
+          :side-menu-collapsed false
+          :fhir-server default-server}}))
 
 (def compiler
   (r/create-compiler {:function-components true}))
