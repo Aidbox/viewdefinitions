@@ -31,6 +31,7 @@
 
 (defn find-page []
   (let [route @(subscribe [::routes/active-page])]
+    (println "route " route)
     [layout
      {:collapsed @(subscribe [::side-menu-collapsed])
       :on-collapse #(dispatch [::toggle-side-menu])
@@ -55,13 +56,15 @@
 (def default-server {:server-name "Aidbox"
                      :base-url "https://viewdefs1.aidbox.app/fhir"
                      :token    "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="})
+
 (reg-event-fx
   ::initialize-db
-  (fn [_ _]
-    {:db {:active-page         ::vd-list.controller/main
-          :view-definitions    []
-          :side-menu-collapsed false
-          :fhir-server default-server}}))
+  (fn [{:keys [db]} _]
+    (if (seq db)
+      {:db db}
+      {:db {:view-definitions    []
+            :side-menu-collapsed false
+            :fhir-server default-server}})))
 
 (def compiler
   (r/create-compiler {:function-components true}))
@@ -73,8 +76,6 @@
     (rdom/render [find-page] root-el compiler)))
 
 (defn init []
-  (re-frame/dispatch-sync [::initialize-db])
   (routes/start!)
+  (re-frame/dispatch-sync [::initialize-db])
   (mount-root))
-
-(init)
