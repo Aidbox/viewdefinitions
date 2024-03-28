@@ -170,6 +170,7 @@
 (defn delete-button [& {on-click :on-click}]
   [:> Button {:on-click on-click
               :type "text"
+              :class "vd-form-row-delete-button"
               :icon (r/create-element icons/CloseOutlined)}])
 
 (defn render-field [ctx name value]

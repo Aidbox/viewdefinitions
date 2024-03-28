@@ -24,10 +24,26 @@ body {
   border-bottom: 1px solid #7972D3;
 }
 
+
+.vd-form-row-delete-button {
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.1s linear;
+  color: #BFBFBF;
+}
+
 .vd-form-row {
+  color: #E0E0E0
 }
 
 .vd-form-row:hover {
   background: rgba(29, 27, 52, 0.05);
+  transition: background .3s;
   border-radius: 4px;
+}
+
+.vd-form-row:hover .vd-form-row-delete-button {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity .3s;
 }
