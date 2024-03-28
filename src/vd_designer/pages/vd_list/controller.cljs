@@ -20,7 +20,7 @@
   ::get-view-definitions
   (fn [{:keys [db]} [_]]
     {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/request:get-view-definitions db)
+     :http-xhrio (-> (http.fhir-server/get-view-definitions db)
                      (assoc :on-success [::got-view-definitions]))}))
 
 (reg-event-fx

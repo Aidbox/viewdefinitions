@@ -17,24 +17,24 @@
       (assoc :path path)
       uri/uri-str))
 
-(defn request:rpc [db params]
+(defn aidbox-rpc [db params]
   (-> {:method :post
        :uri    (base-url+path db "/rpc")
        :params params
        :format (ajax/json-request-format)}
       (with-defaults db)))
 
-(defn request:get-view-definitions [db]
+(defn get-view-definitions [db]
   (-> {:method :get
-       :uri    (base-url+path db "/fhir/ViewDefinition")}
+       :uri    (base-url+path db "/ViewDefinition")}
       (with-defaults db)))
 
-(defn request:get-view-definition [db vd-id]
+(defn get-view-definition [db vd-id]
   (-> {:method :get
-       :uri    (base-url+path db (str "/fhir/ViewDefinition/" vd-id))}
+       :uri    (base-url+path db (str "/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
-(defn request:get-metadata [db]
+(defn get-metadata [db]
   (-> {:method :get
-       :uri    (base-url+path db "/fhir/metadata")}
+       :uri    (base-url+path db "/metadata")}
       (with-defaults db)))

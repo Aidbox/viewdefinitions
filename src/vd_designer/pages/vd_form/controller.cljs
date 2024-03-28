@@ -9,7 +9,7 @@
   ::get-supported-resource-types
   (fn [{:keys [db]} [_]]
     {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/request:get-metadata db)
+     :http-xhrio (-> (http.fhir-server/get-metadata db)
                      (assoc :on-success [::get-supported-resource-types-success]))}))
 
 (reg-event-db
@@ -37,7 +37,7 @@
   ::get-view-definition
   (fn [{:keys [db]} [_ vd-id]]
     {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/request:get-view-definition db vd-id)
+     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
                      (assoc :on-success [::choose-vd]))}))
 
 (reg-event-fx
@@ -51,7 +51,7 @@
   (fn [{:keys [db]} _]
     (let [view-definition (:current-vd db)]
       {:db         (assoc db :loading true)
-       :http-xhrio (-> (http.fhir-server/request:rpc db {:method 'sof/eval-view
+       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                          :params {:limit 100
                                                                   :view  view-definition}})
                        (assoc :on-success [::on-eval-view-definitions-success]))})))
