@@ -7,7 +7,9 @@
             [reagent.core :as r]
             [reagent.dom :as rdom]
             [vd-designer.components.layout :refer [layout]]
+            [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
+            [vd-designer.pages.vd-form.controller :as vd-form.controller]
             [vd-designer.pages.vd-list.controller :as vd-list.controller]
             [vd-designer.pages.vd-list.view]
             [vd-designer.pages.settings.view]
@@ -29,6 +31,15 @@
 (defn prepare-menu-key [s]
   (str (namespace s) "/" (name s)))
 
+(defn breadcrumbs [route]
+  (let [current-vd @(subscribe [::vd-form.model/current-vd])
+        m {::vd-list.controller/main  [{:title "View Definitions"}]
+           ::settings.controller/main [{:title "Settings"}]
+           ::vd-form.controller/main  [{:title "View Definitions", :href "/"}
+                                       {:title (:name current-vd)}]}]
+    (concat [{:title "Home", :href "/"}]
+            (m route))))
+
 (defn find-page []
   (let [route @(subscribe [::routes/active-page])]
     (println "route " route)
@@ -44,8 +55,7 @@
               :label "Settings"
               :icon (r/create-element icons/SettingOutlined)}
              {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs [{:title "Home" :href "/"}
-                    {:title "TODO"}]}
+      :breadcrumbs (breadcrumbs route)}
      (if route
        [:div
         (routes/pages route)]
