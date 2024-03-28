@@ -33,11 +33,10 @@ body {
 }
 
 .vd-form-row {
-  color: #E0E0E0
 }
 
 .vd-form-row:hover {
-  background: rgba(29, 27, 52, 0.05);
+  background: #FAFAFA;
   transition: background .3s;
   border-radius: 4px;
 }
@@ -46,4 +45,10 @@ body {
   visibility: visible;
   opacity: 1;
   transition: opacity .3s;
+}
+
+.vd-form-button-append-array:hover {
+  background: #FAFAFA;
+  transition: background .3s;
+  border-radius: 4px;
 }

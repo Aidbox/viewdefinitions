@@ -12,10 +12,13 @@
   [:> Space {:direction :horizontal}
    [:> Input (merge-with into
                          {:classNames {:input "default-input fhir-path-input"}
-                          :style      {:width "170px"}}
+                          :style      {:width "170px"
+                                       :background-color "transparent"
+                                       }}
                          input-overrides)]
    [:> Button (merge-with into
-                          {:style {:border :none}}
+                          {:style {:border :none
+                                   :background-color "transparent"}}
                           button-overrides)
     (create-react-image "/img/input/expand.svg")]])
 

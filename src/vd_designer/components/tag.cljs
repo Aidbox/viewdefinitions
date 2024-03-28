@@ -32,8 +32,8 @@
 
 (defn union-all []
   (tag "unionall"
-       "#BA004E"
-       "#FE60901A"))
+       :style {:color      "#BA004E"
+               :background "#FE60901A"}))
 
 (defn default [text]
   (tag text
