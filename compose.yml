@@ -1,0 +1,15 @@
+services:
+  vd-designer-ui:
+    image: ghcr.io/aidbox/viewdefinitions-ui:latest
+    restart: unless-stopped
+    pull_policy: always
+    ports:
+      - "8280:80"
+      - "8243:443"
+
+  watchtower:
+    image: containrrr/watchtower
+    restart: unless-stopped
+    command: --schedule "0 */5 * * * *"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
