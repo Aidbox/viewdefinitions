@@ -6,6 +6,20 @@
 (def identifier ::main)
 
 (reg-event-fx
+ identifier
+ (fn [{db :db} [_ phase]]
+   (let [vd-id (-> db :route-params :id)]
+     (if (= :init phase)
+       {:db db
+        :fx (cond-> []
+              :always
+              (conj [:dispatch [::get-supported-resource-types]])
+
+              vd-id
+              (conj [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
+       {:db (dissoc db :current-vd)}))))
+
+(reg-event-fx
  ::get-supported-resource-types
  (fn [{:keys [db]} [_]]
    {:db (assoc db :loading true)
@@ -23,18 +37,6 @@
  (fn [db [_ resp-body]]
    (let [resources (->> resp-body :rest (mapcat :resource) (mapv :type) set)]
      (assoc db :resources resources))))
-
-(reg-event-fx
- identifier
- (fn [{db :db} [_ phase]]
-   (let [vd-id (-> db :route-params :id)]
-     (if (= :init phase)
-       {:db db
-        :fx (cond-> []
-              (and (= :init phase) vd-id)
-              (conj
-               [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
-       {:db (dissoc db :current-vd)}))))
 
 (reg-event-fx
  ::get-view-definition

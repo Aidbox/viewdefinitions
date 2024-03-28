@@ -1,13 +1,17 @@
 (ns vd-designer.pages.vd-form.view
-  (:require [antd :refer [Col Row]]
+  (:require [antd :refer [Col Row Button Space]]
+            ["@ant-design/icons" :as icons]
+            [reagent.core :as r]
             [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.utils.react :refer [create-react-image]]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.dropdown :as dropdown]
+            [vd-designer.components.dropdown :refer [dropdown dropdown-item]]
             [vd-designer.components.select :refer [select]]
+            [vd-designer.components.input :refer [col-name fhir-path search]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tag :as tag]
             [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as model]
+            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
             [vd-designer.utils.yaml :as yaml]
             [vd-designer.components.monaco-editor :as monaco]
@@ -133,54 +137,108 @@
 (defn add-spec-path [ctx k]
   (update ctx :spec-path conj k))
 
+(def dropdown-items 
+  {:column (dropdown-item "column" "/img/form/column.svg")
+   :forEach (dropdown-item "forEach" "/img/form/forEach.svg")
+   :forEachOrNull (dropdown-item "forEachOrNull" "/img/form/forEach.svg")
+   :unionAll (dropdown-item "unionAll" "/img/form/unionAll.svg")})
+
+(defn new-select
+  "Dropdown with actions for new select"
+  [& {:keys [items on-click]:as opts}]
+  (let [items-to-render (->> items
+                             (mapv #(get dropdown-items %
+                                         (dropdown-item % "/img/form/column.svg")))
+                             (interpose {:type "divider"})
+                             vec)]
+    (dropdown "select"
+              :menu {:items items-to-render
+                     :onClick on-click}
+              opts)))
+
 (declare render-block)
 
+(defn select-field-render [name]
+  (case name
+    :forEach [tag/foreach]
+    :forEachOrNull [tag/foreach]
+
+    [:> Row
+     (create-react-image "/img/form/column.svg")
+     [:span name]]))
+
+(defn delete-button [& {on-click :on-click}]
+  [:> Button {:on-click on-click
+              :type "text"
+              :icon (r/create-element icons/CloseOutlined)}])
+
 (defn render-field [ctx name value]
-  [:div
-   [:button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)]) } "DELETE FIELD"]
-   [:span name]
-   #_[:span (str (:value-path ctx))]
-   [:input {:on-change
-            #(dispatch [::c/change-input-value (conj (:value-path ctx) name) (u/target-value %)])
-            :value value}]])
+  [:> Row {:align "middle"
+           :style {:padding-left "12px"}
+           :justify "space-between"}
+   [:> Row {:align "middle"}
+    [select-field-render name]
+    [fhir-path {:on-change
+                #(dispatch [::c/change-input-value (conj (:value-path ctx) name) (u/target-value %)])
+                :value value}]]
+   [delete-button {:on-click #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]])
+              
+(defn key->tag [key] 
+  (get {:select [tag/select]
+        :column [tag/column]
+        :unionAll [tag/union-all]}
+       key
+       [tag/default key]))
 
 (defn add-value-path [ctx k]
   (update ctx :value-path conj k))
 
 (defn render-map [ctx map-key map-value]
-  [:div
-   [:button {:on-click #(dispatch [::c/delete-node (:value-path ctx)]) } "DELETE NODE"]
-   map-key
-   (for [[k _] (spec->elements ctx)]
-     (when-not (get map-value (keyword k))
-       (let [element (resolve-path ctx "elements" k)]
-         ^{:key (conj (:value-path :ctx) k)}
-         [:button
-          {:on-click #(dispatch [::c/add-element-into-map
-                                 (:value-path ctx)
-                                 (keyword k)
-                                 (cond
-                                   (get element "array") [{}]
-                                   (get element "elements") {}
-                                   :else "")])}
-          (str k)])))
+  [:div {:style {:padding-left "12px"}}
+   [:> Row {:justify "space-between"
+            :align "middle"
+            :class "vd-form-row"}
+    [:> Row {:align "middle"}
+     (key->tag map-key)
+     (let [elements (filter #(not (get map-value %))
+                            (map keyword (keys (spec->elements ctx))))]
+       (new-select {:items (map keyword elements)}))]
+    [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}]]
+   #_(for [[k _] (spec->elements ctx)]
+       (when-not (get map-value (keyword k))
+         (let [element (resolve-path ctx "elements" k)]
+           ^{:key (conj (:value-path :ctx) k)}
+           [:button
+            {:on-click #(dispatch [::c/add-element-into-map
+                                   (:value-path ctx)
+                                   (keyword k)
+                                   (cond
+                                     (get element "array") [{}]
+                                     (get element "elements") {}
+                                     :else "")])}
+            (str k)])))
    [:<>
     (for [[k v] map-value]
       ^{:key (conj (:spec-path ctx) k)}
       [render-block (add-spec-path ctx "elements") k v])]])
 
 (defn render-array [ctx k value]
-  [:div
-   (when-not (= [:select] (:value-path ctx))
-     [:button {:on-click #(dispatch [::c/delete-node (:value-path ctx)]) } "DELETE ARRAY"])
-   k
+  [:div {:style {:padding-left "12px"}}
+   [:> Row {:justify "space-between"
+            :align "middle"}
+    (key->tag k)
+    (when-not (= [:select] (:value-path ctx))
+      [delete-button {:on-click #(dispatch [::c/delete-node (:value-path ctx)])}])]
    (map-indexed
-     (fn [idx element]
-       ^{:key (conj (:value-path ctx) idx)}
-       [render-map (add-value-path ctx idx) k element])
-     value)
+    (fn [idx element]
+      ^{:key (conj (:value-path ctx) idx)}
+      [render-map (add-value-path ctx idx) idx element])
+    value)
 
-   [:button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])} (str k)]])
+   [:> Button {:on-click #(dispatch [::c/add-element-into-array (:value-path ctx)])
+               :type "text"
+               :icon (r/create-element icons/PlusOutlined)}
+    (name k)]])
 
 (defn render-block [ctx k v]
   (cond
@@ -206,22 +264,48 @@
    :spec-map (hash-map (get vd-spec "url") vd-spec)
    :value-path []})
 
+(defn form* []
+  [:div
+   [:div
+    [:input {:id          "view-def-name"
+             :s/invalid?  false
+             :placeholder "ViewDefinition1"
+             :on-change (fn [e] (dispatch [::c/select-view-definition-name (u/target-value e)]))}]
+    [:button {:on-click (fn [e] (dispatch [::c/eval-view-definition-data]))}
+     "Run"]]
+
+   [:div
+    [:div
+     [tag/resource]
+     [select :placeholder "Resource type"
+      :options  @(subscribe [::m/get-all-supported-resources])
+      :value    @(subscribe [::m/get-selected-resource])
+      :onSelect #(dispatch  [::c/select-resource %])]]]
+
+   [collapse
+    :items [(collapse-item [tag/constant] [:p "text"])
+            (collapse-item [tag/where]    [:p "text"])
+            (collapse-item [tag/select]   [:p "text"])]]
+
+   #_[new-select (fn [e] (js/console.log "Click on menu item." e))]])
+
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)]
-    [:div
+    [:div {:style {:width "500px"}}
      [:div
-      [:input {:value (:name vd-form)
-               :placeholder "ViewDefinition1"
-               :on-change   (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]
-      [:button {:on-click #(dispatch [::c/eval-view-definition])}
-       "Run"]]
+      [col-name {:value (:name vd-form)
+                 :placeholder "ViewDefinition1"
+                 :on-change   (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]
+      [:> Button {:on-click #(dispatch [::c/eval-view-definition])} "Run"]]
 
      [:div
       [:div
-       [:label {:class label-component-style} "RESOURCE"]
-       [:input {:value (:resource vd-form)
-                :on-change (fn [e] (dispatch [::c/change-vd-resource (u/target-value e)]))}]]]
+       [tag/resource]
+       [select :placeholder "Resource type"
+        :options @(subscribe [::m/get-all-supported-resources])
+        :value (:resource vd-form)
+        :onSelect #(dispatch [::c/change-vd-resource %])]]]
      [:div
       [render-block ctx "constant" (:constant vd-form)]]
      [:div
@@ -246,9 +330,12 @@
     [:div
      [:button {:on-click #(dispatch [::c/change-mode :form])}  "Form"]
      [:button {:on-click #(dispatch [::c/change-mode :yaml])}"YAML"]
-     [:div
-      (when (= mode :form) [form])
-      (when (= mode :yaml) [vd-input])
-      #_[table/table (:data resources)]]]))
+     [:> Row
+      [:> Col {:span 12}
+       [:div
+        (when (= mode :form) [form])
+        (when (= mode :yaml) [vd-input])]]
+      [:> Col {:span 12}
+       [table (:data resources)]]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])

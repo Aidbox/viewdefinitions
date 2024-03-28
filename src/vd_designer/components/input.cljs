@@ -17,7 +17,7 @@
    [:> Button (merge-with into
                           {:style {:border :none}}
                           button-overrides)
-    (create-react-image "/img/expand.svg")]])
+    (create-react-image "/img/input/expand.svg")]])
 
 (defn col-name [& {:as opts}]
   [:> Input (merge-with into

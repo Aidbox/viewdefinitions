@@ -9,7 +9,7 @@
   [:div
    [:h1 "View Definitions"]
    [vd-data-list
-    #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main %]])
+    #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id %]])
     [(fn [id] [:a {:onClick #(dispatch [::c/delete-view-definition id])} "delete"])]
 
     :loading    @(subscribe [::m/view-defs-loading?])

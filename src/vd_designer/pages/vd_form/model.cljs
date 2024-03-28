@@ -16,3 +16,8 @@
   ::mode
   (fn [db _]
     (:mode db)))
+
+(reg-sub
+ ::get-all-supported-resources
+ (fn [db [_]]
+   (options-from-vec (get db :resources))))

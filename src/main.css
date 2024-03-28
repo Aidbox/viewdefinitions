@@ -23,3 +23,11 @@ body {
 .fhir-path-input:focus {
   border-bottom: 1px solid #7972D3;
 }
+
+.vd-form-row {
+}
+
+.vd-form-row:hover {
+  background: rgba(29, 27, 52, 0.05);
+  border-radius: 4px;
+}
