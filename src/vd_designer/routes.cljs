@@ -10,7 +10,7 @@
   (atom
     ["/" {["vd/" :id] :vd-designer.pages.vd-form.controller/main
           "" :vd-designer.pages.vd-list.controller/main
-          "settings" :vd-designer.pages.fhir-server-config.controller/main}]))
+          "settings" :vd-designer.pages.settings.controller/main}]))
 
 (reg-sub
  ::active-page
@@ -19,12 +19,17 @@
 
 (reg-event-fx
  ::set-active-page
- (fn [{:keys [db]} [_ {active-page :handler route-params :route-params}]]
-   {:db (assoc db
-               :active-page active-page
-               :route-params route-params)
-    :fx [[:dispatch [(:active-page db) :deinit]]
-         [:dispatch [active-page :init]]]}))
+ (fn [{:keys [db]} [_ {new-page :handler route-params :route-params}]]
+   (let [old-page (:active-page db)
+         fxses
+         (cond-> [[:dispatch [new-page :init]]]
+
+           (:active-page db)
+           (conj [:dispatch [old-page :deinit]]))]
+     {:db (assoc db
+                 :active-page new-page
+                 :route-params route-params)
+        :fx fxses})))
 
 (defn parse
   [url]

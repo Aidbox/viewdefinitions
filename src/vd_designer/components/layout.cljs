@@ -30,7 +30,7 @@
 
                                              }}}
      [:> Menu {:mode                "inline"
-               :defaultSelectedKeys [(:menu-active-key props)]
+               :selectedKeys [(:menu-active-key props)]
                :onClick             (fn [e] ((:on-menu-click props) (keyword (.-key e))))
                :items               (:menu props)}]]]
    [:> Layout

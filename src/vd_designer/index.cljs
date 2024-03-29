@@ -7,11 +7,13 @@
             [reagent.core :as r]
             [reagent.dom :as rdom]
             [vd-designer.components.layout :refer [layout]]
+            [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
+            [vd-designer.pages.vd-form.controller :as vd-form.controller]
             [vd-designer.pages.vd-list.controller :as vd-list.controller]
             [vd-designer.pages.vd-list.view]
-            [vd-designer.pages.fhir-server-config.view]
-            [vd-designer.pages.fhir-server-config.controller :as fhir-conf.controller]
+            [vd-designer.pages.settings.view]
+            [vd-designer.pages.settings.controller :as settings.controller]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
@@ -29,6 +31,15 @@
 (defn prepare-menu-key [s]
   (str (namespace s) "/" (name s)))
 
+(defn breadcrumbs [route]
+  (let [current-vd @(subscribe [::vd-form.model/current-vd])
+        m {::vd-list.controller/main  [{:title "View Definitions"}]
+           ::settings.controller/main [{:title "Settings"}]
+           ::vd-form.controller/main  [{:title "View Definitions", :href "/"}
+                                       {:title (:name current-vd)}]}]
+    (concat [{:title "Home", :href "/"}]
+            (m route))))
+
 (defn find-page []
   (let [route @(subscribe [::routes/active-page])]
     [layout
@@ -39,12 +50,11 @@
       :menu [{:key (prepare-menu-key vd-list.controller/identifier)
               :label "ViewDefinitions"
               :icon (r/create-element icons/DatabaseOutlined)}
-             {:key (prepare-menu-key fhir-conf.controller/identifier)
+             {:key (prepare-menu-key settings.controller/identifier)
               :label "Settings"
               :icon (r/create-element icons/SettingOutlined)}
              {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs [{:title "Home" :href "/"}
-                    {:title "TODO"}]}
+      :breadcrumbs (breadcrumbs route)}
      (if route
        [:div
         (routes/pages route)]
@@ -52,13 +62,19 @@
 
 ;;;; Initialization
 
+(def default-server {:server-name "Aidbox"
+                     :base-url "https://viewdefs1.aidbox.app/fhir"
+                     :token    "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="})
+
 (reg-event-fx
- ::initialize-db
- (fn [_ _]
-   {:db {:active-page ::vd-list.controller/main
-         :mode :form
-         :view-definitions []
-         :side-menu-collapsed false}}))
+  ::initialize-db
+  (fn [{:keys [db]} _]
+    (if (seq db)
+      {:db db}
+      {:db {:view-definitions    []
+            :mode :form
+            :side-menu-collapsed false
+            :fhir-server default-server}})))
 
 (def compiler
   (r/create-compiler {:function-components true}))
@@ -70,8 +86,6 @@
     (rdom/render [find-page] root-el compiler)))
 
 (defn init []
-  (re-frame/dispatch-sync [::initialize-db])
   (routes/start!)
+  (re-frame/dispatch-sync [::initialize-db])
   (mount-root))
-
-(init)
