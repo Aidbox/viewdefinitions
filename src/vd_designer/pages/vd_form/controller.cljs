@@ -6,11 +6,31 @@
 (def identifier ::main)
 
 (reg-event-fx
-  ::get-supported-resource-types
-  (fn [{:keys [db]} [_]]
-    {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/get-metadata db)
-                     (assoc :on-success [::get-supported-resource-types-success]))}))
+ identifier
+ (fn [{db :db} [_ phase]]
+   (let [vd-id (-> db :route-params :id)]
+     (if (= :init phase)
+       {:db db
+        :fx (cond-> []
+              :always
+              (conj [:dispatch [::get-supported-resource-types]])
+
+              vd-id
+              (conj [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
+       {:db (dissoc db :current-vd)}))))
+
+(reg-event-fx
+ ::get-supported-resource-types
+ (fn [{:keys [db]} [_]]
+   {:db (assoc db :loading true)
+    :http-xhrio {:method          :get
+                 :uri             (str "https://viewdefs1.aidbox.app/fhir/metadata")
+                 :timeout         8000
+                 :with-credentials true
+                 :headers  {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success      [::get-supported-resource-types-success]
+                 :on-failure      [:bad-http-result]}}))
 
 (reg-event-db
   ::get-supported-resource-types-success
@@ -19,26 +39,18 @@
       (assoc db :resources resources))))
 
 (reg-event-fx
-  identifier
-  (fn [{db :db} [_ phase]]
-    (let [vd-id (-> db :route-params :id)]
-      (if (= :init phase)
-        {:db db
-         :fx (cond-> []
-                     :always
-                     (conj [:dispatch [::get-supported-resource-types]])
-
-                     vd-id
-                     (conj [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
-        {:db db}))))
-
-
-(reg-event-fx
-  ::get-view-definition
-  (fn [{:keys [db]} [_ vd-id]]
-    {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
-                     (assoc :on-success [::choose-vd]))}))
+ ::get-view-definition
+ (fn [{:keys [db]} [_ vd-id]]
+   {:db (assoc db :loading true)
+    :http-xhrio {:method          :get
+                 :uri             (str "https://viewdefs1.aidbox.app/fhir/ViewDefinition/" vd-id)
+                 :timeout         8000
+                 :with-credentials true
+                 :headers  {:Authorization
+                            "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
+                 :response-format (ajax/json-response-format {:keywords? true})
+                 :on-success      [::choose-vd]
+                 :on-failure      [:bad-http-result]}}))
 
 (reg-event-fx
   ::choose-vd
@@ -62,11 +74,51 @@
     (assoc db ::m/resource-data (:result result))))
 
 (reg-event-db
-  ::select-view-definition-name
-  (fn [db [_ vd-name]]
-    (assoc-in db [:current :vd-name] vd-name)))
+ ::change-input-value
+ (fn [db [_ path value]]
+   (assoc-in db (into [:current-vd] path) value)))
 
 (reg-event-db
-  ::select-resource
-  (fn [db [_ input]]
-    (assoc-in db [:current :resource] input)))
+ ::add-element-into-array
+ (fn [db [_ path]]
+   (update-in db (into [:current-vd] path) (fnil conj []) {})))
+
+(reg-event-db
+ ::add-element-into-map
+ (fn [db [_ path k default-value]]
+   (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
+
+(reg-event-db
+ ::change-mode
+ (fn [db [_ mode]]
+   (assoc db :mode mode)))
+
+(defn vec-remove
+  "remove elem in coll"
+  [pos coll]
+  (into (subvec coll 0 pos) (subvec coll (inc pos))))
+
+(defn remove-node [node key]
+  (cond
+    (map? node)
+    (dissoc node key)
+
+    (vector? node)
+    (vec-remove key node)))
+
+(reg-event-db
+ ::change-vd-resource
+ (fn [db [_ value]]
+   (assoc-in db [:current-vd :resource] value)))
+
+(reg-event-db
+ ::change-vd-name
+ (fn [db [_ value]]
+   (assoc-in db [:current-vd :name] value)))
+
+(reg-event-db
+ ::delete-node
+ (fn [db [_ path]]
+   (update-in db
+              (into [:current-vd] (butlast path))
+              remove-node (last path))))

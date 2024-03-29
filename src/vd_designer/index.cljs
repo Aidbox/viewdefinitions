@@ -72,6 +72,7 @@
     (if (seq db)
       {:db db}
       {:db {:view-definitions    []
+            :mode :form
             :side-menu-collapsed false
             :fhir-server default-server}})))
 

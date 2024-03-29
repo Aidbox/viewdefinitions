@@ -8,21 +8,11 @@
    (::resource-data db)))
 
 (reg-sub
+ ::current-vd
+ (fn [db _]
+   (:current-vd db)))
+
+(reg-sub
  ::get-all-supported-resources
  (fn [db [_]]
    (options-from-vec (get db :resources))))
-
-(reg-sub
- ::get-selected-resource
- (fn [db [_]]
-   (get db :resource)))
-
-(reg-sub
- ::chosen-vd-name
- (fn [db _]
-   (:vd-name db)))
-
-(reg-sub
-  ::current-vd
-  (fn [db _]
-    (:current-vd db)))
