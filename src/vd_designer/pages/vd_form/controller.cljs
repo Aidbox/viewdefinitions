@@ -1,6 +1,7 @@
 (ns vd-designer.pages.vd-form.controller
   (:require [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
+            [ajax.core :as ajax]
             [vd-designer.pages.vd-form.model :as m]))
 
 (def identifier ::main)
