@@ -160,9 +160,7 @@
 (defn render-field [ctx name value]
   [:div {:class "vd-form-row"
          :style {:padding-left "12px"
-                 #_#_:border-top "1px solid #E4E4E4"
-                 :padding-top "4px"
-                 :padding-bottom "4px"}}
+                 #_#_:border-top "1px solid #E4E4E4"}}
    [:> Row {:align "middle"
             :justify "space-between"}
     [select-field-render name]
@@ -192,9 +190,7 @@
        [:> Row {:justify "space-between"
                 :align "middle"
                 :class "vd-form-row"
-                :style {:padding-top "4px"
-                        :padding-bottom "4px"
-                        #_#_:border-top "1px solid #E4E4E4"}}
+                :style { #_#_:border-top "1px solid #E4E4E4"}}
         [:> Row {:align "middle"}
          (key->tag map-key)
          (let [elements (filter #(not (get map-value %))
@@ -217,9 +213,7 @@
 
 (defn render-array [ctx k value]
   [:div {:style {:padding-left "12px"}}
-   [:div {:style {:padding-top "4px"
-                  :padding-bottom "4px"
-                  #_#_:border-top "1px solid #E4E4E4"}}
+   [:div {:style { #_#_:border-top "1px solid #E4E4E4"}}
     [:> Row {:justify "space-between"
              :align "middle"}
      (key->tag k)
