@@ -33,14 +33,13 @@ input {
   opacity: 1;
 }
 
-/* FORM */
+/* TREE */
 
-.vd-form-row {
-  border-bottom: 1px solid #F2F4F7;
+.vd-tree .ant-tree-node-content-wrapper {
+  border-radius: 0;
+  padding: 0 4px;
 }
 
-.vd-form-row:hover,
-.vd-form-row:has(input:focus) {
-  background: #FAFAFA;
-  transition: background .3s;
+.vd-tree .ant-tree-switcher:has(.ant-tree-switcher-icon) {
+  border-radius: 0;
 }

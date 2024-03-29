@@ -19,16 +19,22 @@
                opts)]])
 
 (defn add [text & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM 8
-                                                    :colorText       "#B5B5BC"
+  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM          8
+                                                    :defaultGhostColor        "#B5B5BC"
+                                                    :defaultGhostBorderColor  "#B5B5BC"
 
-                                                    :textHoverBg     "#FAFAFA"
-                                                    :defaultHoverBg  "#FAFAFA"}}}}
+                                                    :defaultActiveColor       "#7972D399"
+                                                    :defaultActiveBorderColor "#7972D3"
+
+                                                    :defaultHoverBorderColor  "#B5B5BC"
+                                                    :defaultHoverColor        "#B5B5BC"
+                                                    :textHoverBg              "none"}}}}
    [button text (merge-with
                  into
-                 {:type  "text"
+                 {:type  "default"
                   :size  "small"
                   :ghost true
+                  :style {:border "none"}
                   :icon  (r/create-element icons/PlusOutlined)}
                  opts)]])
 

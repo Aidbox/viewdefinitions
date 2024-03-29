@@ -5,13 +5,15 @@
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.dropdown :refer [dropdown dropdown-item]]
+            [vd-designer.components.dropdown :refer [dropdown-item new-select]]
             [vd-designer.components.input :as input]
             [vd-designer.components.monaco-editor :as monaco]
-            [vd-designer.components.select :refer [select]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
+            [vd-designer.components.tree :refer [tree tree-item]]
+            [vd-designer.pages.vd-form.components :refer [name-input
+                                                          resource-input]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
@@ -131,18 +133,18 @@
    :forEachOrNull (dropdown-item "forEachOrNull" "/img/form/forEach.svg")
    :unionAll (dropdown-item "unionAll" "/img/form/unionAll.svg")})
 
-(defn new-select
-  "Dropdown with actions for new select"
-  [& {:keys [items on-select] :as opts}]
-  (let [items-to-render (->> items
-                             (mapv #(get dropdown-items %
-                                         (dropdown-item % "/img/form/column.svg")))
-                             (interpose {:type "divider"})
-                             vec)]
-    (dropdown "select"
-              :menu {:items items-to-render
-                     :onClick on-select}
-              opts)))
+#_(defn new-select
+    "Dropdown with actions for new select"
+    [& {:keys [items on-select] :as opts}]
+    (let [items-to-render (->> items
+                               (mapv #(get dropdown-items %
+                                           (dropdown-item % "/img/form/column.svg")))
+                               (interpose {:type "divider"})
+                               vec)]
+      (dropdown "select"
+                :menu {:items items-to-render
+                       :onClick on-select}
+                opts)))
 
 (declare render-block)
 
@@ -159,8 +161,7 @@
 
 (defn render-field [ctx name value]
   [:div {:class "vd-form-row"
-         :style {:padding-left "12px"
-                 #_#_:border-top "1px solid #E4E4E4"}}
+         :style {:padding-left "12px"}}
    [:> Row {:align "middle"
             :justify "space-between"}
     [select-field-render name]
@@ -189,8 +190,7 @@
      [(collapse-item
        [:> Row {:justify "space-between"
                 :align "middle"
-                :class "vd-form-row"
-                :style { #_#_:border-top "1px solid #E4E4E4"}}
+                :class "vd-form-row"}
         [:> Row {:align "middle"}
          (key->tag map-key)
          (let [elements (filter #(not (get map-value %))
@@ -213,7 +213,7 @@
 
 (defn render-array [ctx k value]
   [:div {:style {:padding-left "12px"}}
-   [:div {:style { #_#_:border-top "1px solid #E4E4E4"}}
+   [:div
     [:> Row {:justify "space-between"
              :align "middle"}
      (key->tag k)
@@ -251,36 +251,67 @@
    :spec-map (hash-map (get vd-spec "url") vd-spec)
    :value-path []})
 
-(defn vd-row [col1 col2]
-  [:> Row {:align "middle" :class "vd-form-row"}
-   [:> Col {:span 8} col1]
-   [:> Col {:span 16} col2]])
+
+;;;; Tree
+
+(declare select->node)
+
+(defn node-column [i items]
+  (tree-item (str "column" i) [tag/column]
+             (conj []
+                   (tree-item (str "add-column" i) [button/add "column"]))))
+
+(defn node-foreach [i items]
+  (tree-item (str "foreach" i) [tag/foreach]
+             (conj []
+                   (tree-item (str "add-foreach" i) [new-select]))))
+
+(defn node-foreach-or-null [i items]
+  (tree-item (str "foreach-or-null" i) [tag/foreach-or-null]
+             (conj []
+                   (tree-item (str "add-foreach-or-null" i) [new-select]))))
+
+(defn node-union-all [i items]
+  (tree-item (str "union-all" i) [tag/union-all]
+             (conj []
+                   (tree-item (str "add-union-all" i) [new-select]))))
+
+(defn node-select [i items]
+  (tree-item (str "select" i) [tag/select]
+             (conj (map select->node items)
+                   (tree-item (str "add-select" i) [new-select]))))
+
+(defn select->node [element]
+  (let [key (key (first element))]
+    (apply
+     (condp = key
+       :column        (partial node-column          1)
+       :forEach       (partial node-foreach         1)
+       :forEachOrNull (partial node-foreach-or-null 1)
+       :unionAll      (partial node-union-all       1)
+       :select        (partial node-select          1))
+     (key element))))
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)]
     [:div
-     [vd-row
-      [tag/default "name"]
-      [input/col-name {:value       (:name vd-form)
-                       :placeholder "ViewDefinition1"
-                       :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]
+     [tree
+      :onSelect (fn [selected-keys info] (js/console.log "selected" selected-keys info))
+      :defaultExpandAll true
+      :treeData [(tree-item "name"     (name-input vd-form))
+                 (tree-item "resource" (resource-input vd-form))
+                 (tree-item "constant" [tag/constant]
+                            [(tree-item "add-constant" [button/add "constant"])])
+                 (tree-item "where"    [tag/where]
+                            [(tree-item "add-where"    [button/add "where"])])
+                 (tree-item "select"   [tag/select]
+                            (conj (mapv select->node (:select vd-form))
+                                  (tree-item "add-select" [new-select])))]]
 
-     [vd-row
-      [tag/resource]
-      [select :placeholder "Resource type"
-       :options @(subscribe [::m/get-all-supported-resources])
-       :value (:resource vd-form)
-       :onSelect #(dispatch [::c/change-vd-resource %])]]
-
-     [collapse
-      :items [(collapse-item [tag/constant] [render-block ctx "constant" (:constant vd-form)])]]
-
-     [collapse
-      :items [(collapse-item [tag/where]    [render-block ctx "where" (:where vd-form)])]]
-
-     [collapse
-      :items [(collapse-item [tag/select]   [render-block ctx "select" (:select vd-form)])]]]))
+     #_[render-block ctx "constant" (:constant vd-form)]
+     #_[render-block ctx "where" (:where vd-form)]
+     #_[render-block ctx "select" (:select vd-form)]]))
 
 (defn editor []
   (let [current-vd @(subscribe [::m/current-vd])]
