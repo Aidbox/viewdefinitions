@@ -25,7 +25,10 @@
                                                     :itemSelectedColor "#1890FF"
                                                     :itemBorderRadius  0
                                                     :itemMarginInline  0
-                                                    :itemMarginBlock   0}}}}
+                                                    :itemMarginBlock   0}
+                                             ;; :Button {:textHoverBg "#FAFAFA"}
+
+                                             }}}
      [:> Menu {:mode                "inline"
                :selectedKeys [(:menu-active-key props)]
                :onClick             (fn [e] ((:on-menu-click props) (keyword (.-key e))))

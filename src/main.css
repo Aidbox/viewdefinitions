@@ -10,16 +10,37 @@ body {
   border-right: 3px solid #1890FF;
 }
 
-.default-input {
-  font-style: italic;
-  border: none;
-  border-radius: 0;
+/* INPUTS */
+
+input {
+  box-shadow: none !important;
 }
 
-.default-input:focus {
-  box-shadow: none;
+.default-input:focus,
+.default-input:hover {
+  border-bottom: 1px solid #7972D3 !important;
 }
 
-.fhir-path-input:focus {
-  border-bottom: 1px solid #7972D3;
+/* BUTTONS */
+
+.delete-button {
+  visibility: hidden;
+  opacity: 0;
+}
+
+*:hover>.delete-button {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* FORM */
+
+.vd-form-row {
+  border-bottom: 1px solid #F2F4F7;
+}
+
+.vd-form-row:hover,
+.vd-form-row:has(input:focus) {
+  background: #FAFAFA;
+  transition: background .3s;
 }
