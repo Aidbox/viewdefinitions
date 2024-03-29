@@ -1,20 +1,45 @@
 (ns vd-designer.pages.vd-list.view
-  (:require [re-frame.core :refer [dispatch subscribe]]
+  (:require [clojure.string :as str]
+            [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.list :refer [vd-data-list]]
             [vd-designer.pages.vd-list.controller :as c]
             [vd-designer.pages.vd-list.model :as m]
-            [vd-designer.routes :as routes]))
+            [vd-designer.routes :as routes]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.input :as input]
+            [vd-designer.utils.event :refer [target-value]]))
+
+(defn search []
+  [input/search
+   :placeholder "input search text"
+   :on-change #(dispatch [::c/filter-updated (target-value %)])
+   :style {:width "100%"}])
+
+(defn grep-vd [vd filter-phrase]
+  (or (-> vd :resource :name (str/includes? filter-phrase))
+      (-> vd :resource :description (str/includes? filter-phrase))
+      (-> vd :resource :resource (str/includes? filter-phrase))))
+
+(defn filter-vds [view-definitions]
+  (let [filter-phrase @(subscribe [::m/filter-phrase])]
+    (cond-> view-definitions
+            filter-phrase (->> (filter #(grep-vd % filter-phrase))))))
 
 (defn viewdefinition-list-view []
-  [:div
-   [:h1 "View Definitions"]
+  [:div {:style {:width "60%"}}
+   [:div {:style {:display         :flex
+                  :justify-content :space-between
+                  :align-items     :center
+                  :width           "100%"}}
+    [:h1 "View Definitions"]
+    [button/add-view-definition "+ ViewDefinition"
+     :on-click (fn [e] (dispatch [::c/add-view-definition]))]]
+   [search]
    [vd-data-list
     #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id %]])
     [(fn [id] [:a {:onClick #(dispatch [::c/delete-view-definition id])} "delete"])]
 
-    :loading    @(subscribe [::m/view-defs-loading?])
-    :dataSource @(subscribe [::m/view-defs])]
-
-   [:button {:on-click (fn [e] (dispatch [::c/add-view-definition]))} "+"]])
+    :loading @(subscribe [::m/view-defs-loading?])
+    :dataSource (filter-vds @(subscribe [::m/view-defs]))]])
 
 (defmethod routes/pages ::c/main [] [viewdefinition-list-view])

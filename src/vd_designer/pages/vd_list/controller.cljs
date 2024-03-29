@@ -1,6 +1,7 @@
 (ns vd-designer.pages.vd-list.controller
   (:require
     #_[vd-designer.pages.vd-list.model :as m]
+    [clojure.string :as str]
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.routes :as routes]))
@@ -40,3 +41,10 @@
   ::delete-view-definition
   (fn [db [_ id]]
     (update db :view-definitions #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
+
+(reg-event-db
+  ::filter-updated
+  (fn [db [_ filter-phrase]]
+    (if (str/blank? filter-phrase)
+      (dissoc db ::filter-phrase)
+      (assoc db ::filter-phrase filter-phrase))))
