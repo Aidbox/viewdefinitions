@@ -20,17 +20,11 @@
        {:db (dissoc db :current-vd)}))))
 
 (reg-event-fx
- ::get-supported-resource-types
- (fn [{:keys [db]} [_]]
-   {:db (assoc db :loading true)
-    :http-xhrio {:method          :get
-                 :uri             (str "https://viewdefs1.aidbox.app/fhir/metadata")
-                 :timeout         8000
-                 :with-credentials true
-                 :headers  {:Authorization "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
-                 :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success      [::get-supported-resource-types-success]
-                 :on-failure      [:bad-http-result]}}))
+  ::get-supported-resource-types
+  (fn [{:keys [db]} [_]]
+    {:db         (assoc db :loading true)
+     :http-xhrio (-> (http.fhir-server/get-metadata db)
+                     (assoc :on-success [::get-supported-resource-types-success]))}))
 
 (reg-event-db
   ::get-supported-resource-types-success
@@ -39,18 +33,11 @@
       (assoc db :resources resources))))
 
 (reg-event-fx
- ::get-view-definition
- (fn [{:keys [db]} [_ vd-id]]
-   {:db (assoc db :loading true)
-    :http-xhrio {:method          :get
-                 :uri             (str "https://viewdefs1.aidbox.app/fhir/ViewDefinition/" vd-id)
-                 :timeout         8000
-                 :with-credentials true
-                 :headers  {:Authorization
-                            "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
-                 :response-format (ajax/json-response-format {:keywords? true})
-                 :on-success      [::choose-vd]
-                 :on-failure      [:bad-http-result]}}))
+  ::get-view-definition
+  (fn [{:keys [db]} [_ vd-id]]
+    {:db         (assoc db :loading true)
+     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
+                     (assoc :on-success [::choose-vd]))}))
 
 (reg-event-fx
   ::choose-vd
