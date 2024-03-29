@@ -32,7 +32,7 @@
                   :icon  (r/create-element icons/PlusOutlined)}
                  opts)]])
 
-(defn my-add [content & {:as opts}]
+(defn add-view-definition [content & {:as opts}]
   [:button (merge-with into
                        {:style {:height           "32px"
                                 :padding          "4px 15px"

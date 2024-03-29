@@ -32,7 +32,7 @@
                   :align-items     :center
                   :width           "100%"}}
     [:h1 "View Definitions"]
-    [button/add "+ ViewDefinition"
+    [button/add-view-definition "+ ViewDefinition"
      :on-click (fn [e] (dispatch [::c/add-view-definition]))]]
    [search]
    [vd-data-list
