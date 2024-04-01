@@ -12,7 +12,8 @@ body {
 
 /* INPUTS */
 
-input {
+input,
+button {
   box-shadow: none !important;
 }
 

@@ -5,15 +5,17 @@
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.dropdown :refer [dropdown-item new-select]]
+            [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.input :as input]
             [vd-designer.components.monaco-editor :as monaco]
-            [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-item]]
-            [vd-designer.pages.vd-form.components :refer [name-input
-                                                          resource-input one-column]]
+            [vd-designer.pages.vd-form.components :refer [add-select
+                                                          foreach-expr
+                                                          name-input
+                                                          one-column
+                                                          resource-input]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
@@ -127,25 +129,6 @@
 (defn add-spec-path [ctx k]
   (update ctx :spec-path conj k))
 
-(def dropdown-items
-  {:column (dropdown-item "column" "/img/form/column.svg")
-   :forEach (dropdown-item "forEach" "/img/form/forEach.svg")
-   :forEachOrNull (dropdown-item "forEachOrNull" "/img/form/forEach.svg")
-   :unionAll (dropdown-item "unionAll" "/img/form/unionAll.svg")})
-
-#_(defn new-select
-    "Dropdown with actions for new select"
-    [& {:keys [items on-select] :as opts}]
-    (let [items-to-render (->> items
-                               (mapv #(get dropdown-items %
-                                           (dropdown-item % "/img/form/column.svg")))
-                               (interpose {:type "divider"})
-                               vec)]
-      (dropdown "select"
-                :menu {:items items-to-render
-                       :onClick on-select}
-                opts)))
-
 (declare render-block)
 
 (defn select-field-render [name]
@@ -182,6 +165,9 @@
 
 (defn add-value-path [ctx k]
   (update ctx :value-path conj k))
+
+(defn drop-value-path [ctx]
+  (update ctx :value-path pop))
 
 (defn render-map [ctx map-key map-value]
   [:div {:style {:padding-left "12px"}}
@@ -262,40 +248,53 @@
 (defn node-column [ctx items]
   (let [key (str "column-" (:value-path ctx))]
     (js/console.debug (str "node-column items: " items))
-    (tree-item
-      key
-      [tag/column]
-      (conj (mapv-indexed (fn [idx v]
-                            (let [ctx (add-value-path ctx idx)]
-                              (tree-item (:value-path ctx) (one-column ctx v)))) items)
-            (tree-item (str "add-" key)
-                       [button/add "column"
-                        {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
+    (tree-item key
+               [tag/column]
+               (conj (mapv-indexed (fn [idx v]
+                                     (let [ctx (add-value-path ctx idx)]
+                                       (tree-item (:value-path ctx) (one-column ctx v)))) items)
+                     (tree-item (str "add-column-" key)
+                                [button/add "column"
+                                 {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
 
-(defn node-foreach [ctx expression]
-  (js/console.debug (str "for each items " expression))
-  (tree-item (str "foreach-" (:value-path ctx))
-             [tag/foreach]
-             (conj
-               (mapv-indexed #(tree-item (:value-path (add-value-path ctx %1)) %2) expression)
-               (tree-item (str "add-foreach-" (:value-path ctx))
-                         [new-select]))))
+(defn node-foreach [ctx path & items]
+  (let [key (str "foreach-" (:value-path ctx))
+        ctx (drop-value-path ctx)]
+    (js/console.debug (str "for each path " path))
+    (js/console.debug (str "for each items " items))
+    (tree-item key
+               [tag/foreach]
+               (conj [(tree-item (str (:value-path ctx) "-path") (foreach-expr ctx :forEach path))]
+                     (tree-item (str "add-foreach-" key)
+                                [add-select (add-value-path ctx :select)])))))
 
-(defn node-foreach-or-null [prefix i items]
-  (tree-item (str "foreach-or-null-" prefix "-" i) [tag/foreach-or-null]
-             (conj []
-                   (tree-item (str "add-foreach-or-null-" prefix "-" i) [new-select]))))
+(defn node-foreach-or-null [ctx path & items]
+  (let [key (str "foreach-or-null-" (:value-path ctx))
+        ctx (drop-value-path ctx)]
+    (js/console.debug (str "for each or null path " path))
+    (js/console.debug (str "for each or null items: " items))
+    (tree-item key
+               [tag/foreach-or-null]
+               (conj [(tree-item (str (:value-path ctx) "-path") (foreach-expr ctx :forEachOrNull path))]
+                     (tree-item (str "add-foreach-or-null-" key)
+                                [add-select (add-value-path ctx :select)])))))
 
-(defn node-union-all [prefix i items]
-  (tree-item (str "union-all" prefix "-" i) [tag/union-all]
-             (conj []
-                   (tree-item (str "add-union-all-" prefix "-" i) [new-select]))))
+(defn node-union-all [ctx items]
+  (let [key (str "union-all-" (:value-path ctx))]
+    (js/console.debug (str "union all items: " items))
+    (tree-item key
+               [tag/union-all]
+               (conj []
+                     (tree-item (str "add-union-all-" key) [add-select ctx])))))
 
-(defn node-select [prefix i items]
-  (js/console.debug (str "node-select: " items))
-  (tree-item (str "select" prefix i) [tag/select]
-             (conj (mapv (partial select->node prefix) items)
-                   (tree-item (str "add-select-" prefix "-" i) [new-select]))))
+(defn node-select [ctx items]
+  (let [key (str "select-" (:value-path ctx))]
+    (js/console.debug (str "node select items: " items))
+    (tree-item key
+               [tag/select]
+               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
+                     (tree-item (str "add-select-" key)
+                                [add-select ctx])))))
 
 (defn select->node [ctx element]
   (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
@@ -324,10 +323,7 @@
                  (tree-item "where"    [tag/where]
                             [(tree-item "add-where"    [button/add "where"])])
 
-                 (tree-item "select"   [tag/select]
-                            (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2)
-                                                (:select vd-form))
-                                  (tree-item "add-select" [new-select])))]]
+                 (node-select ctx (:select vd-form))]]
 
      #_[render-block ctx "constant" (:constant vd-form)]
      #_[render-block ctx "where" (:where vd-form)]

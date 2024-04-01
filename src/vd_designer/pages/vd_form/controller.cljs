@@ -20,48 +20,48 @@
        {:db (dissoc db :current-vd)}))))
 
 (reg-event-fx
-  ::get-supported-resource-types
-  (fn [{:keys [db]} [_]]
-    {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/get-metadata db)
-                     (assoc :on-success [::get-supported-resource-types-success]))}))
+ ::get-supported-resource-types
+ (fn [{:keys [db]} [_]]
+   {:db         (assoc db :loading true)
+    :http-xhrio (-> (http.fhir-server/get-metadata db)
+                    (assoc :on-success [::get-supported-resource-types-success]))}))
 
 (reg-event-db
-  ::get-supported-resource-types-success
-  (fn [db [_ resp-body]]
-    (let [resources (->> resp-body :rest (mapcat :resource) (mapv :type) set)]
-      (assoc db :resources resources))))
+ ::get-supported-resource-types-success
+ (fn [db [_ resp-body]]
+   (let [resources (->> resp-body :rest (mapcat :resource) (mapv :type) set)]
+     (assoc db :resources resources))))
 
 (reg-event-fx
-  ::get-view-definition
-  (fn [{:keys [db]} [_ vd-id]]
-    {:db         (assoc db :loading true)
-     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
-                     (assoc :on-success [::choose-vd]))}))
+ ::get-view-definition
+ (fn [{:keys [db]} [_ vd-id]]
+   {:db         (assoc db :loading true)
+    :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
+                    (assoc :on-success [::choose-vd]))}))
 
 (defn normalize-view [view]
   view)
 
 (reg-event-fx
-  ::choose-vd
-  (fn [{:keys [db]} [_ vd-id]]
-    {:fx [[:dispatch [::eval-view-definition-data]]]
-     :db (assoc db :current-vd (normalize-view vd-id))}))
+ ::choose-vd
+ (fn [{:keys [db]} [_ vd-id]]
+   {:fx [[:dispatch [::eval-view-definition-data]]]
+    :db (assoc db :current-vd (normalize-view vd-id))}))
 
 (reg-event-fx
-  ::eval-view-definition-data
-  (fn [{:keys [db]} _]
-    (let [view-definition (:current-vd db)]
-      {:db         (assoc db :loading true)
-       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
-                                                         :params {:limit 100
-                                                                  :view  view-definition}})
-                       (assoc :on-success [::on-eval-view-definitions-success]))})))
+ ::eval-view-definition-data
+ (fn [{:keys [db]} _]
+   (let [view-definition (:current-vd db)]
+     {:db         (assoc db :loading true)
+      :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
+                                                       :params {:limit 100
+                                                                :view  view-definition}})
+                      (assoc :on-success [::on-eval-view-definitions-success]))})))
 
 (reg-event-db
-  ::on-eval-view-definitions-success
-  (fn [db [_ result]]
-    (assoc db ::m/resource-data (:result result))))
+ ::on-eval-view-definitions-success
+ (fn [db [_ result]]
+   (assoc db ::m/resource-data (:result result))))
 
 (reg-event-db
  ::change-input-value
@@ -70,18 +70,13 @@
 
 (reg-event-db
  ::add-element-into-array
- (fn [db [_ path]]
-   (update-in db (into [:current-vd] path) (fnil conj []) {})))
+ (fn [db [_ path default-value]]
+   (update-in db (into [:current-vd] path) (fnil conj []) (or default-value {}))))
 
 (reg-event-db
  ::add-element-into-map
  (fn [db [_ path k default-value]]
    (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
-
-(reg-event-db
- ::change-mode
- (fn [db [_ mode]]
-   (assoc db :mode mode)))
 
 (defn vec-remove
   "remove elem in coll"
