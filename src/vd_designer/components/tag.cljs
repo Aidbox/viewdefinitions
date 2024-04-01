@@ -15,13 +15,10 @@
                opts)
    text])
 
-(defn foreach []
-  (tag "foreach"
-       :style {:color      "#B37804"
-               :background "#F8CE3B1A"}))
-
-(defn foreach-or-null []
-  (tag "foreach or null"
+(defn foreach [kind]
+  (tag (condp = kind
+         :forEach       "foreach"
+         :forEachOrNull "foreach or null")
        :style {:color      "#B37804"
                :background "#F8CE3B1A"}))
 

@@ -245,6 +245,15 @@
 (defn mapv-indexed [& args]
   (vec (apply map-indexed args)))
 
+(defn node-select [ctx items]
+  (let [key (str "select-" (:value-path ctx))]
+    (js/console.debug (str "node select items: " items))
+    (tree-item key
+               [tag/select]
+               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
+                     (tree-item (str "add-select-" key)
+                                [add-select ctx])))))
+
 (defn node-column [ctx items]
   (let [key (str "column-" (:value-path ctx))]
     (js/console.debug (str "node-column items: " items))
@@ -257,27 +266,16 @@
                                 [button/add "column"
                                  {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
 
-(defn node-foreach [ctx path & items]
-  (let [key (str "foreach-" (:value-path ctx))
+(defn node-foreach [kind ctx path {:keys [select]}]
+  (let [key (str kind "-" (:value-path ctx))
         ctx (drop-value-path ctx)]
-    (js/console.debug (str "for each path " path))
-    (js/console.debug (str "for each items " items))
+    (js/console.debug (str kind " path " path))
+    (js/console.debug (str kind " select " select))
     (tree-item key
-               [tag/foreach]
-               (conj [(tree-item (str (:value-path ctx) "-path") (foreach-expr ctx :forEach path))]
-                     (tree-item (str "add-foreach-" key)
-                                [add-select (add-value-path ctx :select)])))))
-
-(defn node-foreach-or-null [ctx path & items]
-  (let [key (str "foreach-or-null-" (:value-path ctx))
-        ctx (drop-value-path ctx)]
-    (js/console.debug (str "for each or null path " path))
-    (js/console.debug (str "for each or null items: " items))
-    (tree-item key
-               [tag/foreach-or-null]
-               (conj [(tree-item (str (:value-path ctx) "-path") (foreach-expr ctx :forEachOrNull path))]
-                     (tree-item (str "add-foreach-or-null-" key)
-                                [add-select (add-value-path ctx :select)])))))
+               [tag/foreach kind]
+               [(tree-item (str (:value-path ctx) "-path")
+                           (foreach-expr ctx kind path))
+                (node-select (add-value-path ctx :select) select)])))
 
 (defn node-union-all [ctx items]
   (let [key (str "union-all-" (:value-path ctx))]
@@ -287,27 +285,19 @@
                (conj []
                      (tree-item (str "add-union-all-" key) [add-select ctx])))))
 
-(defn node-select [ctx items]
-  (let [key (str "select-" (:value-path ctx))]
-    (js/console.debug (str "node select items: " items))
-    (tree-item key
-               [tag/select]
-               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
-                     (tree-item (str "add-select-" key)
-                                [add-select ctx])))))
-
 (defn select->node [ctx element]
   (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
   (js/console.debug (str "select->node: " element))
   (let [key (key (first element))]
     ((condp = key
        :column        node-column
-       :forEach       node-foreach
-       :forEachOrNull node-foreach-or-null
+       :forEach       (partial node-foreach :forEach)
+       :forEachOrNull (partial node-foreach :forEachOrNull)
        :unionAll      node-union-all
        :select        node-select)
      (add-value-path ctx key)
-     (key element))))
+     (key element)
+     element)))
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
