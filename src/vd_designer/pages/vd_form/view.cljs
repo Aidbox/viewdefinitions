@@ -13,7 +13,7 @@
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-item]]
             [vd-designer.pages.vd-form.components :refer [name-input
-                                                          resource-input]]
+                                                          resource-input one-column]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
@@ -261,15 +261,25 @@
 
 (defn node-column [ctx items]
   (let [key (str "column-" (:value-path ctx))]
-    (js/console.debug (str "node-column: " items))
-    (tree-item key [tag/column]
-               (conj (mapv-indexed #(tree-item (:value-path (add-value-path ctx %1)) %2) items)
-                     (tree-item (str "add-" key) [button/add "column"])))))
+    (js/console.debug (str "node-column items: " items))
+    (tree-item
+      key
+      [tag/column]
+      (conj (mapv-indexed (fn [idx v]
+                            (let [ctx (add-value-path ctx idx)]
+                              (tree-item (:value-path ctx) (one-column ctx v)))) items)
+            (tree-item (str "add-" key)
+                       [button/add "column"
+                        {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
 
-(defn node-foreach [prefix i items]
-  (tree-item (str "foreach-" prefix "-" i) [tag/foreach]
-             (conj []
-                   (tree-item (str "add-foreach-" prefix "-" i) [new-select]))))
+(defn node-foreach [ctx expression]
+  (js/console.debug (str "for each items " expression))
+  (tree-item (str "foreach-" (:value-path ctx))
+             [tag/foreach]
+             (conj
+               (mapv-indexed #(tree-item (:value-path (add-value-path ctx %1)) %2) expression)
+               (tree-item (str "add-foreach-" (:value-path ctx))
+                         [new-select]))))
 
 (defn node-foreach-or-null [prefix i items]
   (tree-item (str "foreach-or-null-" prefix "-" i) [tag/foreach-or-null]
@@ -287,22 +297,22 @@
              (conj (mapv (partial select->node prefix) items)
                    (tree-item (str "add-select-" prefix "-" i) [new-select]))))
 
-(defn select->node [ctx i element]
+(defn select->node [ctx element]
   (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
   (js/console.debug (str "select->node: " element))
-  (let [key (key (first element))
-        new-ctx (add-value-path ctx i)]
+  (let [key (key (first element))]
     ((condp = key
        :column        node-column
        :forEach       node-foreach
        :forEachOrNull node-foreach-or-null
        :unionAll      node-union-all
        :select        node-select)
-     new-ctx (key element))))
+     (add-value-path ctx key)
+     (key element))))
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
-        ctx (create-render-context)]
+        ctx (add-value-path (create-render-context) :select)]
     [:div
      [tree
       :onSelect (fn [selected-keys info] (js/console.log "selected" selected-keys info))
@@ -315,7 +325,8 @@
                             [(tree-item "add-where"    [button/add "where"])])
 
                  (tree-item "select"   [tag/select]
-                            (conj (mapv-indexed #(select->node ctx %1 %2) (:select vd-form))
+                            (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2)
+                                                (:select vd-form))
                                   (tree-item "add-select" [new-select])))]]
 
      #_[render-block ctx "constant" (:constant vd-form)]
