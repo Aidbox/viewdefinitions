@@ -24,7 +24,7 @@
                          opts)]])
 
 (defn fhir-path [input-overrides button-overrides]
-  [:> Space {:direction :horizontal}
+  [:> Space.Compact {:block true}
    [input (merge-with into
                       {}
                       input-overrides)]

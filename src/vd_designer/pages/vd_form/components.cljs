@@ -10,20 +10,28 @@
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :as u]))
 
-(defn row [col1 col2]
-  [:> Row {:align "middle"}
-   [:> Col {:span 8} col1]
-   [:> Col {:span 16} col2]])
+(defn base-input-row [col1 col2]
+  [:> Row {:align "middle" :gutter 32}
+   [:> Col {:span 10} col1]
+   [:> Col {:span 14} col2]])
+
+(defn nested-input-row [icon name value]
+  [base-input-row
+   [:> Row {:wrap false :align "middle" :style {:line-height "10px"}}
+    [:> Col {:flex "30px"} icon]
+    [:> Col {:flex "auto"} name]]
+   value])
+
 
 (defn name-input [vd-form]
-  [row
+  [base-input-row
    [tag/default "name"]
    [input/col-name {:value       (:name vd-form)
                     :placeholder "ViewDefinition"
                     :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
 
 (defn resource-input [vd-form]
-  [row
+  [base-input-row
    [tag/resource]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
@@ -46,22 +54,17 @@
              (u/target-value e)]))
 
 (defn one-column [ctx {:keys [name path]}]
-  [row
-   [:> Row {:wrap false :align "middle" :gutter 8 :style {:line-height "normal"}}
-    [:> Col {:span 5} [icon/column]]
-    [:> Col {:flex "auto"}
-     [input/col-name {:value       name
-                      :placeholder "name"
-                      :onChange    #(change-select-input ctx :name %)}]]]
+  [nested-input-row [icon/column]
+   [input/col-name {:value       name
+                    :placeholder "name"
+                    :onChange    #(change-select-input ctx :name %)}]
    [input/fhir-path {:onChange    #(change-select-input ctx :path %)
                      :placeholder "path"
                      :value       path}]])
 
 (defn foreach-expr [ctx key path]
-  [row
-   [:> Row {:wrap false :align "middle" :gutter 8 :style {:line-height "normal"}}
-    [:> Col {:span 5} [icon/expression]]
-    [:> Col {:flex "auto"} "expression"]]
+  [nested-input-row [icon/expression]
+   "expression"
    [input/fhir-path {:onChange    #(change-select-input ctx key %)
                      :placeholder "path"
                      :value       path}]])

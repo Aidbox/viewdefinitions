@@ -8,6 +8,7 @@
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.input :as input]
             [vd-designer.components.monaco-editor :as monaco]
+            [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-item]]
@@ -342,7 +343,7 @@
                                 :label    "YAML"
                                 :children [editor]
                                 :icon     (r/create-element icons/CodeOutlined)})]}]]
-     #_[:> Col {:span 12}
-        [table (:data resources)]]]))
+     [:> Col {:span 12}
+      [table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])
