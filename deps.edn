@@ -20,7 +20,11 @@
 
   lambdaisland/uri {:mvn/version "1.19.155"
                     :why "URI building"
-                    :github "https://github.com/lambdaisland/uri"}}
+                    :github "https://github.com/lambdaisland/uri"}
+
+  dev.weavejester/medley {:mvn/version "1.7.0"
+                          :why "Functions we wish were in Clojure core"
+                          :github "https://github.com/weavejester/medley"}}
 
  :aliases {:shadow
            {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}

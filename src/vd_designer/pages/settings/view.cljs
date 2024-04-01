@@ -1,56 +1,94 @@
 (ns vd-designer.pages.settings.view
   (:require
-    [antd :refer [List]]
-    [vd-designer.components.modal :as modal]
+    [antd :refer [List Modal]]
+    [clojure.string :as str]
+    [medley.core :as medley]
     [re-frame.core :refer [dispatch subscribe]]
+    [reagent.core :as r]
+    [vd-designer.components.button :as button]
+    [vd-designer.components.list :as components.list]
     [vd-designer.pages.settings.controller :as c]
     [vd-designer.pages.settings.model :as m]
-    [reagent.core :as r]
-    [vd-designer.components.list :as components.list]
-    [vd-designer.components.button :as button]
-    [vd-designer.utils.react :refer [js-obj->clj-map]]
-    [vd-designer.components.input :as input]
     [vd-designer.routes :as routes]
-    [vd-designer.utils.event :refer [target-value]]))
+    [vd-designer.utils.event :refer [target-value]]
+    [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
-(defn fhir-config-form []
-  (let [{:keys [server-name base-url token]} @(subscribe [::m/fhir-server-config])]
-    [:div
-     [:div
-      [:label "Name"]
-      [:input {:type        "text"
-               :value       server-name
-               :placeholder "Server name"
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :server-name (target-value %)])}]]
+(defn error-label [visible? text]
+  [:label {:hidden (not visible?)
+           :style  {:color     "red"
+                    :font-size "10px"}} text])
 
-     [:div
-      [:label "URL"]
-      [:input {:type        "text"
-               :placeholder "URL"
-               :value       base-url
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :base-url (target-value %)])}]]
+(defn fhir-config-form
+  [{:keys [server-name base-url token]} request-sent? errors-set]
+  [:div
+   [:div
+    [:label "Name"]
+    [:br]
+    [:input {:disabled    request-sent?
+             :value       server-name
+             :placeholder "Server name"
+             :on-change   #(dispatch [::c/update-fhir-server-input
+                                      :server-name (target-value %)])}]
+    [:br]
+    [error-label (:name-clash errors-set)
+     "Server with this name already exists"]]
 
-     [:div
-      [:label "Token"]
-      [:input {:type        "text"
-               :placeholder "top secret"
-               :value       token
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :token (target-value %)])}]]]))
+   [:div
+    [:label "URL"]
+    [:br]
+    [:input {:disabled    request-sent?
+             :placeholder "URL"
+             :value       base-url
+             :on-change   #(dispatch [::c/update-fhir-server-input
+                                      :base-url (target-value %)])}]]
+
+   [:div
+    [:label "Token"]
+    [:br]
+    [:input {:disabled    request-sent?
+             :placeholder "top secret"
+             :value       token
+             :on-change   #(dispatch [::c/update-fhir-server-input
+                                      :token (target-value %)])}]]
+   [error-label (:conn-clash errors-set)
+    "Server with this URL and token already exists"]])
+
+(defn some-empty-fields? [{:keys [server-name base-url token]}]
+  (or (str/blank? server-name)
+      (str/blank? base-url)
+      (str/blank? token)))
+
+(defn name-exists? [server-name existing-servers]
+  (->> existing-servers
+       (medley/find-first #(-> % :server-name (= server-name)))
+       boolean))
+
+(defn conn-exists? [{new-base-url :base-url, new-token :token} existing-servers]
+  (->> existing-servers
+       (medley/find-first (fn [{:keys [base-url token]}]
+                            (and (= new-base-url base-url)
+                                 (= new-token token))))
+       boolean))
 
 (defn edit-button []
-  (let [modal-opened? @(subscribe [::m/edit-server])]
+  (let [modal-opened? @(subscribe [::m/edit-server])
+        request-sent? @(subscribe [::m/request-sent])
+        {:keys [server-name] :as fhir-server} @(subscribe [::m/fhir-server-config])
+        existing-servers @(subscribe [::m/existing-servers])
+        errors-set (cond-> #{}
+                           (some-empty-fields? fhir-server) (conj :empty-field)
+                           (name-exists? server-name existing-servers) (conj :name-clash)
+                           (conn-exists? fhir-server existing-servers) (conj :conn-clash))]
     [:<>
      [:a {:onClick #(dispatch [::c/start-edit])} "edit"]
-     [modal/modal {:title "Edit server"
-                   :open modal-opened?
-                   :onCancel #(dispatch [::c/cancel-edit])}
-      [fhir-config-form]
-
-
-      ]]))
+     [:> Modal {:open            modal-opened?
+                :title           "Edit server"
+                :ok-text         "Add"
+                :on-ok           #(dispatch [::c/try-new-conn fhir-server])
+                :ok-button-props {:disabled (not-empty errors-set)}
+                :confirm-loading request-sent?
+                :on-cancel       #(dispatch [::c/cancel-edit])}
+      [fhir-config-form fhir-server request-sent? errors-set]]]))
 
 (defn server-list []
   [:div {:style {:width "60%"}}
@@ -60,13 +98,14 @@
                   :width           "100%"}}
     [:h1 "Servers list"]
     [button/add-view-definition "New server"
-     #_#_:on-click (fn [e] (dispatch [::c/add-view-definition]))]]
+     :on-click (fn [e] (dispatch [::c/new-server-draft]))]]
 
    [components.list/data-list
     #_#_:loading @(subscribe [::m/view-defs-loading?])
+    #_#_:dataSource @(subscribe [::m/existing-servers])
     :dataSource [{:server-name "aidbox"
-                  :base-url "https://viewdefs1.abc"
-                  :token "abc" }]
+                  :base-url    "https://viewdefs1.abc"
+                  :token       "abc"}]
     :renderItem (fn [raw-item]
                   (r/as-element
                     (let [{:keys [server-name token base-url]} (js-obj->clj-map raw-item)]
