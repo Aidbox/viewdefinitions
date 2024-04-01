@@ -256,41 +256,47 @@
 
 (declare select->node)
 
-(defn node-column [i items]
-  (tree-item (str "column" i) [tag/column]
+(defn mapv-indexed [& args]
+  (vec (apply map-indexed args)))
+
+(defn node-column [prefix i items]
+  (js/console.debug (str "node-column: " items))
+  (let [key (str "column-" prefix "-" i)]
+    (tree-item key [tag/column]
+               (conj (mapv-indexed #(tree-item (str key "-" %1) %2) items)
+                     (tree-item (str "add-" key) [button/add "column"])))))
+
+(defn node-foreach [prefix i items]
+  (tree-item (str "foreach-" prefix "-" i) [tag/foreach]
              (conj []
-                   (tree-item (str "add-column" i) [button/add "column"]))))
+                   (tree-item (str "add-foreach-" prefix "-" i) [new-select]))))
 
-(defn node-foreach [i items]
-  (tree-item (str "foreach" i) [tag/foreach]
+(defn node-foreach-or-null [prefix i items]
+  (tree-item (str "foreach-or-null-" prefix "-" i) [tag/foreach-or-null]
              (conj []
-                   (tree-item (str "add-foreach" i) [new-select]))))
+                   (tree-item (str "add-foreach-or-null-" prefix "-" i) [new-select]))))
 
-(defn node-foreach-or-null [i items]
-  (tree-item (str "foreach-or-null" i) [tag/foreach-or-null]
+(defn node-union-all [prefix i items]
+  (tree-item (str "union-all" prefix "-" i) [tag/union-all]
              (conj []
-                   (tree-item (str "add-foreach-or-null" i) [new-select]))))
+                   (tree-item (str "add-union-all-" prefix "-" i) [new-select]))))
 
-(defn node-union-all [i items]
-  (tree-item (str "union-all" i) [tag/union-all]
-             (conj []
-                   (tree-item (str "add-union-all" i) [new-select]))))
+(defn node-select [prefix i items]
+  (js/console.debug (str "node-select: " items))
+  (tree-item (str "select" prefix i) [tag/select]
+             (conj (mapv (partial select->node prefix) items)
+                   (tree-item (str "add-select-" prefix "-" i) [new-select]))))
 
-(defn node-select [i items]
-  (tree-item (str "select" i) [tag/select]
-             (conj (map select->node items)
-                   (tree-item (str "add-select" i) [new-select]))))
-
-(defn select->node [element]
+(defn select->node [prefix i element]
+  (js/console.debug (str "select->node: " element))
   (let [key (key (first element))]
-    (apply
-     (condp = key
-       :column        (partial node-column          1)
-       :forEach       (partial node-foreach         1)
-       :forEachOrNull (partial node-foreach-or-null 1)
-       :unionAll      (partial node-union-all       1)
-       :select        (partial node-select          1))
-     (key element))))
+    ((condp = key
+       :column        node-column
+       :forEach       node-foreach
+       :forEachOrNull node-foreach-or-null
+       :unionAll      node-union-all
+       :select        node-select)
+     prefix i (key element))))
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
@@ -305,8 +311,9 @@
                             [(tree-item "add-constant" [button/add "constant"])])
                  (tree-item "where"    [tag/where]
                             [(tree-item "add-where"    [button/add "where"])])
+
                  (tree-item "select"   [tag/select]
-                            (conj (mapv select->node (:select vd-form))
+                            (conj (mapv-indexed #(select->node 0 %1 %2) (:select vd-form))
                                   (tree-item "add-select" [new-select])))]]
 
      #_[render-block ctx "constant" (:constant vd-form)]
@@ -336,7 +343,7 @@
                                 :label    "YAML"
                                 :children [editor]
                                 :icon     (r/create-element icons/CodeOutlined)})]}]]
-     [:> Col {:span 12}
-      [table (:data resources)]]]))
+     #_[:> Col {:span 12}
+        [table (:data resources)]]]))
 
 (defmethod routes/pages ::c/main [] [viewdefinition-view])
