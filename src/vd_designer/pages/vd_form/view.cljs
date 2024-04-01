@@ -259,11 +259,11 @@
 (defn mapv-indexed [& args]
   (vec (apply map-indexed args)))
 
-(defn node-column [prefix i items]
-  (js/console.debug (str "node-column: " items))
-  (let [key (str "column-" prefix "-" i)]
+(defn node-column [ctx items]
+  (let [key (str "column-" (:value-path ctx))]
+    (js/console.debug (str "node-column: " items))
     (tree-item key [tag/column]
-               (conj (mapv-indexed #(tree-item (str key "-" %1) %2) items)
+               (conj (mapv-indexed #(tree-item (:value-path (add-value-path ctx %1)) %2) items)
                      (tree-item (str "add-" key) [button/add "column"])))))
 
 (defn node-foreach [prefix i items]
@@ -287,16 +287,18 @@
              (conj (mapv (partial select->node prefix) items)
                    (tree-item (str "add-select-" prefix "-" i) [new-select]))))
 
-(defn select->node [prefix i element]
+(defn select->node [ctx i element]
+  (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
   (js/console.debug (str "select->node: " element))
-  (let [key (key (first element))]
+  (let [key (key (first element))
+        new-ctx (add-value-path ctx i)]
     ((condp = key
        :column        node-column
        :forEach       node-foreach
        :forEachOrNull node-foreach-or-null
        :unionAll      node-union-all
        :select        node-select)
-     prefix i (key element))))
+     new-ctx (key element))))
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
@@ -313,7 +315,7 @@
                             [(tree-item "add-where"    [button/add "where"])])
 
                  (tree-item "select"   [tag/select]
-                            (conj (mapv-indexed #(select->node 0 %1 %2) (:select vd-form))
+                            (conj (mapv-indexed #(select->node ctx %1 %2) (:select vd-form))
                                   (tree-item "add-select" [new-select])))]]
 
      #_[render-block ctx "constant" (:constant vd-form)]
