@@ -39,11 +39,14 @@
      :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
                      (assoc :on-success [::choose-vd]))}))
 
+(defn normalize-view [view]
+  view)
+
 (reg-event-fx
   ::choose-vd
   (fn [{:keys [db]} [_ vd-id]]
     {:fx [[:dispatch [::eval-view-definition-data]]]
-     :db (assoc db :current-vd vd-id)}))
+     :db (assoc db :current-vd (normalize-view vd-id))}))
 
 (reg-event-fx
   ::eval-view-definition-data
@@ -109,3 +112,15 @@
    (update-in db
               (into [:current-vd] (butlast path))
               remove-node (last path))))
+
+
+
+; {:forEach "path"
+   ;; :column [{...}]
+   ;; }
+
+; {:forEach "path"
+;; :select [{:column [{...}]}]
+; }
+
+
