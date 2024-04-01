@@ -29,18 +29,19 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
+(defn change-select-input [ctx key e]
+  (dispatch [::c/change-input-value
+             (conj (:value-path ctx) key)
+             (u/target-value e)]))
+
 (defn one-column [ctx {:keys [name path]}]
   [row
-   [:> Row {:wrap false :align "middle" :gutter 8}
-    [:> Col {:span 4} [icon/column]]
+   [:> Row {:wrap false :align "middle" :gutter 8 :style {:line-height "normal"}}
+    [:> Col {:span 5} [icon/column]]
     [:> Col {:flex "auto"}
      [input/col-name {:value       name
                       :placeholder "name"
-                      :onChange    (fn [e] (dispatch [::c/change-input-value
-                                                      (conj (:value-path ctx) :name)
-                                                      (u/target-value e)]))}]]]
-   [input/fhir-path {:on-change (fn [e] (dispatch [::c/change-input-value
-                                                   (conj (:value-path ctx) :path)
-                                                   (u/target-value e)]))
+                      :onChange    #(change-select-input ctx :name %)}]]]
+   [input/fhir-path {:onChange    #(change-select-input ctx :path %)
                      :placeholder "path"
-                     :value path}]])
+                     :value       path}]])
