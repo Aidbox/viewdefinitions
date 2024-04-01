@@ -282,7 +282,7 @@
     (js/console.debug (str "union all items: " items))
     (tree-item key
                [tag/union-all]
-               (conj []
+               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
                      (tree-item (str "add-union-all-" key) [add-select ctx])))))
 
 (defn select->node [ctx element]
