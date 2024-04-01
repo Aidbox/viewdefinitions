@@ -2,8 +2,12 @@
   (:require [ajax.core :as ajax]
             [lambdaisland.uri :as uri]))
 
+(defn active-server [db]
+  (let [{:keys [servers used-server-name]} (:cfg/fhir-servers db)]
+    (servers used-server-name)))
+
 (defn- with-defaults [req db]
-  (merge {:headers          {:Authorization (-> db :fhir-server :token)}
+  (merge {:headers          {:Authorization (-> db active-server :token)}
           :timeout          8000
           :with-credentials true
           :response-format  (ajax/json-response-format {:keywords? true})
@@ -12,7 +16,7 @@
          req))
 
 (defn base-url+path [db path]
-  (-> db :fhir-server :base-url
+  (-> db active-server :base-url
       uri/uri
       (assoc :path path)
       uri/uri-str))
