@@ -6,3 +6,9 @@
   ::fhir-server-config
   (fn [db _]
     (:fhir-server db)))
+
+(reg-sub
+  ::edit-server
+  (fn [db _]
+    (:edit-server db)))
+

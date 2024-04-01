@@ -13,3 +13,13 @@
   ::update-fhir-server-input
   (fn [db [_ path new-val]]
     (assoc-in db [:fhir-server path] new-val)))
+
+(reg-event-db
+  ::start-edit
+  (fn [db [_]]
+    (assoc db :edit-server true)))
+
+(reg-event-db
+  ::cancel-edit
+  (fn [db [_]]
+    (assoc db :edit-server false)))
