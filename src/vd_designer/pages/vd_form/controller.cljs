@@ -73,11 +73,6 @@
  (fn [db [_ path default-value]]
    (update-in db (into [:current-vd] path) (fnil conj []) (or default-value {}))))
 
-(reg-event-db
- ::add-element-into-map
- (fn [db [_ path k default-value]]
-   (update-in db (into [:current-vd] path) assoc k (or default-value ""))))
-
 (defn vec-remove
   "remove elem in coll"
   [pos coll]
