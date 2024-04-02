@@ -14,11 +14,7 @@
     (-> db :cfg/fhir-servers :servers vals)))
 
 (reg-sub
-  ::edit-server
+  ::original-server
   (fn [db _]
-    (:edit-server db)))
+    (:original-server db)))
 
-(reg-sub
-  ::request-sent
-  (fn [db _]
-    (::c/request-sent db)))

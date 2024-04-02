@@ -16,50 +16,68 @@
   (fn [db [_ path new-val]]
     (assoc-in db [:fhir-server path] new-val)))
 
+
 (reg-event-db
-  ::start-new-server
+  ::new-server
   (fn [db [_]]
-    (assoc db :edit-server true)))
+    (assoc db :original-server {})))
 
 (reg-event-db
   ::start-edit
-  (fn [db [_]]
-    (assoc db :edit-server true)))
+  (fn [db [_ server-cfg]]
+    (assoc db
+           :original-server server-cfg
+           :fhir-server server-cfg)))
 
-(reg-event-fx
-  ::try-new-conn
-  (fn [{db :db} [_ {:keys [base-url token] :as _fhir-server}]]
-    {:db         (assoc db ::request-sent true)
-     :http-xhrio (-> (http.fhir-server/get-view-definitions db)
-                     (assoc :uri (-> base-url uri/uri
-                                     (assoc :path "/ViewDefinition")
-                                     uri/uri-str)
-                            :headers {:Authorization token}
-                            :on-success [::got-view-definitions]
-                            #_#_:on-failure [::todo]))}))
-
-(defn add-new-server [db set-active]
+(defn add-new-server [db]
   (let [{:keys [server-name] :as new-server}
         (-> db :fhir-server (select-keys [:server-name :base-url :token]))]
     (if (some-> db :cfg/fhir-servers :servers not-empty)
-      (-> db
-          (update-in [:cfg/fhir-servers :servers] merge {server-name new-server})
-          (cond-> set-active
-                  (assoc-in [:cfg/fhir-servers :used-server-name] server-name)))
+      (update-in db [:cfg/fhir-servers :servers] merge {server-name new-server})
       (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
                                    :used-server-name server-name}))))
 
+(defn edit-server [db]
+  (let [prev-server (:original-server db)
+        {:keys [server-name] :as edited-server} (-> db :fhir-server)]
+    (-> db
+        (update-in [:cfg/fhir-servers :servers] dissoc (:server-name prev-server))
+        (assoc-in [:cfg/fhir-servers :servers server-name] edited-server))))
+
 (reg-event-fx
-  ::got-view-definitions
-  #_[(inject-cofx :local-store :local-store/test)]
+  ::add-server
+  (fn [{db :db} [_]]
+    (if (seq (:original-server db))
+      {:db (-> (edit-server db)
+               (dissoc :original-server :fhir-server))}
+      {:db (-> db
+               (add-new-server)
+               (dissoc :original-server :fhir-server))})))
+
+(reg-event-fx
+  ::connect
+  (fn [{db :db} [_ {:keys [base-url token] :as _fhir-server}]]
+    {:db         (assoc db ::request-sent true)
+     :http-xhrio
+     (-> (http.fhir-server/get-view-definitions db)
+         (assoc :uri (-> base-url uri/uri
+                         (assoc :path "/ViewDefinition")
+                         uri/uri-str)
+                :headers {:Authorization token}
+                :on-success [::connected]
+                :on-failure [::not-connected]))}))
+
+(reg-event-fx
+  ::connected
   (fn [{:keys [db local-store]} [_ result]]
-    (let [set-active (-> db :fhir-server :set-active)]
-      {:db (-> db (add-new-server set-active)
-               (cond->
-                 set-active (assoc :view-definitions (:entry result)))
-               (dissoc ::request-sent :edit-server :fhir-server))})))
+    {:db (dissoc db ::request-sent :edit-server :fhir-server)}))
+
+(reg-event-fx
+  ::not-connected
+  (fn [{:keys [db]} [_ result]]
+    {:db (assoc db :error "error!!!!!!")}))
 
 (reg-event-db
   ::cancel-edit
   (fn [db [_]]
-    (dissoc db :edit-server :fhir-server)))
+    (dissoc db :fhir-server :original-server)))
