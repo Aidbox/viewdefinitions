@@ -39,12 +39,13 @@
                             :on-success [::got-view-definitions]
                             #_#_:on-failure [::todo]))}))
 
-(defn add-new-server [db set-active?]
-  (let [{:keys [server-name] :as new-server} (:fhir-server db)]
+(defn add-new-server [db set-active]
+  (let [{:keys [server-name] :as new-server}
+        (-> db :fhir-server (select-keys [:server-name :base-url :token]))]
     (if (some-> db :cfg/fhir-servers :servers not-empty)
       (-> db
           (update-in [:cfg/fhir-servers :servers] merge {server-name new-server})
-          (cond-> set-active?
+          (cond-> set-active
                   (assoc-in [:cfg/fhir-servers :used-server-name] server-name)))
       (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
                                    :used-server-name server-name}))))
@@ -53,10 +54,12 @@
   ::got-view-definitions
   #_[(inject-cofx :local-store :local-store/test)]
   (fn [{:keys [db local-store]} [_ result]]
-    {:db (-> db (add-new-server false)                      ;; TODO: add handling of setting as active
-             #_(assoc :view-definitions (:entry result))    ;;  <- if set-active: true
-             (dissoc ::request-sent :new-server-draft
-                     :edit-server :fhir-server ))}))
+    (let [set-active (-> db :fhir-server :set-active)]
+      {:db (-> db (add-new-server set-active)
+               (cond->
+                 set-active (assoc :view-definitions (:entry result)))
+               (dissoc ::request-sent :new-server-draft
+                       :edit-server :fhir-server))})))
 
 (reg-event-db
   ::cancel-edit

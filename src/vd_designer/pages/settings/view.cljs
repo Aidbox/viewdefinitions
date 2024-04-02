@@ -1,6 +1,6 @@
 (ns vd-designer.pages.settings.view
   (:require
-    [antd :refer [List Modal]]
+    [antd :refer [List Modal Checkbox]]
     [clojure.string :as str]
     [medley.core :as medley]
     [re-frame.core :refer [dispatch subscribe]]
@@ -51,7 +51,10 @@
              :on-change   #(dispatch [::c/update-fhir-server-input
                                       :token (target-value %)])}]]
    [error-label (:conn-clash errors-set)
-    "Server with this URL and token already exists"]])
+    "Server with this URL and token already exists"]
+   [:> Checkbox {:on-change #(dispatch [::c/update-fhir-server-input
+                                        :set-active (.. % -target -checked)])}
+    "set active"]])
 
 (defn some-empty-fields? [{:keys [server-name base-url token]}]
   (or (str/blank? server-name)
@@ -102,10 +105,7 @@
 
    [components.list/data-list
     #_#_:loading @(subscribe [::m/view-defs-loading?])
-    #_#_:dataSource @(subscribe [::m/existing-servers])
-    :dataSource [{:server-name "aidbox"
-                  :base-url    "https://viewdefs1.abc"
-                  :token       "abc"}]
+    :dataSource @(subscribe [::m/existing-servers])
     :renderItem (fn [raw-item]
                   (r/as-element
                     (let [{:keys [server-name token base-url]} (js-obj->clj-map raw-item)]
