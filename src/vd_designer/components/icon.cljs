@@ -17,3 +17,9 @@
 
 (defn expression [& {:as args}]
   (icon "/img/form/expr.svg" args))
+
+(defn constant [& {:as args}]
+  (icon "/img/form/constant.svg" args))
+
+(defn where [& {:as args}]
+  (icon "/img/form/where.svg" args))

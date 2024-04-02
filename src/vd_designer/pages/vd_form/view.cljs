@@ -14,6 +14,8 @@
                                                           foreach-expr
                                                           name-input
                                                           one-column
+                                                          one-constant
+                                                          one-where
                                                           resource-input]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
@@ -147,6 +149,28 @@
 (defn mapv-indexed [& args]
   (vec (apply map-indexed args)))
 
+(defn node-constant [ctx items]
+  (let [key (str "constant-" (:value-path ctx))]
+    (js/console.debug (str "node constant items: " items))
+    (tree-item key
+               [tag/constant]
+               (conj (mapv-indexed (fn [idx constant]
+                                     (let [ctx (add-value-path ctx idx)]
+                                       (tree-item (:value-path ctx) (one-constant ctx constant)))) items)
+                     (tree-item (str "add-constant-" key)
+                                [add-element-button "constant" ctx])))))
+
+(defn node-where [ctx items]
+  (let [key (str "where-" (:value-path ctx))]
+    (js/console.debug (str "node where items: " items))
+    (tree-item key
+               [tag/where]
+               (conj (mapv-indexed (fn [idx where]
+                                     (let [ctx (add-value-path ctx idx)]
+                                       (tree-item (:value-path ctx) (one-where ctx where)))) items)
+                     (tree-item (str "add-where-" key)
+                                [add-element-button "where" ctx])))))
+
 (defn node-select [ctx items]
   (let [key (str "select-" (:value-path ctx))]
     (js/console.debug (str "node select items: " items))
@@ -161,12 +185,11 @@
     (js/console.debug (str "node-column items: " items))
     (tree-item key
                [tag/column]
-               (conj (mapv-indexed (fn [idx v]
+               (conj (mapv-indexed (fn [idx column]
                                      (let [ctx (add-value-path ctx idx)]
-                                       (tree-item (:value-path ctx) (one-column ctx v)))) items)
+                                       (tree-item (:value-path ctx) (one-column ctx column)))) items)
                      (tree-item (str "add-column-" key)
-                                [add-element-button "column"
-                                 {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
+                                [add-element-button "column" ctx])))))
 
 (defn node-foreach [kind ctx path {:keys [select]}]
   (let [key (str kind "-" (:value-path ctx))
@@ -203,22 +226,17 @@
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
-        ctx (add-value-path (create-render-context) :select)]
+        ctx (create-render-context)]
     [:div
      [tree
       :onSelect (fn [selected-keys info] (js/console.log "selected" selected-keys info))
       :defaultExpandAll true
       :treeData [(tree-item "name"     (name-input vd-form))
                  (tree-item "resource" (resource-input vd-form))
-                 (tree-item "constant" [tag/constant]
-                            [(tree-item "add-constant" [add-element-button "constant"])])
-                 (tree-item "where"    [tag/where]
-                            [(tree-item "add-where"    [add-element-button "where"])])
 
-                 (node-select ctx (:select vd-form))]]
-
-     #_[render-block ctx "constant" (:constant vd-form)]
-     #_[render-block ctx "where" (:where vd-form)]]))
+                 (node-constant (add-value-path ctx :constant) (:constant vd-form))
+                 (node-where    (add-value-path ctx :where)    (:where vd-form))
+                 (node-select   (add-value-path ctx :select)   (:select vd-form))]]]))
 
 (defn editor []
   (let [current-vd @(subscribe [::m/current-vd])]

@@ -60,6 +60,19 @@
    [button/invisible-icon icons/SettingOutlined]
    [button/invisible-icon icons/CloseOutlined {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
 
+(defn one-constant [ctx {:keys [name valueString]}]
+  [nested-input-row [icon/constant]
+   [input {:value       name
+           :placeholder "name"
+           :style       {:font-style "normal"}
+           :onChange    #(change-select-value ctx :name %)}]
+   [fhir-path-input ctx :valueString valueString]])
+
+(defn one-where [ctx {:keys [path]}]
+  [nested-input-row [icon/where]
+   "expression"
+   [fhir-path-input ctx :path path]])
+
 (defn one-column [ctx {:keys [name path]}]
   [nested-input-row [icon/column]
    [input {:value       name
@@ -76,8 +89,9 @@
 
 ;;;; Buttons
 
-(defn add-element-button [name]
-  [button/ghost name icons/PlusOutlined])
+(defn add-element-button [name ctx]
+  [button/ghost name icons/PlusOutlined
+   {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
