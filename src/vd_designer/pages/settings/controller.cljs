@@ -17,10 +17,9 @@
     (assoc-in db [:fhir-server path] new-val)))
 
 (reg-event-db
-  ::new-server-draft
+  ::start-new-server
   (fn [db [_]]
-    (assoc db :edit-server true
-              :new-server-draft true)))
+    (assoc db :edit-server true)))
 
 (reg-event-db
   ::start-edit
@@ -58,8 +57,7 @@
       {:db (-> db (add-new-server set-active)
                (cond->
                  set-active (assoc :view-definitions (:entry result)))
-               (dissoc ::request-sent :new-server-draft
-                       :edit-server :fhir-server))})))
+               (dissoc ::request-sent :edit-server :fhir-server))})))
 
 (reg-event-db
   ::cancel-edit

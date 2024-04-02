@@ -101,7 +101,7 @@
                   :width           "100%"}}
     [:h1 "Servers list"]
     [button/add-view-definition "New server"
-     :on-click (fn [e] (dispatch [::c/new-server-draft]))]]
+     :on-click (fn [e] (dispatch [::c/start-new-server]))]]
 
    [components.list/data-list
     #_#_:loading @(subscribe [::m/view-defs-loading?])
