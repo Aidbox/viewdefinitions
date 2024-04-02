@@ -19,6 +19,6 @@
                         {:showIcon     true
                          :showLine     true
                          :blockNode    true
-                         :class "vd-tree"
+                         :class        "vd-tree"
                          :switcherIcon (r/create-element icons/DownOutlined)}
                         opts)]])

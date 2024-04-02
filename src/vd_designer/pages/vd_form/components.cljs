@@ -13,6 +13,11 @@
 
 ;;;; Rows
 
+(defn base-node-row [col1 col2]
+  [:> Row {:align "middle"}
+   [:> Col {:flex "auto"} col1]
+   [:> Col {:flex "30px"} col2]])
+
 (defn base-input-row [col1 col2]
   [:> Row {:align "middle" :gutter 32}
    [:> Col {:span 10} col1]
@@ -24,6 +29,31 @@
     [:> Col {:flex "30px"} icon]
     [:> Col {:flex "auto"} name]]
    value])
+
+
+;;;; Buttons
+
+(defn add-element-button [name ctx]
+  [button/ghost name icons/PlusOutlined
+   {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])
+
+(defn add-select-button [ctx]
+  (let [key #(keyword (.-key %))]
+    [new-select #(dispatch [::c/add-element-into-array
+                            (:value-path ctx)
+                            (condp = (key %)
+                              :column        {:column   []}
+                              :forEach       {:forEach       "" :select []}
+                              :forEachOrNull {:forEachOrNull "" :select []}
+                              :unionAll      {:unionAll []})])]))
+
+
+(defn delete-button [ctx]
+  [button/invisible-icon icons/CloseOutlined
+   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
+
+(defn settings-button [_ctx]
+  [button/invisible-icon icons/SettingOutlined])
 
 
 ;;;; Inputs
@@ -49,30 +79,12 @@
              (conj (:value-path ctx) key)
              (u/target-value e)]))
 
-(defn fhir-path-input [ctx key value]
+(defn fhir-path-input [ctx key value deletable?]
   [:> Space.Compact {:block true
                      :style {:align-items "center"
                              :gap         "4px"}}
    [input {:placeholder "path"
            :value       value
            :onChange    #(change-select-value ctx key %)}]
-   [button/invisible-icon icons/SettingOutlined]
-   [button/invisible-icon icons/CloseOutlined
-    {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
-
-
-;;;; Buttons
-
-(defn add-element-button [name ctx]
-  [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])
-
-(defn add-select-button [ctx]
-  (let [key #(keyword (.-key %))]
-    [new-select #(dispatch [::c/add-element-into-array
-                            (:value-path ctx)
-                            (condp = (key %)
-                              :column        {:column   []}
-                              :forEach       {:forEach       "" :select []}
-                              :forEachOrNull {:forEachOrNull "" :select []}
-                              :unionAll      {:unionAll []})])]))
+   [settings-button ctx]
+   (when deletable? [delete-button ctx])])

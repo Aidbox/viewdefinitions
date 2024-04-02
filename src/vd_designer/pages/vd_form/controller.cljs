@@ -73,16 +73,14 @@
 
 (defn vec-remove
   "remove elem in coll"
-  [pos coll]
-  (into (subvec coll 0 pos) (subvec coll (inc pos))))
+  [node key]
+  (into (subvec node 0 key)
+        (subvec node (inc key))))
 
 (defn remove-node [node key]
   (cond
-    (map? node)
-    (dissoc node key)
-
-    (vector? node)
-    (vec-remove key node)))
+    (map? node)    (dissoc node key)
+    (vector? node) (vec-remove node key)))
 
 (reg-event-db
  ::change-vd-resource
@@ -95,8 +93,9 @@
    (assoc-in db [:current-vd :name] value)))
 
 (reg-event-db
- ::delete-node
+ ::delete-tree-element
  (fn [db [_ path]]
    (update-in db
-              (into [:current-vd] (butlast path))
-              remove-node (last path))))
+              (into [:current-vd] (pop path))
+              remove-node
+              (peek path))))

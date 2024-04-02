@@ -29,7 +29,9 @@ button {
   opacity: 0;
 }
 
-*:hover>.invisible-button {
+*:hover>.invisible-button,
+*:hover>*>.invisible-button,
+*:hover>*>*>.invisible-button {
   visibility: visible;
   opacity: 1;
 }
