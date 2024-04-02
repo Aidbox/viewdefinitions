@@ -16,7 +16,7 @@
                          {:classNames {:input "default-input"}
                           :style      {:font-style       "italic"
                                        :border           "none"
-                                       :border-bottom    "1px solid #fff"
+                                       :border-bottom    "1px solid transparent"
                                        :border-radius    0
                                        :background-color "transparent"}}
                          opts)]])
