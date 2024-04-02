@@ -57,7 +57,7 @@
 (reg-event-fx
   ::connect
   (fn [{db :db} [_ {:keys [base-url token] :as _fhir-server}]]
-    {:db         (assoc db ::request-sent true)
+    {:db (assoc db ::request-sent true)
      :http-xhrio
      (-> (http.fhir-server/get-view-definitions db)
          (assoc :uri (-> base-url uri/uri
@@ -81,3 +81,11 @@
   ::cancel-edit
   (fn [db [_]]
     (dissoc db :fhir-server :original-server)))
+
+(reg-event-db
+  ::delete
+  (fn [db [_ {:keys [server-name]}]]
+    (-> db
+        (update-in [:cfg/fhir-servers :servers] dissoc server-name)
+        (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
+                (update :cfg/fhir-servers dissoc :used-server-name)))))

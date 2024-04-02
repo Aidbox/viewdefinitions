@@ -102,8 +102,10 @@
                       [:> List.Item
                        {:actions (mapv #(r/as-element (% server-config))
                                       [(fn [id] [:a {:onClick #(dispatch [::c/connect])} "connect"])
-                                       (fn [server-config] [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                                       (fn [id] [:a {:onClick #(js/console.log "deleted")} "delete"])])}
+                                       (fn [server-config]
+                                         [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                                       (fn [server-config]
+                                         [:a {:onClick #(dispatch [::c/delete server-config])} "delete"])])}
                        [:> List.Item.Meta
                         {:title
                          (r/as-element
