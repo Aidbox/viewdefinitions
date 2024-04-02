@@ -12,7 +12,7 @@
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-item]]
-            [vd-designer.pages.vd-form.components :refer [add-select
+            [vd-designer.pages.vd-form.components :refer [add-select-button
                                                           foreach-expr
                                                           name-input
                                                           one-column
@@ -253,7 +253,7 @@
                [tag/select]
                (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
                      (tree-item (str "add-select-" key)
-                                [add-select ctx])))))
+                                [add-select-button ctx])))))
 
 (defn node-column [ctx items]
   (let [key (str "column-" (:value-path ctx))]
@@ -284,7 +284,7 @@
     (tree-item key
                [tag/union-all]
                (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
-                     (tree-item (str "add-union-all-" key) [add-select ctx])))))
+                     (tree-item (str "add-union-all-" key) [add-select-button ctx])))))
 
 (defn select->node [ctx element]
   (js/console.debug (str "select->node (ctx): " (:value-path ctx)))

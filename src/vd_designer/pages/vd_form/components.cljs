@@ -1,14 +1,17 @@
 (ns vd-designer.pages.vd-form.components
-  (:require [antd :refer [Col Row]]
+  (:require [antd :refer [Button Col Row Space]]
+            [vd-designer.utils.react :refer [create-react-image]]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.icon :as icon]
-            [vd-designer.components.input :as input]
+            [vd-designer.components.input :refer [input]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :as u]))
+
+;;;; Rows
 
 (defn base-input-row [col1 col2]
   [:> Row {:align "middle" :gutter 32}
@@ -23,12 +26,15 @@
    value])
 
 
+;;;; Inputs
+
 (defn name-input [vd-form]
   [base-input-row
    [tag/default "name"]
-   [input/col-name {:value       (:name vd-form)
-                    :placeholder "ViewDefinition"
-                    :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
+   [input {:value       (:name vd-form)
+           :placeholder "ViewDefinition"
+           :style       {:font-style "normal"}
+           :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
 
 (defn resource-input [vd-form]
   [base-input-row
@@ -38,7 +44,37 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-(defn add-select [ctx]
+(defn- change-select-value [ctx key e]
+  (dispatch [::c/change-input-value
+             (conj (:value-path ctx) key)
+             (u/target-value e)]))
+
+(defn fhir-path-input [ctx key value]
+  [:> Space.Compact {:block true}
+   [input {:placeholder "path"
+           :value       value
+           :onChange    #(change-select-value ctx key %)}]
+   [:> Button {:style {:border           :none
+                       :background-color "transparent"}}
+
+    (create-react-image "/img/input/expand.svg")]])
+
+(defn one-column [ctx {:keys [name path]}]
+  [nested-input-row [icon/column]
+   [input {:value       name
+           :placeholder "name"
+           :style       {:font-style "normal"}
+           :onChange    #(change-select-value ctx :name %)}]
+   [fhir-path-input ctx :path path]])
+
+(defn foreach-expr [ctx key path]
+  [nested-input-row [icon/expression]
+   "expression"
+   [fhir-path-input ctx key path]])
+
+;;;; Buttons
+
+(defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
     [new-select #(dispatch [::c/add-element-into-array
                             (:value-path ctx)
@@ -47,24 +83,3 @@
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
                               :unionAll      {:unionAll []})])]))
-
-(defn change-select-input [ctx key e]
-  (dispatch [::c/change-input-value
-             (conj (:value-path ctx) key)
-             (u/target-value e)]))
-
-(defn one-column [ctx {:keys [name path]}]
-  [nested-input-row [icon/column]
-   [input/col-name {:value       name
-                    :placeholder "name"
-                    :onChange    #(change-select-input ctx :name %)}]
-   [input/fhir-path {:onChange    #(change-select-input ctx :path %)
-                     :placeholder "path"
-                     :value       path}]])
-
-(defn foreach-expr [ctx key path]
-  [nested-input-row [icon/expression]
-   "expression"
-   [input/fhir-path {:onChange    #(change-select-input ctx key %)
-                     :placeholder "path"
-                     :value       path}]])
