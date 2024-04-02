@@ -6,13 +6,13 @@
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.dropdown :refer [new-select]]
-            [vd-designer.components.input :as input]
             [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-item]]
-            [vd-designer.pages.vd-form.components :refer [add-select-button
+            [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                          add-select-button
                                                           foreach-expr
                                                           name-input
                                                           one-column
@@ -20,7 +20,6 @@
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
-            [vd-designer.utils.event :as u]
             [vd-designer.utils.react :refer [create-react-image
                                              js-obj->clj-map]]
             [vd-designer.utils.yaml :as yaml]))
@@ -150,12 +149,12 @@
             :justify "space-between"}
     [select-field-render name]
     [:> Row {:align "middle"}
-     [input/fhir-path {:on-change
-                       #(dispatch [::c/change-input-value
-                                   (conj (:value-path ctx) name)
-                                   (u/target-value %)])
-                       :value value}]
-     [button/delete {:onClick #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
+     #_[input/fhir-path {:on-change
+                         #(dispatch [::c/change-input-value
+                                     (conj (:value-path ctx) name)
+                                     (u/target-value %)])
+                         :value value}]
+     #_[button/delete {:onClick #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
 
 (defn key->tag [key]
   (get {:select [tag/select]
@@ -192,7 +191,7 @@
                                                              (get elements "elements") {}
                                                              :else "")]
                                          (dispatch [::c/add-element-into-map (:value-path ctx) (keyword k) default-value])))})))]
-        [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]]
+        #_[button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]]
        [:<>
         (for [[k v] map-value]
           ^{:key (conj (:spec-path ctx) k)}
@@ -204,15 +203,15 @@
     [:> Row {:justify "space-between"
              :align "middle"}
      (key->tag k)
-     (when-not (= [:select] (:value-path ctx))
-       [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}])]
+     #_(when-not (= [:select] (:value-path ctx))
+         [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}])]
     (map-indexed
      (fn [idx element]
        ^{:key (conj (:value-path ctx) idx)}
        [render-map (add-value-path ctx idx) "ITEM" element])
      value)
-    [button/add (name k)
-     {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}]]])
+    #_[button/add (name k)
+       {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}]]])
 
 (defn render-block [ctx k v]
   (cond
@@ -264,7 +263,7 @@
                                      (let [ctx (add-value-path ctx idx)]
                                        (tree-item (:value-path ctx) (one-column ctx v)))) items)
                      (tree-item (str "add-column-" key)
-                                [button/add "column"
+                                [add-element-button "column"
                                  {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])))))
 
 (defn node-foreach [kind ctx path {:keys [select]}]
@@ -310,9 +309,9 @@
       :treeData [(tree-item "name"     (name-input vd-form))
                  (tree-item "resource" (resource-input vd-form))
                  (tree-item "constant" [tag/constant]
-                            [(tree-item "add-constant" [button/add "constant"])])
+                            [(tree-item "add-constant" [add-element-button "constant"])])
                  (tree-item "where"    [tag/where]
-                            [(tree-item "add-where"    [button/add "where"])])
+                            [(tree-item "add-where"    [add-element-button "where"])])
 
                  (node-select ctx (:select vd-form))]]
 

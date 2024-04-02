@@ -24,12 +24,12 @@ button {
 
 /* BUTTONS */
 
-.delete-button {
+.invisible-button {
   visibility: hidden;
   opacity: 0;
 }
 
-*:hover>.delete-button {
+*:hover>.invisible-button {
   visibility: visible;
   opacity: 1;
 }

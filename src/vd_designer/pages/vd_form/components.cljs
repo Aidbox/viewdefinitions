@@ -1,7 +1,8 @@
 (ns vd-designer.pages.vd-form.components
-  (:require [antd :refer [Button Col Row Space]]
-            [vd-designer.utils.react :refer [create-react-image]]
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [Col Row Space]]
             [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
@@ -50,14 +51,14 @@
              (u/target-value e)]))
 
 (defn fhir-path-input [ctx key value]
-  [:> Space.Compact {:block true}
+  [:> Space.Compact {:block true
+                     :style {:align-items "center"
+                             :gap         "4px"}}
    [input {:placeholder "path"
            :value       value
            :onChange    #(change-select-value ctx key %)}]
-   [:> Button {:style {:border           :none
-                       :background-color "transparent"}}
-
-    (create-react-image "/img/input/expand.svg")]])
+   [button/invisible-icon icons/SettingOutlined]
+   [button/invisible-icon icons/CloseOutlined {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
 
 (defn one-column [ctx {:keys [name path]}]
   [nested-input-row [icon/column]
@@ -72,7 +73,11 @@
    "expression"
    [fhir-path-input ctx key path]])
 
+
 ;;;; Buttons
+
+(defn add-element-button [name]
+  [button/ghost name icons/PlusOutlined])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]

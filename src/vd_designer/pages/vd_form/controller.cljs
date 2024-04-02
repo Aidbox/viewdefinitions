@@ -107,15 +107,3 @@
    (update-in db
               (into [:current-vd] (butlast path))
               remove-node (last path))))
-
-
-
-; {:forEach "path"
-   ;; :column [{...}]
-   ;; }
-
-; {:forEach "path"
-;; :select [{:column [{...}]}]
-; }
-
-
