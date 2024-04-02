@@ -4,14 +4,9 @@
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
-            [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
-            [vd-designer.components.tree :refer [tree-item]]
-            [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                           drop-value-path
-                                                           mapv-indexed]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :as u]))
@@ -49,7 +44,7 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-(defn- change-select-value [ctx key e]
+(defn change-select-value [ctx key e]
   (dispatch [::c/change-input-value
              (conj (:value-path ctx) key)
              (u/target-value e)]))
@@ -62,7 +57,8 @@
            :value       value
            :onChange    #(change-select-value ctx key %)}]
    [button/invisible-icon icons/SettingOutlined]
-   [button/invisible-icon icons/CloseOutlined {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
+   [button/invisible-icon icons/CloseOutlined
+    {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
 
 
 ;;;; Buttons
@@ -80,97 +76,3 @@
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
                               :unionAll      {:unionAll []})])]))
-
-
-;;;; Tree
-
-;; Leafs
-
-(defn- general-leaf [ctx icon name-key name value-key value]
-  [nested-input-row
-   [icon]
-   (if (nil? name-key)
-     name
-     [input {:value       name
-             :placeholder "name"
-             :style       {:font-style "normal"}
-             :onChange    #(change-select-value ctx name-key %)}])
-   [fhir-path-input ctx value-key value]])
-
-(defn constant-leaf [ctx {:keys [name valueString]}]
-  [general-leaf ctx icon/constant :name name :valueString valueString])
-
-(defn where-leaf [ctx {:keys [path]}]
-  [general-leaf ctx icon/where nil "expression" :path path])
-
-(defn column-leaf [ctx {:keys [name path]}]
-  [general-leaf ctx icon/column :name name :path path])
-
-(defn foreach-expr-leaf [ctx key path]
-  [general-leaf ctx icon/expression nil "expression" key path])
-
-
-;; Nodes
-
-(declare select->node)
-
-(defn- general-flat-node [ctx label tag items leaf]
-  (let [key (str label "-" (:value-path ctx))]
-    (js/console.debug (str "node " label " items: " items))
-    (tree-item key
-               [tag]
-               (conj (mapv-indexed (fn [idx item]
-                                     (let [ctx (add-value-path ctx idx)]
-                                       (tree-item (:value-path ctx) (leaf ctx item)))) items)
-                     (tree-item (str "add-" label "-" key)
-                                [add-element-button label ctx])))))
-
-(defn constant-node [ctx items]
-  (general-flat-node ctx "constant" tag/constant items constant-leaf))
-
-(defn where-node [ctx items]
-  (general-flat-node ctx "where" tag/where items where-leaf))
-
-(defn column-node [ctx items]
-  (general-flat-node ctx "column" tag/column items column-leaf))
-
-
-
-(defn- general-nested-node [ctx label tag items]
-  (let [key (str label "-" (:value-path ctx))]
-    (js/console.debug (str "node " label " items: " items))
-    (tree-item key
-               [tag]
-               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
-                     (tree-item (str "add-" label "-" key) [add-select-button ctx])))))
-
-(defn select-node [ctx items]
-  (general-nested-node ctx "select" tag/select items))
-
-(defn union-all-node [ctx items]
-  (general-nested-node ctx "union-all" tag/union-all items))
-
-(defn node-foreach [kind ctx path {:keys [select]}]
-  (let [key (str kind "-" (:value-path ctx))
-        ctx (drop-value-path ctx)]
-    (js/console.debug (str kind " path " path))
-    (js/console.debug (str kind " select " select))
-    (tree-item key
-               [tag/foreach kind]
-               [(tree-item (str (:value-path ctx) "-path")
-                           (foreach-expr-leaf ctx kind path))
-                (select-node (add-value-path ctx :select) select)])))
-
-(defn select->node [ctx element]
-  (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
-  (js/console.debug (str "select->node: " element))
-  (let [key (key (first element))]
-    ((condp = key
-       :column        column-node
-       :forEach       (partial node-foreach :forEach)
-       :forEachOrNull (partial node-foreach :forEachOrNull)
-       :unionAll      union-all-node
-       :select        select-node)
-     (add-value-path ctx key)
-     (key element)
-     element)))
