@@ -11,10 +11,20 @@
 (reg-sub
   ::existing-servers
   (fn [db _]
-    (-> db :cfg/fhir-servers :servers vals)))
+    (or (-> db :cfg/fhir-servers :servers vals)
+        [])))
 
 (reg-sub
   ::original-server
   (fn [db _]
     (:original-server db)))
 
+(reg-sub
+  ::request-sent-by
+  (fn [db _]
+    (::c/request-sent-by db)))
+
+(reg-sub
+  ::used-server-name
+  (fn [db _]
+    (-> db :cfg/fhir-servers :used-server-name)))

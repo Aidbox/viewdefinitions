@@ -56,21 +56,24 @@
 
 (reg-event-fx
   ::connect
-  (fn [{db :db} [_ {:keys [base-url token] :as _fhir-server}]]
-    {:db (assoc db ::request-sent true)
+  (fn [{db :db} [_ {:keys [server-name base-url token]}]]
+    {:db (assoc db ::request-sent-by server-name)
      :http-xhrio
      (-> (http.fhir-server/get-view-definitions db)
          (assoc :uri (-> base-url uri/uri
                          (assoc :path "/ViewDefinition")
                          uri/uri-str)
                 :headers {:Authorization token}
-                :on-success [::connected]
+                :on-success [::connected server-name]
                 :on-failure [::not-connected]))}))
 
 (reg-event-fx
   ::connected
-  (fn [{:keys [db local-store]} [_ result]]
-    {:db (dissoc db ::request-sent :edit-server :fhir-server)}))
+  (fn [{:keys [db local-store]} [_ server-name result]]
+    {:db (-> db
+             (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
+             (assoc :view-definitions (:entry result))
+             (dissoc ::request-sent-by :edit-server :fhir-server))}))
 
 (reg-event-fx
   ::not-connected

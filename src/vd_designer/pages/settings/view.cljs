@@ -71,46 +71,60 @@
         fhir-server @(subscribe [::m/fhir-server-config])
         existing-servers @(subscribe [::m/existing-servers])
         errors-set (cond-> #{}
-                     (some-empty-fields? fhir-server) (conj :empty-field)
-                     (name-exists? (:server-name fhir-server) existing-servers) (conj :name-clash)
-                     (conn-exists? fhir-server existing-servers) (conj :conn-clash))]
-    [:> Modal {:open (boolean original-server)
-               :title (if (:server-name original-server) "Edit server" "Add server")
-               :ok-text (if (:server-name original-server) "Edit" "Add")
-               :on-ok #(dispatch [::c/add-server fhir-server])
+                           (some-empty-fields? fhir-server) (conj :empty-field)
+                           (name-exists? (:server-name fhir-server) existing-servers) (conj :name-clash)
+                           (conn-exists? fhir-server existing-servers) (conj :conn-clash))]
+    [:> Modal {:open      (boolean original-server)
+               :title     (if (:server-name original-server) "Edit server" "Add server")
+               :ok-text   (if (:server-name original-server) "Edit" "Add")
+               :on-ok     #(dispatch [::c/add-server fhir-server])
                #_#_:ok-button-props {:disabled (not-empty errors-set)}
                :on-cancel #(dispatch [::c/cancel-edit])}
      [fhir-config-form fhir-server errors-set]]))
 
-(defn server-list []
-  [:div {:style {:width "60%"}}
-   [:div {:style {:display         :flex
-                  :justify-content :space-between
-                  :align-items     :center
-                  :width           "100%"}}
-    [:h1 "Servers list"]
-    [button/add-view-definition "New server"
-     :on-click (fn [e] (dispatch [::c/new-server]))]]
-   [modal-view]
+(defn connect [server-config request-sent-by used-server-name]
+  (cond
+    (-> server-config :server-name (= request-sent-by))
+    [:label {:style {:color "lightgrey"}} "connecting..."]
 
-   [components.list/data-list
-    #_#_:loading @(subscribe [::m/view-defs-loading?])
-    :dataSource @(subscribe [::m/existing-servers])
-    :renderItem (fn [raw-item]
-                  (r/as-element
-                    (let [{:keys [server-name token base-url] :as server-config} (js-obj->clj-map raw-item)]
-                      [:> List.Item
-                       {:actions (mapv #(r/as-element (% server-config))
-                                      [(fn [id] [:a {:onClick #(dispatch [::c/connect])} "connect"])
-                                       (fn [server-config]
-                                         [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                                       (fn [server-config]
-                                         [:a {:onClick #(dispatch [::c/delete server-config])} "delete"])])}
-                       [:> List.Item.Meta
-                        {:title
-                         (r/as-element
-                           [:a {:onClick #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id base-url]])}
-                            server-name])
-                         :description base-url}]])))]])
+    (-> server-config :server-name (= used-server-name))
+    [:label {:style {:color "green"}} "connected"]
+
+    :otherwise
+    [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
+
+(defn server-list []
+  (let [request-sent-by @(subscribe [::m/request-sent-by])
+        used-server-name @(subscribe [::m/used-server-name])]
+    [:div {:style {:width "60%"}}
+     [:div {:style {:display         :flex
+                    :justify-content :space-between
+                    :align-items     :center
+                    :width           "100%"}}
+      [:h1 "Servers list"]
+      [button/add-view-definition "New server"
+       :on-click (fn [e] (dispatch [::c/new-server]))]]
+     [modal-view]
+
+     [components.list/data-list
+      :dataSource @(subscribe [::m/existing-servers])
+      :renderItem (fn [raw-item]
+                    (r/as-element
+                      (let [{:keys [server-name token base-url] :as server-config}
+                            (js-obj->clj-map raw-item)]
+                        [:> List.Item
+                         {:actions (mapv #(r/as-element (% server-config))
+                                         [(fn [server-config]
+                                            [connect server-config request-sent-by used-server-name])
+                                          (fn [server-config]
+                                            [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                                          (fn [server-config]
+                                            [:a {:onClick #(dispatch [::c/delete server-config])} "delete"])])}
+                         [:> List.Item.Meta
+                          {:title
+                           (r/as-element
+                             [:a {:onClick #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id base-url]])}
+                              server-name])
+                           :description base-url}]])))]]))
 
 (defmethod routes/pages ::c/main [] [server-list])
