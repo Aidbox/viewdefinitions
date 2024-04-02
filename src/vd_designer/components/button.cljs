@@ -1,6 +1,5 @@
 (ns vd-designer.components.button
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button ConfigProvider]]
+  (:require [antd :refer [Button ConfigProvider]]
             [reagent.core :as r]))
 
 (defn button

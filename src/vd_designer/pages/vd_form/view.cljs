@@ -4,8 +4,6 @@
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
-            [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.monaco-editor :as monaco]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
@@ -20,8 +18,6 @@
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
-            [vd-designer.utils.react :refer [create-react-image
-                                             js-obj->clj-map]]
             [vd-designer.utils.yaml :as yaml]))
 
 (def vd-spec
@@ -131,105 +127,11 @@
 
 (declare render-block)
 
-(defn select-field-render [name]
-  (case name
-    :forEach [tag/foreach]
-    :forEachOrNull [tag/foreach]
-
-    [:> Row
-     (create-react-image "/img/form/column.svg")
-     [:span name]]))
-
-
-
-(defn render-field [ctx name value]
-  [:div {:class "vd-form-row"
-         :style {:padding-left "12px"}}
-   [:> Row {:align "middle"
-            :justify "space-between"}
-    [select-field-render name]
-    [:> Row {:align "middle"}
-     #_[input/fhir-path {:on-change
-                         #(dispatch [::c/change-input-value
-                                     (conj (:value-path ctx) name)
-                                     (u/target-value %)])
-                         :value value}]
-     #_[button/delete {:onClick #(dispatch [::c/delete-node (conj (:value-path ctx) name)])}]]]])
-
-(defn key->tag [key]
-  (get {:select [tag/select]
-        :column [tag/column]
-        :unionAll [tag/union-all]}
-       key
-       [tag/default key]))
-
 (defn add-value-path [ctx k]
   (update ctx :value-path conj k))
 
 (defn drop-value-path [ctx]
   (update ctx :value-path pop))
-
-(defn render-map [ctx map-key map-value]
-  [:div {:style {:padding-left "12px"}}
-   [collapse
-    {:items
-     [(collapse-item
-       [:> Row {:justify "space-between"
-                :align "middle"
-                :class "vd-form-row"}
-        [:> Row {:align "middle"}
-         (key->tag map-key)
-         (let [elements (filter #(not (get map-value %))
-                                (map keyword (keys (spec->elements ctx))))]
-           (when (seq elements)
-             (new-select {:items (map keyword elements)
-                          :on-select (fn [e]
-                                       (let [k (:key (js-obj->clj-map e))
-                                             elements (resolve-path ctx "elements" k)
-                                             default-value (cond
-                                                             (get elements "array") [{}]
-                                                             (get elements "elements") {}
-                                                             :else "")]
-                                         (dispatch [::c/add-element-into-map (:value-path ctx) (keyword k) default-value])))})))]
-        #_[button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]]
-       [:<>
-        (for [[k v] map-value]
-          ^{:key (conj (:spec-path ctx) k)}
-          [render-block (add-spec-path ctx "elements") k v])])]}]])
-
-(defn render-array [ctx k value]
-  [:div {:style {:padding-left "12px"}}
-   [:div
-    [:> Row {:justify "space-between"
-             :align "middle"}
-     (key->tag k)
-     #_(when-not (= [:select] (:value-path ctx))
-         [button/delete {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}])]
-    (map-indexed
-     (fn [idx element]
-       ^{:key (conj (:value-path ctx) idx)}
-       [render-map (add-value-path ctx idx) "ITEM" element])
-     value)
-    #_[button/add (name k)
-       {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}]]])
-
-(defn render-block [ctx k v]
-  (cond
-    (spec-array? ctx (name k))
-    [render-array (-> ctx
-                      (add-spec-path (name k))
-                      (add-value-path (keyword k))) k v]
-
-    (spec-map? ctx (name k))
-    [render-map (-> ctx
-                    (add-spec-path (name k))
-                    (add-value-path (keyword k))) k v]
-
-    (spec-field? ctx (name k))
-    [render-field (add-spec-path ctx (name k)) k v]
-
-    :else
-    [:div "not found"]))
 
 (defn create-render-context []
   {:spec-path ["elements"]
@@ -316,8 +218,7 @@
                  (node-select ctx (:select vd-form))]]
 
      #_[render-block ctx "constant" (:constant vd-form)]
-     #_[render-block ctx "where" (:where vd-form)]
-     #_[render-block ctx "select" (:select vd-form)]]))
+     #_[render-block ctx "where" (:where vd-form)]]))
 
 (defn editor []
   (let [current-vd @(subscribe [::m/current-vd])]
