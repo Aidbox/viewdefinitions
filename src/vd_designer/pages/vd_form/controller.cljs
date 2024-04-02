@@ -1,7 +1,8 @@
 (ns vd-designer.pages.vd-form.controller
   (:require [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
-            [vd-designer.pages.vd-form.model :as m]))
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]))
 
 (def identifier ::main)
 
@@ -39,14 +40,11 @@
     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
                     (assoc :on-success [::choose-vd]))}))
 
-(defn normalize-view [view]
-  view)
-
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ vd-id]]
    {:fx [[:dispatch [::eval-view-definition-data]]]
-    :db (assoc db :current-vd (normalize-view vd-id))}))
+    :db (assoc db :current-vd (update vd-id :select normalize-vd))}))
 
 (reg-event-fx
  ::eval-view-definition-data
