@@ -28,3 +28,8 @@
   ::used-server-name
   (fn [db _]
     (-> db :cfg/fhir-servers :used-server-name)))
+
+(reg-sub
+  ::connect-error
+  (fn [db _]
+    (:cfg/connect-error db)))

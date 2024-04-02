@@ -2,7 +2,7 @@
   (:require
     [lambdaisland.uri :as uri]
     [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx]]
-    [vd-designer.http.fhir-server :as http.fhir-server]))
+    [vd-designer.http.fhir-server :as http]))
 
 (def identifier ::main)
 
@@ -59,26 +59,34 @@
   (fn [{db :db} [_ {:keys [server-name base-url token]}]]
     {:db (assoc db ::request-sent-by server-name)
      :http-xhrio
-     (-> (http.fhir-server/get-view-definitions db)
-         (assoc :uri (-> base-url uri/uri
-                         (assoc :path "/ViewDefinition")
-                         uri/uri-str)
-                :headers {:Authorization token}
-                :on-success [::connected server-name]
-                :on-failure [::not-connected]))}))
+     [(http/get-metadata db {:uri (-> base-url uri/uri
+                                      (assoc :path "/metadata")
+                                      uri/uri-str)
+                             :on-success [::connected server-name]
+                             :on-failure [::not-connected server-name]})
+      (http/get-view-definitions
+        db
+        {:uri (-> base-url uri/uri
+                  (assoc :path "/ViewDefinition")
+                  uri/uri-str)
+         :headers {:Authorization token}
+         :on-success [::connected server-name]
+         :on-failure [::not-connected server-name]})]}))
+
 
 (reg-event-fx
   ::connected
   (fn [{:keys [db local-store]} [_ server-name result]]
     {:db (-> db
              (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
-             (assoc :view-definitions (:entry result))
-             (dissoc ::request-sent-by :edit-server :fhir-server))}))
+             (assoc-in [:cfg/fhir-servers :servers server-name :fhir-version] (:fhirVersion result))
+             (dissoc ::request-sent-by :edit-server :fhir-server :cfg/connect-error))}))
 
 (reg-event-fx
   ::not-connected
-  (fn [{:keys [db]} [_ result]]
-    {:db (assoc db :error "error!!!!!!")}))
+  (fn [{:keys [db]} [_ server-name result]]
+    {:db (assoc db :cfg/connect-error {:result result
+                                       :server-name server-name})}))
 
 (reg-event-db
   ::cancel-edit

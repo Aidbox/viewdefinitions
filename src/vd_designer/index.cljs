@@ -62,9 +62,13 @@
 
 ;;;; Initialization
 
-(def default-server {:server-name "Aidbox Default"
-                     :base-url    "https://viewdefs1.aidbox.app/fhir"
-                     :token       "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="})
+(def default-servers {"Aidbox Default" {:server-name "Aidbox Default"
+                                        :base-url    "https://viewdefs1.aidbox.app/fhir"
+                                        :token       "Basic dmlldy1kZWZpbml0aW9uOnNlY3JldA=="}
+                      "Aidbox Default 2"
+                      {:server-name "Aidbox Default 2"
+                       :base-url    "https://viedefinitions.aidbox.app/fhir"
+                       :token       "Basic YmFzaWM6c2VjcmV0"}})
 
 (reg-event-fx
   ::initialize-db
@@ -74,9 +78,8 @@
       {:db {:view-definitions    []
             :mode                :form
             :side-menu-collapsed false
-            :cfg/fhir-servers    {:servers          {(-> default-server :server-name)
-                                                     default-server}
-                                  :used-server-name (-> default-server :server-name)}}})))
+            :cfg/fhir-servers    {:servers  default-servers
+                                  #_#_:used-server-name (-> default-server :server-name)}}})))
 
 (def compiler
   (r/create-compiler {:function-components true}))

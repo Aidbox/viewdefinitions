@@ -28,17 +28,20 @@
        :format (ajax/json-request-format)}
       (with-defaults db)))
 
-(defn get-view-definitions [db]
+(defn get-view-definitions [db & [opts]]
   (-> {:method :get
        :uri    (base-url+path db "/ViewDefinition")}
-      (with-defaults db)))
+      (with-defaults db)
+      (merge opts)))
 
 (defn get-view-definition [db vd-id]
   (-> {:method :get
        :uri    (base-url+path db (str "/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
-(defn get-metadata [db]
+(defn get-metadata [db & [opts]]
   (-> {:method :get
        :uri    (base-url+path db "/metadata")}
-      (with-defaults db)))
+      (with-defaults db)
+      (dissoc :headers)
+      (merge opts)))
