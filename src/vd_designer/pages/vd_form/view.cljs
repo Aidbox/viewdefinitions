@@ -11,12 +11,12 @@
             [vd-designer.components.tree :refer [tree tree-item]]
             [vd-designer.pages.vd-form.components :refer [add-element-button
                                                           add-select-button
-                                                          foreach-expr
+                                                          column-leaf
+                                                          constant-leaf
+                                                          foreach-expr-leaf
                                                           name-input
-                                                          one-column
-                                                          one-constant
-                                                          one-where
-                                                          resource-input]]
+                                                          resource-input
+                                                          where-leaf]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.routes :as routes]
@@ -156,7 +156,7 @@
                [tag/constant]
                (conj (mapv-indexed (fn [idx constant]
                                      (let [ctx (add-value-path ctx idx)]
-                                       (tree-item (:value-path ctx) (one-constant ctx constant)))) items)
+                                       (tree-item (:value-path ctx) (constant-leaf ctx constant)))) items)
                      (tree-item (str "add-constant-" key)
                                 [add-element-button "constant" ctx])))))
 
@@ -167,7 +167,7 @@
                [tag/where]
                (conj (mapv-indexed (fn [idx where]
                                      (let [ctx (add-value-path ctx idx)]
-                                       (tree-item (:value-path ctx) (one-where ctx where)))) items)
+                                       (tree-item (:value-path ctx) (where-leaf ctx where)))) items)
                      (tree-item (str "add-where-" key)
                                 [add-element-button "where" ctx])))))
 
@@ -187,7 +187,7 @@
                [tag/column]
                (conj (mapv-indexed (fn [idx column]
                                      (let [ctx (add-value-path ctx idx)]
-                                       (tree-item (:value-path ctx) (one-column ctx column)))) items)
+                                       (tree-item (:value-path ctx) (column-leaf ctx column)))) items)
                      (tree-item (str "add-column-" key)
                                 [add-element-button "column" ctx])))))
 
@@ -199,7 +199,7 @@
     (tree-item key
                [tag/foreach kind]
                [(tree-item (str (:value-path ctx) "-path")
-                           (foreach-expr ctx kind path))
+                           (foreach-expr-leaf ctx kind path))
                 (node-select (add-value-path ctx :select) select)])))
 
 (defn node-union-all [ctx items]

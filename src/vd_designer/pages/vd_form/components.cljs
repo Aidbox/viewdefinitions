@@ -60,31 +60,31 @@
    [button/invisible-icon icons/SettingOutlined]
    [button/invisible-icon icons/CloseOutlined {:onClick #(dispatch [::c/delete-node (:value-path ctx)])}]])
 
-(defn one-constant [ctx {:keys [name valueString]}]
-  [nested-input-row [icon/constant]
-   [input {:value       name
-           :placeholder "name"
-           :style       {:font-style "normal"}
-           :onChange    #(change-select-value ctx :name %)}]
-   [fhir-path-input ctx :valueString valueString]])
 
-(defn one-where [ctx {:keys [path]}]
-  [nested-input-row [icon/where]
-   "expression"
-   [fhir-path-input ctx :path path]])
+;;;; Tree leafs
 
-(defn one-column [ctx {:keys [name path]}]
-  [nested-input-row [icon/column]
-   [input {:value       name
-           :placeholder "name"
-           :style       {:font-style "normal"}
-           :onChange    #(change-select-value ctx :name %)}]
-   [fhir-path-input ctx :path path]])
+(defn general-leaf [ctx icon name-key name value-key value]
+  [nested-input-row
+   [icon]
+   (if (nil? name-key)
+     name
+     [input {:value       name
+             :placeholder "name"
+             :style       {:font-style "normal"}
+             :onChange    #(change-select-value ctx name-key %)}])
+   [fhir-path-input ctx value-key value]])
 
-(defn foreach-expr [ctx key path]
-  [nested-input-row [icon/expression]
-   "expression"
-   [fhir-path-input ctx key path]])
+(defn constant-leaf [ctx {:keys [name valueString]}]
+  [general-leaf ctx icon/constant :name name :valueString valueString])
+
+(defn where-leaf [ctx {:keys [path]}]
+  [general-leaf ctx icon/where nil "expression" :path path])
+
+(defn column-leaf [ctx {:keys [name path]}]
+  [general-leaf ctx icon/column :name name :path path])
+
+(defn foreach-expr-leaf [ctx key path]
+  [general-leaf ctx icon/expression nil "expression" key path])
 
 
 ;;;; Buttons
