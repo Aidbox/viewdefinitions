@@ -11,7 +11,7 @@
 (reg-sub
  ::view-defs-loading?
  (fn [db _]
-   (:loading db)))
+   (::view-definitions-loading db)))
 
 (reg-sub
   ::filter-phrase
