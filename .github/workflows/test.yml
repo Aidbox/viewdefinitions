@@ -1,0 +1,38 @@
+name: Test
+
+on:
+  push:
+
+jobs:
+  build:
+    name: Testing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Cache clj deps
+        id: cache-clj-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-clojure-${{ hashFiles('**/deps.edn') }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+      - uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 1.11.1.1435  
+      - name: Install rlwrap
+        run: sudo apt -y update && sudo apt install -y rlwrap
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile project
+        run: clj -M:build
+      - name: Compile tests
+        run: clj -M:build-tests
+      - name: Run tests
+        run: node out/node-tests.js

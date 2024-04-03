@@ -17,7 +17,6 @@
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
-
 (reg-event-db
  ::toggle-side-menu
  (fn [db []]

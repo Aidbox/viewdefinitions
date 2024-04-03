@@ -5,11 +5,10 @@ concurrency:
   cancel-in-progress: true
 
 on:
-  push:
-    branches:
-      - master
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: [Test]
+    branches: [master]
+    types: [completed]
 
 env:
   REGISTRY: ghcr.io
@@ -18,6 +17,7 @@ env:
 jobs:
   ui-docker:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       contents: read
@@ -87,3 +87,9 @@ jobs:
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
           "echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
             docker compose down; docker compose up -d"
+
+  on-failure:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    steps:
+      - run: echo 'Tests have failed'
