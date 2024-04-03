@@ -114,7 +114,7 @@
                     :width           "100%"}}
       [:h1 "Server list"]
       [button/add-view-definition "New server"
-       :on-click (fn [e] (dispatch [::c/new-server]))]]
+       {:on-click (fn [e] (dispatch [::c/new-server]))}]]
      [modal-view]
 
      [components.list/data-list

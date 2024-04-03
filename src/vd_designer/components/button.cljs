@@ -1,5 +1,6 @@
 (ns vd-designer.components.button
   (:require ["@ant-design/icons" :as icons]
+            [vd-designer.utils.utils :as utils]
             [antd :refer [Button ConfigProvider]]
             [reagent.core :as r]))
 
@@ -11,12 +12,12 @@
 
 (defn delete [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:colorText "#BFBFBF"}}}}
-   [button "" (merge-with
-               into
-               {:type  "text"
-                :class "delete-button"
-                :icon  (r/create-element icons/CloseOutlined)}
-               opts)]])
+   [button "" (utils/deep-merge
+                {:type  "text"
+                 :class "delete-button"
+                 :icon  (r/create-element icons/CloseOutlined)}
+                opts)]])
+
 
 (defn add [text & {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM 8
@@ -24,16 +25,15 @@
 
                                                     :textHoverBg     "#FAFAFA"
                                                     :defaultHoverBg  "#FAFAFA"}}}}
-   [button text (merge-with
-                 into
-                 {:type  "text"
-                  :size  "small"
-                  :ghost true
-                  :icon  (r/create-element icons/PlusOutlined)}
-                 opts)]])
+   [button text (utils/deep-merge
+                  {:type  "text"
+                   :size  "small"
+                   :ghost true
+                   :icon  (r/create-element icons/PlusOutlined)}
+                  opts)]])
 
 (defn add-view-definition [content & {:as opts}]
-  [:button (merge-with into
+  [:button (utils/deep-merge
                        {:style {:height           "32px"
                                 :padding          "4px 15px"
                                 :background-color "#1890FF"

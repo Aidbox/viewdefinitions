@@ -33,7 +33,7 @@
                   :width           "100%"}}
     [:h1 "View Definitions"]
     [button/add-view-definition "+ ViewDefinition"
-     :on-click (fn [e] (dispatch [::c/add-view-definition]))]]
+     {:on-click (fn [e] (dispatch [::c/add-view-definition]))}]]
    [search]
    [vd-data-list
     #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id %]])
