@@ -14,8 +14,14 @@
 (reg-event-db
   ::update-fhir-server-input
   (fn [db [_ path new-val]]
-    (assoc-in db [:fhir-server path] new-val)))
+    (assoc-in db (into [:fhir-server] path) new-val)))
 
+(reg-event-db
+  ::add-fhir-server-header
+  (fn [db [_]]
+    (if (some-> db :fhir-server :headers seq)
+      (update-in db [:fhir-server :headers] conj {:name "", :value ""})
+      (assoc-in db [:fhir-server :headers] [{:name "", :value ""}]))))
 
 (reg-event-db
   ::new-server
@@ -26,8 +32,12 @@
   ::start-edit
   (fn [db [_ server-cfg]]
     (assoc db
-           :original-server server-cfg
-           :fhir-server server-cfg)))
+      :original-server server-cfg
+      :fhir-server (update server-cfg :headers
+                           (fn [m]
+                             (mapv (fn [[k v]]
+                                     {:name  k
+                                      :value v}) m))))))
 
 (defn add-new-server [db]
   (let [{:keys [server-name] :as new-server} (:fhir-server db)]

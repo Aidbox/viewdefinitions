@@ -29,7 +29,7 @@
     [components.input/input {:value       server-name
                              :placeholder "Server name"
                              :on-change   #(dispatch [::c/update-fhir-server-input
-                                                      :server-name (target-value %)])}]
+                                                      [:server-name] (target-value %)])}]
     [:br]
     [error-label (:name-clash errors-set)
      "Server with this name already exists"]]
@@ -40,37 +40,36 @@
     [components.input/input {:placeholder "URL"
                              :value       base-url
                              :on-change   #(dispatch [::c/update-fhir-server-input
-                                                      :base-url (target-value %)])}]]
+                                                      [:base-url] (target-value %)])}]]
    [:div
     [:label "Evaluate ViewDefinition endpoint"]
     [:br]
     [components.input/input {:placeholder "URL"
                              :value       "todo"
-                             :on-change   #(dispatch [::c/update-fhir-server-input
-                                                      :base-url (target-value %)])}]]
+                             :on-change   #()}]]
 
    (when fhir-version
      [:div
       [:label (str "FHIR version: " fhir-version)]])])
 
-(defn request-headers-tab [fhir-server errors-set]
+(defn header-line [k v idx]
+  ^{:key idx}
+  [:> Row
+   [components.input/input {:value     k
+                            :style     {:width "50%"}
+                            :on-change #(dispatch [::c/update-fhir-server-input
+                                                   [:headers idx :name] (target-value %)])}]
+   [components.input/input {:value     v
+                            :style     {:width "50%"}
+                            :on-change #(dispatch [::c/update-fhir-server-input
+                                                   [:headers idx :value] (target-value %)])}]])
+
+(defn request-headers-tab [{:keys [headers] :as _fhir-server}]
   [:div
-   [:> Row
-    [:div [:label "Key"]
-     [components.input/input {:value       "todo"
-                              :on-change   #(dispatch [::c/update-fhir-server-input
-                                                       :base-url (target-value %)])}]]
-
-    [:div [:label "Value"]
-     [components.input/input {:value       "todo"
-                              :on-change   #(dispatch [::c/update-fhir-server-input
-                                                       :base-url (target-value %)])}]]
-    ]
-   [button/add "Add" {#_:on-click
-                      :style {:width "100%"}}]]
-
-
-  )
+   (map-indexed (fn [idx header] (header-line (:name header) (:value header) idx))
+                headers)
+   [button/add "Add" {:on-click #(dispatch [::c/add-fhir-server-header])
+                      :style    {:width "100%"}}]])
 
 (defn fhir-config-form [fhir-server errors-set]
   [tabs/tabs
@@ -80,7 +79,7 @@
                             :icon     (r/create-element icons/EditOutlined)})
             (tabs/tab-item {:key      "Request Headers"
                             :label    "Request Headers"
-                            :children [request-headers-tab fhir-server errors-set]
+                            :children [request-headers-tab fhir-server]
                             :icon     (r/create-element icons/SettingOutlined)})]}])
 
 (defn some-empty-fields? [{:keys [server-name base-url]}]
