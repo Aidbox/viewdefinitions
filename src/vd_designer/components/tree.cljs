@@ -13,7 +13,6 @@
   "Tree like structure
    For more details see: https://ant.design/components/tree#api"
   [& {:as opts}]
-  []
   [:> ConfigProvider {:theme {:components {:Tree {:titleHeight 32}}}}
    [:> Tree (merge-with into
                         {:showIcon     true
