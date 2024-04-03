@@ -1,7 +1,7 @@
 (ns vd-designer.components.button
   (:require ["@ant-design/icons" :as icons]
-            [vd-designer.utils.utils :as utils]
             [antd :refer [Button ConfigProvider]]
+            [medley.core :as medley]
             [reagent.core :as r]))
 
 (defn button
@@ -12,7 +12,7 @@
 
 (defn delete [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:colorText "#BFBFBF"}}}}
-   [button "" (utils/deep-merge
+   [button "" (medley/deep-merge
                 {:type  "text"
                  :class "delete-button"
                  :icon  (r/create-element icons/CloseOutlined)}
@@ -25,7 +25,7 @@
 
                                                     :textHoverBg     "#FAFAFA"
                                                     :defaultHoverBg  "#FAFAFA"}}}}
-   [button text (utils/deep-merge
+   [button text (medley/deep-merge
                   {:type  "text"
                    :size  "small"
                    :ghost true
@@ -33,7 +33,7 @@
                   opts)]])
 
 (defn add-view-definition [content & {:as opts}]
-  [:button (utils/deep-merge
+  [:button (medley/deep-merge
                        {:style {:height           "32px"
                                 :padding          "4px 15px"
                                 :background-color "#1890FF"

@@ -20,9 +20,7 @@
 (reg-event-db
   ::add-fhir-server-header
   (fn [db [_]]
-    (if (some-> db :fhir-server :headers seq)
-      (update-in db [:fhir-server :headers] conj {:name "", :value ""})
-      (assoc-in db [:fhir-server :headers] [{:name "", :value ""}]))))
+    (update-in db [:fhir-server :headers] (fnil conj []) {:name "", :value ""})))
 
 (reg-event-db
   ::new-server
@@ -48,10 +46,12 @@
 
 (defn add-new-server [db]
   (let [{:keys [server-name] :as new-server} (:fhir-server db)]
+
     (if (some-> db :cfg/fhir-servers :servers not-empty)
-      (update-in db [:cfg/fhir-servers :servers] merge {server-name new-server})
+      (assoc-in db [:cfg/fhir-servers :servers server-name] new-server)
       (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
                                    :used-server-name server-name}))))
+
 
 (defn edit-server [db]
   (let [edited-server (:fhir-server db)
@@ -67,8 +67,8 @@
 
 (defn remove-empty-headers [headers]
   (remove
-    (fn [kv]
-      (and (str/blank? (:value kv)) (str/blank? (:name kv)))) headers))
+    (fn [m]
+      (and (str/blank? (:value m)) (str/blank? (:name m)))) headers))
 
 (reg-event-fx
   ::add-server
@@ -113,10 +113,9 @@
 
 (reg-event-fx
   ::get-view-definitions-success
-  (fn [{:keys [db]} [_ server-name result]]
+  (fn [{:keys [db]} [_ server-name _result]]
     {:db (-> db
              (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
-             (assoc-in [:cfg/fhir-servers :servers server-name :fhir-version] (:fhirVersion result))
              (dissoc ::request-sent-by :edit-server :fhir-server :cfg/connect-error))}))
 
 
