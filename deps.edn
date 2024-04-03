@@ -3,7 +3,7 @@
  :deps
  {org.clojure/clojurescript {:mvn/version "1.11.132"}
   org.clojure/clojure {:mvn/version "1.11.2"}
-  thheller/shadow-cljs {:mvn/version "2.28.2"}
+  thheller/shadow-cljs {:mvn/version "2.28.3"}
   reagent/reagent {:mvn/version "1.2.0"}
   re-frame/re-frame {:mvn/version "1.4.3"}
   babashka/process {:mvn/version "0.5.22"}
