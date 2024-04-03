@@ -1,6 +1,6 @@
 (ns vd-designer.pages.settings.view
   (:require
-    [antd :refer [List Modal Checkbox Row Col Button]]
+    [antd :refer [List Modal Row]]
     ["@ant-design/icons" :as icons]
     [clojure.string :as str]
     [medley.core :as medley]
@@ -131,7 +131,7 @@
                     :width           "100%"}}
       [:h1 "Server list"]
       [button/add-view-definition "New server"
-       {:on-click (fn [e] (dispatch [::c/new-server]))}]]
+       {:on-click (fn [_e] (dispatch [::c/new-server]))}]]
      [modal-view]
 
      [components.list/data-list

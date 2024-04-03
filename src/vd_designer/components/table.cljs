@@ -15,5 +15,6 @@
     [:> Table (merge-with
                into
                {:columns    columns
-                :dataSource data}
+                :dataSource data
+                :rowKey     "id"}
                opts)]))
