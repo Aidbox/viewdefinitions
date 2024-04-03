@@ -17,3 +17,8 @@
   ::filter-phrase
   (fn [db _]
     (::c/filter-phrase db)))
+
+(reg-sub
+ ::delete-fail
+ (fn [db _]
+    (::delete-fail db)))
