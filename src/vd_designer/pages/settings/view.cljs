@@ -41,13 +41,6 @@
                              :value       base-url
                              :on-change   #(dispatch [::c/update-fhir-server-input
                                                       [:base-url] (target-value %)])}]]
-   [:div
-    [:label "Evaluate ViewDefinition endpoint"]
-    [:br]
-    [components.input/input {:placeholder "URL"
-                             :value       "todo"
-                             :on-change   #()}]]
-
    (when fhir-version
      [:div
       [:label (str "FHIR version: " fhir-version)]])])
@@ -86,21 +79,24 @@
   (or (str/blank? server-name)
       (str/blank? base-url)))
 
-(defn name-exists? [server-name existing-servers]
-  (->> existing-servers
-       (medley/find-first #(-> % :server-name (= server-name)))
-       boolean))
+(defn name-exists? [server-name existing-servers original-server]
+  (and (->> existing-servers
+            (medley/find-first #(-> % :server-name (= server-name)))
+            boolean)
+       (or (not (:server-name original-server)) ; add mode
+           (not= (:server-name original-server) server-name))))
 
 (defn modal-view []
   (let [original-server @(subscribe [::m/original-server])
         fhir-server @(subscribe [::m/fhir-server-config])
         existing-servers @(subscribe [::m/existing-servers])
+        edit? (:server-name original-server)
         errors-set (cond-> #{}
                            (some-empty-fields? fhir-server) (conj :empty-field)
-                           (name-exists? (:server-name fhir-server) existing-servers) (conj :name-clash))]
+                           (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
     [:> Modal {:open      (boolean original-server)
-               :title     (if (:server-name original-server) "Edit server" "Add server")
-               :ok-text   (if (:server-name original-server) "Edit" "Add")
+               :title     (if edit? "Edit server" "Add server")
+               :ok-text   (if edit? "Edit" "Add")
                :on-ok     #(dispatch [::c/add-server fhir-server])
                #_#_:ok-button-props {:disabled (not-empty errors-set)}
                :on-cancel #(dispatch [::c/cancel-edit])}
