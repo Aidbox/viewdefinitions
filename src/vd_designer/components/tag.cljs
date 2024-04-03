@@ -16,7 +16,7 @@
    text])
 
 (defn foreach [kind]
-  (tag (condp = kind
+  (tag (case kind
          :forEach       "foreach"
          :forEachOrNull "foreach or null")
        :style {:color      "#B37804"

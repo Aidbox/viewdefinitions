@@ -105,7 +105,7 @@
   (js/console.debug (str "select->node (ctx): " (:value-path ctx)))
   (js/console.debug (str "select->node: " element))
   (let [key (key (first element))]
-    ((condp = key
+    ((case key
        :column        column-node
        :forEach       (partial node-foreach :forEach)
        :forEachOrNull (partial node-foreach :forEachOrNull)

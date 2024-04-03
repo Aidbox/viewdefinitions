@@ -41,7 +41,7 @@
   (let [key #(keyword (.-key %))]
     [new-select #(dispatch [::c/add-element-into-array
                             (:value-path ctx)
-                            (condp = (key %)
+                            (case (key %)
                               :column        {:column   []}
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
