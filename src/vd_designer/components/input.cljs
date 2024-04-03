@@ -1,7 +1,5 @@
 (ns vd-designer.components.input
-  (:require
-   [antd :refer [Button ConfigProvider Input Space]]
-   [vd-designer.utils.react :refer [create-react-image]]))
+  (:require [antd :refer [ConfigProvider Input]]))
 
 (defn search [& {:as opts}]
   [:> Input.Search (merge-with into
@@ -18,23 +16,7 @@
                          {:classNames {:input "default-input"}
                           :style      {:font-style       "italic"
                                        :border           "none"
-                                       :border-bottom    "1px solid #fff"
+                                       :border-bottom    "1px solid transparent"
                                        :border-radius    0
                                        :background-color "transparent"}}
                          opts)]])
-
-(defn fhir-path [input-overrides button-overrides]
-  [:> Space {:direction :horizontal}
-   [input (merge-with into
-                      {}
-                      input-overrides)]
-   [:> Button (merge-with into
-                          {:style {:border           :none
-                                   :background-color "transparent"}}
-                          button-overrides)
-    (create-react-image "/img/input/expand.svg")]])
-
-(defn col-name [& {:as opts}]
-  [input (merge-with into
-                     {:style {:font-style "normal"}}
-                     opts)])

@@ -1,6 +1,5 @@
 (ns vd-designer.components.button
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button ConfigProvider]]
+  (:require [antd :refer [Button ConfigProvider]]
             [reagent.core :as r]))
 
 (defn button
@@ -9,28 +8,32 @@
   [text & {:as opts}]
   [:> Button opts text])
 
-(defn delete [& {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:colorText "#BFBFBF"}}}}
-   [button "" (merge-with
-               into
-               {:type  "text"
-                :class "delete-button"
-                :icon  (r/create-element icons/CloseOutlined)}
-               opts)]])
+(defn ghost [text icon & {:as opts}]
+  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM          8
+                                                    :defaultGhostColor        "#B5B5BC"
+                                                    :defaultGhostBorderColor  "#B5B5BC"
 
-(defn add [text & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM 8
-                                                    :colorText       "#B5B5BC"
+                                                    :defaultActiveColor       "#7972D399"
+                                                    :defaultActiveBorderColor "#7972D3"
 
-                                                    :textHoverBg     "#FAFAFA"
-                                                    :defaultHoverBg  "#FAFAFA"}}}}
+                                                    :defaultHoverBorderColor  "#B5B5BC"
+                                                    :defaultHoverColor        "#B5B5BC"
+                                                    :textHoverBg              "none"}}}}
    [button text (merge-with
                  into
-                 {:type  "text"
-                  :size  "small"
+                 {:type  :default
+                  :size  :small
                   :ghost true
-                  :icon  (r/create-element icons/PlusOutlined)}
+                  :icon  (r/create-element icon)
+                  :style {:border        :none
+                          :border-radius "5px"}}
                  opts)]])
+
+(defn invisible-icon [icon & {:as opts}]
+  [ghost "" icon (merge-with
+                  into
+                  {:class "invisible-button"}
+                  opts)])
 
 (defn add-view-definition [content & {:as opts}]
   [:button (merge-with into

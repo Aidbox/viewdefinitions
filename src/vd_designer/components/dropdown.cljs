@@ -24,7 +24,7 @@
 
 (defn new-select
   "Dropdown with actions for new select"
-  [handle-click & {:as opts}]
+  [on-click & {:as opts}]
   (dropdown "select"
             :menu {:items   [(dropdown-item "column"        "/img/form/column.svg")
                              {:type "divider"}
@@ -33,5 +33,5 @@
                              (dropdown-item "forEachOrNull" "/img/form/forEach.svg")
                              {:type "divider"}
                              (dropdown-item "unionAll"      "/img/form/unionAll.svg")]
-                   :onClick handle-click}
+                   :onClick on-click}
             opts))
