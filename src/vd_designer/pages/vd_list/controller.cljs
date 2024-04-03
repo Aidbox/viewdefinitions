@@ -41,19 +41,30 @@
   (fn [{:keys [db]} [_]]
     {:db (-> (assoc db
                 :view-definitions []
-                ::m/view-definitions-loading false)
-             #_(dissoc ::m/view-definitions-loading))}))
+                ::m/view-definitions-loading false))}))
 
 (reg-event-fx
   ::add-view-definition
   (fn [{:keys [_db]} _]
     {:dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id ""]]}))
 
-;; TODO: Add backend call
-(reg-event-db
+(reg-event-fx
   ::delete-view-definition
-  (fn [db [_ id]]
-    (update db :view-definitions #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
+  (fn [{:keys [db]} [_ id]]
+    {:http-xhrio (-> (http.fhir-server/delete-view-definition db id)
+                     (assoc :on-success [::delete-view-definition-success id]
+                            :on-failure [::delete-view-definition-failure]))}))
+
+(reg-event-db
+  ::delete-view-definition-success
+  (fn [db [_ id _result]]
+    (update db :view-definitions
+            #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
+
+(reg-event-db
+  ::delete-view-definition-failure
+  (fn [db [_ result]]
+    (assoc db ::m/delete-fail result)))
 
 (reg-event-db
   ::filter-updated

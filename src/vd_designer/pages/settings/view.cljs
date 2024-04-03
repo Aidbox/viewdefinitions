@@ -98,7 +98,7 @@
                :title     (if edit? "Edit server" "Add server")
                :ok-text   (if edit? "Edit" "Add")
                :on-ok     #(dispatch [::c/add-server fhir-server])
-               #_#_:ok-button-props {:disabled (not-empty errors-set)}
+               :ok-button-props {:disabled (not-empty errors-set)}
                :on-cancel #(dispatch [::c/cancel-edit])}
      [fhir-config-form fhir-server errors-set]]))
 

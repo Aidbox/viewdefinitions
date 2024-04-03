@@ -10,6 +10,7 @@
   (merge {:headers          (-> db active-server :headers)
           :timeout          8000
           :with-credentials true
+          :format (ajax/json-request-format)
           :response-format  (ajax/json-response-format {:keywords? true})
           ;; do we need this by default?
           :on-failure       [:bad-http-result]}
@@ -45,3 +46,8 @@
       (with-defaults db)
       (dissoc :headers)
       (merge opts)))
+
+(defn delete-view-definition [db vd-id]
+  (-> {:method :delete
+       :uri    (base-url+path db (str "/ViewDefinition/" vd-id))}
+      (with-defaults db)))
