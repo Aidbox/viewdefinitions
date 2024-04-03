@@ -1,9 +1,35 @@
 (ns vd-designer.pages.settings.model
   (:require
-    [vd-designer.http.fhir-server :as fhir-server]
-    [re-frame.core :refer [reg-sub]]))
+    [re-frame.core :refer [reg-sub]]
+    [vd-designer.pages.settings.controller :as-alias c]))
 
 (reg-sub
   ::fhir-server-config
   (fn [db _]
-    (fhir-server/active-server db)))
+    (:fhir-server db)))
+
+(reg-sub
+  ::existing-servers
+  (fn [db _]
+    (or (-> db :cfg/fhir-servers :servers vals)
+        [])))
+
+(reg-sub
+  ::original-server
+  (fn [db _]
+    (:original-server db)))
+
+(reg-sub
+  ::request-sent-by
+  (fn [db _]
+    (::c/request-sent-by db)))
+
+(reg-sub
+  ::used-server-name
+  (fn [db _]
+    (-> db :cfg/fhir-servers :used-server-name)))
+
+(reg-sub
+  ::connect-error
+  (fn [db _]
+    (:cfg/connect-error db)))

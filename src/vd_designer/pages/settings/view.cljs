@@ -1,36 +1,154 @@
 (ns vd-designer.pages.settings.view
   (:require
+    [antd :refer [List Modal Row]]
+    ["@ant-design/icons" :as icons]
+    [clojure.string :as str]
+    [medley.core :as medley]
     [re-frame.core :refer [dispatch subscribe]]
+    [reagent.core :as r]
+    [vd-designer.components.button :as button]
+    [vd-designer.components.list :as components.list]
+    [vd-designer.components.input :as components.input]
     [vd-designer.pages.settings.controller :as c]
     [vd-designer.pages.settings.model :as m]
+    [vd-designer.components.tabs :as tabs]
     [vd-designer.routes :as routes]
-    [vd-designer.utils.event :refer [target-value]]))
+    [vd-designer.utils.event :refer [target-value]]
+    [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
-(defn fhir-config-form []
-  (let [{:keys [server-name base-url token]} @(subscribe [::m/fhir-server-config])]
+(defn error-label [visible? text]
+  [:label {:hidden (not visible?)
+           :style  {:color     "red"
+                    :font-size "10px"}} text])
+
+(defn request-settings-tab [{:keys [server-name base-url fhir-version]} errors-set]
+  [:div
+   [:div
+    [:label "Name"]
+    [:br]
+    [components.input/input {:value       server-name
+                             :placeholder "Server name"
+                             :on-change   #(dispatch [::c/update-fhir-server-input
+                                                      [:server-name] (target-value %)])}]
+    [:br]
+    [error-label (:name-clash errors-set)
+     "Server with this name already exists"]]
+
+   [:div
+    [:label "URL"]
+    [:br]
+    [components.input/input {:placeholder "URL"
+                             :value       base-url
+                             :on-change   #(dispatch [::c/update-fhir-server-input
+                                                      [:base-url] (target-value %)])}]]
+   (when fhir-version
+     [:div
+      [:label (str "FHIR version: " fhir-version)]])])
+
+(defn header-line [k v idx]
+  ^{:key idx}
+  [:> Row
+   [components.input/input {:value     k
+                            :style     {:width "50%"}
+                            :on-change #(dispatch [::c/update-fhir-server-input
+                                                   [:headers idx :name] (target-value %)])}]
+   [components.input/input {:value     v
+                            :style     {:width "50%"}
+                            :on-change #(dispatch [::c/update-fhir-server-input
+                                                   [:headers idx :value] (target-value %)])}]])
+
+(defn request-headers-tab [{:keys [headers] :as _fhir-server}]
+  [:div
+   (map-indexed (fn [idx header] (header-line (:name header) (:value header) idx))
+                headers)
+   [button/add "Add" {:on-click #(dispatch [::c/add-fhir-server-header])
+                      :style    {:width "100%"}}]])
+
+(defn fhir-config-form [fhir-server errors-set]
+  [tabs/tabs
+   {:items [(tabs/tab-item {:key      "Request settings"
+                            :label    "Request settings"
+                            :children [request-settings-tab fhir-server errors-set]
+                            :icon     (r/create-element icons/EditOutlined)})
+            (tabs/tab-item {:key      "Request Headers"
+                            :label    "Request Headers"
+                            :children [request-headers-tab fhir-server]
+                            :icon     (r/create-element icons/SettingOutlined)})]}])
+
+(defn some-empty-fields? [{:keys [server-name base-url]}]
+  (or (str/blank? server-name)
+      (str/blank? base-url)))
+
+(defn name-exists? [server-name existing-servers original-server]
+  (and (->> existing-servers
+            (medley/find-first #(-> % :server-name (= server-name)))
+            boolean)
+       (or (not (:server-name original-server)) ; add mode
+           (not= (:server-name original-server) server-name))))
+
+(defn modal-view []
+  (let [original-server @(subscribe [::m/original-server])
+        fhir-server @(subscribe [::m/fhir-server-config])
+        existing-servers @(subscribe [::m/existing-servers])
+        edit? (:server-name original-server)
+        errors-set (cond-> #{}
+                           (some-empty-fields? fhir-server) (conj :empty-field)
+                           (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
+    [:> Modal {:open      (boolean original-server)
+               :title     (if edit? "Edit server" "Add server")
+               :ok-text   (if edit? "Edit" "Add")
+               :on-ok     #(dispatch [::c/add-server fhir-server])
+               #_#_:ok-button-props {:disabled (not-empty errors-set)}
+               :on-cancel #(dispatch [::c/cancel-edit])}
+     [fhir-config-form fhir-server errors-set]]))
+
+(defn connect [server-config request-sent-by used-server-name connect-error]
+  (cond
+    (and connect-error (= (:server-name server-config) (:server-name connect-error)))
     [:div
-     [:div
-      [:label "Name"]
-      [:input {:type        "text"
-               :value       server-name
-               :placeholder "Server name"
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :server-name (target-value %)])}]]
+     [:label {:style {:color "red"}} (:status-text (:result connect-error))]
+     " "
+     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]
+     ]
 
-     [:div
-      [:label "URL"]
-      [:input {:type        "text"
-               :placeholder "URL"
-               :value       base-url
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :base-url (target-value %)])}]]
+    (-> server-config :server-name (= request-sent-by))
+    [:label {:style {:color "lightgrey"}} "connecting..."]
 
-     [:div
-      [:label "Token"]
-      [:input {:type        "text"
-               :placeholder "top secret"
-               :value       token
-               :on-change   #(dispatch [::c/update-fhir-server-input
-                                        :token (target-value %)])}]]]))
+    (-> server-config :server-name (= used-server-name))
+    [:label {:style {:color "green"}} "connected"]
 
-(defmethod routes/pages ::c/main [] [fhir-config-form])
+    :else
+    [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
+
+(defn server-list []
+  (let [request-sent-by @(subscribe [::m/request-sent-by])
+        used-server-name @(subscribe [::m/used-server-name])
+        connect-error @(subscribe [::m/connect-error])]
+    [:div {:style {:width "60%"}}
+     [:div {:style {:display         :flex
+                    :justify-content :space-between
+                    :align-items     :center
+                    :width           "100%"}}
+      [:h1 "Server list"]
+      [button/add-view-definition "New server"
+       {:on-click (fn [_e] (dispatch [::c/new-server]))}]]
+     [modal-view]
+
+     [components.list/data-list
+      :dataSource @(subscribe [::m/existing-servers])
+      :renderItem (fn [raw-item]
+                    (r/as-element
+                      (let [{:keys [server-name base-url] :as server-config}
+                            (js-obj->clj-map raw-item)]
+                        [:> List.Item
+                         {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])
+                                    (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                                    (r/as-element [:a {:onClick #(dispatch [::c/delete server-config])} "delete"])]}
+                         [:> List.Item.Meta
+                          {:title
+                           (r/as-element
+                             [:a {:onClick #(dispatch [::c/start-edit server-config])}
+                              server-name])
+                           :description base-url}]])))]]))
+
+(defmethod routes/pages ::c/main [] [server-list])
