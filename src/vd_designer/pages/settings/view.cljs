@@ -1,14 +1,17 @@
 (ns vd-designer.pages.settings.view
   (:require
-    [antd :refer [List Modal Checkbox]]
+    [antd :refer [List Modal Checkbox Row Col Button]]
+    ["@ant-design/icons" :as icons]
     [clojure.string :as str]
     [medley.core :as medley]
     [re-frame.core :refer [dispatch subscribe]]
     [reagent.core :as r]
     [vd-designer.components.button :as button]
     [vd-designer.components.list :as components.list]
+    [vd-designer.components.input :as components.input]
     [vd-designer.pages.settings.controller :as c]
     [vd-designer.pages.settings.model :as m]
+    [vd-designer.components.tabs :as tabs]
     [vd-designer.routes :as routes]
     [vd-designer.utils.event :refer [target-value]]
     [vd-designer.utils.react :refer [js-obj->clj-map]]))
@@ -18,15 +21,15 @@
            :style  {:color     "red"
                     :font-size "10px"}} text])
 
-(defn fhir-config-form [{:keys [server-name base-url token fhir-version]} errors-set]
+(defn request-settings-tab [{:keys [server-name base-url token fhir-version]} errors-set]
   [:div
    [:div
     [:label "Name"]
     [:br]
-    [:input {:value       server-name
-             :placeholder "Server name"
-             :on-change   #(dispatch [::c/update-fhir-server-input
-                                      :server-name (target-value %)])}]
+    [components.input/input {:value       server-name
+                             :placeholder "Server name"
+                             :on-change   #(dispatch [::c/update-fhir-server-input
+                                                      :server-name (target-value %)])}]
     [:br]
     [error-label (:name-clash errors-set)
      "Server with this name already exists"]]
@@ -34,23 +37,53 @@
    [:div
     [:label "URL"]
     [:br]
-    [:input {:placeholder "URL"
-             :value       base-url
-             :on-change   #(dispatch [::c/update-fhir-server-input
-                                      :base-url (target-value %)])}]]
-
+    [components.input/input {:placeholder "URL"
+                             :value       base-url
+                             :on-change   #(dispatch [::c/update-fhir-server-input
+                                                      :base-url (target-value %)])}]]
    [:div
-    [:label "Token"]
+    [:label "Evaluate ViewDefinition endpoint"]
     [:br]
-    [:input {:placeholder "top secret"
-             :value       token
-             :on-change   #(dispatch [::c/update-fhir-server-input
-                                      :token (target-value %)])}]]
+    [components.input/input {:placeholder "URL"
+                             :value       "todo"
+                             :on-change   #(dispatch [::c/update-fhir-server-input
+                                                      :base-url (target-value %)])}]]
+
    [error-label (:conn-clash errors-set)
     "Server with this URL and token already exists"]
    (when fhir-version
      [:div
       [:label (str "FHIR version: " fhir-version)]])])
+
+(defn request-headers-tab [{:keys [server-name base-url token fhir-version]} errors-set]
+  [:div
+   [:> Row
+    [:div [:label "Key"]
+     [components.input/input {:value       "todo"
+                              :on-change   #(dispatch [::c/update-fhir-server-input
+                                                       :base-url (target-value %)])}]]
+
+    [:div [:label "Value"]
+     [components.input/input {:value       "todo"
+                              :on-change   #(dispatch [::c/update-fhir-server-input
+                                                       :base-url (target-value %)])}]]
+    ]
+   [button/add "Add" {#_:on-click
+                      :style {:width "100%"}}]]
+
+
+  )
+
+(defn fhir-config-form [{:keys [server-name base-url token fhir-version] :as fhir-server} errors-set]
+  [tabs/tabs
+   {:items [(tabs/tab-item {:key      "Request settings"
+                            :label    "Request settings"
+                            :children [request-settings-tab fhir-server errors-set]
+                            :icon     (r/create-element icons/EditOutlined)})
+            (tabs/tab-item {:key      "Request Headers"
+                            :label    "Request Headers"
+                            :children [request-headers-tab fhir-server errors-set]
+                            :icon     (r/create-element icons/SettingOutlined)})]}])
 
 (defn some-empty-fields? [{:keys [server-name base-url token]}]
   (or (str/blank? server-name)
