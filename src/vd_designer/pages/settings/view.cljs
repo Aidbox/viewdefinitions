@@ -21,7 +21,7 @@
            :style  {:color     "red"
                     :font-size "10px"}} text])
 
-(defn request-settings-tab [{:keys [server-name base-url token fhir-version]} errors-set]
+(defn request-settings-tab [{:keys [server-name base-url fhir-version]} errors-set]
   [:div
    [:div
     [:label "Name"]
@@ -49,13 +49,11 @@
                              :on-change   #(dispatch [::c/update-fhir-server-input
                                                       :base-url (target-value %)])}]]
 
-   [error-label (:conn-clash errors-set)
-    "Server with this URL and token already exists"]
    (when fhir-version
      [:div
       [:label (str "FHIR version: " fhir-version)]])])
 
-(defn request-headers-tab [{:keys [server-name base-url token fhir-version]} errors-set]
+(defn request-headers-tab [fhir-server errors-set]
   [:div
    [:> Row
     [:div [:label "Key"]
@@ -74,7 +72,7 @@
 
   )
 
-(defn fhir-config-form [{:keys [server-name base-url token fhir-version] :as fhir-server} errors-set]
+(defn fhir-config-form [fhir-server errors-set]
   [tabs/tabs
    {:items [(tabs/tab-item {:key      "Request settings"
                             :label    "Request settings"
@@ -85,21 +83,13 @@
                             :children [request-headers-tab fhir-server errors-set]
                             :icon     (r/create-element icons/SettingOutlined)})]}])
 
-(defn some-empty-fields? [{:keys [server-name base-url token]}]
+(defn some-empty-fields? [{:keys [server-name base-url]}]
   (or (str/blank? server-name)
-      (str/blank? base-url)
-      (str/blank? token)))
+      (str/blank? base-url)))
 
 (defn name-exists? [server-name existing-servers]
   (->> existing-servers
        (medley/find-first #(-> % :server-name (= server-name)))
-       boolean))
-
-(defn conn-exists? [{new-base-url :base-url, new-token :token} existing-servers]
-  (->> existing-servers
-       (medley/find-first (fn [{:keys [base-url token]}]
-                            (and (= new-base-url base-url)
-                                 (= new-token token))))
        boolean))
 
 (defn modal-view []
@@ -108,8 +98,7 @@
         existing-servers @(subscribe [::m/existing-servers])
         errors-set (cond-> #{}
                            (some-empty-fields? fhir-server) (conj :empty-field)
-                           (name-exists? (:server-name fhir-server) existing-servers) (conj :name-clash)
-                           (conn-exists? fhir-server existing-servers) (conj :conn-clash))]
+                           (name-exists? (:server-name fhir-server) existing-servers) (conj :name-clash))]
     [:> Modal {:open      (boolean original-server)
                :title     (if (:server-name original-server) "Edit server" "Add server")
                :ok-text   (if (:server-name original-server) "Edit" "Add")
@@ -154,7 +143,7 @@
       :dataSource @(subscribe [::m/existing-servers])
       :renderItem (fn [raw-item]
                     (r/as-element
-                      (let [{:keys [server-name token base-url] :as server-config}
+                      (let [{:keys [server-name base-url] :as server-config}
                             (js-obj->clj-map raw-item)]
                         [:> List.Item
                          {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])

@@ -7,7 +7,7 @@
     (servers used-server-name)))
 
 (defn- with-defaults [req db]
-  (merge {:headers          {:Authorization (-> db active-server :token)}
+  (merge {:headers          (-> db active-server :headers)
           :timeout          8000
           :with-credentials true
           :response-format  (ajax/json-response-format {:keywords? true})

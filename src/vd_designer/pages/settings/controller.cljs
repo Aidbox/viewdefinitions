@@ -30,8 +30,7 @@
            :fhir-server server-cfg)))
 
 (defn add-new-server [db]
-  (let [{:keys [server-name] :as new-server}
-        (-> db :fhir-server (select-keys [:server-name :base-url :token]))]
+  (let [{:keys [server-name] :as new-server} (:fhir-server db)]
     (if (some-> db :cfg/fhir-servers :servers not-empty)
       (update-in db [:cfg/fhir-servers :servers] merge {server-name new-server})
       (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
@@ -56,7 +55,7 @@
 
 (reg-event-fx
   ::connect
-  (fn [{db :db} [_ {:keys [server-name base-url token]}]]
+  (fn [{db :db} [_ {:keys [server-name base-url headers]}]]
     {:db (assoc db ::request-sent-by server-name)
      :http-xhrio
      [(http/get-metadata db {:uri (-> base-url uri/uri
@@ -69,7 +68,7 @@
         {:uri (-> base-url uri/uri
                   (assoc :path "/ViewDefinition")
                   uri/uri-str)
-         :headers {:Authorization token}
+         :headers headers
          :on-success [::connected server-name]
          :on-failure [::not-connected server-name]})]}))
 
