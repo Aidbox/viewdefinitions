@@ -40,7 +40,13 @@
                                       :value v}) m))))))
 
 (defn add-new-server [db]
-  (let [{:keys [server-name] :as new-server} (:fhir-server db)]
+  (let [{:keys [server-name] :as new-server} (:fhir-server db)
+        new-server (update new-server :headers
+                           (fn [v]
+                             (reduce
+                               (fn [acc {:keys [name value]}]
+                                 (assoc acc (keyword name) value))
+                               {} v)))]
     (if (some-> db :cfg/fhir-servers :servers not-empty)
       (update-in db [:cfg/fhir-servers :servers] merge {server-name new-server})
       (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
