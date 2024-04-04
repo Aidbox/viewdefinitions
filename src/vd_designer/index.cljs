@@ -81,7 +81,10 @@
             :mode                :form
             :side-menu-collapsed false
             :cfg/fhir-servers    {:servers  default-servers
-                                  #_#_:used-server-name (-> default-server :server-name)}}})))
+                                  :used-server-name (-> default-servers
+                                                        first
+                                                        second
+                                                        :server-name)}}})))
 
 (def compiler
   (r/create-compiler {:function-components true}))
