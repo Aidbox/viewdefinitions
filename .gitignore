@@ -13,6 +13,7 @@ resources/public/cljs-runtime/
 resources/public/manifest.edn
 resources/public/app.css
 resources/public/app.js
+out/
 
 .idea/*
 .vscode/*

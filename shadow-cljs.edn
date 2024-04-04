@@ -11,15 +11,17 @@
    :asset-path "/"
 
    :compiler-options {:warnings {:fn-deprecated false}}
-   :devtools {:preloads [re-frisk.preload devtools.preload]
-              :after-load vd-designer/render}
-
    :modules {:app {:init-fn vd-designer.index/init}}
 
    :dev
-   {:devtools {:preloads [re-frisk.preload devtools.preload]}
+   {:devtools {:preloads [re-frisk.preload devtools.preload]
+               :after-load vd-designer/render}
     :compiler-options {:optimizations :none}
     :build-hooks [(postcss/watch "src/main.css" "resources/public/app.css")]}
 
    :release
-   {:build-hooks [(postcss/release "src/main.css" "resources/public/app.css")]}}}}
+   {:build-hooks [(postcss/release "src/main.css" "resources/public/app.css")]}}
+  :test
+  {:target    :node-test
+   :output-to "out/node-tests.js"
+   :autorun   false}}}

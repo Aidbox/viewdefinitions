@@ -15,9 +15,6 @@
   ;; org.clojars.arthurbarroso/re-frame-cljs-http {:mvn/version "0.1.0"}
   day8.re-frame/http-fx {:mvn/version "0.2.4"}
 
-  binaryage/devtools {:mvn/version "1.0.7"}
-  re-frisk/re-frisk {:mvn/version "1.6.0"}
-
   lambdaisland/uri {:mvn/version "1.19.155"
                     :why "URI building"
                     :github "https://github.com/lambdaisland/uri"}
@@ -26,9 +23,16 @@
                           :why "Functions we wish were in Clojure core"
                           :github "https://github.com/weavejester/medley"}}
 
- :aliases {:shadow
-           {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
-           :release
-           {:main-opts ["-m" "shadow.cljs.devtools.cli" "release" "app"]}
-           :test {:paths ["test"]
-                  :deps {healthsamurai/matcho {:mvn/version "0.3.10"}}}}}
+ :aliases {:build {:main-opts ["-m" "shadow.cljs.devtools.cli" "compile" "app"]
+                   :extra-deps {binaryage/devtools {:mvn/version "1.0.7"}
+                                re-frisk/re-frisk {:mvn/version "1.6.0"}}}
+           :build-tests {:main-opts ["-m" "shadow.cljs.devtools.cli" "compile" "test"]
+                         :extra-paths ["test"]
+                         :extra-deps {healthsamurai/matcho {:mvn/version "0.3.10"}}}
+           :shadow {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]
+                    :extra-paths ["test"]
+                    :extra-deps {cider/cider-nrepl {:mvn/version "0.47.1"}
+                                 binaryage/devtools {:mvn/version "1.0.7"}
+                                 re-frisk/re-frisk {:mvn/version "1.6.0"}
+                                 healthsamurai/matcho {:mvn/version "0.3.10"}}}
+           :release {:main-opts ["-m" "shadow.cljs.devtools.cli" "release" "app"]}}}
