@@ -31,7 +31,7 @@
                          :extra-deps {healthsamurai/matcho {:mvn/version "0.3.10"}}}
            :shadow {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]
                     :extra-paths ["test"]
-                    :extra-deps {cider/cider-nrepl {:mvn/version "LATEST"}
+                    :extra-deps {cider/cider-nrepl {:mvn/version "0.47.1"}
                                  binaryage/devtools {:mvn/version "1.0.7"}
                                  re-frisk/re-frisk {:mvn/version "1.6.0"}
                                  healthsamurai/matcho {:mvn/version "0.3.10"}}}
