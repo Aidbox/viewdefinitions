@@ -13,6 +13,11 @@
    (:current-vd db)))
 
 (reg-sub
+ ::current-tree-expanded-nodes
+ (fn [db _]
+   (:current-tree-expanded-nodes db)))
+
+(reg-sub
  ::get-all-supported-resources
  (fn [db [_]]
    (options-from-vec (get db :resources))))

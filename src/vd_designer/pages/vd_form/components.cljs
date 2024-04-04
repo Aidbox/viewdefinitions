@@ -35,11 +35,11 @@
 
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])}])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
-    [new-select #(dispatch [::c/add-element-into-array
+    [new-select #(dispatch [::c/add-tree-element
                             (:value-path ctx)
                             (case (key %)
                               :column        {:column   []}
@@ -48,9 +48,9 @@
                               :unionAll      {:unionAll []})])]))
 
 
-(defn delete-button [ctx]
+(defn delete-button [ctx & [node-type]]
   [button/invisible-icon icons/CloseOutlined
-   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx) node-type])}])
 
 (defn settings-button [_ctx]
   [button/invisible-icon icons/SettingOutlined])
