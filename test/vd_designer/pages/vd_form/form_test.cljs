@@ -1,0 +1,32 @@
+(ns vd-designer.pages.vd-form.form-test
+  (:require
+    [cljs.test :as t]
+
+    [vd-designer.pages.vd-form.form :as form]))
+
+(t/deftest select->node-test
+  (t/are [element node-type]
+    (= node-type (form/determine-key element))
+
+    {:select []}
+    :select
+
+    {:column []}
+    :column
+
+    {:unionAll []}
+    :unionAll
+
+    {:select []
+     :forEach "name"}
+    :forEach
+
+    {:select []
+     :forEachOrNull "name"}
+    :forEachOrNull
+
+    {:forEach "name"
+     :select  []}
+    :forEach))
+
+(t/run-tests 'vd-designer.pages.vd-form.form-test)

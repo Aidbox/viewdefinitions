@@ -105,10 +105,23 @@
                            (foreach-expr-leaf ctx kind path))
                 (select-node (add-value-path ctx :select) select)])))
 
+(defn determine-key
+  "Expects an element of normalized view definition"
+  [element]
+  (cond
+    (->> element keys (some #{:forEach}))
+    :forEach
+
+    (->> element keys (some #{:forEachOrNull}))
+    :forEachOrNull
+
+    :else
+    (first (keys element))))
+
 (defn select->node [ctx element]
   (js/console.debug (str "{select->node}(ctx): " (:value-path ctx)))
   (js/console.debug (str "{select->node}(element): " element))
-  (let [key (first (keys element))]
+  (let [key (determine-key element)]
     ((case key
        :column        column-node
        :forEach       (partial node-foreach :forEach)
