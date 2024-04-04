@@ -92,4 +92,4 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
-      - run: echo 'Tests have failed'
+      - run: echo 'Tests failed'
