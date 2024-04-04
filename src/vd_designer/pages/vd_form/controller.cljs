@@ -49,13 +49,15 @@
  (fn [{:keys [db]} [_ vd-id]]
    {:db         (assoc db :loading true)
     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
-                    (assoc :on-success [::choose-vd]))}))
+                    (assoc :on-success [::choose-vd]
+                           :on-failure [::on-vd-error]))}))
 
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
    (let [normalized-view (update view :select normalize-vd)]
-     {:fx [[:dispatch [::eval-view-definition-data]]
+     {:fx [[:dispatch [::reset-vd-error]]
+           [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (mapv str (into [[:constant] [:where] [:select]]
                                        (get-select-path normalized-view)))]]]
@@ -70,6 +72,17 @@
                                                        :params {:limit 100
                                                                 :view  view-definition}})
                       (assoc :on-success [::on-eval-view-definitions-success]))})))
+
+(reg-event-db
+ ::reset-vd-error
+ (fn [db [_]]
+   (assoc db ::m/current-vd-error nil)))
+
+(reg-event-db
+ ::on-vd-error
+ (fn [db [_ result]]
+   (assoc db ::m/current-vd-error (or (-> result :response :error)
+                                      (-> result :response :text :div)))))
 
 (reg-event-db
  ::on-eval-view-definitions-success

@@ -21,3 +21,8 @@
  ::get-all-supported-resources
  (fn [db [_]]
    (options-from-vec (get db :resources))))
+
+(reg-sub
+ ::current-vd-error
+ (fn [db _]
+   (::current-vd-error db)))
