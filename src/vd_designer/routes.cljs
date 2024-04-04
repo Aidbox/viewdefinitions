@@ -1,65 +1,58 @@
 (ns vd-designer.routes
-  (:require [bidi.bidi :as bidi]
-            [pushy.core :as pushy]
-            [re-frame.core :as re-frame :refer [reg-event-fx reg-fx reg-sub]]))
+  (:require [reagent.core :as reagent]
+            [vd-designer.pages.settings.view :as settings]
+            [vd-designer.pages.settings.controller :as settings-controller]
+            [vd-designer.pages.vd-form.view :as vd-form]
+            [vd-designer.pages.vd-form.controller :as vd-form-controller]
+            [vd-designer.pages.vd-list.view :as vd-list]
+            [vd-designer.pages.vd-list.controller :as vd-list-controller]
+            [reitit.frontend :as rf]
+            [reitit.frontend.easy :as rfe]
+            [reitit.frontend.controllers :as rfc]
+            [re-frame.core :as re-frame :refer [reg-event-fx reg-fx dispatch]]))
 
-(defmulti pages identity)
-(defmethod pages :default [] [:div "No page found for this route."])
+(def reitit-routes
+  (rf/router
+    [["/" {:name :vd-list
+           :view vd-list/viewdefinition-list-view
+           :controllers [{:start #(dispatch [::vd-list-controller/start])}]}]
+     ["/vd"
+      ["" {:name :form-create
+           :view vd-form/viewdefinition-view
+           :controllers [{:start #(dispatch [::vd-form-controller/start])
+                          :stop #(dispatch [::vd-form-controller/stop])}]}]
+      ["/:id" {:name :form-edit
+               :view vd-form/viewdefinition-view
+               :parameters {:path {:id string?}}
+               :controllers [{:parameters {:path [:id]}
+                              :start #(dispatch [::vd-form-controller/start %])
+                              :stop #(dispatch [::vd-form-controller/stop %])}]}]]
+     ["/settings"
+      {:name :settings
+       :view settings/server-list
+       :controllers [{:start #(dispatch [::settings-controller/start])}]}]]))
 
-(def routes
-  (atom
-    ["/" {["vd/" :id] :vd-designer.pages.vd-form.controller/main
-          "" :vd-designer.pages.vd-list.controller/main
-          "settings" :vd-designer.pages.settings.controller/main}]))
+(defonce match (reagent/atom nil))
 
-(reg-sub
- ::active-page
- (fn [db _]
-   (:active-page db)))
+(defn start-reitit []
+  (rfe/start!
+    reitit-routes
+    (fn [new-match]
+      (swap!
+        match
+        (fn [old-match]
+          (when new-match
+            (assoc new-match :controllers
+                   (rfc/apply-controllers (:controllers old-match) new-match))))))
+    {:use-fragment false}))
 
-(reg-event-fx
- ::set-active-page
- (fn [{:keys [db]} [_ {new-page :handler route-params :route-params}]]
-   (let [old-page (:active-page db)
-         fxses
-         (cond-> [[:dispatch [new-page :init]]]
-
-           (:active-page db)
-           (conj [:dispatch [old-page :deinit]]))]
-     {:db (assoc db
-                 :active-page new-page
-                 :route-params route-params)
-        :fx fxses})))
-
-(defn parse
-  [url]
-  (bidi/match-route @routes url))
-
-(defn url-for
-  [& args]
-  (apply bidi/path-for (into [@routes] args)))
-
-(defn dispatch
-  [route]
-  (re-frame/dispatch [::set-active-page route]))
-
-(defonce history
-  (pushy/pushy dispatch parse))
-
-(defn navigate!
-  [handler]
-  (pushy/set-token! history (apply url-for handler)))
-
-(defn start!
-  []
-  (pushy/start! history))
 
 (reg-fx
- ::navigate
- (fn [handler]
-   (navigate! handler)))
+ :navigate
+ (fn [route-name & [params]]
+   (rfe/navigate route-name params)))
 
 (reg-event-fx
- ::navigate
+ :navigate
  (fn [_ [_ handler]]
-   {::navigate handler}))
+   {:navigate handler}))

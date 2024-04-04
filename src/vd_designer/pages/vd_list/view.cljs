@@ -2,11 +2,11 @@
   (:require [clojure.string :as str]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.list :refer [vd-data-list]]
+            [reitit.frontend.easy :as rfe]
             [vd-designer.pages.vd-list.controller :as c]
             [vd-designer.pages.vd-list.model :as m]
             [vd-designer.pages.settings.model :as settings-model]
             [vd-designer.pages.settings.controller :as settings-controller]
-            [vd-designer.routes :as routes]
             [vd-designer.components.button :as button]
             [vd-designer.components.input :as input]
             [vd-designer.utils.event :refer [target-value]]))
@@ -38,20 +38,21 @@
       [:h1 "View Definitions"]
       (when used-server-name
         [button/add-view-definition "+ ViewDefinition"
-         {:on-click (fn [_e] (dispatch [::c/add-view-definition]))}])]
+         {:on-click
+          (fn [_e]
+            (rfe/navigate :form-create))}])]
      [:div
       [search]
       [vd-data-list
-       #(dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id %]])
+       #(rfe/navigate :form-edit {:path-params {:id %}})
        [(fn [id]
           [:div
-           [:a {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]
+           [:a
+            {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]
            (when delete-fail [:label (:status-text delete-fail)])])]
        :loading @(subscribe [::m/view-defs-loading?])
        :dataSource (filter-vds @(subscribe [::m/view-defs]))]
       (when-not used-server-name
-        [:a {:on-click
-             #(dispatch [::routes/navigate [::settings-controller/main]])}
+        [:a {:on-click #(rfe/navigate :settings) }
          "Connect"])]]))
 
-(defmethod routes/pages ::c/main [] [viewdefinition-list-view])

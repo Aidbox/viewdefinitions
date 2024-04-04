@@ -9,12 +9,10 @@
   babashka/process {:mvn/version "0.5.22"}
 
   ;; routing
-  bidi/bidi {:mvn/version "2.1.6"}
-  clj-commons/pushy {:mvn/version "0.3.10"}
+  metosin/reitit {:mvn/version "0.7.0-alpha7"}
   ;; cljs-http/cljs-http {:mvn/version "0.1.48"}
   ;; org.clojars.arthurbarroso/re-frame-cljs-http {:mvn/version "0.1.0"}
   day8.re-frame/http-fx {:mvn/version "0.2.4"}
-
   lambdaisland/uri {:mvn/version "1.19.155"
                     :why "URI building"
                     :github "https://github.com/lambdaisland/uri"}

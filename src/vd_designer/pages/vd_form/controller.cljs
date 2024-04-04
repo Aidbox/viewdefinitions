@@ -4,21 +4,23 @@
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]))
 
-(def identifier ::main)
 
 (reg-event-fx
- identifier
- (fn [{db :db} [_ phase]]
-   (let [vd-id (-> db :route-params :id)]
-     (if (= :init phase)
-       {:db db
-        :fx (cond-> []
-              :always
-              (conj [:dispatch [::get-supported-resource-types]])
+  ::start
+ (fn [{db :db} [_ parameters]]
+   (let [vd-id (-> parameters :path :id)]
+     {:db db
+      :fx (cond-> []
+            :always
+            (conj [:dispatch [::get-supported-resource-types]])
 
-              vd-id
-              (conj [:dispatch [::get-view-definition (-> db :route-params :id)]]))}
-       {:db (dissoc db :current-vd)}))))
+            vd-id
+            (conj [:dispatch [::get-view-definition vd-id]]))})))
+
+(reg-event-fx
+  ::stop
+  (fn [{db :db} [_]]
+    {:db (dissoc db :current-vd)}))
 
 (reg-event-fx
  ::get-supported-resource-types

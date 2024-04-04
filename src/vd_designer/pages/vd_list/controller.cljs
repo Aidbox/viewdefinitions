@@ -4,21 +4,13 @@
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.pages.vd-list.model :as m]
     [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.settings.controller :as settings-controller]
-    [vd-designer.routes :as routes]))
-
-(def identifier ::main)
+    [reitit.frontend.easy :as rfe]
+    [vd-designer.pages.settings.controller :as settings-controller]))
 
 (reg-event-fx
-  identifier
-  (fn [{db :db} [_ phase]]
-    {:fx (cond-> []
-                 (= :init phase)
-                 (conj [:dispatch [::get-view-definitions]])
-                 #_#_(= :deinit phase)
-                         (conj [:dispatch [::deinit]]))}))
-
-
+  ::start
+  (fn [_ [_]]
+    {:dispatch [::get-view-definitions]}))
 
 (reg-event-fx
   ::get-view-definitions
@@ -46,7 +38,7 @@
 (reg-event-fx
   ::add-view-definition
   (fn [{:keys [_db]} _]
-    {:dispatch [::routes/navigate [:vd-designer.pages.vd-form.controller/main :id ""]]}))
+    {:navigate [:form-create]}))
 
 (reg-event-fx
   ::delete-view-definition

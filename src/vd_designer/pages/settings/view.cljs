@@ -12,7 +12,6 @@
     [vd-designer.pages.settings.controller :as c]
     [vd-designer.pages.settings.model :as m]
     [vd-designer.components.tabs :as tabs]
-    [vd-designer.routes :as routes]
     [vd-designer.utils.event :refer [target-value]]
     [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
@@ -151,4 +150,3 @@
                               server-name])
                            :description base-url}]])))]]))
 
-(defmethod routes/pages ::c/main [] [server-list])

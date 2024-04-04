@@ -5,11 +5,9 @@
    [re-frame.core :refer [reg-event-db reg-event-fx]]
    [vd-designer.http.fhir-server :as http]))
 
-(def identifier ::main)
-
 (reg-event-fx
-  identifier
-  (fn [{db :db} [_ _phase]]
+  ::start
+  (fn [{db :db} [_]]
     {:db db}))
 
 (reg-event-db

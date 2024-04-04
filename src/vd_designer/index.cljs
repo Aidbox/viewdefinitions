@@ -1,19 +1,17 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
+            [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
             [re-frame.core :as re-frame :refer [dispatch
                                                 reg-event-db reg-event-fx
                                                 reg-sub subscribe]]
             [reagent.core :as r]
-            [reagent.dom :as rdom]
+            [reagent.dom.client :as rdom-client]
             [vd-designer.components.layout :refer [layout]]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
-            [vd-designer.pages.vd-form.controller :as vd-form.controller]
-            [vd-designer.pages.vd-list.controller :as vd-list.controller]
             [vd-designer.pages.vd-list.view]
             [vd-designer.pages.settings.view]
-            [vd-designer.pages.settings.controller :as settings.controller]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
@@ -28,37 +26,15 @@
  (fn [db _]
    (:side-menu-collapsed db)))
 
-(defn prepare-menu-key [s]
-  (str (namespace s) "/" (name s)))
-
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])
-        m {::vd-list.controller/main  [{:title "View Definitions"}]
-           ::settings.controller/main [{:title "Settings"}]
-           ::vd-form.controller/main  [{:title "View Definitions", :href "/"}
-                                       {:title (:name current-vd)}]}]
-    (concat [{:title "Home", :href "/"}]
-            (m route))))
-
-(defn find-page []
-  (let [route @(subscribe [::routes/active-page])]
-    [layout
-     {:collapsed @(subscribe [::side-menu-collapsed])
-      :on-collapse #(dispatch [::toggle-side-menu])
-      :on-menu-click (fn [key] (dispatch [::routes/navigate [key]]))
-      :menu-active-key (subs (str route) 1)
-      :menu [{:key (prepare-menu-key vd-list.controller/identifier)
-              :label "ViewDefinitions"
-              :icon (r/create-element icons/DatabaseOutlined)}
-             {:key (prepare-menu-key settings.controller/identifier)
-              :label "Settings"
-              :icon (r/create-element icons/SettingOutlined)}
-             {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs (breadcrumbs route)}
-     (if route
-       [:div
-        (routes/pages route)]
-       [:div "Page not found"])]))
+        m {:vd-list  [{:title "View Definitions"}]
+           :settings [{:title "Settings"}]
+           :form-edit [{:title "View Definitions", :href "/"}
+                       {:title (:name current-vd)}]
+           :form-create [{:title "View Definitions", :href "/"}
+                         {:title "New"}]}]
+    (m route)))
 
 ;;;; Initialization
 
@@ -89,13 +65,37 @@
 (def compiler
   (r/create-compiler {:function-components true}))
 
-(defn ^:dev/after-load mount-root []
-  (re-frame/clear-subscription-cache!)
-  (let [root-el (.getElementById js/document "app")]
-    (rdom/unmount-component-at-node root-el)
-    (rdom/render [find-page] root-el compiler)))
+(defn current-page []
+  (let [route @routes/match
+        current-route (-> route :data :name)]
+    [layout
+     {:collapsed @(subscribe [::side-menu-collapsed])
+      :on-collapse #(dispatch [::toggle-side-menu])
+      :on-menu-click (fn [key]
+                       (rfe/navigate (keyword key)))
+      :menu-active-key (when current-route (name current-route))
+      :menu [{:key "vd-list"
+              :label "ViewDefinitions"
+              :icon (r/create-element icons/DatabaseOutlined)}
+             {:key "settings"
+              :label "Settings"
+              :icon (r/create-element icons/SettingOutlined)}
+             {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
+      :breadcrumbs (breadcrumbs current-route)}
+     (if route
+       [:div
+        (let [view (:view (:data route))]
+          [view @routes/match])]
+       [:div "Page not found"])]))
+
+(defonce root-element (rdom-client/create-root (.getElementById js/document "app")))
 
 (defn init []
-  (routes/start!)
+  (routes/start-reitit)
   (re-frame/dispatch-sync [::initialize-db])
-  (mount-root))
+  (.render root-element (r/as-element [current-page]) compiler))
+
+(defn ^:dev/after-load re-render []
+  (re-frame/clear-subscription-cache!)
+  (init))
+
