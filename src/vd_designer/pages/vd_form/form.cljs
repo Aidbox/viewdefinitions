@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.form
-  (:require [re-frame.core :refer [dispatch subscribe]]
+  (:require [antd :refer [Spin]]
+            [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tag :as tag]
@@ -15,10 +16,9 @@
                                                           resource-input]]
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
-                                                           drop-value-path
-                                                           mapv-indexed]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]))
+                                                           drop-value-path]]
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.controller :as c]))
 
 ;;;; Tree
 
@@ -59,9 +59,10 @@
                (if deletable?
                  [base-node-row [tag] [delete-button (drop-value-path ctx) [kind]]]
                  [tag])
-               (conj (mapv-indexed (fn [idx item]
-                                     (let [ctx (add-value-path ctx idx)]
-                                       (tree-leaf (:value-path ctx) (leaf ctx item)))) items)
+               (conj (mapv (fn [item]
+                             (let [ctx (add-value-path ctx (:tree/key item))]
+                               (tree-leaf (:value-path ctx) (leaf ctx item))))
+                           items)
                      (tree-leaf (conj node-key :add)
                                 [add-element-button (name kind) ctx])))))
 
@@ -84,7 +85,9 @@
                (if deletable?
                  [base-node-row [tag] [delete-button (drop-value-path ctx) [kind]]]
                  [tag])
-               (conj (mapv-indexed #(select->node (add-value-path ctx %1) %2) items)
+               (conj (mapv (fn [item]
+                             (select->node (add-value-path ctx (:tree/key item)) item))
+                           items)
                      (tree-leaf (conj node-key :add) [add-select-button ctx])))))
 
 (defn select-node [ctx items]
@@ -139,12 +142,14 @@
   (let [vd-form @(subscribe [::m/current-vd])
         ctx (create-render-context)
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
-    [tree
-     :onExpand #(dispatch [::c/update-tree-expanded-nodes (js->clj %)])
-     :expandedKeys expanded-keys
-     :treeData [(tree-leaf [:name]     (name-input vd-form))
-                (tree-leaf [:resource] (resource-input vd-form))
+    (if vd-form
+      [tree
+       :onExpand #(dispatch [::c/update-tree-expanded-nodes (js->clj %)])
+       :expandedKeys expanded-keys
+       :treeData [(tree-leaf [:name]     (name-input vd-form))
+                  (tree-leaf [:resource] (resource-input vd-form))
 
-                (constant-node (add-value-path ctx :constant) (:constant vd-form))
-                (where-node    (add-value-path ctx :where)    (:where    vd-form))
-                (select-node   (add-value-path ctx :select)   (:select   vd-form))]]))
+                  (constant-node (add-value-path ctx :constant) (:constant vd-form))
+                  (where-node    (add-value-path ctx :where)    (:where    vd-form))
+                  (select-node   (add-value-path ctx :select)   (:select   vd-form))]]
+      [:> Spin {:size :large}])))

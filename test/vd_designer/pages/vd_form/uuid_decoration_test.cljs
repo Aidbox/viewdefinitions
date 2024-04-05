@@ -1,10 +1,9 @@
 (ns vd-designer.pages.vd-form.uuid-decoration-test
-  (:require [cljs.test :refer [are deftest run-tests is]]
+  (:require [cljs.test :refer [deftest run-tests is]]
             [matcher-combinators.test :refer [match?]]
             [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
-                                                               remove-decoration]]))
-
-
+                                                               remove-decoration
+                                                               uuid->idx]]))
 
 (defn uuid-str? [o]
   (-> o parse-uuid boolean))
@@ -26,6 +25,25 @@
    :where    [{:path "code.coding.exists(system='http://loinc.org' and code='85354-9')"}
               {:path "%sbp_component.dataAbsentReason.empty()"}
               {:path "%dbp_component.dataAbsentReason.empty()"}],
+   :resource "Patient"})
+
+(def raw-vd-with-id
+  {:name     "unnesting",
+   :select [{:column   [{:name     "id"
+                         :path     "id"
+                         :tree/key "46fe36c0-c43c-4599-a37f-32b40d50a157"}]
+             :tree/key "e2d24fbf-0241-4839-ab27-a010afc1b52b"}
+            {:select   [{:column   []
+                         :tree/key "5bc906ff-dc27-4198-8200-10d6fd5493b6"}]
+             :forEach  "name"
+             :tree/key "2b37ccad-57e3-4d1e-8f97-e6f4c6944ff5"}]
+   :constant [{:name        "sbp_component",
+               :valueString "component.where(code.coding.exists(system='http://loinc.org' and code='8480-6')).first()"}
+              {:name        "dbp_component",
+               :valueString "component.where(code.coding.exists(system='http://loinc.org' and code='8462-4')).first()"}],
+   :where    [{:path "code.coding.exists(system='http://loinc.org' and code='85354-9')"}
+              {:path "%sbp_component.dataAbsentReason.empty()"}
+              {:path "%dbp_component.dataAbsentReason.empty()"}]
    :resource "Patient"})
 
 (deftest decorate-test
@@ -97,6 +115,25 @@
                        :tree/key (str (random-uuid))}],
            :resource "Patient"}))))
 
+(deftest uuid->idx-test
+  (is (match?
+        [:select 0 :column]
+        (uuid->idx [:select "e2d24fbf-0241-4839-ab27-a010afc1b52b"
+                    :column]
+                   raw-vd-with-id)))
+
+  (is (match?
+        [:select 1 :select]
+        (uuid->idx [:select "2b37ccad-57e3-4d1e-8f97-e6f4c6944ff5"
+                    :select]
+                   raw-vd-with-id)))
+
+  (is (match?
+        [:select 1 :select 0 :column]
+        (uuid->idx [:select "2b37ccad-57e3-4d1e-8f97-e6f4c6944ff5"
+                    :select "5bc906ff-dc27-4198-8200-10d6fd5493b6"
+                    :column]
+                   raw-vd-with-id))))
+
 (comment
-  (run-tests 'vd-designer.pages.vd-form.uuid-decoration-test)
-  )
+  (run-tests 'vd-designer.pages.vd-form.uuid-decoration-test))

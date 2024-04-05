@@ -4,7 +4,10 @@
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]))
+            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]
+            [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
+                                                               remove-decoration
+                                                               uuid->idx]]))
 
 
 #_"status is required"
@@ -55,18 +58,18 @@
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
-   (let [normalized-view (update view :select normalize-vd)]
+   (let [decorated-view (decorate (update view :select normalize-vd))]
      {:fx [[:dispatch [::reset-vd-error]]
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (mapv str (into [[:constant] [:where] [:select]]
-                                       (get-select-path normalized-view)))]]]
-      :db (assoc db :current-vd normalized-view)})))
+                                       (get-select-path decorated-view)))]]]
+      :db (assoc db :current-vd decorated-view)})))
 
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
-   (let [view-definition (:current-vd db)]
+   (let [view-definition (remove-decoration (:current-vd db))]
      {:db         (assoc db :loading true)
       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                        :params {:limit 100
@@ -92,7 +95,8 @@
 (reg-event-db
  ::change-input-value
  (fn [db [_ path value]]
-   (assoc-in db (into [:current-vd] path) value)))
+   (let [real-path (uuid->idx path (:current-vd db))]
+     (assoc-in db (into [:current-vd] real-path) value))))
 
 
 (defn vec-remove
@@ -125,13 +129,13 @@
 (reg-event-fx
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
-   (let [insertion-path    (into [:current-vd] path)
-         insertion-idx     (count (get-in db insertion-path))
-         mk-expanded-path #(str (conj path insertion-idx (key %)))]
-     {:db (update-in db
-                     insertion-path
-                     (fnil conj [])
-                     (or default-value {}))
+   (let [value (decorate (or default-value {}))
+         mk-expanded-path #(str (conj path (:tree/key value) (key %)))] ;; FIXME
+     {:db (let [real-path (uuid->idx path (:current-vd db))]
+            (update-in db
+                       (into [:current-vd] real-path)
+                       (fnil conj [])
+                       value))
       :fx [[:dispatch [::update-tree-expanded-nodes
                        (into (:current-tree-expanded-nodes db)
                              (mapv mk-expanded-path default-value))]]]})))
@@ -139,23 +143,23 @@
 (reg-event-fx
  ::delete-tree-element
  (fn [{:keys [db]} [_ path & [node-types]]]
-   (let [collapse-paths (mapv #(str/join " " (conj path %)) node-types)]
-     (js/console.warn (str collapse-paths))
+   (let [mk-collapse-paths #(str/replace (str (conj path %)) #"[\[\]]" "")]
      {:fx [(when-not (nil? node-types)
              [:dispatch [::update-tree-expanded-nodes
                          (remove (fn [expanded]
                                    (some #(str/starts-with? (subs expanded 1) %)
-                                         collapse-paths))
+                                         (mapv mk-collapse-paths node-types)))
                                  (:current-tree-expanded-nodes db))]])]
-      :db (update-in db
-                     (into [:current-vd] (pop path))
-                     remove-node
-                     (peek path))})))
+      :db (let [real-path (uuid->idx path (:current-vd db))]
+            (update-in db
+                       (into [:current-vd] (pop real-path))
+                       remove-node
+                       (peek real-path)))})))
 
 (reg-event-fx
  ::save-view-definition
  (fn [{:keys [db]} [_]]
-   (let [view-definition (:current-vd db)
+   (let [view-definition (remove-decoration (:current-vd db))
          req (if (:id view-definition)
                (http.fhir-server/put-view-definition
                 db

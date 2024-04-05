@@ -122,6 +122,5 @@
 
 (defn get-select-path [view]
   (->> (:select view)
-       (mapv-indexed (fn [idx select]
-                       (map (fn [[k _]] [:select idx k]) select)))
+       (mapv #(map (fn [[k _]] [:select (:tree/key %) k]) (dissoc % :tree/key)))
        (apply concat)))
