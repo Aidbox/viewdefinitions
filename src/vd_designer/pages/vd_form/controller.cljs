@@ -5,11 +5,18 @@
             [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]))
 
 
+#_"status is required"
+(defn set-view-definition-status [db]
+  (let [vd (:current-vd db)]
+    (if (not (:status vd))
+      (assoc-in db [:current-vd :status] "unknown")
+      db)))
+
 (reg-event-fx
   ::start
  (fn [{db :db} [_ parameters]]
    (let [vd-id (-> parameters :path :id)]
-     {:db db
+     {:db (if vd-id db (set-view-definition-status db))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
@@ -105,15 +112,19 @@
 (reg-event-fx
   ::save-view-definition
  (fn [{:keys [db]} [_]]
-   (let [view-definition (:current-vd db)]
+   (let [view-definition (:current-vd db)
+         req (if (:id view-definition)
+               (http.fhir-server/put-view-definition
+                 db
+                 (:id view-definition)
+                 view-definition)
+               (http.fhir-server/post-view-definition
+                 db
+                 view-definition))]
      {:db (assoc db ::m/save-view-definition-loading true)
-      :http-xhrio
-      (-> (http.fhir-server/put-view-definition
-            db
-            (:id view-definition)
-            view-definition)
-          (assoc :on-success [::save-view-definition-success]
-                 :on-failure [::save-view-definition-failure]))})))
+      :http-xhrio (assoc req
+                         :on-success [::save-view-definition-success]
+                         :on-failure [::save-view-definition-failure])})))
 
 (reg-event-fx
   ::save-view-definition-success

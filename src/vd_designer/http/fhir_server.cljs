@@ -59,12 +59,8 @@
        :format (ajax/json-request-format)}
       (with-defaults db)))
 
-;; TODO: we need to POST view definition if we consider it new
-;; (created by "+ ViewDefinition" button)
-;; because if we POST FHIR server will check if
-;; id (or even view_name) already exists
-#_(defn post-view-definition [db params]
-  (-> {:method :put
+(defn post-view-definition [db params]
+  (-> {:method :post
        :uri    (base-url+path db "/ViewDefinition/")
        :params params
        :format (ajax/json-request-format)}
