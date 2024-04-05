@@ -15,7 +15,9 @@
   (let [resources @(subscribe [::m/view-definition-data])]
     [:> Row {:gutter 32}
      [:> Col {:span 12}
-      [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
+      [:> Row
+       [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])}]
+       [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])}]]
       [tabs {:items [(tab-item {:key      "form"
                                 :label    "Form"
                                 :children [form]

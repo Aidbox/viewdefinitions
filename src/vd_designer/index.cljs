@@ -66,9 +66,6 @@
                                                         second
                                                         :server-name)}}})))
 
-(def compiler
-  (r/create-compiler {:function-components true}))
-
 (defn current-page []
   (let [route @routes/match
         current-route (-> route :data :name)]
@@ -97,7 +94,7 @@
 (defn init []
   (routes/start-reitit)
   (re-frame/dispatch-sync [::initialize-db])
-  (.render root-element (r/as-element [current-page]) compiler))
+  (.render root-element (r/as-element [current-page])))
 
 (defn ^:dev/after-load re-render []
   (re-frame/clear-subscription-cache!)

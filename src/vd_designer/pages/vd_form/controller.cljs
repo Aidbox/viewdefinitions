@@ -101,3 +101,29 @@
               (into [:current-vd] (pop path))
               remove-node
               (peek path))))
+
+(reg-event-fx
+  ::save-view-definition
+ (fn [{:keys [db]} [_]]
+   (let [view-definition (:current-vd db)]
+     {:db (assoc db ::m/save-view-definition-loading true)
+      :http-xhrio
+      (-> (http.fhir-server/put-view-definition
+            db
+            (:id view-definition)
+            view-definition)
+          (assoc :on-success [::save-view-definition-success]
+                 :on-failure [::save-view-definition-failure]))})))
+
+(reg-event-fx
+  ::save-view-definition-success
+ (fn [{:keys [db]} [_ result]]
+   {:db (-> db
+            (assoc :current-vd result)
+            (dissoc ::m/save-view-definition-loading))}))
+
+(reg-event-fx
+  ::save-view-definition-failure
+ (fn [{:keys [db]} [_ _result]]
+   #_"TODO: handle it and render the error"
+   {:db db}))
