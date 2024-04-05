@@ -83,7 +83,9 @@
 (reg-event-fx
   ::connect
   (fn [{db :db} [_ {:keys [server-name base-url headers]}]]
-    {:db (assoc db ::request-sent-by server-name)
+    {:db (-> db
+             (assoc ::request-sent-by server-name)
+             (update :cfg/fhir-servers dissoc :used-server-name))
      :http-xhrio
      [(http/get-metadata db {:uri (-> base-url uri/uri
                                       (assoc :path "/metadata")
