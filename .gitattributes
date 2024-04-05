@@ -1,0 +1,2 @@
+# this tells Github to hide (collapse by default) generated files in diffs & PRs
+package-lock.json linguist-generated=true
