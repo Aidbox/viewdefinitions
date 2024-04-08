@@ -48,9 +48,9 @@
                               :unionAll      {:unionAll []})])]))
 
 
-(defn delete-button [ctx & [node-type]]
+(defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
-   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx) node-type])}])
+   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
 
 (defn settings-button [_ctx]
   [button/invisible-icon icons/SettingOutlined])

@@ -1,5 +1,5 @@
 (ns vd-designer.pages.vd-form.controller
-  (:require [clojure.string :as str]
+  (:require [vd-designer.utils.utils :as utils]
             [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
@@ -65,8 +65,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (->> (get-select-path decorated-view)
-                            (into [[:constant] [:where] [:select]])
-                            (mapv str))]]]
+                            (into [[:constant] [:where] [:select]]))]]]
       :db (assoc db :current-vd decorated-view)})))
 
 (reg-event-fx
@@ -134,9 +133,7 @@
  (fn [{:keys [db]} [_ path default-value]]
    (let [value (decorate (or default-value {}))
          mk-expanded-path (fn [[k v]]
-                            (-> path
-                                (conj (:tree/key value) k)
-                                (str)))]
+                            (conj path (:tree/key value) k))]
      {:db (let [real-path (uuid->idx path (:current-vd db))]
             (update-in db
                        (into [:current-vd] real-path)
@@ -150,19 +147,16 @@
 
 (reg-event-fx
  ::delete-tree-element
- (fn [{:keys [db]} [_ path & [node-types]]]
-   (let [mk-collapse-paths #(str/replace (str (conj path %)) #"[\[\]]" "")]
-     {:fx [(when-not (nil? node-types)
-             [:dispatch [::update-tree-expanded-nodes
-                         (remove (fn [expanded]
-                                   (some #(str/starts-with? (subs expanded 1) %)
-                                         (mapv mk-collapse-paths node-types)))
-                                 (:current-tree-expanded-nodes db))]])]
-      :db (let [real-path (uuid->idx path (:current-vd db))]
-            (update-in db
-                       (into [:current-vd] (pop real-path))
-                       remove-node
-                       (peek real-path)))})))
+ (fn [{:keys [db]} [_ path]]
+   {:fx [[:dispatch [::update-tree-expanded-nodes
+                     (->> (:current-tree-expanded-nodes db)
+                          (remove #(utils/vector-starts-with % path))
+                          vec)]]]
+    :db (let [real-path (uuid->idx path (:current-vd db))]
+          (update-in db
+                     (into [:current-vd] (pop real-path))
+                     remove-node
+                     (peek real-path)))}))
 
 (reg-event-fx
  ::save-view-definition

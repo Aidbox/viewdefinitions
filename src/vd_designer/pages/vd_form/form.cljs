@@ -1,10 +1,11 @@
 (ns vd-designer.pages.vd-form.form
   (:require [antd :refer [Spin]]
+            [vd-designer.utils.string :as str.utils]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tag :as tag]
-            [vd-designer.components.tree :refer [tree tree-leaf tree-node]]
+            [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
             [vd-designer.pages.vd-form.components :refer [add-element-button
                                                           add-select-button
                                                           base-node-row
@@ -57,7 +58,7 @@
     (js/console.debug (str "(node items)[" (name kind) "]: " items))
     (tree-node node-key
                (if deletable?
-                 [base-node-row [tag] [delete-button (drop-value-path ctx) [kind]]]
+                 [base-node-row [tag] [delete-button (drop-value-path ctx)]]
                  [tag])
                (conj (mapv (fn [item]
                              (let [ctx (add-value-path ctx (:tree/key item))]
@@ -83,7 +84,7 @@
     (js/console.debug (str "(node items)[" (name kind) "]: " items))
     (tree-node node-key
                (if deletable?
-                 [base-node-row [tag] [delete-button (drop-value-path ctx) [kind]]]
+                 [base-node-row [tag] [delete-button (drop-value-path ctx)]]
                  [tag])
                (conj (mapv (fn [item]
                              (select->node (add-value-path ctx (:tree/key item)) item))
@@ -103,7 +104,7 @@
     (js/console.debug (str "(node path)["  (name kind) "]: " path))
     (js/console.debug (str "(node items)[" (name kind) "]: " select))
     (tree-node node-key
-               [base-node-row [tag/foreach kind] [delete-button ctx [kind :select]]]
+               [base-node-row [tag/foreach kind] [delete-button ctx]]
                [(tree-leaf (conj (:value-path ctx) :path)
                            (foreach-expr-leaf ctx kind path))
                 (select-node (add-value-path ctx :select) select)])))
@@ -144,8 +145,9 @@
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
     (if vd-form
       [tree
-       :onExpand #(dispatch [::c/update-tree-expanded-nodes (js->clj %)])
-       :expandedKeys expanded-keys
+       :onExpand #(dispatch [::c/update-tree-expanded-nodes
+                             (->> % js->clj (mapv str.utils/parse-path))])
+       :expandedKeys (map tree/calc-key expanded-keys)
        :treeData [(tree-leaf [:name]     (name-input vd-form))
                   (tree-leaf [:resource] (resource-input vd-form))
 
