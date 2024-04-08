@@ -35,11 +35,11 @@
 
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-element-into-array (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])}])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
-    [new-select #(dispatch [::c/add-element-into-array
+    [new-select #(dispatch [::c/add-tree-element
                             (:value-path ctx)
                             (case (key %)
                               :column        {:column   []}

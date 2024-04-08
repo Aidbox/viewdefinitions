@@ -1,8 +1,13 @@
 (ns vd-designer.pages.vd-form.controller
-  (:require [re-frame.core :refer [reg-event-db reg-event-fx]]
+  (:require [vd-designer.utils.utils :as utils]
+            [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
+            [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]))
+            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]
+            [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
+                                                               remove-decoration
+                                                               uuid->idx]]))
 
 
 #_"status is required"
@@ -13,7 +18,7 @@
       db)))
 
 (reg-event-fx
-  ::start
+ ::start
  (fn [{db :db} [_ parameters]]
    (let [vd-id (-> parameters :path :id)]
      {:db (if vd-id db (set-view-definition-status db))
@@ -25,9 +30,9 @@
             (conj [:dispatch [::get-view-definition vd-id]]))})))
 
 (reg-event-fx
-  ::stop
-  (fn [{db :db} [_]]
-    {:db (dissoc db :current-vd)}))
+ ::stop
+ (fn [{db :db} [_]]
+   {:db (dissoc db :current-vd)}))
 
 (reg-event-fx
  ::get-supported-resource-types
@@ -47,23 +52,42 @@
  (fn [{:keys [db]} [_ vd-id]]
    {:db         (assoc db :loading true)
     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
-                    (assoc :on-success [::choose-vd]))}))
+                    (assoc :on-success [::choose-vd]
+                           :on-failure [::on-vd-error]))}))
 
 (reg-event-fx
  ::choose-vd
- (fn [{:keys [db]} [_ vd-id]]
-   {:fx [[:dispatch [::eval-view-definition-data]]]
-    :db (assoc db :current-vd (update vd-id :select normalize-vd))}))
+ (fn [{:keys [db]} [_ view]]
+   (let [decorated-view (-> view
+                            (update :select normalize-vd)
+                            (decorate))]
+     {:fx [[:dispatch [::reset-vd-error]]
+           [:dispatch [::eval-view-definition-data]]
+           [:dispatch [::update-tree-expanded-nodes
+                       (->> (get-select-path decorated-view)
+                            (into [[:constant] [:where] [:select]]))]]]
+      :db (assoc db :current-vd decorated-view)})))
 
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
-   (let [view-definition (:current-vd db)]
+   (let [view-definition (remove-decoration (:current-vd db))]
      {:db         (assoc db :loading true)
       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                        :params {:limit 100
                                                                 :view  view-definition}})
                       (assoc :on-success [::on-eval-view-definitions-success]))})))
+
+(reg-event-db
+ ::reset-vd-error
+ (fn [db [_]]
+   (dissoc db ::m/current-vd-error)))
+
+(reg-event-db
+ ::on-vd-error
+ (fn [db [_ result]]
+   (assoc db ::m/current-vd-error (or (-> result :response :error)
+                                      (-> result :response :text :div)))))
 
 (reg-event-db
  ::on-eval-view-definitions-success
@@ -73,12 +97,9 @@
 (reg-event-db
  ::change-input-value
  (fn [db [_ path value]]
-   (assoc-in db (into [:current-vd] path) value)))
+   (let [real-path (uuid->idx path (:current-vd db))]
+     (assoc-in db (into [:current-vd] real-path) value))))
 
-(reg-event-db
- ::add-element-into-array
- (fn [db [_ path default-value]]
-   (update-in db (into [:current-vd] path) (fnil conj []) (or default-value {}))))
 
 (defn vec-remove
   "remove elem in coll"
@@ -101,40 +122,68 @@
  (fn [db [_ value]]
    (assoc-in db [:current-vd :name] value)))
 
+
 (reg-event-db
- ::delete-tree-element
- (fn [db [_ path]]
-   (update-in db
-              (into [:current-vd] (pop path))
-              remove-node
-              (peek path))))
+ ::update-tree-expanded-nodes
+ (fn [db [_ expanded]]
+   (assoc-in db [:current-tree-expanded-nodes] expanded)))
 
 (reg-event-fx
-  ::save-view-definition
+ ::add-tree-element
+ (fn [{:keys [db]} [_ path default-value]]
+   (let [value (decorate (or default-value {}))
+         mk-expanded-path (fn [[k v]]
+                            (conj path (:tree/key value) k))]
+     {:db (let [real-path (uuid->idx path (:current-vd db))]
+            (update-in db
+                       (into [:current-vd] real-path)
+                       (fnil conj [])
+                       value))
+      :fx [[:dispatch-later
+            [{:ms       100
+              :dispatch [::update-tree-expanded-nodes
+                         (into (:current-tree-expanded-nodes db)
+                               (mapv mk-expanded-path default-value))]}]]]})))
+
+(reg-event-fx
+ ::delete-tree-element
+ (fn [{:keys [db]} [_ path]]
+   {:fx [[:dispatch [::update-tree-expanded-nodes
+                     (->> (:current-tree-expanded-nodes db)
+                          (remove #(utils/vector-starts-with % path))
+                          vec)]]]
+    :db (let [real-path (uuid->idx path (:current-vd db))]
+          (update-in db
+                     (into [:current-vd] (pop real-path))
+                     remove-node
+                     (peek real-path)))}))
+
+(reg-event-fx
+ ::save-view-definition
  (fn [{:keys [db]} [_]]
-   (let [view-definition (:current-vd db)
+   (let [view-definition (remove-decoration (:current-vd db))
          req (if (:id view-definition)
                (http.fhir-server/put-view-definition
-                 db
-                 (:id view-definition)
-                 view-definition)
+                db
+                (:id view-definition)
+                view-definition)
                (http.fhir-server/post-view-definition
-                 db
-                 view-definition))]
+                db
+                view-definition))]
      {:db (assoc db ::m/save-view-definition-loading true)
       :http-xhrio (assoc req
                          :on-success [::save-view-definition-success]
                          :on-failure [::save-view-definition-failure])})))
 
 (reg-event-fx
-  ::save-view-definition-success
+ ::save-view-definition-success
  (fn [{:keys [db]} [_ result]]
    {:db (-> db
             (assoc :current-vd result)
             (dissoc ::m/save-view-definition-loading))}))
 
 (reg-event-fx
-  ::save-view-definition-failure
+ ::save-view-definition-failure
  (fn [{:keys [db]} [_ _result]]
    #_"TODO: handle it and render the error"
    {:db db}))

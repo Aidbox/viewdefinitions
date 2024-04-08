@@ -119,3 +119,8 @@
    :spec vd-spec
    :spec-map (hash-map (get vd-spec "url") vd-spec)
    :value-path []})
+
+(defn get-select-path [view]
+  (->> (:select view)
+       (mapv #(map (fn [[k _]] [:select (:tree/key %) k]) (dissoc % :tree/key)))
+       (apply concat)))
