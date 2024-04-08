@@ -1,5 +1,6 @@
 (ns vd-designer.components.table
-  (:require [antd :refer [Table]]))
+  (:require [antd :refer [Table]]
+            [medley.core :as medley]))
 
 (defn derive-columns [data]
   (->> data
@@ -12,8 +13,7 @@
   For more details see: https://ant.design/components/table#api"
   [data & {:as opts}]
   (let [columns (derive-columns data)]
-    [:> Table (merge-with
-               into
+    [:> Table (medley/deep-merge
                {:columns    columns
                 :dataSource data
                 :rowKey     "id"}

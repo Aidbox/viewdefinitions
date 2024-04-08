@@ -2,8 +2,23 @@
 @tailwind components;
 @tailwind utilities; */
 
-body {
+html, body, #app, #app>div {
+  height: 100%;
   margin: 0;
+}
+
+
+/* FORM */
+
+
+div.ant-tabs {
+  flex: 1;
+  overflow: hidden;
+}
+
+.ant-tabs-content-holder {
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .ant-menu-item-selected {

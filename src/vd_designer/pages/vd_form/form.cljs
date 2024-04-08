@@ -120,7 +120,7 @@
 
 (defn form []
   (let [vd-form @(subscribe [::m/current-vd])
-        ctx (create-render-context)]
+        ctx (create-render-context)] 
     [:div
      [tree
       :onSelect (fn [selected-keys info] (js/console.log "selected" selected-keys info))
