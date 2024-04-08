@@ -28,11 +28,11 @@
                            idx))
                        coll)))
 
-(defn uuid->idx [initial-path form]
+(defn uuid->idx [initial-path vd]
   (reduce (fn [path step]
             (if (keyword? step)
               (conj path step)
-              (let [sub-form (get-in form path)]
+              (let [sub-form (get-in vd path)]
                 (conj path (find-index #(= step (:tree/key %)) sub-form)))))
           []
           initial-path))

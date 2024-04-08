@@ -58,12 +58,15 @@
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
-   (let [decorated-view (decorate (update view :select normalize-vd))]
+   (let [decorated-view (-> view
+                            (update :select normalize-vd)
+                            (decorate))]
      {:fx [[:dispatch [::reset-vd-error]]
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
-                       (mapv str (into [[:constant] [:where] [:select]]
-                                       (get-select-path decorated-view)))]]]
+                       (->> (get-select-path decorated-view)
+                            (into [[:constant] [:where] [:select]])
+                            (mapv str))]]]
       :db (assoc db :current-vd decorated-view)})))
 
 (reg-event-fx
@@ -79,7 +82,7 @@
 (reg-event-db
  ::reset-vd-error
  (fn [db [_]]
-   (assoc db ::m/current-vd-error nil)))
+   (dissoc db ::m/current-vd-error)))
 
 (reg-event-db
  ::on-vd-error
@@ -130,15 +133,20 @@
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
    (let [value (decorate (or default-value {}))
-         mk-expanded-path #(str (conj path (:tree/key value) (key %)))] ;; FIXME
+         mk-expanded-path (fn [[k v]]
+                            (-> path
+                                (conj (:tree/key value) k)
+                                (str)))]
      {:db (let [real-path (uuid->idx path (:current-vd db))]
             (update-in db
                        (into [:current-vd] real-path)
                        (fnil conj [])
                        value))
-      :fx [[:dispatch [::update-tree-expanded-nodes
-                       (into (:current-tree-expanded-nodes db)
-                             (mapv mk-expanded-path default-value))]]]})))
+      :fx [[:dispatch-later
+            [{:ms       100
+              :dispatch [::update-tree-expanded-nodes
+                         (into (:current-tree-expanded-nodes db)
+                               (mapv mk-expanded-path default-value))]}]]]})))
 
 (reg-event-fx
  ::delete-tree-element
