@@ -22,7 +22,8 @@
                             :flex-flow "row"
                             :overflow "hidden"}}
      [:> Panel 
-      {:minSize 25}
+      {:minSize 25
+       :style {:display "flex"}}
       [:div {:style {:flex 1
                      :flow-grow 1
                      :flex-shrink 0
@@ -43,9 +44,7 @@
                                           :icon     (r/create-element icons/CodeOutlined)})]}]]]
      [:> PanelResizeHandle {:style {:border-right "solid"
                                     :border-right-color "#F0F0F0"
-                                    :border-width "1px"
-                                    :margin-left 16
-                                    :margin-right 16}}]
+                                    :border-width "1px"}}]
      [:> Panel 
       {:minSize 20}
       [table (:data resources)

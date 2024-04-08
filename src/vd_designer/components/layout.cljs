@@ -55,6 +55,7 @@
         :style {:margin "16px"}}]
 
       [:div {:style {:padding 24
+                     :padding-bottom 0
                      :flex 1
                      :flow-grow 1
                      :flex-shrink 0

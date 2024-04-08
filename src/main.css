@@ -19,6 +19,8 @@ div.ant-tabs {
 .ant-tabs-content-holder {
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #F0F0F0 #FFFFFF;
 }
 
 .ant-menu-item-selected {
