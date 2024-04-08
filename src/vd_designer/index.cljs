@@ -70,23 +70,20 @@
   (let [route @routes/match
         current-route (-> route :data :name)]
     [layout
-     {:collapsed @(subscribe [::side-menu-collapsed])
-      :on-collapse #(dispatch [::toggle-side-menu])
-      :on-menu-click (fn [key]
+     {:on-menu-click (fn [key]
                        (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
       :menu [{:key "vd-list"
-              :label "ViewDefinitions"
-              :icon (r/create-element icons/DatabaseOutlined)}
+              :icon (r/create-element icons/DatabaseOutlined)
+              :size 64}
              {:key "settings"
-              :label "Settings"
-              :icon (r/create-element icons/SettingOutlined)}
-             {:key "3" :label "Docs" :icon (r/create-element icons/BookOutlined)}]
+              :icon (r/create-element icons/SettingOutlined)
+              :size 64}
+             {:key "3" :icon (r/create-element icons/BookOutlined)}]
       :breadcrumbs (breadcrumbs current-route)}
      (if route
-       [:div
-        (let [view (:view (:data route))]
-          [view @routes/match])]
+       (let [view (:view (:data route))]
+         [view @routes/match])
        [:div "Page not found"])]))
 
 (defonce root-element (rdom-client/create-root (.getElementById js/document "app")))

@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.controller
   (:require [vd-designer.utils.utils :as utils]
+            [day8.re-frame.tracing :refer-macros [fn-traced]]
             [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
@@ -85,9 +86,10 @@
 
 (reg-event-db
  ::on-vd-error
- (fn [db [_ result]]
+ (fn-traced [db [_ result]]
    (assoc db ::m/current-vd-error (or (-> result :response :error)
-                                      (-> result :response :text :div)))))
+                                      (-> result :response :text :div) 
+                                      (:status-text result)))))
 
 (reg-event-db
  ::on-eval-view-definitions-success

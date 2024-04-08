@@ -19,9 +19,13 @@
    [:> Col {:flex "30px"} col2]])
 
 (defn base-input-row [col1 col2]
-  [:> Row {:align "middle" :gutter 32}
-   [:> Col {:span 10} col1]
-   [:> Col {:span 14} col2]])
+  [:> Row {:justify "space-between"}
+   [:> Col {:span 12} 
+    [:> Row {:justify "start"}
+     col1]]
+   [:> Col {:span 12} 
+    [:> Row {:justify "end"}
+     col2]]])
 
 (defn nested-input-row [icon name value]
   [base-input-row
@@ -63,7 +67,9 @@
    [tag/default "name"]
    [input {:value       (:name vd-form)
            :placeholder "ViewDefinition"
-           :style       {:font-style "normal"}
+           :style       {:font-style "normal"
+                         :min-width "200px"
+                         :max-width "400px"}
            :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
 
 (defn resource-input [vd-form]
@@ -71,6 +77,7 @@
    [tag/resource]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
+    :style {:max-width "400px" :min-width "200px"}
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 

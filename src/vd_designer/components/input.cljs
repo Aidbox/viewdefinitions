@@ -1,5 +1,6 @@
 (ns vd-designer.components.input
-  (:require [antd :refer [ConfigProvider Input]]))
+  (:require [antd :refer [ConfigProvider Input]]
+            [medley.core :as medley]))
 
 (defn search [& {:as opts}]
   [:> Input.Search (merge-with into
@@ -12,11 +13,11 @@
   [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                    :hoverBorderColor  "#7972D3"}}}}
-   [:> Input (merge-with into
-                         {:classNames {:input "default-input"}
-                          :style      {:font-style       "italic"
-                                       :border           "none"
-                                       :border-bottom    "1px solid transparent"
-                                       :border-radius    0
-                                       :background-color "transparent"}}
-                         opts)]])
+   [:> Input (medley/deep-merge
+               {:classNames {:input "default-input"}
+                :style      {:font-style       "italic"
+                             :border           "none"
+                             :border-bottom    "1px solid transparent"
+                             :border-radius    0
+                             :background-color "transparent"}}
+               opts)]])
