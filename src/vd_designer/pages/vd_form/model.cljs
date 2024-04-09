@@ -26,3 +26,8 @@
  ::current-vd-error
  (fn [db _]
    (::current-vd-error db)))
+
+(reg-sub
+  ::language
+  (fn [db _]
+    (:language db)))

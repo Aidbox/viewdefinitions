@@ -189,3 +189,8 @@
  (fn [{:keys [db]} [_ _result]]
    #_"TODO: handle it and render the error"
    {:db db}))
+
+(reg-event-db
+  ::change-language
+  (fn [db [_ lang]]
+    (assoc db :language lang)))

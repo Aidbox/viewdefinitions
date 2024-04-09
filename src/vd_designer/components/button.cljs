@@ -69,3 +69,11 @@
                                 :border-radius    "2px"}}
                        opts)
    content])
+
+(defn download-text-file [{:keys [filename text]}]
+  (let [file (js/Blob. [text] {:type "text/plain"})]
+    [:a {:download filename
+         ;; URL.createObjectURL is called w/o subsequent revocation
+         ;; Theoretically, this may lead to memory leaks
+         :href     (js/URL.createObjectURL file)}
+     [button nil {:icon (r/create-element icons/DownloadOutlined)}]]))

@@ -60,11 +60,12 @@
       {:db {:view-definitions    []
             :mode                :form
             :side-menu-collapsed false
-            :cfg/fhir-servers    {:servers  default-servers
+            :cfg/fhir-servers    {:servers          default-servers
                                   :used-server-name (-> default-servers
                                                         first
                                                         second
-                                                        :server-name)}}})))
+                                                        :server-name)}
+            :language            :language/yaml}})))
 
 (defn current-page []
   (let [route @routes/match

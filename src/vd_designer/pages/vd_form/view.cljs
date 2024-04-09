@@ -47,8 +47,8 @@
                                  :label    "Form"
                                  :children [form]
                                  :icon     (r/create-element icons/EditOutlined)})
-                      (tab-item {:key      "yaml"
-                                 :label    "YAML"
+                      (tab-item {:key      "code"
+                                 :label    "Code"
                                  :children [editor]
                                  :icon     (r/create-element icons/CodeOutlined)})]}]]]
      [:> PanelResizeHandle {:style {:border-right "solid"
