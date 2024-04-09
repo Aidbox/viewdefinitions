@@ -31,3 +31,8 @@
   ::language
   (fn [db _]
     (::language db)))
+
+(reg-sub 
+ ::sql
+ (fn [db _]
+   (-> db ::resource-data :sql)))

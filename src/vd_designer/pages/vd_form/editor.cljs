@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.editor
   (:require ["@ant-design/icons" :as icons]
+            [antd :refer [Popover]]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
@@ -21,6 +22,11 @@
               :language/yaml "yml"
               :language/json "json")]
     (str (:name vd) "." ext)))
+
+(defn label-copied []
+  (r/as-element
+   [:div {:style {:text-align "center"}}
+    "View definition copied!"]))
 
 (defn editor []
   (let [vd @(subscribe [::m/current-vd])
@@ -47,8 +53,13 @@
        :defaultChecked (= lang :language/json)
        :onChange #(dispatch [::c/change-language
                              (if % :language/json :language/yaml)])]
-      [button/button nil
-       {:icon     (r/create-element icons/CopyOutlined)
-        :on-click #(utils.browser/copy-text-to-clipboard code)}]
+      [:> Popover
+       {:title (label-copied)
+        :placement :top
+        :content nil
+        :trigger :click}
+       (button/button nil
+                      {:icon     (r/create-element icons/CopyOutlined)
+                       :on-click #(utils.browser/copy-text-to-clipboard code)})]
       [button/download-text-file {:filename (filename vd lang)
                                   :text     code}]]]))
