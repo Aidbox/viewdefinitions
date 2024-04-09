@@ -154,4 +154,10 @@
                   (constant-node (add-value-path ctx :constant) (:constant vd-form))
                   (where-node    (add-value-path ctx :where)    (:where    vd-form))
                   (select-node   (add-value-path ctx :select)   (:select   vd-form))]]
-      [:> Spin {:size :large}])))
+      [:div
+       {:style {:display "flex"
+                :justify-content "center"
+                :flex 1
+                :align-items "center"
+                :padding-top "50%"}}
+       [:> Spin {:size :large}]])))
