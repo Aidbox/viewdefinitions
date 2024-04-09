@@ -8,6 +8,7 @@
             [vd-designer.components.button :as button]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
+            [vd-designer.components.heading :refer [h1]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
             [vd-designer.pages.vd-form.form :refer [form]]
@@ -23,7 +24,7 @@
                             :flex-direction "row"
                             :flex-flow "row"
                             :overflow "hidden"}}
-     [:> Panel 
+     [:> Panel
       {:minSize 25
        :style {:display "flex"}}
       [:div {:style {:flex 1
@@ -34,12 +35,13 @@
                      :display "flex"
                      :override "hidden"
                      :min-width "400px"}}
+       [h1 "ViewDefinition"]
        (if-not (nil? error)
          [alert :type :error :message error]
-         [:> Row 
+         [:> Row
           [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])
                                 :style {:max-width "80px"}}]
-          [button/button "Save" {:onClick #(dispatch [::c/save-view-definition]) 
+          [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])
                                  :style {:max-width "80px"}}]])
        [tabs {:items [(tab-item {:key      "form"
                                  :label    "Form"
@@ -52,8 +54,10 @@
      [:> PanelResizeHandle {:style {:border-right "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width "1px"}}]
-     [:> Panel 
+     [:> Panel
       {:minSize 20}
+      [h1 "Results"
+       :style {:margin-left "16px"}]
       [table (:data resources)
        {:scroll {:y 1000
                  :x true}}]]]))
@@ -61,7 +65,7 @@
 #_(defn viewdefinition-view []
   (let [resources @(subscribe [::m/view-definition-data])
         error @(subscribe [::m/current-vd-error])]
-    [:> PanelGroup 
+    [:> PanelGroup
      {:direction "horizontal"
       :style {:gutter 32
               :flex 1
@@ -101,6 +105,6 @@
        [:> Panel
         {:minSize 20}
         [:> Col {:span 12}
-         [table (:data resources) 
+         [table (:data resources)
           {:scroll {:y 1000
                     :x true}}]]]]]]))
