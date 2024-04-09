@@ -22,7 +22,12 @@
  ::start
  (fn [{db :db} [_ parameters]]
    (let [vd-id (-> parameters :path :id)]
-     {:db (if vd-id db (set-view-definition-status db))
+     {:db (cond-> db
+            :always
+            (assoc ::m/language :language/yaml)
+
+            vd-id
+            (set-view-definition-status))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
@@ -193,4 +198,4 @@
 (reg-event-db
   ::change-language
   (fn [db [_ lang]]
-    (assoc db :language lang)))
+    (assoc db ::m/language lang)))

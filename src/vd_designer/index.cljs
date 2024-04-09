@@ -64,8 +64,7 @@
                                   :used-server-name (-> default-servers
                                                         first
                                                         second
-                                                        :server-name)}
-            :language            :language/yaml}})))
+                                                        :server-name)}}})))
 
 (defn current-page []
   (let [route @routes/match

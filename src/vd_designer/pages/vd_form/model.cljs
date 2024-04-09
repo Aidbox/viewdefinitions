@@ -30,4 +30,4 @@
 (reg-sub
   ::language
   (fn [db _]
-    (:language db)))
+    (::language db)))
