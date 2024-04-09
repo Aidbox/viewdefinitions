@@ -4,7 +4,14 @@
 
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
 
-html, body, #app, #app>div {
+:root {
+  --hover-color: #FAFAFA;
+}
+
+html,
+body,
+#app,
+#app>div {
   height: 100%;
   margin: 0;
 }
@@ -50,7 +57,8 @@ button {
 
 *:hover>.invisible-button,
 *:hover>*>.invisible-button,
-*:hover>*>*>.invisible-button {
+*:hover>*>*>.invisible-button,
+.invisible-button.active {
   visibility: visible;
   opacity: 1;
 }
@@ -65,4 +73,8 @@ button {
 
 .vd-tree .ant-tree-switcher:has(.ant-tree-switcher-icon) {
   border-radius: 0;
+}
+
+.vd-tree .ant-tree-node-content-wrapper.active {
+  background-color: var(--hover-color);
 }

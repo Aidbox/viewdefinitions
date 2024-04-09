@@ -1,7 +1,8 @@
 (ns vd-designer.pages.vd-form.controller
   (:require [vd-designer.utils.utils :as utils]
+            [medley.core :as medley]
             [day8.re-frame.tracing :refer-macros [fn-traced]]
-            [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
+            [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
@@ -93,21 +94,21 @@
 (reg-event-db
  ::on-vd-error
  (fn-traced [db [_ result]]
-   (assoc db ::m/current-vd-error (or (-> result :response :error)
-                                      (-> result :response :text :div) 
-                                      (:status-text result)))))
+            (assoc db ::m/current-vd-error (or (-> result :response :error)
+                                               (-> result :response :text :div)
+                                               (:status-text result)))))
 
 (reg-event-db
  ::on-eval-view-definitions-success
  (fn [db [_ result]]
-   (assoc db 
+   (assoc db
           ::m/resource-data (:result result)
           ::m/eval-loading false)))
 
 (reg-event-db
  ::on-eval-view-definitions-error
  (fn [db [_ result]]
-   (assoc db 
+   (assoc db
           :notification (-> result :response :text :div)
           ::m/eval-loading false)))
 
@@ -117,6 +118,13 @@
    (let [real-path (uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
+(reg-event-db
+ ::change-input-value-merge
+ (fn [db [_ path value]]
+   (let [real-path (uuid->idx path (:current-vd db))]
+     (update-in db
+                (into [:current-vd] real-path)
+                (fn [v] (medley/deep-merge v value))))))
 
 (defn vec-remove
   "remove elem in coll"
@@ -140,11 +148,11 @@
    (assoc-in db [:current-vd :name] value)))
 
 (reg-event-db
-  ::toggle-expand-collapse
-  (fn [db [_ path]]
-    (if (-> db :current-tree-expanded-nodes (contains? path))
-      (update db :current-tree-expanded-nodes disj path)
-      (update db :current-tree-expanded-nodes conj path))))
+ ::toggle-expand-collapse
+ (fn [db [_ path]]
+   (if (-> db :current-tree-expanded-nodes (contains? path))
+     (update db :current-tree-expanded-nodes disj path)
+     (update db :current-tree-expanded-nodes conj path))))
 
 (reg-event-db
  ::update-tree-expanded-nodes
@@ -155,7 +163,7 @@
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
    (let [value (decorate (or default-value {}))
-         mk-expanded-path (fn [[k v]]
+         mk-expanded-path (fn [[k _]]
                             (conj path (:tree/key value) k))]
      {:db (let [real-path (uuid->idx path (:current-vd db))]
             (update-in db
@@ -192,7 +200,7 @@
                (http.fhir-server/post-view-definition
                 db
                 view-definition))]
-     {:db (assoc db 
+     {:db (assoc db
                  ::m/save-view-definition-loading true
                  ::m/save-loading true)
       :http-xhrio (assoc req
@@ -210,11 +218,18 @@
 (reg-event-fx
  ::save-view-definition-failure
  (fn [{:keys [db]} [_ result]]
-   #_"TODO: handle it and render the error"
    {:db (assoc db ::m/save-loading false)
     :notification-error (-> result :response :text :div)}))
 
 (reg-event-db
-  ::change-language
-  (fn [db [_ lang]]
-    (assoc db ::m/language lang)))
+ ::change-language
+ (fn [db [_ lang]]
+   (assoc db ::m/language lang)))
+
+(reg-event-fx
+ ::toggle-settings-opened-id
+ (fn [{:keys [db]} [_ settings-opened-id]]
+   {:db
+    (if (= settings-opened-id (::m/settings-opened-id db))
+      (assoc db ::m/settings-opened-id nil)
+      (assoc db ::m/settings-opened-id settings-opened-id))}))

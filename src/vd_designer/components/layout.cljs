@@ -1,5 +1,5 @@
 (ns vd-designer.components.layout
-  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu Col]]))
+  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout Menu]]))
 
 (defn layout
   "Base layout for pages, first argument is props, second - content.
@@ -38,8 +38,6 @@
                                                     :iconSize 24
                                                     :itemHeight 64
                                                     :lineWidth 0}
-                                             ;; :Button {:textHoverBg "#FAFAFA"}
-
                                              }}}
      [:> Menu {:mode                "inline"
                :selectedKeys [(:menu-active-key props)]

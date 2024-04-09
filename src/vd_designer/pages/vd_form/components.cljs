@@ -1,15 +1,55 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Col Row Space]]
+            [antd :refer [Col ConfigProvider Form Popover Row Space Typography]]
+            [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
+            [vd-designer.components.tree :refer [calc-key]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.utils.event :as u]))
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.js :refer [get-element-by-id toggle-class]]))
+
+
+;;;; Tags
+
+(defn tree-tag [kind]
+  (case kind
+    :select
+    (tag/tag "select"
+             :style {:color      "#7972D3"
+                     :background "#7972D31A"})
+
+    :column
+    (tag/tag "column"
+             :style {:color      "#009906"
+                     :background "#E5FAE8"})
+
+    :unionAll
+    (tag/tag "unionall"
+             :style {:color      "#BA004E"
+                     :background "#FE60901A"})
+
+    :forEach
+    (tag/tag "foreach"
+             :style {:color      "#B37804"
+                     :background "#F8CE3B1A"})
+    :forEachOrNull
+    (tag/tag "foreach or null"
+             :style {:color      "#B37804"
+                     :background "#F8CE3B1A"})
+
+    :constant
+    (tag/default "constant")
+
+    :where
+    (tag/default "where")))
+
 
 ;;;; Rows
 
@@ -20,19 +60,20 @@
                       :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
               [:> Col {:flex "auto"} col1]])))
 
-(defn base-input-row [col1 col2]
+(defn base-input-row [ctx col1 col2]
   [:> Row {:justify "space-between"
-           :align   "middle"}
-   [:> Col {:span 12} 
+           :align   "middle"
+           :id      (calc-key (:value-path ctx))}
+   [:> Col {:span 12}
     [:> Row {:justify "start"}
      col1]]
-   [:> Col {:span 12} 
+   [:> Col {:span 12}
     [:> Row {:justify "end"}
      col2]]])
 
-(defn nested-input-row [icon name value]
-  [base-input-row
-   [:> Row {:wrap false
+(defn nested-input-row [ctx icon name value]
+  [base-input-row ctx
+   [:> Row {:wrap  false
             :align "middle"
             :style {:line-height "10px"}}
     [:> Col {:flex "30px"} icon]
@@ -49,10 +90,10 @@
               :text-align "left"}}])
 
 (defn add-select-button [ctx]
-  (let [key #(keyword (.-key %))]
+  (let [requested-key #(keyword (.-key %))]
     [new-select #(dispatch [::c/add-tree-element
                             (:value-path ctx)
-                            (case (key %)
+                            (case (requested-key %)
                               :column        {:column   [{:name "", :path ""}]}
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
@@ -63,14 +104,19 @@
   [button/invisible-icon icons/CloseOutlined
    {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
 
-(defn settings-button [_ctx]
-  [button/invisible-icon icons/SettingOutlined])
+(defn settings-button [& {:as opts}]
+  [button/invisible-icon icons/SettingOutlined opts])
 
 
 ;;;; Inputs
 
-(defn name-input [vd-form]
-  [base-input-row
+(defn change-input-value [ctx key e]
+  (dispatch [::c/change-input-value
+             (conj (:value-path ctx) key)
+             (u/target-value e)]))
+
+(defn name-input [ctx vd-form]
+  [base-input-row ctx
    [tag/default "name"]
    [input {:value       (:name vd-form)
            :placeholder "ViewDefinition"
@@ -79,9 +125,9 @@
                          :max-width "400px"}
            :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
 
-(defn resource-input [vd-form]
-  [base-input-row
-   [tag/resource]
+(defn resource-input [ctx vd-form]
+  [base-input-row ctx
+   [tag/default "resource"]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
     :style {:min-width "200px"
@@ -89,17 +135,63 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-(defn change-select-value [ctx key e]
-  (dispatch [::c/change-input-value
-             (conj (:value-path ctx) key)
-             (u/target-value e)]))
+(defn toggle-settings-popover-hover [ctx]
+  (let [tree-element-id (calc-key (:value-path ctx))
+        button-id (str tree-element-id "-settings-btn")]
+    (-> (get-element-by-id button-id)
+        (toggle-class "active"))
+    (-> (get-element-by-id tree-element-id)
+        (.-parentNode)
+        (.-parentNode)
+        (toggle-class "active"))))
 
-(defn fhir-path-input [ctx key value deletable?]
+(defn settings-popover [ctx & {:as opts}]
+  (let [tree-element-id (calc-key (:value-path ctx))
+        button-id (str tree-element-id "-settings-btn")
+        opened-id @(subscribe [::m/settings-opened-id])]
+    [:> Popover (medley/deep-merge
+                 {:trigger :click
+                  :open (= button-id opened-id)}
+                 opts)
+     [:div [settings-button {:onClick (fn [_e]
+                                        (toggle-settings-popover-hover ctx)
+                                        (dispatch [::c/toggle-settings-opened-id button-id]))
+                             :id button-id}]]]))
+
+(defn fhir-path-input [ctx key value deletable? settings-form]
   [:> Space.Compact {:block true
                      :style {:align-items "center"
                              :gap         "4px"}}
    [input {:placeholder "path"
            :value       value
-           :onChange    #(change-select-value ctx key %)}]
-   [settings-button ctx]
+           :onChange    #(change-input-value ctx key %)}]
+   (when settings-form
+     [settings-popover ctx {:placement :right
+                            :content   (r/as-element [settings-form ctx])}])
    (when deletable? [delete-button ctx])])
+
+
+;;;; Settings
+
+(defn settings-base-form [title props popoverCloseAction items]
+  [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
+   [:> Form (medley/deep-merge
+             props
+             {:style      {:width 400}
+              :labelCol   {:xs {:span 24},
+                           :sm {:span 6}},
+              :layout     :horizontal
+              :labelAlign :left})
+    [:> Typography.Title {:level 5
+                          :style {:margin-top 0}}
+     title]
+    items
+    [:div {:style {:textAlign :right}}
+     [:> Space
+      [button/button "Close" {:size     "small"
+                              :onClick  popoverCloseAction
+                              :type     "default"
+                              :htmlType "reset"}]
+      [button/button "Save" {:size     "small"
+                             :type     "primary"
+                             :htmlType "submit"}]]]]])
