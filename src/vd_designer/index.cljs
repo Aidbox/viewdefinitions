@@ -91,7 +91,7 @@
 (defn init []
   (routes/start-reitit)
   (re-frame/dispatch-sync [::initialize-db])
-  (.render root-element (r/as-element [current-page])))
+  (.render root-element (r/as-element [(fn [] current-page)])))
 
 (defn ^:dev/after-load re-render []
   (re-frame/clear-subscription-cache!)
