@@ -14,10 +14,6 @@
    [:div {:style {:text-align "center"}}
     "SQL copied!"]))
 
-(sqlf/format 
- "SELECT cast( id AS text ) as \"id\" , cast( jsonb_path_query_first( q1_1 , '$ . family' ) #>> '{}' AS text ) as \"family_name\" , cast( jsonb_path_query_first( q1_2 , '$' ) #>> '{}' AS text ) as \"given_name\" FROM \"patient\" as r JOIN LATERAL jsonb_path_query( r.resource , '$ . name [*]' ) q1_1 ON true JOIN LATERAL jsonb_path_query( q1_1 , '$ . given [*]' ) q1_2 ON true LIMIT 100"
- (clj->js {:language "postgresql"}))
-
 (defn sql []
   (let [sql @(subscribe [::m/sql])
         formatted-sql (sqlf/format sql (clj->js {:language "postgresql"}))]
