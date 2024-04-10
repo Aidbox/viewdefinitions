@@ -19,7 +19,8 @@
    [:> Col {:flex "30px"} col2]])
 
 (defn base-input-row [col1 col2]
-  [:> Row {:justify "space-between"}
+  [:> Row {:justify "space-between"
+           :align   "middle"}
    [:> Col {:span 12} 
     [:> Row {:justify "start"}
      col1]]
@@ -29,7 +30,9 @@
 
 (defn nested-input-row [icon name value]
   [base-input-row
-   [:> Row {:wrap false :align "middle" :style {:line-height "10px"}}
+   [:> Row {:wrap false
+            :align "middle"
+            :style {:line-height "10px"}}
     [:> Col {:flex "30px"} icon]
     [:> Col {:flex "auto"} name]]
    value])
