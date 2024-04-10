@@ -2,14 +2,12 @@
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [Popover]]
             [re-frame.core :refer [dispatch subscribe]]
-            [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.monaco-editor :refer [monaco]]
             [vd-designer.components.switch :as switch]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.uuid-decoration :refer [remove-decoration]]
-            [vd-designer.utils.browser :as utils.browser]
             [vd-designer.utils.yaml :as yaml]))
 
 (defn format-vd [vd lang]
@@ -19,14 +17,9 @@
 
 (defn filename [vd lang]
   (let [ext (case lang
-              :language/yaml "yml"
+              :language/yaml "yaml"
               :language/json "json")]
     (str (:name vd) "." ext)))
-
-(defn label-copied []
-  (r/as-element
-   [:div {:style {:text-align "center"}}
-    "View definition copied!"]))
 
 (defn editor []
   (let [vd @(subscribe [::m/current-vd])
@@ -53,13 +46,6 @@
        :defaultChecked (= lang :language/json)
        :onChange #(dispatch [::c/change-language
                              (if % :language/json :language/yaml)])]
-      [:> Popover
-       {:title (label-copied)
-        :placement :top
-        :content nil
-        :trigger :click}
-       (button/button nil
-                      {:icon     (r/create-element icons/CopyOutlined)
-                       :on-click #(utils.browser/copy-text-to-clipboard code)})]
+      [button/copy code]
       [button/download-text-file {:filename (filename vd lang)
                                   :text     code}]]]))

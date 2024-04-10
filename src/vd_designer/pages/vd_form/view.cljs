@@ -49,6 +49,7 @@
                       (tab-item {:key      "sql"
                                  :label    "SQL"
                                  :children [sql]
+                                 :disabled (nil? resources)
                                  :icon     (r/create-element icons/HddOutlined)})]
               :tabBarExtraContent {:right (r/as-element 
                                            [:div {:style {:display :flex
