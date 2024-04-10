@@ -12,7 +12,8 @@
    For more details see: https://ant.design/components/input#api"
   [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
-                                                   :hoverBorderColor  "#7972D3"}}}}
+                                                   :hoverBorderColor  "#7972D3"
+                                                   :paddingInline 0}}}}
    [:> Input (medley/deep-merge
                {:classNames {:input "default-input"}
                 :style      {:font-style       "italic"

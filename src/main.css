@@ -65,3 +65,7 @@ button {
 .vd-tree .ant-tree-switcher:has(.ant-tree-switcher-icon) {
   border-radius: 0;
 }
+
+.ant-tree-treenode {
+  padding-bottom: 0 !important;
+}

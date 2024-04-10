@@ -33,8 +33,8 @@
    [:> Row {:wrap false
             :align "middle"
             :style {:line-height "10px"}}
-    [:> Col {:flex "30px"} icon]
-    [:> Col {:flex "auto"} name]]
+    icon
+    name]
    value])
 
 
