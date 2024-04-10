@@ -38,7 +38,6 @@
              :style       {:font-style "normal"
                            :flex 1}
              :onChange    #(change-select-value ctx name-key %)}])
-   #_[fhir-path-input ctx value-key value deletable?]
    [input {:placeholder "path"
            :value       value
            :style       {:flex 1}
