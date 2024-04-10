@@ -60,7 +60,7 @@
       {:db {:view-definitions    []
             :mode                :form
             :side-menu-collapsed false
-            :cfg/fhir-servers    {:servers  default-servers
+            :cfg/fhir-servers    {:servers          default-servers
                                   :used-server-name (-> default-servers
                                                         first
                                                         second

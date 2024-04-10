@@ -1,8 +1,9 @@
 (ns vd-designer.components.button
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button ConfigProvider]]
+            [antd :refer [Button ConfigProvider Tooltip]]
             [medley.core :as medley]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [vd-designer.utils.browser :as utils.browser]))
 
 
 (defn button
@@ -69,3 +70,27 @@
                                 :border-radius    "2px"}}
                        opts)
    content])
+
+(defn download-text-file [{:keys [filename text]}]
+  (let [file (js/Blob. [text] {:type "text/plain"})]
+    [:a {:download filename
+         ;; URL.createObjectURL is called w/o subsequent revocation
+         ;; Theoretically, this may lead to memory leaks
+         :href     (js/URL.createObjectURL file)}
+     [button nil {:icon (r/create-element icons/DownloadOutlined)}]]))
+
+(defn label-copied []
+  (r/as-element
+    [:div {:style {:text-align "center"}}
+     "copied!"]))
+
+(defn copy [text-to-copy]
+  [:> Tooltip
+   {:title           (label-copied)
+    :mouseLeaveDelay 2
+    :placement       :top
+    :content         nil
+    :trigger         :click}
+   (button nil
+           {:icon     (r/create-element icons/CopyOutlined)
+            :on-click #(utils.browser/copy-text-to-clipboard text-to-copy)})])
