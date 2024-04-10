@@ -22,12 +22,9 @@
  ::start
  (fn [{db :db} [_ parameters]]
    (let [vd-id (-> parameters :path :id)]
-     {:db (cond-> db
-            :always
-            (assoc ::m/language :language/yaml)
-
-            vd-id
-            (set-view-definition-status))
+     {:db (-> db
+              (assoc ::m/language :language/yaml)
+              (set-view-definition-status))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
