@@ -58,9 +58,11 @@
                                                           :margin-right "8px"}}
                                             [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])
                                                                   :icon (r/create-element icons/PlayCircleOutlined)
+                                                                  :loading @(subscribe [::m/eval-loading])
                                                                   :style {:max-width "80px"}}]
                                             [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])
                                                                    :icon (r/create-element icons/SaveOutlined)
+                                                                   :loading @(subscribe [::m/save-loading])
                                                                    :style {:max-width "80px"}}]])}}]]]
      [:> PanelResizeHandle {:style {:border-right "solid"
                                     :border-right-color "#F0F0F0"

@@ -36,3 +36,13 @@
  ::sql
  (fn [db _]
    (-> db ::resource-data :sql)))
+
+(reg-sub
+ ::eval-loading
+ (fn [db _]
+   (-> db ::eval-loading)))
+
+(reg-sub
+ ::save-loading
+ (fn [db _]
+   (-> db ::save-loading)))

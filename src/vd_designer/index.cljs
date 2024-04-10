@@ -7,6 +7,7 @@
                                                 reg-sub subscribe]]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
+            [vd-designer.notifications]
             [vd-designer.components.layout :refer [layout]]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]

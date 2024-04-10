@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.controller
   (:require [vd-designer.utils.utils :as utils]
             [day8.re-frame.tracing :refer-macros [fn-traced]]
-            [re-frame.core :refer [reg-event-db reg-event-fx]]
+            [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
@@ -22,9 +22,12 @@
  ::start
  (fn [{db :db} [_ parameters]]
    (let [vd-id (-> parameters :path :id)]
-     {:db (-> db
-              (assoc ::m/language :language/yaml)
-              (set-view-definition-status))
+     {:db (cond-> db
+            :alway
+            (assoc ::m/language :language/yaml)
+
+            (not vd-id)
+            (set-view-definition-status))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
@@ -35,7 +38,7 @@
 (reg-event-fx
  ::stop
  (fn [{db :db} [_]]
-   {:db (dissoc db :current-vd)}))
+   {:db (dissoc db :current-vd ::m/resource-data)}))
 
 (reg-event-fx
  ::get-supported-resource-types
@@ -75,11 +78,12 @@
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
    (let [view-definition (remove-decoration (:current-vd db))]
-     {:db         (assoc db :loading true)
+     {:db         (assoc db ::m/eval-loading true)
       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                        :params {:limit 100
                                                                 :view  view-definition}})
-                      (assoc :on-success [::on-eval-view-definitions-success]))})))
+                      (assoc :on-success [::on-eval-view-definitions-success]
+                             :on-failure [::on-eval-view-definitions-error]))})))
 
 (reg-event-db
  ::reset-vd-error
@@ -96,7 +100,16 @@
 (reg-event-db
  ::on-eval-view-definitions-success
  (fn [db [_ result]]
-   (assoc db ::m/resource-data (:result result))))
+   (assoc db 
+          ::m/resource-data (:result result)
+          ::m/eval-loading false)))
+
+(reg-event-db
+ ::on-eval-view-definitions-error
+ (fn [db [_ result]]
+   (assoc db 
+          :notification (-> result :response :text :div)
+          ::m/eval-loading false)))
 
 (reg-event-db
  ::change-input-value
@@ -174,7 +187,9 @@
                (http.fhir-server/post-view-definition
                 db
                 view-definition))]
-     {:db (assoc db ::m/save-view-definition-loading true)
+     {:db (assoc db 
+                 ::m/save-view-definition-loading true
+                 ::m/save-loading true)
       :http-xhrio (assoc req
                          :on-success [::save-view-definition-success]
                          :on-failure [::save-view-definition-failure])})))
@@ -183,14 +198,16 @@
  ::save-view-definition-success
  (fn [{:keys [db]} [_ result]]
    {:db (-> db
-            (assoc :current-vd result)
-            (dissoc ::m/save-view-definition-loading))}))
+            (assoc :current-vd result ::m/save-loading false)
+            (dissoc ::m/save-view-definition-loading))
+    :notification-info "Saved!"}))
 
 (reg-event-fx
  ::save-view-definition-failure
- (fn [{:keys [db]} [_ _result]]
+ (fn [{:keys [db]} [_ result]]
    #_"TODO: handle it and render the error"
-   {:db db}))
+   {:db (assoc db ::m/save-loading false)
+    :notification-error (-> result :response :text :div)}))
 
 (reg-event-db
   ::change-language
