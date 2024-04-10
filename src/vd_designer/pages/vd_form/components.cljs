@@ -42,7 +42,9 @@
 
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])
+    :style   {:width      "100%"
+              :text-align "left"}}])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
@@ -80,7 +82,8 @@
    [tag/resource]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
-    :style {:max-width "400px" :min-width "200px"}
+    :style {:min-width "200px"
+            :max-width "400px"}
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 

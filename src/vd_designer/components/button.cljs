@@ -44,15 +44,14 @@
                                                     :defaultHoverBorderColor  "#B5B5BC"
                                                     :defaultHoverColor        "#B5B5BC"
                                                     :textHoverBg              "none"}}}}
-   [button text (merge-with
-                 into
-                 {:type  :default
-                  :size  :small
-                  :ghost true
-                  :icon  (r/create-element icon)
-                  :style {:border        :none
-                          :border-radius "5px"}}
-                 opts)]])
+   [button text (medley/deep-merge
+                  {:type  :default
+                   :size  :small
+                   :ghost true
+                   :icon  (r/create-element icon)
+                   :style {:border        :none
+                           :border-radius "5px"}}
+                  opts)]])
 
 (defn invisible-icon [icon & {:as opts}]
   [ghost "" icon (merge-with
