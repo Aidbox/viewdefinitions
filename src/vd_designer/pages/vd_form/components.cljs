@@ -51,7 +51,7 @@
     [new-select #(dispatch [::c/add-tree-element
                             (:value-path ctx)
                             (case (key %)
-                              :column        {:column   []}
+                              :column        {:column   [{:name "", :path ""}]}
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
                               :unionAll      {:unionAll []})])]))
