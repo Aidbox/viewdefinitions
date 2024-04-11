@@ -14,8 +14,7 @@
                                                           fhir-path-input
                                                           name-input
                                                           nested-input-row
-                                                          resource-input
-                                                          settings-button]]
+                                                          resource-input]]
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
                                                            drop-value-path]]
@@ -27,23 +26,15 @@
 ;; Leafs
 
 (defn- general-leaf [ctx icon name-key name value-key value deletable?]
-  [:div {:style {:display :flex
-                 :align-items :center
-                 :gap 8}}
+  [nested-input-row
    [icon]
    (if (nil? name-key)
      name
      [input {:value       name
              :placeholder "name"
-             :style       {:font-style "normal"
-                           :flex 1}
+             :style       {:font-style "normal"}
              :onChange    #(change-select-value ctx name-key %)}])
-   [input {:placeholder "path"
-           :value       value
-           :style       {:flex 1}
-           :onChange    #(change-select-value ctx value-key %)}]
-   [settings-button ctx]
-   (when deletable? [delete-button ctx])])
+   [fhir-path-input ctx value-key value deletable?]])
 
 (defn constant-leaf [ctx {:keys [name valueString]}]
   [general-leaf ctx icon/constant :name name :valueString valueString true])

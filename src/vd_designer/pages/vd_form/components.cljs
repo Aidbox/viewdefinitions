@@ -35,8 +35,8 @@
    [:> Row {:wrap false
             :align "middle"
             :style {:line-height "10px"}}
-    icon
-    name]
+    [:> Col {:flex "30px"} icon]
+    [:> Col {:flex "auto"} name]]
    value])
 
 
