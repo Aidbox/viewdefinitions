@@ -1,111 +1,253 @@
 (ns vd-designer.pages.vd-form.form
-  (:require [antd :refer [Col Row Spin]]
+  (:require [antd :refer [Spin Form Input Select Space Spin Switch]]
             [vd-designer.utils.string :as str.utils]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            ["@ant-design/icons" :as icons]
+            [medley.core :as medley]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
-            [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
             [vd-designer.pages.vd-form.components :refer [add-element-button
                                                           add-select-button
                                                           base-node-row
-                                                          change-select-value
+                                                          change-input-value
                                                           delete-button
                                                           fhir-path-input
                                                           name-input
                                                           nested-input-row
-                                                          resource-input]]
+                                                          resource-input
+                                                          settings-base-form
+                                                          tree-tag] :as components]
+            [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
                                                            drop-value-path]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.controller :as c]))
+            [vd-designer.pages.vd-form.model :as m]))
+
+;;;; Settings forms
+
+;; TODO: rework to modal
+(defn view-definition-popup-form []
+  (let [vd @(subscribe [::m/current-vd])]
+    [settings-base-form "ViewDefinition"
+     {:onFinish      (fn [values]
+                       #_"TODO: check whether we still need it"
+                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+                         (dispatch [::c/change-input-value-merge nil fields])
+                         (dispatch [::c/toggle-settings-opened-id nil])))
+      :initialValues vd}
+     #(dispatch [::c/toggle-settings-opened-id nil])
+     [:<>
+      [:> Form.Item {:label "status" :name "status" :rules [{:required true}]}
+       [:> Select {:showSearch       true
+                   :style            {:width "100%"}
+                   :filterOption     true
+                   :optionFilterProp "label"
+                   :placeholder "status"
+                   :options [{:label "draft" :value "draft"}
+                             {:label "active" :value "active"}
+                             {:label "retired" :value "retired"}
+                             {:label "unknown" :value "unknown"}]}]]
+      [:> Form.Item {:label "title" :name "title"} [:> Input]]
+      [:> Form.Item {:label "description" :name "description"} [:> Input]]
+      [:> Form.Item {:label "url" :name "url"} [:> Input]]
+      [:> Form.Item {:label "identifier" :name "identifier"} [:> Input]]
+      [:> Form.Item {:label "experimental" :name "experimental"} [:> Switch {:size "small"}]]
+      [:> Form.Item {:label "publisher" :name "publisher"} [:> Input]]
+      [:> Form.Item {:label "copyright" :name "copyright"} [:> Input]]
+      #_"TODO: Meta object"
+      #_"TODO: contact array"
+      #_"TODO: useContext array"
+      #_"TODO: fhirVersion array"
+
+      [:> Form.Item {:label "FHIR version"}
+       [:> Form.List
+        {:name "fhirVersion"}
+        (fn [raw-fields actions]
+          (let [fields (js->clj raw-fields :keywordize-keys true)
+                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+            (r/as-element
+             [:div
+              (map (fn [{:keys [key name]}]
+                     ^{:key key}
+                     [:> Space {:align "baseline"}
+                      [:> Form.Item {:name  key
+                                     :key   key
+                                     :rules [{:required true
+                                              :message  "FHIR version is required"}]}
+                       [:> Input]]
+                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
+                   fields)
+              [:> Form.Item
+               [button/icon "Add" icons/PlusOutlined
+                {:type    "dashed"
+                 :block   true
+                 :onClick #(add)}]]])))]]]]))
+
+
+(defn close-popover-in-line [ctx]
+  (dispatch-sync [::c/toggle-settings-opened-id nil])
+  (components/toggle-settings-popover-hover ctx))
+
+;; TODO move all props to settings-base-form once top-level vd popover will be
+;; migrated to modal
+(defn where-popup-form [ctx]
+  (let [vd @(subscribe [::m/current-vd])]
+    [settings-base-form "Where"
+     {:onFinish      (fn [values]
+                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+                         (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
+                         (close-popover-in-line ctx)))
+      :initialValues (get-in vd (:value-path ctx))}
+     #(close-popover-in-line ctx)
+     [:<>
+      [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
+
+;; TODO move all props to settings-base-form once top-level vd popover will be
+;; migrated to modal
+(defn column-popup-form [ctx]
+  (let [vd @(subscribe [::m/current-vd])]
+    [settings-base-form "Column"
+     {:onFinish            (fn [values]
+                             (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+                               (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
+                               (close-popover-in-line ctx)))
+      :initialValues       (get-in vd (:value-path ctx))}
+     #(close-popover-in-line ctx)
+     [:<>
+      [:> Form.Item {:label "Description" :name "description"} [:> Input.TextArea]]
+      [:> Form.Item {:label "Type" :name "type"} [:> Input]]
+      [:> Form.Item {:label "Collection" :name "collection"} [:> Switch {:size "small"}]]
+      [:> Form.Item {:label "Tags"}
+       [:> Form.List {:name "tag"}
+        (fn [raw-fields actions]
+          (let [fields (js->clj raw-fields :keywordize-keys true)
+                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+            (r/as-element
+             [:div
+              (map (fn [{:keys [key name]}]
+                     ^{:key key}
+                     [:> Space {:align "baseline"}
+                      [:> Form.Item {:name  [key :name]
+                                     :rules [{:required true
+                                              :message  "Name is required"}]}
+                       [:> Input {:placeholder "Name"}]]
+                      [:> Form.Item {:name  [key :value]
+                                     :rules [{:required true
+                                              :message  "Value is required"}]}
+                       [:> Input {:placeholder "Value"}]]
+
+                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
+                   fields)
+              [:> Form.Item
+               [button/icon "Add" icons/PlusOutlined
+                {:type    "dashed"
+                 :block   true
+                 :onClick #(add)}]]])))]]]]))
 
 ;;;; Tree
 
 ;; Leafs
 
-(defn- general-leaf [ctx icon name-key name value-key value deletable?]
-  [nested-input-row
-   [icon]
-   (if (nil? name-key)
-     name
-     [input {:value       name
-             :placeholder "name"
-             :style       {:font-style "normal"}
-             :onChange    #(change-select-value ctx name-key %)}])
-   [fhir-path-input ctx value-key value deletable?]])
-
-(defn constant-leaf [ctx {:keys [name valueString]}]
-  [general-leaf ctx icon/constant :name name :valueString valueString true])
-
-(defn where-leaf [ctx {:keys [path]}]
-  [general-leaf ctx icon/where nil "expression" :path path true])
+(defn- general-leaf [ctx props]
+  (let [{:keys [icon name-key name value-key value deletable? settings-form]} props]
+    [nested-input-row ctx
+     [icon]
+     (if (nil? name-key)
+       name
+       [input {:value       name
+               :placeholder "name"
+               :style       {:font-style "normal"}
+               :onChange    #(change-input-value ctx name-key %)}])
+     [fhir-path-input ctx value-key value deletable? settings-form]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
-  [general-leaf ctx icon/column :name name :path path true])
+  [general-leaf ctx
+   {:icon          icon/column
+    :name-key      :name
+    :name          name
+    :value-key     :path
+    :value         path
+    :settings-form column-popup-form
+    :deletable?    true}])
+
+(defn constant-leaf [ctx {:keys [name valueString]}]
+  [general-leaf ctx
+   {:icon          icon/constant
+    :name-key      :name
+    :name          name
+    :value-key     :valueString
+    :value         valueString
+    :deletable?    true}])
+
+(defn where-leaf [ctx {:keys [path]}]
+  [general-leaf ctx
+   {:icon          icon/where
+    :name          "expression"
+    :value-key     :path
+    :value         path
+    :settings-form where-popup-form
+    :deletable?    true}])
 
 (defn foreach-expr-leaf [ctx value-key path]
-  [general-leaf ctx icon/expression nil "expression" value-key path false])
+  [general-leaf ctx
+   {:icon          icon/expression
+    :name          "expression"
+    :value-key     value-key
+    :value         path
+    :deletable?    false}])
 
 ;; Nodes
 
 (declare select->node)
 
-(defn- general-flat-node [kind ctx tag items leaf deletable?]
-  (let [node-key (:value-path ctx)]
-    (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
-    (js/console.debug (str "(node items)[" (name kind) "]: " items))
-    (tree-node node-key
-               (cond-> [base-node-row node-key [tag]]
-                 deletable? (conj [delete-button (drop-value-path ctx)]))
-               (conj (mapv (fn [item]
-                             (let [ctx (add-value-path ctx (:tree/key item))]
-                               (tree-leaf (:value-path ctx) (leaf ctx item))))
-                           items)
-                     (tree-leaf (conj node-key :add)
-                                [add-element-button (name kind) ctx])))))
+(defn node-deletable? [kind]
+  (case kind
+    :select        false
+    :column        true
+    :unionAll      true
+    :forEach       true
+    :forEachOrNull true
+    :constant      false
+    :where         false))
 
-(defn constant-node [ctx items]
-  (general-flat-node :constant ctx tag/constant items constant-leaf false))
-
-(defn where-node [ctx items]
-  (general-flat-node :where ctx tag/where items where-leaf false))
-
-(defn column-node [ctx items]
-  (general-flat-node :column ctx tag/column items column-leaf true))
-
-
-
-(defn- general-nested-node [kind ctx tag items deletable?]
-  (let [node-key (:value-path ctx)]
-    (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
-    (js/console.debug (str "(node items)[" (name kind) "]: " items))
-    (tree-node node-key
-               (cond-> [base-node-row node-key [tag]]
-                 deletable? (conj [delete-button (drop-value-path ctx)]))
-               (conj (mapv (fn [item]
-                             (select->node (add-value-path ctx (:tree/key item)) item))
-                           items)
-                     (tree-leaf (conj node-key :add) [add-select-button ctx])))))
-
-(defn select-node [ctx items]
-  (general-nested-node :select ctx tag/select items false))
-
-(defn union-all-node [ctx items]
-  (general-nested-node :unionAll ctx tag/union-all items true))
-
-(defn node-foreach [kind ctx path {:keys [select]}]
+(defn- general-node [kind ctx render-children]
   (let [node-key (:value-path ctx)
-        ctx (drop-value-path ctx)]
+        tag      (tree-tag kind)]
     (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
-    (js/console.debug (str "(node path)["  (name kind) "]: " path))
-    (js/console.debug (str "(node items)[" (name kind) "]: " select))
     (tree-node node-key
-               [base-node-row node-key [tag/foreach kind] [delete-button ctx]]
-               [(tree-leaf (conj (:value-path ctx) :path)
-                           (foreach-expr-leaf ctx kind path))
-                (select-node (add-value-path ctx :select) select)])))
+               (cond-> [base-node-row node-key tag]
+                 (node-deletable? kind) (conj [delete-button (drop-value-path ctx)]))
+               (render-children node-key))))
+
+(defn- flat-node [kind generate-leaf ctx items]
+  (general-node kind ctx
+                (fn [node-key]
+                  (conj (mapv (fn [item]
+                                (let [ctx (add-value-path ctx (:tree/key item))]
+                                  (tree-leaf (:value-path ctx) (generate-leaf ctx item))))
+                              items)
+                        (tree-leaf (conj node-key :add)
+                                   [add-element-button (name kind) ctx])))))
+
+(defn- nested-node [kind ctx items]
+  (general-node kind ctx
+                (fn [node-key]
+                  (conj (mapv (fn [item]
+                                (select->node (add-value-path ctx (:tree/key item)) item))
+                              items)
+                        (tree-leaf (conj node-key :add) [add-select-button ctx])))))
+
+;; TODO: try to generalize as other node types
+(defn node-foreach [kind ctx path {:keys [select]}]
+  (general-node kind ctx
+                (fn [_node-key]
+                  (let [ctx (drop-value-path ctx)]
+                    [(tree-leaf (conj (:value-path ctx) :path)
+                                (foreach-expr-leaf ctx kind path))
+                     (nested-node :select (add-value-path ctx :select) select)]))))
 
 (defn determine-key
   "Expects an element of normalized view definition"
@@ -125,11 +267,11 @@
   (js/console.debug (str "{select->node}(element): " element))
   (let [key (determine-key element)]
     ((case key
-       :column        column-node
+       :column        (partial flat-node    :column column-leaf)
        :forEach       (partial node-foreach :forEach)
        :forEachOrNull (partial node-foreach :forEachOrNull)
-       :unionAll      union-all-node
-       :select        select-node)
+       :unionAll      (partial nested-node  :unionAll)
+       :select        (partial nested-node  :select))
      (add-value-path ctx key)
      (key element)
      element)))
@@ -146,12 +288,15 @@
        :onExpand #(dispatch [::c/update-tree-expanded-nodes
                              (->> % js->clj (map str.utils/parse-path))])
        :expandedKeys (map tree/calc-key expanded-keys)
-       :treeData [(tree-leaf [:name]     (name-input vd-form))
-                  (tree-leaf [:resource] (resource-input vd-form))
+       :treeData [(tree-leaf [:name]     (name-input ctx vd-form))
+                  (tree-leaf [:resource] (resource-input ctx vd-form))
 
-                  (constant-node (add-value-path ctx :constant) (:constant vd-form))
-                  (where-node    (add-value-path ctx :where)    (:where    vd-form))
-                  (select-node   (add-value-path ctx :select)   (:select   vd-form))]]
+                  (flat-node   :constant constant-leaf
+                               (add-value-path ctx :constant) (:constant vd-form))
+                  (flat-node   :where    where-leaf
+                               (add-value-path ctx :where)    (:where    vd-form))
+                  (nested-node :select
+                               (add-value-path ctx :select)   (:select   vd-form))]]
       [:div
        {:style {:display "flex"
                 :justify-content "center"

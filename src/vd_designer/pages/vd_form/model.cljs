@@ -28,11 +28,11 @@
    (::current-vd-error db)))
 
 (reg-sub
-  ::language
-  (fn [db _]
-    (::language db)))
+ ::language
+ (fn [db _]
+   (::language db)))
 
-(reg-sub 
+(reg-sub
  ::sql
  (fn [db _]
    (-> db ::resource-data :sql)))
@@ -46,3 +46,8 @@
  ::save-loading
  (fn [db _]
    (-> db ::save-loading)))
+
+(reg-sub
+ ::settings-opened-id
+ (fn [db _]
+   (::settings-opened-id db)))

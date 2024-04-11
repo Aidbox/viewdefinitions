@@ -12,26 +12,18 @@
   [text & {:as opts}]
   [:> Button opts text])
 
-(defn delete [& {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:colorText "#BFBFBF"}}}}
-   [button "" (medley/deep-merge
-                {:type  "text"
-                 :class "delete-button"
-                 :icon  (r/create-element icons/CloseOutlined)}
-                opts)]])
-
 (defn add [text & {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM 8
                                                     :colorText       "#B5B5BC"
 
-                                                    :textHoverBg     "#FAFAFA"
-                                                    :defaultHoverBg  "#FAFAFA"}}}}
+                                                    :textHoverBg     "var(--hover-color)"
+                                                    :defaultHoverBg  "var(--hover-color)"}}}}
    [button text (medley/deep-merge
-                  {:type  "text"
-                   :size  "small"
-                   :ghost true
-                   :icon  (r/create-element icons/PlusOutlined)}
-                  opts)]])
+                 {:type  "text"
+                  :size  "small"
+                  :ghost true
+                  :icon  (r/create-element icons/PlusOutlined)}
+                 opts)]])
 
 (defn ghost [text icon & {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM          8
@@ -58,6 +50,11 @@
                   into
                   {:class "invisible-button"}
                   opts)])
+
+(defn icon [text icon & {:as opts}]
+  [button text (medley/deep-merge
+                {:icon  (r/create-element icon)}
+                opts)])
 
 (defn add-view-definition [content & {:as opts}]
   [:button (merge-with into

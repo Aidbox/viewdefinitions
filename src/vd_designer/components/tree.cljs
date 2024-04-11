@@ -24,7 +24,7 @@
    For more details see: https://ant.design/components/tree#api"
   [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Tree {:titleHeight 32
-                                                  :nodeHoverBf "#FAFAFA"}}}}
+                                                  :nodeHoverBg "var(--hover-color)"}}}}
    [:> Tree (merge-with into
                         {:showIcon     true
                          :showLine     true
