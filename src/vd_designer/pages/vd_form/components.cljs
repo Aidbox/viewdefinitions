@@ -176,12 +176,12 @@
 (defn settings-base-form [title props popoverCloseAction items]
   [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
    [:> Form (medley/deep-merge
-             props
-             {:style      {:width 400}
-              :labelCol   {:xs {:span 24},
-                           :sm {:span 6}},
-              :layout     :horizontal
-              :labelAlign :left})
+              {:style      {:width 400}
+               :labelCol   {:xs {:span 24},
+                            :sm {:span 6}},
+               :layout     :horizontal
+               :labelAlign :left}
+              props)
     [:> Typography.Title {:level 5
                           :style {:margin-top 0}}
      title]

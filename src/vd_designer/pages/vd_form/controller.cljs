@@ -124,7 +124,7 @@
    (let [real-path (uuid->idx path (:current-vd db))]
      (update-in db
                 (into [:current-vd] real-path)
-                (fn [v] (medley/deep-merge v value))))))
+                medley/deep-merge value))))
 
 (defn vec-remove
   "remove elem in coll"

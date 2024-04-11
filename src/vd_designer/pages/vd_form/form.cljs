@@ -185,7 +185,6 @@
 (defn where-leaf [ctx {:keys [path]}]
   [general-leaf ctx
    {:icon          icon/where
-    :name-key      nil
     :name          "expression"
     :value-key     :path
     :value         path
@@ -195,7 +194,6 @@
 (defn foreach-expr-leaf [ctx value-key path]
   [general-leaf ctx
    {:icon          icon/expression
-    :name-key      nil
     :name          "expression"
     :value-key     value-key
     :value         path

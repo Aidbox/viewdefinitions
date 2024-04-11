@@ -19,7 +19,7 @@
   (let [resources @(subscribe [::m/view-definition-data])
         error @(subscribe [::m/current-vd-error])
         opened-id @(subscribe [::m/settings-opened-id])
-        button-id "mybutton"]
+        button-id "root-vd-settings"]
     [:> PanelGroup {:direction "horizontal"
                     :style {:gutter 32
                             :flex 1
