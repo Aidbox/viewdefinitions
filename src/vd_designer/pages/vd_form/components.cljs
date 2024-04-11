@@ -13,10 +13,12 @@
 
 ;;;; Rows
 
-(defn base-node-row [col1 col2]
-  [:> Row {:align "middle"}
-   [:> Col {:flex "auto"} col1]
-   [:> Col {:flex "30px"} col2]])
+(defn base-node-row [node-key col1 & cols]
+  (->> cols
+       (mapv (fn [col] [:> Col {:flex "30px"} col]))
+       (into [:> Row {:align "middle"
+                      :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
+              [:> Col {:flex "auto"} col1]])))
 
 (defn base-input-row [col1 col2]
   [:> Row {:justify "space-between"
@@ -42,14 +44,16 @@
 
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])
+    :style   {:width      "100%"
+              :text-align "left"}}])
 
 (defn add-select-button [ctx]
   (let [key #(keyword (.-key %))]
     [new-select #(dispatch [::c/add-tree-element
                             (:value-path ctx)
                             (case (key %)
-                              :column        {:column   []}
+                              :column        {:column   [{:name "", :path ""}]}
                               :forEach       {:forEach       "" :select []}
                               :forEachOrNull {:forEachOrNull "" :select []}
                               :unionAll      {:unionAll []})])]))
@@ -80,7 +84,8 @@
    [tag/resource]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
-    :style {:max-width "400px" :min-width "200px"}
+    :style {:min-width "200px"
+            :max-width "400px"}
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 

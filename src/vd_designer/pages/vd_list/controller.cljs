@@ -2,10 +2,8 @@
   (:require
     [clojure.string :as str]
     [re-frame.core :refer [reg-event-db reg-event-fx]]
-    [vd-designer.pages.vd-list.model :as m]
     [vd-designer.http.fhir-server :as http.fhir-server]
-    [reitit.frontend.easy :as rfe]
-    [vd-designer.pages.settings.controller :as settings-controller]))
+    [vd-designer.pages.vd-list.model :as m]))
 
 (reg-event-fx
   ::start

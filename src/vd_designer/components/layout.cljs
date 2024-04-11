@@ -54,8 +54,7 @@
        {:items (:breadcrumbs props)
         :style {:margin "16px"}}]
 
-      [:div {:style {:padding 24
-                     :padding-bottom 0
+      [:div {:style {:padding "0px 24px"
                      :flex 1
                      :flow-grow 1
                      :flex-shrink 0

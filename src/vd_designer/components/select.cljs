@@ -1,5 +1,6 @@
 (ns vd-designer.components.select
-  (:require [antd :refer [Select]]))
+  (:require [antd :refer [Select]]
+            [medley.core :as medley]))
 
 (defn options-from-vec [o]
   (map #(hash-map :value % :label %) o))
@@ -8,11 +9,11 @@
   "Select with sealch
    For more details see: https://ant.design/components/select#api"
   [& {:as opts}]
-  [:> Select (merge-with
-              into
-              {:showSearch       true
-               :style            {:width "100%"}
-               :allowClear       true
-               :filterOption     true
-               :optionFilterProp "label"}
-              opts)])
+  [:> Select (medley/deep-merge
+               {:showSearch       true
+                :variant          :borderless
+                :style            {:width "100%"}
+                :allowClear       true
+                :filterOption     true
+                :optionFilterProp "label"}
+               opts)])

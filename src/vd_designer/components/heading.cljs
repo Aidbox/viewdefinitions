@@ -3,6 +3,8 @@
 
 (defn h1 [content & {:as opts}]
   [:h1 (-> {:style {:font-size   "24px"
-                    :font-weight 500}}
+                    :font-weight 500
+                    :margin 0
+                    :margin-bottom 8}}
            (medley/deep-merge opts))
    content])
