@@ -56,29 +56,19 @@
 (defn base-node-row [node-key col1 & cols]
   (->> cols
        (mapv (fn [col] [:> Col {:flex "30px"} col]))
-       (into [:> Row {:align "middle"
+       (into [:> Row {:align :middle
                       :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
-              [:> Col {:flex "auto"} col1]])))
+              [:> Col {:flex :auto} col1]])))
 
 (defn base-input-row [ctx col1 col2]
-  [:> Row {:justify "space-between"
-           :align   "middle"
-           :id      (calc-key (:value-path ctx))}
+  [:> Row {:align  :middle
+           :gutter 16
+           :id     (calc-key (:value-path ctx))}
    [:> Col {:span 12}
-    [:> Row {:justify "start"}
-     col1]]
-   [:> Col {:span 12}
-    [:> Row {:justify "end"}
-     col2]]])
+    [:> Row {:justify :start} col1]]
 
-(defn nested-input-row [ctx icon name value]
-  [base-input-row ctx
-   [:> Row {:wrap  false
-            :align "middle"
-            :style {:line-height "10px"}}
-    [:> Col {:flex "30px"} icon]
-    [:> Col {:flex "auto"} name]]
-   value])
+   [:> Col {:span 12}
+    [:> Row {:justify :end} col2]]])
 
 
 ;;;; Buttons
@@ -160,8 +150,8 @@
 
 (defn fhir-path-input [ctx key value deletable? settings-form]
   [:> Space.Compact {:block true
-                     :style {:align-items "center"
-                             :gap         "4px"}}
+                     :style {:align-items :center
+                             :gap         4}}
    [input {:placeholder "path"
            :value       value
            :onChange    #(change-input-value ctx key %)}]
@@ -176,12 +166,12 @@
 (defn settings-base-form [title props popoverCloseAction items]
   [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
    [:> Form (medley/deep-merge
-              {:style      {:width 400}
-               :labelCol   {:xs {:span 24},
-                            :sm {:span 6}},
-               :layout     :horizontal
-               :labelAlign :left}
-              props)
+             {:style      {:width 400}
+              :labelCol   {:xs {:span 24},
+                           :sm {:span 6}},
+              :layout     :horizontal
+              :labelAlign :left}
+             props)
     [:> Typography.Title {:level 5
                           :style {:margin-top 0}}
      title]

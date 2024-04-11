@@ -78,3 +78,7 @@ button {
 .vd-tree .ant-tree-node-content-wrapper.active {
   background-color: var(--hover-color);
 }
+
+.vd-tree .ant-tree-treenode {
+  padding-bottom: 0 !important;
+}

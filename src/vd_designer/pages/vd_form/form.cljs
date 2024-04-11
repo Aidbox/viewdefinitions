@@ -1,9 +1,8 @@
 (ns vd-designer.pages.vd-form.form
-  (:require [antd :refer [Spin Form Input Select Space Spin Switch]]
-            [vd-designer.utils.string :as str.utils]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            ["@ant-design/icons" :as icons]
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [Flex Form Input Select Space Spin Spin Switch]]
             [medley.core :as medley]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.icon :as icon]
@@ -11,12 +10,12 @@
             [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
             [vd-designer.pages.vd-form.components :refer [add-element-button
                                                           add-select-button
+                                                          base-input-row
                                                           base-node-row
                                                           change-input-value
                                                           delete-button
                                                           fhir-path-input
                                                           name-input
-                                                          nested-input-row
                                                           resource-input
                                                           settings-base-form
                                                           tree-tag] :as components]
@@ -24,7 +23,8 @@
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
                                                            drop-value-path]]
-            [vd-designer.pages.vd-form.model :as m]))
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.utils.string :as str.utils]))
 
 ;;;; Settings forms
 
@@ -153,14 +153,17 @@
 
 (defn- general-leaf [ctx props]
   (let [{:keys [icon name-key name value-key value deletable? settings-form]} props]
-    [nested-input-row ctx
-     [icon]
-     (if (nil? name-key)
-       name
-       [input {:value       name
-               :placeholder "name"
-               :style       {:font-style "normal"}
-               :onChange    #(change-input-value ctx name-key %)}])
+    [base-input-row ctx
+     [:> Flex {:gap   8
+               :align :center
+               :style {:width "100%"}}
+      [icon]
+      (if (nil? name-key)
+        name
+        [input {:value       name
+                :placeholder "name"
+                :style       {:font-style "normal"}
+                :onChange    #(change-input-value ctx name-key %)}])]
      [fhir-path-input ctx value-key value deletable? settings-form]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
