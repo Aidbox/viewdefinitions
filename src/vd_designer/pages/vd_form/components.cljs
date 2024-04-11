@@ -120,6 +120,7 @@
    [tag/default "resource"]
    [select :placeholder "Resource type"
     :options @(subscribe [::m/get-all-supported-resources])
+    :class "vd-resource"
     :style {:min-width "200px"
             :max-width "400px"}
     :value (:resource vd-form)

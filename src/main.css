@@ -16,9 +16,7 @@ body,
   margin: 0;
 }
 
-
 /* FORM */
-
 
 div.ant-tabs {
   flex: 1;
@@ -34,6 +32,10 @@ div.ant-tabs {
 
 .ant-menu-item-selected {
   border-right: 3px solid #1890FF;
+}
+
+.vd-resource:not(.ant-select-open)>.ant-select-selector {
+  padding: 0 !important;
 }
 
 /* INPUTS */
