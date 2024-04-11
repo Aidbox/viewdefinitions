@@ -1,5 +1,5 @@
 (ns vd-designer.pages.vd-form.form
-  (:require [antd :refer [Spin]]
+  (:require [antd :refer [Col Row Spin]]
             [vd-designer.utils.string :as str.utils]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.icon :as icon]
@@ -66,9 +66,8 @@
     (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
     (js/console.debug (str "(node items)[" (name kind) "]: " items))
     (tree-node node-key
-               (if deletable?
-                 [base-node-row [tag] [delete-button (drop-value-path ctx)]]
-                 [tag])
+               (cond-> [base-node-row node-key [tag]]
+                 deletable? (conj [delete-button (drop-value-path ctx)]))
                (conj (mapv (fn [item]
                              (let [ctx (add-value-path ctx (:tree/key item))]
                                (tree-leaf (:value-path ctx) (leaf ctx item))))
@@ -92,9 +91,8 @@
     (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
     (js/console.debug (str "(node items)[" (name kind) "]: " items))
     (tree-node node-key
-               (if deletable?
-                 [base-node-row [tag] [delete-button (drop-value-path ctx)]]
-                 [tag])
+               (cond-> [base-node-row node-key [tag]]
+                 deletable? (conj [delete-button (drop-value-path ctx)]))
                (conj (mapv (fn [item]
                              (select->node (add-value-path ctx (:tree/key item)) item))
                            items)
@@ -113,7 +111,7 @@
     (js/console.debug (str "(node path)["  (name kind) "]: " path))
     (js/console.debug (str "(node items)[" (name kind) "]: " select))
     (tree-node node-key
-               [base-node-row [tag/foreach kind] [delete-button ctx]]
+               [base-node-row node-key [tag/foreach kind] [delete-button ctx]]
                [(tree-leaf (conj (:value-path ctx) :path)
                            (foreach-expr-leaf ctx kind path))
                 (select-node (add-value-path ctx :select) select)])))
@@ -155,7 +153,7 @@
     (if vd-form
       [tree
        :onExpand #(dispatch [::c/update-tree-expanded-nodes
-                             (->> % js->clj (mapv str.utils/parse-path))])
+                             (->> % js->clj (map str.utils/parse-path))])
        :expandedKeys (map tree/calc-key expanded-keys)
        :treeData [(tree-leaf [:name]     (name-input vd-form))
                   (tree-leaf [:resource] (resource-input vd-form))

@@ -13,10 +13,12 @@
 
 ;;;; Rows
 
-(defn base-node-row [col1 col2]
-  [:> Row {:align "middle"}
-   [:> Col {:flex "auto"} col1]
-   [:> Col {:flex "30px"} col2]])
+(defn base-node-row [node-key col1 & cols]
+  (->> cols
+       (mapv (fn [col] [:> Col {:flex "30px"} col]))
+       (into [:> Row {:align "middle"
+                      :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
+              [:> Col {:flex "auto"} col1]])))
 
 (defn base-input-row [col1 col2]
   [:> Row {:justify "space-between"

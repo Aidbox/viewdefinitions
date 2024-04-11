@@ -11,6 +11,7 @@
   [& {:as opts}]
   [:> Select (medley/deep-merge
                {:showSearch       true
+                :variant          :borderless
                 :style            {:width "100%"}
                 :allowClear       true
                 :filterOption     true

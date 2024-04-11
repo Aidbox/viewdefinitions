@@ -71,7 +71,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (->> (get-select-path decorated-view)
-                            (into [[:constant] [:where] [:select]]))]]]
+                            (into #{[:constant] [:where] [:select]}))]]]
       :db (assoc db :current-vd decorated-view)})))
 
 (reg-event-fx
@@ -139,11 +139,17 @@
  (fn [db [_ value]]
    (assoc-in db [:current-vd :name] value)))
 
+(reg-event-db
+  ::toggle-expand-collapse
+  (fn [db [_ path]]
+    (if (-> db :current-tree-expanded-nodes (contains? path))
+      (update db :current-tree-expanded-nodes disj path)
+      (update db :current-tree-expanded-nodes conj path))))
 
 (reg-event-db
  ::update-tree-expanded-nodes
  (fn [db [_ expanded]]
-   (assoc-in db [:current-tree-expanded-nodes] expanded)))
+   (assoc db :current-tree-expanded-nodes (set expanded))))
 
 (reg-event-fx
  ::add-tree-element
@@ -167,8 +173,7 @@
  (fn [{:keys [db]} [_ path]]
    {:fx [[:dispatch [::update-tree-expanded-nodes
                      (->> (:current-tree-expanded-nodes db)
-                          (remove #(utils/vector-starts-with % path))
-                          vec)]]]
+                          (remove #(utils/vector-starts-with % path)))]]]
     :db (let [real-path (uuid->idx path (:current-vd db))]
           (update-in db
                      (into [:current-vd] (pop real-path))
