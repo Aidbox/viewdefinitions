@@ -8,9 +8,6 @@ jobs:
     name: Testing
     runs-on: ubuntu-latest
 
-    env:
-      CLOJURE_VERSION: 1.11.2.1446
-
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,17 +17,16 @@ jobs:
 
       - uses: DeLaGuardo/setup-clojure@12.5
         with:
-          cli: ${{ env.CLOJURE_VERSION }}
+          cli: 1.11.2.1446
 
       - name: Cache clj deps
         id: cache-clj-deps
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
-          key: clojure-${{ env.CLOJURE_VERSION }}-${{ hashFiles('**/deps.edn') }}
+          key: clojure-${{ hashFiles('**/deps.edn') }}
           restore-keys: |
-            clojure-${{ env.CLOJURE_VERSION }}-${{ hashFiles('**/deps.edn') }}-
-            clojure-${{ env.CLOJURE_VERSION }}-
+            clojure-${{ hashFiles('**/deps.edn') }}-
             clojure-
 
       - name: Install rlwrap

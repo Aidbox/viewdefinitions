@@ -1,6 +1,7 @@
 # ViewDefinition Designer
 
 [![Deployment](https://github.com/Aidbox/viewdefinitions/actions/workflows/deployment.yml/badge.svg)](https://github.com/Aidbox/viewdefinitions/actions/workflows/deployment.yml)
+[![Check dependencies](https://github.com/Aidbox/viewdefinitions/actions/workflows/dependencies.yml/badge.svg)](https://github.com/Aidbox/viewdefinitions/actions/workflows/dependencies.yml)
 
 
 ## Contributions
