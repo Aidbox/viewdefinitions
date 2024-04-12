@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Row Popover]]
+            [antd :refer [Row Popover Space]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
@@ -40,16 +40,18 @@
                      :override "hidden"
                      :min-width "400px"}}
        [:> Row {:align "middle"}
-        [h1 "ViewDefinition"]
-        [:> Popover {:trigger :click
-                     :open (= button-id opened-id)
-                     :placement :right
-                     :content (r/as-element [form/view-definition-popup-form])}
-         [button/icon ""
-          icons/SettingOutlined
-          {:onClick (fn [_e] (dispatch [::c/toggle-settings-opened-id button-id]))
-           :style {:border :none}
-           :id button-id}]]]
+
+        [:> Space
+         [h1 "ViewDefinition"]
+         [:> Popover {:trigger :click
+                      :open (= button-id opened-id)
+                      :placement :right
+                      :content (r/as-element [form/view-definition-popup-form])}
+          [button/icon ""
+           icons/SettingOutlined
+           {:onClick (fn [_e] (dispatch [::c/toggle-settings-opened-id button-id]))
+            :style {:border :none}
+            :id button-id}]]]]
 
        (when error
          [alert :type :error :message error])
@@ -83,10 +85,8 @@
      [:> PanelResizeHandle {:style {:border-right "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width "1px"}}]
-     [:> Panel
-      {:minSize 20}
-      [h1 "Results"
-       :style {:margin-left "16px"}]
+     [:> Panel {:minSize 20}
+      [h1 "Results" :style {:margin-left "20px"}]
       [table (:data resources)
        {:scroll {:y 1000
                  :x true}}]]]))

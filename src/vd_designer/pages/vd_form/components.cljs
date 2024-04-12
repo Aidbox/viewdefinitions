@@ -1,11 +1,12 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Col ConfigProvider Form Popover Row Space Typography]]
+            [antd :refer [Col ConfigProvider Form Popover Row Space]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
+            [vd-designer.components.heading :refer [h4]]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
@@ -173,9 +174,7 @@
               :layout     :horizontal
               :labelAlign :left}
              props)
-    [:> Typography.Title {:level 5
-                          :style {:margin-top 0}}
-     title]
+    [h4 title]
     items
     [:div {:style {:textAlign :right}}
      [:> Space
