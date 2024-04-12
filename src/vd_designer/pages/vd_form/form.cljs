@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.form
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [DatePicker Flex Form Input Modal Select Space Spin
-                          Typography Switch]]
+                          Switch Typography]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
@@ -20,6 +20,7 @@
                                                           name-input
                                                           resource-input
                                                           settings-base-form
+                                                          toggle-popover-in-line
                                                           tree-tag] :as components]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
@@ -30,15 +31,11 @@
 
 ;;;; Settings forms
 
-(defn close-popover-in-line [ctx]
-  (dispatch [::c/toggle-settings-opened-id nil])
-  (components/toggle-settings-popover-hover ctx))
-
 (defn close-popover [values ctx]
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
     (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
     (if ctx
-      (close-popover-in-line ctx)
+      (toggle-popover-in-line ctx nil)
       (dispatch [::c/toggle-settings-opened-id nil]))))
 
 (defn root-settings-modal [opts]
@@ -136,7 +133,7 @@
     [settings-base-form "Where"
      {:onFinish      (fn [values] (close-popover values ctx))
       :initialValues (get-in vd (:value-path ctx))}
-     #(close-popover-in-line ctx)
+     #(toggle-popover-in-line ctx nil)
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
@@ -146,9 +143,9 @@
      {:onFinish            (fn [values]
                              (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
                                (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
-                               (close-popover-in-line ctx)))
+                               (toggle-popover-in-line ctx nil)))
       :initialValues       (get-in vd (:value-path ctx))}
-     #(close-popover-in-line ctx)
+     #(toggle-popover-in-line ctx nil)
      [:<>
       [:> Form.Item {:label "Description" :name "description"}
        [:> Input.TextArea {:autoSize true :allowClear true}]]

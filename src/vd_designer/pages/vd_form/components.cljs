@@ -127,7 +127,8 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-(defn toggle-settings-popover-hover [ctx]
+
+(defn- toggle-settings-popover-hover [ctx]
   (let [tree-element-id (calc-key (:value-path ctx))
         button-id (str tree-element-id "-settings-btn")]
     (-> (get-element-by-id button-id)
@@ -137,6 +138,10 @@
         (.-parentNode)
         (toggle-class "active"))))
 
+(defn toggle-popover-in-line [ctx button-id]
+  (toggle-settings-popover-hover ctx)
+  (dispatch [::c/toggle-settings-opened-id button-id]))
+
 (defn settings-popover [ctx & {:as opts}]
   (let [tree-element-id (calc-key (:value-path ctx))
         button-id (str tree-element-id "-settings-btn")
@@ -145,10 +150,10 @@
                  {:trigger :click
                   :open (= button-id opened-id)}
                  opts)
-     [:div [settings-button {:onClick (fn [_e]
-                                        (toggle-settings-popover-hover ctx)
-                                        (dispatch [::c/toggle-settings-opened-id button-id]))
-                             :id button-id}]]]))
+     [:div [settings-button {:onClick   #(toggle-popover-in-line ctx button-id)
+                             :onKeyDown #(when (= "Escape" (.-key %))
+                                           (toggle-popover-in-line ctx nil))
+                             :id        button-id}]]]))
 
 (defn fhir-path-input [ctx key value deletable? settings-form]
   [:> Space.Compact {:block true
