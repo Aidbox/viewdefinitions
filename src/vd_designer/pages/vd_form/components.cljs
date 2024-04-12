@@ -168,10 +168,10 @@
 (defn settings-base-form [title props popoverCloseAction items]
   [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
    [:> Form (medley/deep-merge
-             {:style      {:width 400}
-              :labelCol   {:xs {:span 24},
-                           :sm {:span 6}},
+             {:labelCol   {:span 6},
               :layout     :horizontal
+              :style      {:width 472} ;; default modal width - 24 * 2 paddings
+              :colon      false
               :labelAlign :left}
              props)
     [h4 title]

@@ -1,8 +1,9 @@
 (ns vd-designer.pages.vd-form.form
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Form Input Select Space Spin Spin Switch]]
+            [antd :refer [Spin Flex Form Input Select Space Spin Switch Modal]]
+            [vd-designer.utils.string :as str.utils]
+            [re-frame.core :refer [dispatch subscribe]]
             [medley.core :as medley]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.icon :as icon]
@@ -23,96 +24,93 @@
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
                                                            drop-value-path]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.utils.string :as str.utils]))
+            [vd-designer.pages.vd-form.model :as m]))
 
 ;;;; Settings forms
 
-;; TODO: rework to modal
-(defn view-definition-popup-form []
-  (let [vd @(subscribe [::m/current-vd])]
-    [settings-base-form "ViewDefinition"
-     {:onFinish      (fn [values]
-                       #_"TODO: check whether we still need it"
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch [::c/change-input-value-merge nil fields])
-                         (dispatch [::c/toggle-settings-opened-id nil])))
-      :initialValues vd}
-     #(dispatch [::c/toggle-settings-opened-id nil])
-     [:<>
-      [:> Form.Item {:label "status" :name "status" :rules [{:required true}]}
-       [:> Select {:showSearch       true
-                   :style            {:width "100%"}
-                   :filterOption     true
-                   :optionFilterProp "label"
-                   :placeholder "status"
-                   :options [{:label "draft" :value "draft"}
-                             {:label "active" :value "active"}
-                             {:label "retired" :value "retired"}
-                             {:label "unknown" :value "unknown"}]}]]
-      [:> Form.Item {:label "title" :name "title"} [:> Input]]
-      [:> Form.Item {:label "description" :name "description"} [:> Input]]
-      [:> Form.Item {:label "url" :name "url"} [:> Input]]
-      [:> Form.Item {:label "identifier" :name "identifier"} [:> Input]]
-      [:> Form.Item {:label "experimental" :name "experimental"} [:> Switch {:size "small"}]]
-      [:> Form.Item {:label "publisher" :name "publisher"} [:> Input]]
-      [:> Form.Item {:label "copyright" :name "copyright"} [:> Input]]
-      #_"TODO: Meta object"
-      #_"TODO: contact array"
-      #_"TODO: useContext array"
-      #_"TODO: fhirVersion array"
-
-      [:> Form.Item {:label "FHIR version"}
-       [:> Form.List
-        {:name "fhirVersion"}
-        (fn [raw-fields actions]
-          (let [fields (js->clj raw-fields :keywordize-keys true)
-                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-            (r/as-element
-             [:div
-              (map (fn [{:keys [key name]}]
-                     ^{:key key}
-                     [:> Space {:align "baseline"}
-                      [:> Form.Item {:name  key
-                                     :key   key
-                                     :rules [{:required true
-                                              :message  "FHIR version is required"}]}
-                       [:> Input]]
-                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
-                   fields)
-              [:> Form.Item
-               [button/icon "Add" icons/PlusOutlined
-                {:type    "dashed"
-                 :block   true
-                 :onClick #(add)}]]])))]]]]))
-
-
 (defn close-popover-in-line [ctx]
-  (dispatch-sync [::c/toggle-settings-opened-id nil])
+  (dispatch [::c/toggle-settings-opened-id nil])
   (components/toggle-settings-popover-hover ctx))
 
-;; TODO move all props to settings-base-form once top-level vd popover will be
-;; migrated to modal
+(defn close-popover [values ctx]
+  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+    (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
+    (if ctx
+      (close-popover-in-line ctx)
+      (dispatch [::c/toggle-settings-opened-id nil]))))
+
+(defn root-settings-modal [opts]
+  (let [vd @(subscribe [::m/current-vd])]
+    [:> Modal (medley.core/deep-merge
+               {:footer    nil
+                :style     {:top 50}
+                :on-cancel #(dispatch [::c/toggle-settings-opened-id nil])}
+               opts)
+     [settings-base-form "ViewDefinition"
+      {:onFinish (fn [values] (close-popover values nil))
+       :initialValues vd}
+      #(dispatch [::c/toggle-settings-opened-id nil])
+      [:<>
+       [:> Form.Item {:label "status" :name "status" :rules [{:required true}]}
+        [:> Select {:showSearch       true
+                    :style            {:width "100%"}
+                    :filterOption     true
+                    :optionFilterProp "label"
+                    :placeholder "status"
+                    :options [{:label "draft" :value "draft"}
+                              {:label "active" :value "active"}
+                              {:label "retired" :value "retired"}
+                              {:label "unknown" :value "unknown"}]}]]
+       [:> Form.Item {:label "title" :name "title"} [:> Input]]
+       [:> Form.Item {:label "description" :name "description"} [:> Input]]
+       [:> Form.Item {:label "url" :name "url"} [:> Input]]
+       [:> Form.Item {:label "identifier" :name "identifier"} [:> Input]]
+       [:> Form.Item {:label "experimental" :name "experimental"} [:> Switch {:size "small"}]]
+       [:> Form.Item {:label "publisher" :name "publisher"} [:> Input]]
+       [:> Form.Item {:label "copyright" :name "copyright"} [:> Input]]
+       #_"TODO: Meta object"
+       #_"TODO: contact array"
+       #_"TODO: useContext array"
+
+       [:> Form.Item {:label "FHIR version"}
+        [:> Form.List
+         {:name "fhirVersion"}
+         (fn [raw-fields actions]
+           (let [fields (js->clj raw-fields :keywordize-keys true)
+                 {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+             (r/as-element
+              [:div
+               (map (fn [{:keys [key name]}]
+                      ^{:key key}
+                      [:> Space {:align "baseline"}
+                       [:> Form.Item {:name  key
+                                      :key   key
+                                      :rules [{:required true
+                                               :message  "FHIR version is required"}]}
+                        [:> Input]]
+                       [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
+                    fields)
+               [:> Form.Item
+                [button/icon "Add" icons/PlusOutlined
+                 {:type    "dashed"
+                  :block   true
+                  :onClick #(add)}]]])))]]]]]))
+
 (defn where-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
-     {:onFinish      (fn [values]
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
-                         (close-popover-in-line ctx)))
+     {:onFinish      (fn [values] (close-popover values ctx))
       :initialValues (get-in vd (:value-path ctx))}
      #(close-popover-in-line ctx)
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
-;; TODO move all props to settings-base-form once top-level vd popover will be
-;; migrated to modal
 (defn column-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
      {:onFinish            (fn [values]
                              (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                               (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
+                               (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
                                (close-popover-in-line ctx)))
       :initialValues       (get-in vd (:value-path ctx))}
      #(close-popover-in-line ctx)
