@@ -19,7 +19,8 @@
   (let [resources @(subscribe [::m/view-definition-data])
         error @(subscribe [::m/current-vd-error])
         opened-id @(subscribe [::m/settings-opened-id])
-        button-id "root-vd-settings"]
+        button-id "root-vd-settings"
+        current-vd @(subscribe [::m/current-vd])]
     [:> PanelGroup {:direction "horizontal"
                     :style {:gutter 32
                             :flex 1
@@ -49,6 +50,7 @@
           {:onClick (fn [_e] (dispatch [::c/toggle-settings-opened-id button-id]))
            :style {:border :none}
            :id button-id}]]]
+
        (when error
          [alert :type :error :message error])
        [tabs {:items [(tab-item {:key      "form"
@@ -57,6 +59,7 @@
                                  :icon     (r/create-element icons/EditOutlined)})
                       (tab-item {:key      "code"
                                  :label    "Code"
+                                 :disabled (nil? current-vd)
                                  :children [editor]
                                  :icon     (r/create-element icons/CodeOutlined)})
                       (tab-item {:key      "sql"

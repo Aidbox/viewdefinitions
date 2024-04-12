@@ -16,11 +16,12 @@
     :language/json (-> vd clj->js (js/JSON.stringify nil 2))
     ""))
 
-(defn filename [vd lang]
-  (let [ext (case lang
-              :language/yaml "yaml"
-              :language/json "json")]
-    (str (:name vd) "." ext)))
+(defn filename [vd-name lang]
+  (when (and vd-name lang) 
+    (let [ext (case lang
+                :language/yaml "yaml"
+                :language/json "json")]
+      (str vd-name "." ext))))
 
 (defn editor []
   (let [vd @(subscribe [::m/current-vd])
@@ -31,7 +32,7 @@
     [:div
      {:style {:height "600px" :width "100%"}}
      [monaco {:id       "vd-yaml"
-              :language (name lang)
+              :language (when lang (name lang))
               :value    code
               :schemas  []
               #_#_:onChange (fn [value & _] (dispatch [::c/set-schema value]))
@@ -48,5 +49,5 @@
        :onChange #(dispatch [::c/change-language
                              (if % :language/json :language/yaml)])]
       [button/copy code]
-      [button/download-text-file {:filename (filename vd lang)
+      [button/download-text-file {:filename (filename (:name vd) lang)
                                   :text     code}]]]))

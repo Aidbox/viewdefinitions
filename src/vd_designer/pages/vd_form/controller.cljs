@@ -112,7 +112,7 @@
 
 (reg-event-fx
   ::on-eval-view-definitions-error
-  (fn [db [_ result]]
+  (fn [{:keys [db]} [_ result]]
     {:db (assoc db ::m/eval-loading false)
      :notification-error (response->error result)}))
 
