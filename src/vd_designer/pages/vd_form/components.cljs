@@ -235,7 +235,9 @@
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [autocomplete ctx value {:placeholder "path"}]
+   [input {:placeholder  "path"
+           :defaultValue value
+           :onChange     #(change-input-value ctx key %)}]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
