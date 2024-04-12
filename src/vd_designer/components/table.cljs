@@ -20,5 +20,5 @@
      [:> Table (medley/deep-merge
                {:columns    columns
                 :dataSource data
-                :rowKey     "id"}
+                :rowKey     (fn [row] (hash (js->clj row {:keywordize-keys true})))}
                opts)]]))

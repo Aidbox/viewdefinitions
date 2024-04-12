@@ -46,7 +46,8 @@
  (fn [{:keys [db]} [_]]
    {:db         (assoc db :loading true)
     :http-xhrio (-> (http.fhir-server/get-metadata db)
-                    (assoc :on-success [::get-supported-resource-types-success]))}))
+                    (assoc :on-success [::get-supported-resource-types-success])
+                    (assoc :on-failure [::on-vd-error]))}))
 
 (reg-event-db
  ::get-supported-resource-types-success
@@ -61,6 +62,7 @@
     :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
                     (assoc :on-success [::choose-vd]
                            :on-failure [::on-vd-error]))}))
+
 
 (reg-event-fx
  ::choose-vd
@@ -91,12 +93,15 @@
  (fn [db [_]]
    (dissoc db ::m/current-vd-error)))
 
+(defn response->error [resp-body]
+  (or (-> resp-body :response :error)
+      (-> resp-body :response :text :div)
+      (:status-text resp-body)))
+
 (reg-event-db
  ::on-vd-error
  (fn-traced [db [_ result]]
-            (assoc db ::m/current-vd-error (or (-> result :response :error)
-                                               (-> result :response :text :div)
-                                               (:status-text result)))))
+            (assoc db ::m/current-vd-error (response->error result))))
 
 (reg-event-db
  ::on-eval-view-definitions-success
@@ -105,12 +110,11 @@
           ::m/resource-data (:result result)
           ::m/eval-loading false)))
 
-(reg-event-db
- ::on-eval-view-definitions-error
- (fn [db [_ result]]
-   (assoc db
-          :notification (-> result :response :text :div)
-          ::m/eval-loading false)))
+(reg-event-fx
+  ::on-eval-view-definitions-error
+  (fn [db [_ result]]
+    {:db (assoc db ::m/eval-loading false)
+     :notification-error (response->error result)}))
 
 (reg-event-db
  ::change-input-value
@@ -219,7 +223,7 @@
  ::save-view-definition-failure
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/save-loading false)
-    :notification-error (-> result :response :text :div)}))
+    :notification-error (response->error result)}))
 
 (reg-event-db
  ::change-language

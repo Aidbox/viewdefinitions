@@ -13,7 +13,8 @@
 (defn format-vd [vd lang]
   (case lang
     :language/yaml (yaml/edn->yaml vd)
-    :language/json (-> vd clj->js (js/JSON.stringify nil 2))))
+    :language/json (-> vd clj->js (js/JSON.stringify nil 2))
+    ""))
 
 (defn filename [vd lang]
   (let [ext (case lang
