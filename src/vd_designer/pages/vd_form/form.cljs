@@ -1,11 +1,12 @@
 (ns vd-designer.pages.vd-form.form
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Spin Flex Form Input Select Space Spin Switch Modal]]
-            [vd-designer.utils.string :as str.utils]
-            [re-frame.core :refer [dispatch subscribe]]
+            [antd :refer [DatePicker Flex Form Input Modal Select Space Spin
+                          Typography Switch]]
             [medley.core :as medley]
+            [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
+            [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
@@ -24,7 +25,8 @@
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
                                                            drop-value-path]]
-            [vd-designer.pages.vd-form.model :as m]))
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.utils.string :as str.utils]))
 
 ;;;; Settings forms
 
@@ -43,7 +45,7 @@
   (let [vd @(subscribe [::m/current-vd])]
     [:> Modal (medley.core/deep-merge
                {:footer    nil
-                :style     {:top 50}
+                :style     {:top 96 :margin-left 96}
                 :on-cancel #(dispatch [::c/toggle-settings-opened-id nil])}
                opts)
      [settings-base-form "ViewDefinition"
@@ -51,23 +53,56 @@
        :initialValues vd}
       #(dispatch [::c/toggle-settings-opened-id nil])
       [:<>
-       [:> Form.Item {:label "status" :name "status" :rules [{:required true}]}
+       [:> Form.Item {:label "Title" :name "title"} [:> Input]]
+       [:> Form.Item {:label "Description" :name "description"}
+        [:> Input.TextArea {:autoSize true :allowClear true}]]
+       [:> Form.Item {:label "Status" :name "status" :rules [{:required true}]}
         [:> Select {:showSearch       true
-                    :style            {:width "100%"}
                     :filterOption     true
                     :optionFilterProp "label"
-                    :placeholder "status"
-                    :options [{:label "draft" :value "draft"}
-                              {:label "active" :value "active"}
-                              {:label "retired" :value "retired"}
-                              {:label "unknown" :value "unknown"}]}]]
-       [:> Form.Item {:label "title" :name "title"} [:> Input]]
-       [:> Form.Item {:label "description" :name "description"} [:> Input]]
-       [:> Form.Item {:label "url" :name "url"} [:> Input]]
-       [:> Form.Item {:label "identifier" :name "identifier"} [:> Input]]
-       [:> Form.Item {:label "experimental" :name "experimental"} [:> Switch {:size "small"}]]
-       [:> Form.Item {:label "publisher" :name "publisher"} [:> Input]]
-       [:> Form.Item {:label "copyright" :name "copyright"} [:> Input]]
+                    :placeholder      "status"
+                    :options          [{:label "draft"   :value "draft"}
+                                       {:label "active"  :value "active"}
+                                       {:label "retired" :value "retired"}
+                                       {:label "unknown" :value "unknown"}]}]]
+       [:> Form.Item {:label "Url" :name "url"} [:> Input]]
+       [:> Form.Item {:label "Publisher" :name "publisher"} [:> Input]]
+       [:> Form.Item {:label "Copyright" :name "copyright"}
+        [:> Input.TextArea {:autoSize true :allowClear true}]]
+
+       [collapse
+        :expandIconPosition :end
+        :items [(collapse-item
+                 [:> Typography.Title {:level 5 :style {:margin 0}} "Identifier"]
+                 (let [id :identifier]
+                   [:<>
+                    [:> Form.Item {:label "Use"      :name [id :use]}
+                     [:> Select {:showSearch       true
+                                 :defaultValue     nil
+                                 :filterOption     true
+                                 :allowClear       true
+                                 :optionFilterProp "label"
+                                 :options          [{:label "Usual"     :value "usual"}
+                                                    {:label "Official"  :value "official"}
+                                                    {:label "Temp"      :value "temp"}
+                                                    {:label "Secondary" :value "secondary"}
+                                                    {:label "Old"       :value "old"}]}]]
+                    #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
+                    [:> Form.Item {:label "Type"     :name [id :type]}
+                     [:> Input]]
+                    [:> Form.Item {:label "System"   :name [id :system]}
+                     [:> Input]]
+                    [:> Form.Item {:label "Value"    :name [id :value]}
+                     [:> Input]]
+                    [:> Form.Item {:label "Period"   :name [id :period]}
+                     #_#_TODO "allow to select only year or year-month"
+                     [:> DatePicker.RangePicker {:style {:width "100%"}}]]
+                    [:> Form.Item {:label "Assigner" :name [id :assigner]}
+                     [:> Input]]]))]]
+
+       [:> Form.Item {:label "Experimental" :name "experimental"}
+        [:> Switch {:size "small"}]]
+
        #_"TODO: Meta object"
        #_"TODO: contact array"
        #_"TODO: useContext array"
@@ -115,7 +150,8 @@
       :initialValues       (get-in vd (:value-path ctx))}
      #(close-popover-in-line ctx)
      [:<>
-      [:> Form.Item {:label "Description" :name "description"} [:> Input.TextArea]]
+      [:> Form.Item {:label "Description" :name "description"}
+       [:> Input.TextArea {:autoSize true :allowClear true}]]
       [:> Form.Item {:label "Type" :name "type"} [:> Input]]
       [:> Form.Item {:label "Collection" :name "collection"} [:> Switch {:size "small"}]]
       [:> Form.Item {:label "Tags"}
