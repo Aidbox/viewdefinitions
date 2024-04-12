@@ -1,4 +1,5 @@
-(ns vd-designer.pages.vd-form.fhir-schema)
+(ns vd-designer.pages.vd-form.fhir-schema
+  (:require [clojure.string :as str]))
 
 (def vd-spec
   {"url" "http://fhir.aidbox.app/fhir/StructureDefinition/ViewDefinition|1.0.0",
@@ -72,6 +73,26 @@
                               "datatype" "string"}},
    "required" ["select" "status" "resource"]})
 
+(def value-type-list
+  ["base64Binary"
+   "boolean"
+   "canonical"
+   "code"
+   "date"
+   "dateTime"
+   "decimal"
+   "id"
+   "instant"
+   "integer"
+   "integer64"
+   "oid"
+   "string"
+   "positiveInt"
+   "time"
+   "unsignedInt"
+   "uri"
+   "url"
+   "uuid"])
 
 (defn mapv-indexed [& args]
   (vec (apply map-indexed args)))
@@ -124,3 +145,9 @@
   (->> (:select view)
        (mapv #(map (fn [[k _]] [:select (:tree/key %) k]) (dissoc % :tree/key)))
        (apply concat)))
+
+(defn get-constant-type [constant]
+  (->> constant
+       (filterv (fn [[k _]] (str/starts-with? (name k) "value")))
+       first
+       first))

@@ -1,16 +1,18 @@
 (ns vd-designer.pages.vd-form.controller
-  (:require [vd-designer.utils.utils :as utils]
+  (:require [day8.re-frame.tracing :refer-macros [fn-traced]]
             [medley.core :as medley]
-            [day8.re-frame.tracing :refer-macros [fn-traced]]
             [re-frame.core :refer [reg-event-db reg-event-fx]]
             [vd-designer.http.fhir-server :as http.fhir-server]
-            [vd-designer.pages.vd-form.fhir-schema :refer [get-select-path]]
+            [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                           get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]
             [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
                                                                remove-decoration
                                                                uuid->idx]]
-            [vd-designer.utils.event :refer [response->error]]))
+            [vd-designer.utils.event :refer [response->error]]
+            [vd-designer.utils.utils :as utils]))
+
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -161,7 +163,7 @@
 (reg-event-fx
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
-   (let [value (decorate (or default-value {}))
+   (let [value (decorate default-value)
          mk-expanded-path (fn [[k _]]
                             (conj path (:tree/key value) k))]
      {:db (let [real-path (uuid->idx path (:current-vd db))]
@@ -232,3 +234,17 @@
     (if (= settings-opened-id (::m/settings-opened-id db))
       (assoc db ::m/settings-opened-id nil)
       (assoc db ::m/settings-opened-id settings-opened-id))}))
+
+(reg-event-db
+ ::normalize-constant-value
+ (fn [db [_ path]]
+   (let [real-path    (-> (into [:current-vd] path)
+                          (uuid->idx db))
+         constant-map (get-in db real-path)
+         current-type (get-constant-type constant-map)]
+     (assoc-in db real-path
+               (-> constant-map
+                   (dissoc current-type)
+                   (assoc (keyword (:type constant-map))
+                          (current-type   constant-map))
+                   (dissoc :type))))))

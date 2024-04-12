@@ -74,22 +74,30 @@
 
 ;;;; Buttons
 
+(defn add-vd-item [ctx kind leaf?]
+  (let [column-leaf-value {:name "" :path ""}]
+    (dispatch [::c/add-tree-element
+               (:value-path ctx)
+               (if leaf?
+                 (case kind
+                   :constant      {:name "" :valueString ""}
+                   :where         {:path ""}
+                   :column        column-leaf-value)
+                 (case kind
+                   :column        {:column   [column-leaf-value]}
+                   :forEach       {:forEach       "" :select []}
+                   :forEachOrNull {:forEachOrNull "" :select []}
+                   :unionAll      {:unionAll []}))])))
+
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])
+   {:onClick #(add-vd-item ctx (keyword name) true)
     :style   {:width      "100%"
-              :text-align "left"}}])
+              :text-align :left}}])
 
 (defn add-select-button [ctx]
   (let [requested-key #(keyword (.-key %))]
-    [new-select #(dispatch [::c/add-tree-element
-                            (:value-path ctx)
-                            (case (requested-key %)
-                              :column        {:column   [{:name "", :path ""}]}
-                              :forEach       {:forEach       "" :select []}
-                              :forEachOrNull {:forEachOrNull "" :select []}
-                              :unionAll      {:unionAll []})])]))
-
+    [new-select #(add-vd-item ctx (requested-key %) false)]))
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
@@ -155,11 +163,11 @@
                                            (toggle-popover-in-line ctx nil))
                              :id        button-id}]]]))
 
-(defn fhir-path-input [ctx key value deletable? settings-form]
+(defn fhir-path-input [ctx key value deletable? settings-form placeholder]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [input {:placeholder  "path"
+   [input {:placeholder  (or placeholder "path")
            :defaultValue value
            :onChange     #(change-input-value ctx key %)}]
    (when settings-form
