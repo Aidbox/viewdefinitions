@@ -16,9 +16,10 @@
     ;; 13px - to fit the height of ViewDefinition form:
     ;; it's height in pixels is 46
     ;; 16 (padding) * 2 + 13 + 1 (border) = 46
-    [:> ConfigProvider {:theme {:token {:lineHeight "13px"}}}
+    [:> ConfigProvider {:theme {:token {:Table {:lineHeight         "13px"
+                                                :headerBorderRadius 0}}}}
      [:> Table (medley/deep-merge
-               {:columns    columns
-                :dataSource data
-                :rowKey     (fn [row] (hash (js->clj row {:keywordize-keys true})))}
-               opts)]]))
+                {:columns    columns
+                 :dataSource data
+                 :rowKey     (fn [row] (hash (js->clj row {:keywordize-keys true})))}
+                opts)]]))
