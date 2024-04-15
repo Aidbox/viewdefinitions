@@ -1,12 +1,8 @@
 (ns vd-designer.pages.vd-form.form
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [DatePicker Flex Form Input Modal Space Spin Switch
-                          Typography]]
+  (:require [antd :refer [DatePicker Flex Form Input Modal Spin Switch Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            [reagent.core :as r]
-            [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
@@ -20,6 +16,7 @@
                                                           delete-button
                                                           fhir-path-input
                                                           name-input
+                                                          popover-form-list
                                                           resource-input
                                                           settings-base-form
                                                           toggle-popover
@@ -110,28 +107,14 @@
        #_"TODO: useContext array"
 
        [:> Form.Item {:label "FHIR version"}
-        [:> Form.List
-         {:name "fhirVersion"}
-         (fn [raw-fields actions]
-           (let [fields (js->clj raw-fields :keywordize-keys true)
-                 {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-             (r/as-element
-              [:div
-               (map (fn [{:keys [key name]}]
-                      ^{:key key}
-                      [:> Space {:align "baseline"}
-                       [:> Form.Item {:name  key
-                                      :key   key
-                                      :rules [{:required true
-                                               :message  "FHIR version is required"}]}
-                        [:> Input]]
-                       [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
-                    fields)
-               [:> Form.Item
-                [button/icon "Add" icons/PlusOutlined
-                 {:type    "dashed"
-                  :block   true
-                  :onClick #(add)}]]])))]]]]]))
+        [popover-form-list "fhirVersion"
+         (fn [element-key]
+           [:<>
+            [:> Form.Item {:name  element-key
+                           :key   element-key
+                           :rules [{:required true
+                                    :message  "FHIR version is required"}]}
+             [:> Input]]])]]]]]))
 
 (defn where-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
@@ -141,7 +124,7 @@
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
-(defn column-popup-form [ctx]
+(defn column-popover-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
      {:onFinish      #(save-popover % ctx)
@@ -152,31 +135,17 @@
       [:> Form.Item {:label "Type" :name "type"} [:> Input]]
       [:> Form.Item {:label "Collection" :name "collection"} [:> Switch {:size "small"}]]
       [:> Form.Item {:label "Tags"}
-       [:> Form.List {:name "tag"}
-        (fn [raw-fields actions]
-          (let [fields (js->clj raw-fields :keywordize-keys true)
-                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-            (r/as-element
-             [:div
-              (map (fn [{:keys [key name]}]
-                     ^{:key key}
-                     [:> Space {:align "baseline"}
-                      [:> Form.Item {:name  [key :name]
-                                     :rules [{:required true
-                                              :message  "Name is required"}]}
-                       [:> Input {:placeholder "Name"}]]
-                      [:> Form.Item {:name  [key :value]
-                                     :rules [{:required true
-                                              :message  "Value is required"}]}
-                       [:> Input {:placeholder "Value"}]]
-
-                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
-                   fields)
-              [:> Form.Item
-               [button/icon "Add" icons/PlusOutlined
-                {:type    "dashed"
-                 :block   true
-                 :onClick #(add)}]]])))]]]]))
+       [popover-form-list "tag"
+        (fn [element-key]
+          [:<>
+           [:> Form.Item {:name  [element-key :name]
+                          :rules [{:required true
+                                   :message  "Name is required"}]}
+            [:> Input {:placeholder "Name"}]]
+           [:> Form.Item {:name  [element-key :value]
+                          :rules [{:required true
+                                   :message  "Value is required"}]}
+            [:> Input {:placeholder "Value"}]]])]]]]))
 
 (defn constant-popover-form [ctx]
   (let [vd          @(subscribe [::m/current-vd])
@@ -220,7 +189,7 @@
     :name          name
     :value-key     :path
     :value         path
-    :settings-form column-popup-form
+    :settings-form column-popover-form
     :deletable?    true}])
 
 (defn constant-type->input-type [constant-type]

@@ -217,3 +217,23 @@
       [button/button "Save" {:size     "small"
                              :type     "primary"
                              :htmlType "submit"}]]]]])
+
+(defn popover-form-list [name render-list-items]
+  [:> Form.List {:name name}
+   (fn [raw-fields actions]
+     (let [fields (js->clj raw-fields :keywordize-keys true)
+           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+       (r/as-element
+        [:div
+         (map (fn [{:keys [key name]}]
+                ^{:key key}
+                [:> Space {:align "baseline"}
+                 [:<>
+                  (render-list-items key)
+                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
+              fields)
+         [:> Form.Item
+          [button/icon "Add" icons/PlusOutlined
+           {:type    "dashed"
+            :block   true
+            :onClick #(add)}]]])))])
