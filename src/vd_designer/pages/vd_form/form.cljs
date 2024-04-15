@@ -73,7 +73,6 @@
                    [:<>
                     [:> Form.Item {:label "Use"      :name [id :use]}
                      [:> Select {:showSearch       true
-                                 :defaultValue     nil
                                  :filterOption     true
                                  :allowClear       true
                                  :optionFilterProp "label"
