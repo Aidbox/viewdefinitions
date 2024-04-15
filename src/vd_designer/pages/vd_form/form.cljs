@@ -1,37 +1,36 @@
 (ns vd-designer.pages.vd-form.form
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [DatePicker Flex Form Input Modal Select Space Spin
-                          Switch Typography]]
-            [clojure.string :as str]
-            [medley.core :as medley]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            [reagent.core :as r]
-            [vd-designer.components.button :as button]
-            [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.icon :as icon]
-            [vd-designer.components.input :refer [input]]
-            [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
-            [vd-designer.pages.vd-form.components :refer [add-element-button
-                                                          add-select-button
-                                                          base-input-row
-                                                          base-node-row
-                                                          change-input-value
-                                                          delete-button
-                                                          fhir-path-input
-                                                          name-input
-                                                          resource-input
-                                                          settings-base-form
-                                                          toggle-popover-in-line
-                                                          tree-tag] :as components]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                           create-render-context
-                                                           drop-value-path
-                                                           get-constant-type
-                                                           value-type-list]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.uuid-decoration :refer [uuid->idx]]
-            [vd-designer.utils.string :as str.utils]))
+  (:require
+   ["@ant-design/icons" :as icons]
+   [antd :refer [DatePicker Flex Form Input Modal Select Space Spin Switch
+                 Typography]]
+   [clojure.string :as str]
+   [medley.core :as medley]
+   [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+   [reagent.core :as r]
+   [vd-designer.components.button :as button]
+   [vd-designer.components.collapse :refer [collapse collapse-item]]
+   [vd-designer.components.icon :as icon]
+   [vd-designer.components.input :refer [input]]
+   [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
+   [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                 add-select-button
+                                                 base-input-row base-node-row
+                                                 change-input-value
+                                                 delete-button fhir-path-input
+                                                 name-input resource-input
+                                                 settings-base-form
+                                                 toggle-popover-in-line
+                                                 tree-tag] :as components]
+   [vd-designer.pages.vd-form.controller :as c]
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+                                                  create-render-context
+                                                  drop-value-path
+                                                  get-constant-type
+                                                  value-type-list]]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.pages.vd-form.uuid-decoration :refer [uuid->idx]]
+   [vd-designer.utils.event :as u]
+   [vd-designer.utils.string :as str.utils]))
 
 ;;;; Settings forms
 
@@ -204,7 +203,8 @@
 ;; Leafs
 
 (defn- general-leaf [ctx props]
-  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder]} props]
+  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder input-type]}
+        props]
     [base-input-row ctx
      [:> Flex {:gap   8
                :align :center
@@ -215,8 +215,8 @@
         [input {:value       name
                 :placeholder "name"
                 :style       {:font-style "normal"}
-                :onChange    #(change-input-value ctx name-key %)}])]
-     [fhir-path-input ctx value-key value deletable? settings-form placeholder]]))
+                :onChange    #(change-input-value ctx name-key (u/target-value %))}])]
+     [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
   [general-leaf ctx
@@ -228,6 +228,17 @@
     :settings-form column-popup-form
     :deletable?    true}])
 
+(defn constant-type->input-type [constant-type]
+  (case constant-type
+    (:valueDecimal
+      :valueInteger
+      :valueInteger64
+      :valuePositiveInt
+      :valueUnsignedInt) :number
+
+    :valueBoolean        :boolean
+    :text))
+
 (defn constant-leaf [ctx {:keys [name] :as item}]
   (let [current-type (keyword (get-constant-type item))]
     [general-leaf ctx
@@ -238,6 +249,7 @@
       :value         (current-type item)
       :placeholder   "constant"
       :settings-form constant-popover-form
+      :input-type    (constant-type->input-type current-type)
       :deletable?    true}]))
 
 (defn where-leaf [ctx {:keys [path]}]

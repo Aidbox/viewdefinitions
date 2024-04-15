@@ -1,13 +1,13 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Col ConfigProvider Form Popover Row Space]]
+            [antd :refer [Col ConfigProvider Form Popover Row Space Checkbox]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.heading :refer [h4]]
-            [vd-designer.components.input :refer [input]]
+            [vd-designer.components.input :refer [input input-number]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [calc-key]]
@@ -109,10 +109,10 @@
 
 ;;;; Inputs
 
-(defn change-input-value [ctx key e]
+(defn change-input-value [ctx key value]
   (dispatch [::c/change-input-value
              (conj (:value-path ctx) key)
-             (u/target-value e)]))
+             value]))
 
 (defn name-input [ctx vd-form]
   [base-input-row ctx
@@ -163,13 +163,25 @@
                                            (toggle-popover-in-line ctx nil))
                              :id        button-id}]]]))
 
-(defn fhir-path-input [ctx key value deletable? settings-form placeholder]
+(defn render-input [ctx input-type placeholder kind value]
+  (case input-type
+    :number [input-number {:placeholder  (or placeholder "path")
+                           :defaultValue value
+                           :onChange #(change-input-value ctx kind %)}]
+    :boolean [:div {:style {:width "100%"}}
+              [:> Checkbox
+               {:checked  value
+                :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
+
+    [input {:placeholder  (or placeholder "path")
+            :defaultValue value
+            :onChange     #(change-input-value ctx kind (u/target-value %))}]))
+
+(defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [input {:placeholder  (or placeholder "path")
-           :defaultValue value
-           :onChange     #(change-input-value ctx key %)}]
+   (render-input ctx input-type placeholder kind value)
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
