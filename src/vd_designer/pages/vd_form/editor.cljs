@@ -1,6 +1,5 @@
 (ns vd-designer.pages.vd-form.editor
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Popover]]
+  (:require [antd :refer [Flex]]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.button :as button]
             [vd-designer.components.monaco-editor :refer [monaco]]
@@ -17,7 +16,7 @@
     ""))
 
 (defn filename [vd-name lang]
-  (when (and vd-name lang) 
+  (when (and vd-name lang)
     (let [ext (case lang
                 :language/yaml "yaml"
                 :language/json "json")]
@@ -29,21 +28,19 @@
         code (-> vd
                  (remove-decoration)
                  (format-vd lang))]
-    [:div
-     {:style {:height "600px" :width "100%"}}
+    [:div {:style {:height "calc(100vh - 180px)"}}
      [monaco {:id       "vd-yaml"
               :language (when lang (name lang))
               :value    code
               :schemas  []
               #_#_:onChange (fn [value & _] (dispatch [::c/set-schema value]))
               #_#_:onValidate (fn [markers] (dispatch [::c/set-monaco-markers (js->clj markers)]))}]
-     [:div {:style {:position       :absolute
-                    :top            "16px"
-                    :right          "16px"
-                    :display        :flex
-                    :flex-direction :column
-                    :align-items    :end
-                    :gap            "8px"}}
+     [:> Flex {:style    {:position :absolute
+                          :top      "16px"
+                          :right    "16px"}
+               :vertical true
+               :align    :end
+               :gap      8}
       [switch/json<->yaml
        :defaultChecked (= lang :language/json)
        :onChange #(dispatch [::c/change-language

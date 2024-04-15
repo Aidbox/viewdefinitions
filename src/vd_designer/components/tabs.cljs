@@ -13,14 +13,3 @@
    For more details see: https://ant.design/components/tabs#tabs"
   [& {:as opts}]
   [:> Tabs (medley/deep-merge {:defaultActiveKey 1} opts)])
-
-
-    ;; items={[AppleOutlined, AndroidOutlined].map((Icon, i) => {
-    ;;   const id = String(i + 1);
-    ;;   return {
-    ;;     key: id,
-    ;;     label: `Tab ${id}`,
-    ;;     children: `Tab ${id}`,
-    ;;     icon: <Icon />,
-    ;;   };
-    ;; })}
