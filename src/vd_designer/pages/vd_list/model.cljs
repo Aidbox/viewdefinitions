@@ -22,3 +22,15 @@
  ::delete-fail
  (fn [db _]
     (::delete-fail db)))
+
+(defn vd-by-id [vds id]
+ (first (filter
+         (fn [entry] (= id (-> entry :resource :id)))
+         vds)))
+
+(reg-sub
+ ::vd-name-by-id
+ (fn [db [_ id]]
+  (-> (vd-by-id (:view-definitions db) id)
+      :resource
+      :name)))

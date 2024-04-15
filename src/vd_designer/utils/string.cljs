@@ -1,5 +1,7 @@
 (ns vd-designer.utils.string
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [goog.string :as gstring]
+            [goog.string.format]))
 
 (defn parse-kw
   "Converts string to keyword, if it starts with `:`."
@@ -13,3 +15,6 @@
   [path-str]
   (->> (str/split path-str " ")
        (mapv parse-kw)))
+
+(defn format [& args]
+  (apply gstring/format args))
