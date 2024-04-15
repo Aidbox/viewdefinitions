@@ -51,7 +51,7 @@
   (fn [{:keys [db]} [_ id _result]]
     {:db (update db :view-definitions
                  #(remove (fn [entry] (= id (-> entry :resource :id))) %))
-     :message-success "Deleted!"}))
+     :message-success "Deleted"}))
 
 (reg-event-fx
   ::delete-view-definition-failure

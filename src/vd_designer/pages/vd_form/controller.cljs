@@ -212,7 +212,7 @@
    {:db (-> db
             (assoc :current-vd result ::m/save-loading false)
             (dissoc ::m/save-view-definition-loading))
-    :message-success "Saved!"}))
+    :message-success "Saved"}))
 
 (reg-event-fx
  ::save-view-definition-failure

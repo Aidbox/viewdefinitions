@@ -140,4 +140,4 @@
              (update-in [:cfg/fhir-servers :servers] dissoc server-name)
              (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
                (update :cfg/fhir-servers dissoc :used-server-name)))
-     :message-success "Deleted!"}))
+     :message-success "Deleted"}))

@@ -28,8 +28,7 @@
             filter-phrase (->> (filter #(grep-vd % filter-phrase))))))
 
 (defn viewdefinition-list-view []
-  (let [used-server-name @(subscribe [::settings-model/used-server-name])
-        delete-fail @(subscribe [::m/delete-fail])]
+  (let [used-server-name @(subscribe [::settings-model/used-server-name])]
     [:div {:style {:width "60%"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
@@ -54,4 +53,3 @@
       (when-not used-server-name
         [:a {:on-click #(rfe/navigate :settings) }
          "Connect"])]]))
-
