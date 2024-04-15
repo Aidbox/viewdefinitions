@@ -9,8 +9,8 @@
             [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]
             [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
                                                                remove-decoration
-                                                               uuid->idx]]))
-
+                                                               uuid->idx]]
+            [vd-designer.utils.event :refer [response->error]]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -85,18 +85,13 @@
       :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                        :params {:limit 100
                                                                 :view  view-definition}})
-                      (assoc :on-success [::on-eval-view-definitions-success]
-                             :on-failure [::on-eval-view-definitions-error]))})))
+                      (assoc :on-success [::on-eval-view-definition-success]
+                             :on-failure [::on-eval-view-definition-error]))})))
 
 (reg-event-db
  ::reset-vd-error
  (fn [db [_]]
    (dissoc db ::m/current-vd-error)))
-
-(defn response->error [resp-body]
-  (or (-> resp-body :response :error)
-      (-> resp-body :response :text :div)
-      (:status-text resp-body)))
 
 (reg-event-db
  ::on-vd-error
@@ -104,17 +99,17 @@
             (assoc db ::m/current-vd-error (response->error result))))
 
 (reg-event-db
- ::on-eval-view-definitions-success
+ ::on-eval-view-definition-success
  (fn [db [_ result]]
    (assoc db
           ::m/resource-data (:result result)
           ::m/eval-loading false)))
 
 (reg-event-fx
-  ::on-eval-view-definitions-error
-  (fn [{:keys [db]} [_ result]]
-    {:db (assoc db ::m/eval-loading false)
-     :notification-error (response->error result)}))
+ ::on-eval-view-definition-error
+ (fn [{:keys [db]} [_ result]]
+   {:db (assoc db ::m/eval-loading false)
+    :notification-error (str "Error on run: " (response->error result))}))
 
 (reg-event-db
  ::change-input-value
@@ -217,13 +212,13 @@
    {:db (-> db
             (assoc :current-vd result ::m/save-loading false)
             (dissoc ::m/save-view-definition-loading))
-    :notification-info "Saved!"}))
+    :message-success "Saved"}))
 
 (reg-event-fx
  ::save-view-definition-failure
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/save-loading false)
-    :notification-error (response->error result)}))
+    :notification-error (str "Error on save: " (response->error result))}))
 
 (reg-event-db
  ::change-language

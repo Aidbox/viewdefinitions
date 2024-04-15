@@ -28,8 +28,7 @@
             filter-phrase (->> (filter #(grep-vd % filter-phrase))))))
 
 (defn viewdefinition-list-view []
-  (let [used-server-name @(subscribe [::settings-model/used-server-name])
-        delete-fail @(subscribe [::m/delete-fail])]
+  (let [used-server-name @(subscribe [::settings-model/used-server-name])]
     [:div {:style {:width "60%"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
@@ -48,11 +47,9 @@
        [(fn [id]
           [:div
            [:a
-            {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]
-           (when delete-fail [:label (:status-text delete-fail)])])]
+            {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]])]
        :loading @(subscribe [::m/view-defs-loading?])
        :dataSource (filter-vds @(subscribe [::m/view-defs]))]
       (when-not used-server-name
         [:a {:on-click #(rfe/navigate :settings) }
          "Connect"])]]))
-

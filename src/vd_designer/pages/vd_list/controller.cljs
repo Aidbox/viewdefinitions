@@ -3,6 +3,7 @@
     [clojure.string :as str]
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.utils.event :refer [response->error]]
     [vd-designer.pages.vd-list.model :as m]))
 
 (reg-event-fx
@@ -45,16 +46,18 @@
                      (assoc :on-success [::delete-view-definition-success id]
                             :on-failure [::delete-view-definition-failure]))}))
 
-(reg-event-db
+(reg-event-fx
   ::delete-view-definition-success
-  (fn [db [_ id _result]]
-    (update db :view-definitions
-            #(remove (fn [entry] (= id (-> entry :resource :id))) %))))
+  (fn [{:keys [db]} [_ id _result]]
+    {:db (update db :view-definitions
+                 #(remove (fn [entry] (= id (-> entry :resource :id))) %))
+     :message-success "Deleted"}))
 
-(reg-event-db
+(reg-event-fx
   ::delete-view-definition-failure
-  (fn [db [_ result]]
-    (assoc db ::m/delete-fail result)))
+  (fn [{:keys [db]} [_ result]]
+    {:db (assoc db ::m/delete-fail result)
+     :notification-error (str "Delete failed: " (response->error result))}))
 
 (reg-event-db
   ::filter-updated
