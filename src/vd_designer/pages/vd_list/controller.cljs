@@ -35,11 +35,6 @@
                 ::m/view-definitions-loading false))}))
 
 (reg-event-fx
-  ::add-view-definition
-  (fn [{:keys [_db]} _]
-    {:navigate [:form-create]}))
-
-(reg-event-fx
   ::delete-view-definition
   (fn [{:keys [db]} [_ id]]
     {:http-xhrio (-> (http.fhir-server/delete-view-definition db id)

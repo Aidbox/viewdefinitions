@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-list.model
   (:require
+   [medley.core :as medley]
    [re-frame.core :refer [reg-sub]]
    [vd-designer.pages.vd-list.controller :as-alias c]))
 
@@ -22,3 +23,13 @@
  ::delete-fail
  (fn [db _]
     (::delete-fail db)))
+
+(defn vd-by-id [vds id]
+  (medley/find-first (fn [entry] (= id (-> entry :resource :id))) vds))
+
+(reg-sub
+ ::vd-name-by-id
+ (fn [db [_ id]]
+  (-> (vd-by-id (:view-definitions db) id)
+      :resource
+      :name)))
