@@ -1,36 +1,39 @@
 (ns vd-designer.pages.vd-form.form
-  (:require
-   ["@ant-design/icons" :as icons]
-   [antd :refer [DatePicker Flex Form Input Modal Select Space Spin Switch
-                 Typography]]
-   [clojure.string :as str]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-   [reagent.core :as r]
-   [vd-designer.components.button :as button]
-   [vd-designer.components.collapse :refer [collapse collapse-item]]
-   [vd-designer.components.icon :as icon]
-   [vd-designer.components.input :refer [input]]
-   [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
-   [vd-designer.pages.vd-form.components :refer [add-element-button
-                                                 add-select-button
-                                                 base-input-row base-node-row
-                                                 change-input-value
-                                                 delete-button fhir-path-input
-                                                 name-input resource-input
-                                                 settings-base-form
-                                                 toggle-popover
-                                                 tree-tag] :as components]
-   [vd-designer.pages.vd-form.controller :as c]
-   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                  create-render-context
-                                                  drop-value-path
-                                                  get-constant-type
-                                                  value-type-list]]
-   [vd-designer.pages.vd-form.model :as m]
-   [vd-designer.pages.vd-form.uuid-decoration :refer [uuid->idx]]
-   [vd-designer.utils.event :as u]
-   [vd-designer.utils.string :as str.utils]))
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [DatePicker Flex Form Input Modal Space Spin Switch
+                          Typography]]
+            [clojure.string :as str]
+            [medley.core :as medley]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.collapse :refer [collapse collapse-item]]
+            [vd-designer.components.icon :as icon]
+            [vd-designer.components.input :refer [input]]
+            [vd-designer.components.select :refer [select]]
+            [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
+            [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                          add-select-button
+                                                          base-input-row
+                                                          base-node-row
+                                                          change-input-value
+                                                          delete-button
+                                                          fhir-path-input
+                                                          name-input
+                                                          resource-input
+                                                          settings-base-form
+                                                          toggle-popover
+                                                          tree-tag] :as components]
+            [vd-designer.pages.vd-form.controller :as c]
+            [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+                                                           create-render-context
+                                                           drop-value-path
+                                                           get-constant-type
+                                                           value-type-list]]
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.uuid-decoration :refer [uuid->idx]]
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.string :as str.utils]))
 
 ;;;; Settings forms
 
@@ -55,11 +58,18 @@
        [:> Form.Item {:label "Description" :name "description"}
         [:> Input.TextArea {:autoSize true :allowClear true}]]
        [:> Form.Item {:label "Status" :name "status" :rules [{:required true}]}
-        [:> Select {:placeholder      "status"
-                    :options          [{:label "draft"   :value "draft"}
-                                       {:label "active"  :value "active"}
-                                       {:label "retired" :value "retired"}
-                                       {:label "unknown" :value "unknown"}]}]]
+        [select
+         :placeholder "status"
+         :allowClear  false
+         :variant     :outlined
+         :options     [{:label "draft"
+                        :value "draft"}
+                       {:label "active"
+                        :value "active"}
+                       {:label "retired"
+                        :value "retired"}
+                       {:label "unknown"
+                        :value "unknown"}]]]
        [:> Form.Item {:label "Url" :name "url"} [:> Input]]
        [:> Form.Item {:label "Publisher" :name "publisher"} [:> Input]]
        [:> Form.Item {:label "Copyright" :name "copyright"}
@@ -72,15 +82,13 @@
                  (let [id :identifier]
                    [:<>
                     [:> Form.Item {:label "Use"      :name [id :use]}
-                     [:> Select {:showSearch       true
-                                 :filterOption     true
-                                 :allowClear       true
-                                 :optionFilterProp "label"
-                                 :options          [{:label "Usual"     :value "usual"}
-                                                    {:label "Official"  :value "official"}
-                                                    {:label "Temp"      :value "temp"}
-                                                    {:label "Secondary" :value "secondary"}
-                                                    {:label "Old"       :value "old"}]}]]
+                     [select
+                      :variant :outlined
+                      :options [{:label "Usual"     :value "usual"}
+                                {:label "Official"  :value "official"}
+                                {:label "Temp"      :value "temp"}
+                                {:label "Secondary" :value "secondary"}
+                                {:label "Old"       :value "old"}]]]
                     #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
                     [:> Form.Item {:label "Type"     :name [id :type]}
                      [:> Input]]
@@ -179,12 +187,12 @@
       :initialValues {:type (get-constant-type constant-map)}}
      [:<>
       [:> Form.Item {:label "Value type" :name "type"}
-       [:> Select {:showSearch       true
-                   :filterOption     true
-                   :optionFilterProp "label"
-                   :options          (mapv #(hash-map :label %
-                                                      :value (str "value" (str/capitalize %)))
-                                           value-type-list)}]]]]))
+       [select
+        :variant    :outlined
+        :allowClear false
+        :options    (mapv #(hash-map :label %
+                                     :value (str "value" (str/capitalize %)))
+                          value-type-list)]]]]))
 ;;;; Tree
 
 ;; Leafs
