@@ -48,8 +48,7 @@
        [(fn [id]
           [:div
            [:a
-            {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]
-           (when delete-fail [:label (:status-text delete-fail)])])]
+            {:onClick #(dispatch [::c/delete-view-definition id])} "delete"]])]
        :loading @(subscribe [::m/view-defs-loading?])
        :dataSource (filter-vds @(subscribe [::m/view-defs]))]
       (when-not used-server-name

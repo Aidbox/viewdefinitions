@@ -3,7 +3,9 @@
    [clojure.string :as str]
    [lambdaisland.uri :as uri]
    [re-frame.core :refer [reg-event-db reg-event-fx]]
-   [vd-designer.http.fhir-server :as http]))
+   [vd-designer.http.fhir-server :as http]
+   [vd-designer.notifications]
+   [vd-designer.utils.event :as u]))
 
 (reg-event-fx
   ::start
@@ -123,17 +125,19 @@
   ::not-connected
   (fn [{:keys [db]} [_ server-name result]]
     {:db (assoc db :cfg/connect-error {:result result
-                                       :server-name server-name})}))
+                                       :server-name server-name})
+     :notification-error (str "Error on connect: " (u/response->error result))}))
 
 (reg-event-db
   ::cancel-edit
   (fn [db [_]]
     (dissoc db :fhir-server :original-server)))
 
-(reg-event-db
+(reg-event-fx
   ::delete
-  (fn [db [_ {:keys [server-name]}]]
-    (-> db
-        (update-in [:cfg/fhir-servers :servers] dissoc server-name)
-        (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
-                (update :cfg/fhir-servers dissoc :used-server-name)))))
+  (fn [{:keys [db]} [_ {:keys [server-name]}]]
+    {:db (-> db
+             (update-in [:cfg/fhir-servers :servers] dissoc server-name)
+             (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
+               (update :cfg/fhir-servers dissoc :used-server-name)))
+     :message-success "Deleted!"}))

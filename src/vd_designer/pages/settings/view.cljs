@@ -95,7 +95,7 @@
                            (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
     [:> Modal {:open      (boolean original-server)
                :title     (if edit? "Edit server" "Add server")
-               :ok-text   (if edit? "Edit" "Add")
+               :ok-text   (if edit? "Confirm" "Add")
                :on-ok     #(dispatch [::c/add-server fhir-server])
                :ok-button-props {:disabled (not-empty errors-set)}
                :on-cancel #(dispatch [::c/cancel-edit])}
