@@ -199,7 +199,7 @@
               "http://hl7.org/fhir/StructureDefinition/HumanName" humanname-fhirschema
               "Patient" patient-fhirschema
               "http://hl7.org/fhir/StructureDefinition/Patient" patient-fhirschema}})
-            
+
 (deftest find-part-with-carret-test
   (testing "Empty string"
     (is (match? 0
@@ -229,10 +229,10 @@
     (is (match? -1
                 (fhirpath/find-part-with-carret ["name" "family"] 12)))))
 
-(comment 
+(comment
   (run-test find-part-with-carret-test))
 
-(deftest fhirpath-autocomplete-test
+(deftest autocomplete-test
   (testing "Autocomplete doesn't work on selection region"
     (is (match?
          {:fields []
@@ -331,6 +331,16 @@
              :selection-end 12
              :type "Patient"})))))
   (testing "Autocomplete functions"
+    (testing "Base Patient 'name.where|()' autocomplete"
+      (is (match?
+            {:functions []
+             :fields    []}
+            (fhirpath/autocomplete
+              test-spec
+              {:text "name.where()"
+               :selection-start 10
+               :selection-end 10
+               :type "Patient"}))))
     (testing "Base Patient 'name.|' autocomplete"
       (is (match?
            {:functions (m/embeds [{:label "empty" :value "empty()" :cursor 7}])}
@@ -359,35 +369,46 @@
              :selection-end 7
              :type "Patient"})))))
   (testing "Autocomplete inside functions"
-    (testing "Base Patient 'name.where()' autocomplete"
+    ;; TODO: add test cases for 'name.where(|'
+    (testing "Base Patient 'name.where(|)' autocomplete"
       (is (match?
            {:fields (m/embeds [{:label "family" :value "family"}
                                {:label "given" :value "given"}])
             :functions (m/embeds [{:label "empty" :value "empty()" :cursor 7}])}
            (fhirpath/autocomplete
             test-spec
-            {:text "name."
+            {:text "name.where()"
              :selection-start 11 
              :selection-end 11
              :type "Patient"}))))
-    (testing "Base Patient 'name.f|' autocomplete"
+    (testing "Base Patient 'name.exists(|)' autocomplete"
       (is (match?
-           {:functions (m/embeds [{:label "first" :value "first()" :cursor 7}])}
-           (fhirpath/autocomplete
-            test-spec
-            {:text "name.f"
-             :selection-start 6
-             :selection-end 6
-             :type "Patient"}))))
-    (testing "Base Patient 'name.fb|' autocomplete"
+            {:fields (m/embeds [{:label "family" :value "family"}
+                                {:label "given" :value "given"}])
+             :functions (m/embeds [{:label "empty"
+                                    :value "empty()"
+                                    :cursor 7}])}
+            (fhirpath/autocomplete
+              test-spec
+              {:text "name.exists()"
+               :selection-start 12
+               :selection-end 12
+               :type "Patient"}))))
+
+    #_(testing "Base Patient 'name.where(period.where(|))' autocomplete"
       (is (match?
-           {:functions []}
-           (fhirpath/autocomplete
-            test-spec
-            {:text "name.fb"
-             :selection-start 7
-             :selection-end 7
-             :type "Patient"}))))))
+            {:fields (m/embeds [{:label "start" :value "start"}
+                                {:label "end" :value "end"}])
+             :functions (m/embeds [{:label "empty"
+                                    :value "empty()"
+                                    :cursor 7}])}
+            (fhirpath/autocomplete
+              test-spec
+              {:text            "name.where(period.where())"
+               :selection-start 24
+               :selection-end   24
+               :type            "Patient"}))))
+    ))
 
 (comment
   (run-test fhirpath-autocomplete-test))

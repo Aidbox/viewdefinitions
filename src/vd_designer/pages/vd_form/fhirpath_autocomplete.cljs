@@ -1,5 +1,5 @@
 (ns vd-designer.pages.vd-form.fhirpath-autocomplete
-  (:require [clojure.string :as s]
+  (:require [clojure.string :as str]
             [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
 
 (def fhirpath-fns 
@@ -68,7 +68,15 @@
           index))
       -1)))
 
-(defn autocomplete [{:keys [spec-map] :as ctx} {:keys [selection-start selection-end text type]}]
+(defn matches-part [part elem]
+  (or (str/starts-with? part "where")
+      (str/starts-with? part "exists")
+      (str/starts-with? elem part)))
+
+(defn autocomplete
+  [{:keys [spec-map] :as ctx}
+   {:keys [selection-start selection-end text type]}]
+
   (if (not= selection-start selection-end)
     {:functions [] :fields []}
     (let [substracted-text (subs text 0 selection-start)
@@ -78,20 +86,21 @@
           context-path (interleave (take part-index splitted-path)
                                    (repeat :elements))
           part (get splitted-path part-index)
-          fhirschema-ctx (fhirschema/resolve-path ctx type (into [:elements] 
-                                                                 (map keyword)
-                                                                 context-path))] 
+          fhirschema-ctx (fhirschema/resolve-path
+                           ctx type (into [:elements]
+                                          (map keyword)
+                                          context-path))]
       {:fields
        (->> fhirschema-ctx
             (keys)
             (mapv name)
-            (filterv #(s/starts-with? % part))
+            (filterv #(matches-part part %))
             (mapv
              (fn [k]
                {:label k :value k})))
        :functions 
        (->> fhirpath-fns
-            (filterv (fn [[k _]] (s/starts-with? (name k) part)))
+            (filterv (fn [[k _]] (matches-part part (name k))))
             (mapv 
              (fn [[k v]]
                {:label (name k)
