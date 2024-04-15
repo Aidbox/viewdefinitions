@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Col ConfigProvider Form Popover Row Space Checkbox]]
+            [antd :refer [Checkbox Col ConfigProvider Form Popover Row Space]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
@@ -14,7 +14,8 @@
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :as u]
-            [vd-designer.utils.js :refer [get-element-by-id toggle-class]]))
+            [vd-designer.utils.js :refer [find-elements get-element-by-id
+                                          remove-class toggle-class]]))
 
 
 ;;;; Tags
@@ -135,18 +136,24 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-
 (defn- toggle-settings-popover-hover [ctx]
   (let [tree-element-id (calc-key (:value-path ctx))
-        button-id (str tree-element-id "-settings-btn")]
-    (-> (get-element-by-id button-id)
-        (toggle-class "active"))
-    (-> (get-element-by-id tree-element-id)
-        (.-parentNode)
-        (.-parentNode)
-        (toggle-class "active"))))
+        button-id       (str tree-element-id "-settings-btn")
 
-(defn toggle-popover-in-line [ctx button-id]
+        process-hover   (fn [f elements]
+                          (mapv (fn [element]
+                                  (mapv #(f element %)
+                                        ["settings-popover-active" "active"]))
+                                elements))]
+
+    (process-hover remove-class (find-elements ".settings-popover-active.active"))
+    (when ctx
+      (process-hover toggle-class [(get-element-by-id button-id)
+                                   (-> (get-element-by-id tree-element-id)
+                                       (.-parentNode)
+                                       (.-parentNode))]))))
+
+(defn toggle-popover [ctx button-id]
   (toggle-settings-popover-hover ctx)
   (dispatch [::c/toggle-settings-opened-id button-id]))
 
@@ -156,11 +163,11 @@
         opened-id @(subscribe [::m/settings-opened-id])]
     [:> Popover (medley/deep-merge
                  {:trigger :click
-                  :open (= button-id opened-id)}
+                  :open    (= button-id opened-id)}
                  opts)
-     [:div [settings-button {:onClick   #(toggle-popover-in-line ctx button-id)
+     [:div [settings-button {:onClick   #(toggle-popover ctx button-id)
                              :onKeyDown #(when (= "Escape" (.-key %))
-                                           (toggle-popover-in-line ctx nil))
+                                           (toggle-popover nil nil))
                              :id        button-id}]]]))
 
 (defn render-input [ctx input-type placeholder kind value]
@@ -190,7 +197,7 @@
 
 ;;;; Settings
 
-(defn settings-base-form [title props popoverCloseAction items]
+(defn settings-base-form [title props items]
   [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
    [:> Form (medley/deep-merge
              {:labelCol   {:span 6},
@@ -204,7 +211,7 @@
     [:div {:style {:textAlign :right}}
      [:> Space
       [button/button "Close" {:size     "small"
-                              :onClick  popoverCloseAction
+                              :onClick  #(toggle-popover nil nil)
                               :type     "default"
                               :htmlType "reset"}]
       [button/button "Save" {:size     "small"

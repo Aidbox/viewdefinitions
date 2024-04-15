@@ -9,6 +9,7 @@
             [vd-designer.components.heading :refer [h1]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
+            [vd-designer.pages.vd-form.components :refer [toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
             [vd-designer.pages.vd-form.form :refer [form root-settings-modal]]
@@ -40,7 +41,7 @@
          [h1 "ViewDefinition"]
          [button/icon ""
           icons/SettingOutlined
-          {:onClick #(dispatch [::c/toggle-settings-opened-id button-id])
+          {:onClick #(toggle-popover nil button-id)
            :style   {:border :none}
            :id      button-id}]]
         [root-settings-modal {:open (= button-id opened-id)}]]

@@ -19,7 +19,7 @@
                                                  delete-button fhir-path-input
                                                  name-input resource-input
                                                  settings-base-form
-                                                 toggle-popover-in-line
+                                                 toggle-popover
                                                  tree-tag] :as components]
    [vd-designer.pages.vd-form.controller :as c]
    [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
@@ -34,24 +34,22 @@
 
 ;;;; Settings forms
 
-(defn close-popover [values ctx]
+(defn save-popover [values ctx]
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-    (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
-    (if ctx
-      (toggle-popover-in-line ctx nil)
-      (dispatch [::c/toggle-settings-opened-id nil]))))
+    (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
+    (dispatch [::c/normalize-constant-value (:value-path ctx)])
+    (toggle-popover ctx nil)))
 
 (defn root-settings-modal [opts]
   (let [vd @(subscribe [::m/current-vd])]
     [:> Modal (medley.core/deep-merge
                {:footer    nil
                 :style     {:top 96 :margin-left 96}
-                :on-cancel #(dispatch [::c/toggle-settings-opened-id nil])}
+                :on-cancel #(toggle-popover nil nil)}
                opts)
      [settings-base-form "ViewDefinition"
-      {:onFinish      (fn [values] (close-popover values nil))
+      {:onFinish      #(save-popover % nil)
        :initialValues vd}
-      #(dispatch [::c/toggle-settings-opened-id nil])
       [:<>
        [:> Form.Item {:label "Title" :name "title"} [:> Input]]
        [:> Form.Item {:label "Description" :name "description"}
@@ -131,21 +129,16 @@
 (defn where-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
-     {:onFinish      (fn [values] (close-popover values ctx))
+     {:onFinish      #(save-popover % ctx)
       :initialValues (get-in vd (:value-path ctx))}
-     #(toggle-popover-in-line ctx nil)
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
 (defn column-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
-     {:onFinish      (fn [values]
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch [::c/change-input-value-merge (:value-path ctx) fields])
-                         (toggle-popover-in-line ctx nil)))
+     {:onFinish      #(save-popover % ctx)
       :initialValues (get-in vd (:value-path ctx))}
-     #(toggle-popover-in-line ctx nil)
      [:<>
       [:> Form.Item {:label "Description" :name "description"}
        [:> Input.TextArea {:autoSize true :allowClear true}]]
@@ -183,13 +176,8 @@
         real-path    (uuid->idx (:value-path ctx) vd)
         constant-map (get-in vd real-path)]
     [settings-base-form "Constant"
-     {:onFinish      (fn [values]
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
-                         (dispatch [::c/normalize-constant-value (:value-path ctx)])
-                         (toggle-popover-in-line ctx nil)))
+     {:onFinish      #(save-popover % ctx)
       :initialValues {:type (get-constant-type constant-map)}}
-     #(toggle-popover-in-line ctx nil)
      [:<>
       [:> Form.Item {:label "Value type" :name "type"}
        [:> Select {:showSearch       true
@@ -231,10 +219,10 @@
 (defn constant-type->input-type [constant-type]
   (case constant-type
     (:valueDecimal
-      :valueInteger
-      :valueInteger64
-      :valuePositiveInt
-      :valueUnsignedInt) :number
+     :valueInteger
+     :valueInteger64
+     :valuePositiveInt
+     :valueUnsignedInt) :number
 
     :valueBoolean        :boolean
     :text))
