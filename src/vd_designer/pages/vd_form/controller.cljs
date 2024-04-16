@@ -210,9 +210,9 @@
 
 (reg-event-fx
  ::save-view-definition-success
- (fn [{:keys [db]} [_ result]]
+ (fn [{:keys [db]} [_ _result]]
    {:db (-> db
-            (assoc :current-vd result ::m/save-loading false)
+            (assoc  ::m/save-loading false)
             (dissoc ::m/save-view-definition-loading))
     :message-success "Saved"}))
 
