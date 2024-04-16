@@ -14,10 +14,11 @@
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]))
 
-(defn- save-popover [values ctx]
-  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-    (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
-    (dispatch [::c/normalize-constant-value (:value-path ctx)])
+(defn- save-popover [values ctx & extra-actions]
+  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))
+        path   (:value-path ctx)]
+    (dispatch-sync [::c/change-input-value-merge path fields])
+    (mapv #(% path) extra-actions)
     (toggle-popover ctx nil)))
 
 (defn root-settings [opts]
@@ -132,7 +133,8 @@
         real-path    (uuid->idx (:value-path ctx) vd)
         constant-map (get-in vd real-path)]
     [settings-base-form "Constant"
-     {:onFinish      #(save-popover % ctx)
+     {:onFinish      #(save-popover % ctx
+                                    (fn [path] (dispatch [::c/normalize-constant-value path])))
       :initialValues {:type (get-constant-type constant-map)}}
      [:<>
       [:> Form.Item {:label "Value type" :name "type"}
