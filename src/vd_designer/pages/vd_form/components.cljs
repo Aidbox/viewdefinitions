@@ -1,20 +1,21 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Col ConfigProvider Form Popover Row Space]]
+            [antd :refer [Checkbox Col ConfigProvider Form Popover Row Space]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.heading :refer [h4]]
-            [vd-designer.components.input :refer [input]]
+            [vd-designer.components.input :refer [input input-number]]
             [vd-designer.components.select :refer [select]]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [calc-key]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :as u]
-            [vd-designer.utils.js :refer [get-element-by-id toggle-class]]))
+            [vd-designer.utils.js :refer [find-elements get-element-by-id
+                                          remove-class toggle-class]]))
 
 
 ;;;; Tags
@@ -74,22 +75,30 @@
 
 ;;;; Buttons
 
+(defn add-vd-item [ctx kind leaf?]
+  (let [column-leaf-value {:name "" :path ""}]
+    (dispatch [::c/add-tree-element
+               (:value-path ctx)
+               (if leaf?
+                 (case kind
+                   :constant      {:name "" :valueString ""}
+                   :where         {:path ""}
+                   :column        column-leaf-value)
+                 (case kind
+                   :column        {:column   [column-leaf-value]}
+                   :forEach       {:forEach       "" :select []}
+                   :forEachOrNull {:forEachOrNull "" :select []}
+                   :unionAll      {:unionAll []}))])))
+
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(dispatch [::c/add-tree-element (:value-path ctx)])
+   {:onClick #(add-vd-item ctx (keyword name) true)
     :style   {:width      "100%"
-              :text-align "left"}}])
+              :text-align :left}}])
 
 (defn add-select-button [ctx]
   (let [requested-key #(keyword (.-key %))]
-    [new-select #(dispatch [::c/add-tree-element
-                            (:value-path ctx)
-                            (case (requested-key %)
-                              :column        {:column   [{:name "", :path ""}]}
-                              :forEach       {:forEach       "" :select []}
-                              :forEachOrNull {:forEachOrNull "" :select []}
-                              :unionAll      {:unionAll []})])]))
-
+    [new-select #(add-vd-item ctx (requested-key %) false)]))
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
@@ -101,10 +110,10 @@
 
 ;;;; Inputs
 
-(defn change-input-value [ctx key e]
+(defn change-input-value [ctx key value]
   (dispatch [::c/change-input-value
              (conj (:value-path ctx) key)
-             (u/target-value e)]))
+             value]))
 
 (defn name-input [ctx vd-form]
   [base-input-row ctx
@@ -127,15 +136,26 @@
     :value (:resource vd-form)
     :onSelect #(dispatch [::c/change-vd-resource %])]])
 
-(defn toggle-settings-popover-hover [ctx]
+(defn- toggle-settings-popover-hover [ctx]
   (let [tree-element-id (calc-key (:value-path ctx))
-        button-id (str tree-element-id "-settings-btn")]
-    (-> (get-element-by-id button-id)
-        (toggle-class "active"))
-    (-> (get-element-by-id tree-element-id)
-        (.-parentNode)
-        (.-parentNode)
-        (toggle-class "active"))))
+        button-id       (str tree-element-id "-settings-btn")
+
+        process-hover   (fn [f elements]
+                          (mapv (fn [element]
+                                  (mapv #(f element %)
+                                        ["settings-popover-active" "active"]))
+                                elements))]
+
+    (process-hover remove-class (find-elements ".settings-popover-active.active"))
+    (when ctx
+      (process-hover toggle-class [(get-element-by-id button-id)
+                                   (-> (get-element-by-id tree-element-id)
+                                       (.-parentNode)
+                                       (.-parentNode))]))))
+
+(defn toggle-popover [ctx button-id]
+  (toggle-settings-popover-hover ctx)
+  (dispatch [::c/toggle-settings-opened-id button-id]))
 
 (defn settings-popover [ctx & {:as opts}]
   (let [tree-element-id (calc-key (:value-path ctx))
@@ -143,20 +163,32 @@
         opened-id @(subscribe [::m/settings-opened-id])]
     [:> Popover (medley/deep-merge
                  {:trigger :click
-                  :open (= button-id opened-id)}
+                  :open    (= button-id opened-id)}
                  opts)
-     [:div [settings-button {:onClick (fn [_e]
-                                        (toggle-settings-popover-hover ctx)
-                                        (dispatch [::c/toggle-settings-opened-id button-id]))
-                             :id button-id}]]]))
+     [:div [settings-button {:onClick   #(toggle-popover ctx button-id)
+                             :onKeyDown #(when (= "Escape" (.-key %))
+                                           (toggle-popover nil nil))
+                             :id        button-id}]]]))
 
-(defn fhir-path-input [ctx key value deletable? settings-form]
+(defn render-input [ctx input-type placeholder kind value]
+  (case input-type
+    :number [input-number {:placeholder  (or placeholder "path")
+                           :defaultValue value
+                           :onChange #(change-input-value ctx kind %)}]
+    :boolean [:div {:style {:width "100%"}}
+              [:> Checkbox
+               {:checked  value
+                :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
+
+    [input {:placeholder  (or placeholder "path")
+            :defaultValue value
+            :onChange     #(change-input-value ctx kind (u/target-value %))}]))
+
+(defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [input {:placeholder  "path"
-           :defaultValue value
-           :onChange     #(change-input-value ctx key %)}]
+   (render-input ctx input-type placeholder kind value)
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
@@ -165,13 +197,13 @@
 
 ;;;; Settings
 
-(defn settings-base-form [title props popoverCloseAction items]
+(defn settings-base-form [title props items]
   [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
    [:> Form (medley/deep-merge
-             {:style      {:width 400}
-              :labelCol   {:xs {:span 24},
-                           :sm {:span 6}},
+             {:labelCol   {:span 6},
               :layout     :horizontal
+              :style      {:width 472} ;; default modal width - 24 * 2 paddings
+              :colon      false
               :labelAlign :left}
              props)
     [h4 title]
@@ -179,9 +211,29 @@
     [:div {:style {:textAlign :right}}
      [:> Space
       [button/button "Close" {:size     "small"
-                              :onClick  popoverCloseAction
+                              :onClick  #(toggle-popover nil nil)
                               :type     "default"
                               :htmlType "reset"}]
       [button/button "Save" {:size     "small"
                              :type     "primary"
                              :htmlType "submit"}]]]]])
+
+(defn popover-form-list [name render-list-items]
+  [:> Form.List {:name name}
+   (fn [raw-fields actions]
+     (let [fields (js->clj raw-fields :keywordize-keys true)
+           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+       (r/as-element
+        [:div
+         (map (fn [{:keys [key name]}]
+                ^{:key key}
+                [:> Space {:align "baseline"}
+                 [:<>
+                  (render-list-items key)
+                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
+              fields)
+         [:> Form.Item
+          [button/icon "Add" icons/PlusOutlined
+           {:type    "dashed"
+            :block   true
+            :onClick #(add)}]]])))])

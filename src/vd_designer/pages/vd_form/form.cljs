@@ -1,12 +1,12 @@
 (ns vd-designer.pages.vd-form.form
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Form Input Select Space Spin Spin Switch]]
+  (:require [antd :refer [DatePicker Flex Form Input Modal Spin Switch Typography]]
+            [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-            [reagent.core :as r]
-            [vd-designer.components.button :as button]
+            [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
+            [vd-designer.components.select :refer [select]]
             [vd-designer.components.tree :refer [tree tree-leaf tree-node] :as tree]
             [vd-designer.pages.vd-form.components :refer [add-element-button
                                                           add-select-button
@@ -16,143 +16,159 @@
                                                           delete-button
                                                           fhir-path-input
                                                           name-input
+                                                          popover-form-list
                                                           resource-input
                                                           settings-base-form
+                                                          toggle-popover
                                                           tree-tag] :as components]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                            create-render-context
-                                                           drop-value-path]]
+                                                           drop-value-path
+                                                           get-constant-type
+                                                           value-type-list]]
             [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.uuid-decoration :refer [uuid->idx]]
+            [vd-designer.utils.event :as u]
             [vd-designer.utils.string :as str.utils]))
 
 ;;;; Settings forms
 
-;; TODO: rework to modal
-(defn view-definition-popup-form []
+(defn save-popover [values ctx]
+  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+    (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
+    (dispatch [::c/normalize-constant-value (:value-path ctx)])
+    (toggle-popover ctx nil)))
+
+(defn root-settings-modal [opts]
   (let [vd @(subscribe [::m/current-vd])]
-    [settings-base-form "ViewDefinition"
-     {:onFinish      (fn [values]
-                       #_"TODO: check whether we still need it"
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch [::c/change-input-value-merge nil fields])
-                         (dispatch [::c/toggle-settings-opened-id nil])))
-      :initialValues vd}
-     #(dispatch [::c/toggle-settings-opened-id nil])
-     [:<>
-      [:> Form.Item {:label "status" :name "status" :rules [{:required true}]}
-       [:> Select {:showSearch       true
-                   :style            {:width "100%"}
-                   :filterOption     true
-                   :optionFilterProp "label"
-                   :placeholder "status"
-                   :options [{:label "draft" :value "draft"}
-                             {:label "active" :value "active"}
-                             {:label "retired" :value "retired"}
-                             {:label "unknown" :value "unknown"}]}]]
-      [:> Form.Item {:label "title" :name "title"} [:> Input]]
-      [:> Form.Item {:label "description" :name "description"} [:> Input]]
-      [:> Form.Item {:label "url" :name "url"} [:> Input]]
-      [:> Form.Item {:label "identifier" :name "identifier"} [:> Input]]
-      [:> Form.Item {:label "experimental" :name "experimental"} [:> Switch {:size "small"}]]
-      [:> Form.Item {:label "publisher" :name "publisher"} [:> Input]]
-      [:> Form.Item {:label "copyright" :name "copyright"} [:> Input]]
-      #_"TODO: Meta object"
-      #_"TODO: contact array"
-      #_"TODO: useContext array"
-      #_"TODO: fhirVersion array"
+    [:> Modal (medley.core/deep-merge
+               {:footer    nil
+                :style     {:top 96 :margin-left 96}
+                :on-cancel #(toggle-popover nil nil)}
+               opts)
+     [settings-base-form "ViewDefinition"
+      {:onFinish      #(save-popover % nil)
+       :initialValues vd}
+      [:<>
+       [:> Form.Item {:label "Title" :name "title"} [:> Input]]
+       [:> Form.Item {:label "Description" :name "description"}
+        [:> Input.TextArea {:autoSize true :allowClear true}]]
+       [:> Form.Item {:label "Status" :name "status" :rules [{:required true}]}
+        [select
+         :placeholder "status"
+         :allowClear  false
+         :variant     :outlined
+         :options     [{:label "draft"
+                        :value "draft"}
+                       {:label "active"
+                        :value "active"}
+                       {:label "retired"
+                        :value "retired"}
+                       {:label "unknown"
+                        :value "unknown"}]]]
+       [:> Form.Item {:label "Url" :name "url"} [:> Input]]
+       [:> Form.Item {:label "Publisher" :name "publisher"} [:> Input]]
+       [:> Form.Item {:label "Copyright" :name "copyright"}
+        [:> Input.TextArea {:autoSize true :allowClear true}]]
 
-      [:> Form.Item {:label "FHIR version"}
-       [:> Form.List
-        {:name "fhirVersion"}
-        (fn [raw-fields actions]
-          (let [fields (js->clj raw-fields :keywordize-keys true)
-                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-            (r/as-element
-             [:div
-              (map (fn [{:keys [key name]}]
-                     ^{:key key}
-                     [:> Space {:align "baseline"}
-                      [:> Form.Item {:name  key
-                                     :key   key
-                                     :rules [{:required true
-                                              :message  "FHIR version is required"}]}
-                       [:> Input]]
-                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
-                   fields)
-              [:> Form.Item
-               [button/icon "Add" icons/PlusOutlined
-                {:type    "dashed"
-                 :block   true
-                 :onClick #(add)}]]])))]]]]))
+       [collapse
+        :expandIconPosition :end
+        :items [(collapse-item
+                 [:> Typography.Title {:level 5 :style {:margin 0}} "Identifier"]
+                 (let [id :identifier]
+                   [:<>
+                    [:> Form.Item {:label "Use"      :name [id :use]}
+                     [select
+                      :variant :outlined
+                      :options [{:label "Usual"     :value "usual"}
+                                {:label "Official"  :value "official"}
+                                {:label "Temp"      :value "temp"}
+                                {:label "Secondary" :value "secondary"}
+                                {:label "Old"       :value "old"}]]]
+                    #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
+                    [:> Form.Item {:label "Type"     :name [id :type]}
+                     [:> Input]]
+                    [:> Form.Item {:label "System"   :name [id :system]}
+                     [:> Input]]
+                    [:> Form.Item {:label "Value"    :name [id :value]}
+                     [:> Input]]
+                    [:> Form.Item {:label "Period"   :name [id :period]}
+                     #_#_TODO "allow to select only year or year-month"
+                     [:> DatePicker.RangePicker {:style {:width "100%"}}]]
+                    [:> Form.Item {:label "Assigner" :name [id :assigner]}
+                     [:> Input]]]))]]
 
+       [:> Form.Item {:label "Experimental" :name "experimental"}
+        [:> Switch {:size "small"}]]
 
-(defn close-popover-in-line [ctx]
-  (dispatch-sync [::c/toggle-settings-opened-id nil])
-  (components/toggle-settings-popover-hover ctx))
+       #_"TODO: Meta object"
+       #_"TODO: contact array"
+       #_"TODO: useContext array"
 
-;; TODO move all props to settings-base-form once top-level vd popover will be
-;; migrated to modal
+       [:> Form.Item {:label "FHIR version"}
+        [popover-form-list "fhirVersion"
+         (fn [element-key]
+           [:<>
+            [:> Form.Item {:name  element-key
+                           :key   element-key
+                           :rules [{:required true
+                                    :message  "FHIR version is required"}]}
+             [:> Input]]])]]]]]))
+
 (defn where-popup-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
-     {:onFinish      (fn [values]
-                       (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                         (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
-                         (close-popover-in-line ctx)))
+     {:onFinish      #(save-popover % ctx)
       :initialValues (get-in vd (:value-path ctx))}
-     #(close-popover-in-line ctx)
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
-;; TODO move all props to settings-base-form once top-level vd popover will be
-;; migrated to modal
-(defn column-popup-form [ctx]
+(defn column-popover-form [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
-     {:onFinish            (fn [values]
-                             (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-                               (dispatch-sync [::c/change-input-value-merge (:value-path ctx) fields])
-                               (close-popover-in-line ctx)))
-      :initialValues       (get-in vd (:value-path ctx))}
-     #(close-popover-in-line ctx)
+     {:onFinish      #(save-popover % ctx)
+      :initialValues (get-in vd (:value-path ctx))}
      [:<>
-      [:> Form.Item {:label "Description" :name "description"} [:> Input.TextArea]]
+      [:> Form.Item {:label "Description" :name "description"}
+       [:> Input.TextArea {:autoSize true :allowClear true}]]
       [:> Form.Item {:label "Type" :name "type"} [:> Input]]
       [:> Form.Item {:label "Collection" :name "collection"} [:> Switch {:size "small"}]]
       [:> Form.Item {:label "Tags"}
-       [:> Form.List {:name "tag"}
-        (fn [raw-fields actions]
-          (let [fields (js->clj raw-fields :keywordize-keys true)
-                {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-            (r/as-element
-             [:div
-              (map (fn [{:keys [key name]}]
-                     ^{:key key}
-                     [:> Space {:align "baseline"}
-                      [:> Form.Item {:name  [key :name]
-                                     :rules [{:required true
-                                              :message  "Name is required"}]}
-                       [:> Input {:placeholder "Name"}]]
-                      [:> Form.Item {:name  [key :value]
-                                     :rules [{:required true
-                                              :message  "Value is required"}]}
-                       [:> Input {:placeholder "Value"}]]
+       [popover-form-list "tag"
+        (fn [element-key]
+          [:<>
+           [:> Form.Item {:name  [element-key :name]
+                          :rules [{:required true
+                                   :message  "Name is required"}]}
+            [:> Input {:placeholder "Name"}]]
+           [:> Form.Item {:name  [element-key :value]
+                          :rules [{:required true
+                                   :message  "Value is required"}]}
+            [:> Input {:placeholder "Value"}]]])]]]]))
 
-                      [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
-                   fields)
-              [:> Form.Item
-               [button/icon "Add" icons/PlusOutlined
-                {:type    "dashed"
-                 :block   true
-                 :onClick #(add)}]]])))]]]]))
-
+(defn constant-popover-form [ctx]
+  (let [vd          @(subscribe [::m/current-vd])
+        real-path    (uuid->idx (:value-path ctx) vd)
+        constant-map (get-in vd real-path)]
+    [settings-base-form "Constant"
+     {:onFinish      #(save-popover % ctx)
+      :initialValues {:type (get-constant-type constant-map)}}
+     [:<>
+      [:> Form.Item {:label "Value type" :name "type"}
+       [select
+        :variant    :outlined
+        :allowClear false
+        :options    (mapv #(hash-map :label %
+                                     :value (str "value" (str/capitalize %)))
+                          value-type-list)]]]]))
 ;;;; Tree
 
 ;; Leafs
 
 (defn- general-leaf [ctx props]
-  (let [{:keys [icon name-key name value-key value deletable? settings-form]} props]
+  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder input-type]}
+        props]
     [base-input-row ctx
      [:> Flex {:gap   8
                :align :center
@@ -163,8 +179,8 @@
         [input {:value       name
                 :placeholder "name"
                 :style       {:font-style "normal"}
-                :onChange    #(change-input-value ctx name-key %)}])]
-     [fhir-path-input ctx value-key value deletable? settings-form]]))
+                :onChange    #(change-input-value ctx name-key (u/target-value %))}])]
+     [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
   [general-leaf ctx
@@ -173,17 +189,32 @@
     :name          name
     :value-key     :path
     :value         path
-    :settings-form column-popup-form
+    :settings-form column-popover-form
     :deletable?    true}])
 
-(defn constant-leaf [ctx {:keys [name valueString]}]
-  [general-leaf ctx
-   {:icon          icon/constant
-    :name-key      :name
-    :name          name
-    :value-key     :valueString
-    :value         valueString
-    :deletable?    true}])
+(defn constant-type->input-type [constant-type]
+  (case constant-type
+    (:valueDecimal
+     :valueInteger
+     :valueInteger64
+     :valuePositiveInt
+     :valueUnsignedInt) :number
+
+    :valueBoolean        :boolean
+    :text))
+
+(defn constant-leaf [ctx {:keys [name] :as item}]
+  (let [current-type (keyword (get-constant-type item))]
+    [general-leaf ctx
+     {:icon          icon/constant
+      :name-key      :name
+      :name          name
+      :value-key     current-type
+      :value         (current-type item)
+      :placeholder   "constant"
+      :settings-form constant-popover-form
+      :input-type    (constant-type->input-type current-type)
+      :deletable?    true}]))
 
 (defn where-leaf [ctx {:keys [path]}]
   [general-leaf ctx

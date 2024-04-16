@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Popover Row Space]]
+            [antd :refer [Flex Row Space]]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
@@ -9,10 +9,10 @@
             [vd-designer.components.heading :refer [h1]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
+            [vd-designer.pages.vd-form.components :refer [toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
-            [vd-designer.pages.vd-form.form :refer [form
-                                                    view-definition-popup-form]]
+            [vd-designer.pages.vd-form.form :refer [form root-settings-modal]]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.sql :refer [sql]]))
 
@@ -39,15 +39,12 @@
        [:> Row {:align "middle"}
         [:> Space
          [h1 "ViewDefinition"]
-         [:> Popover {:trigger   :click
-                      :open      (= button-id opened-id)
-                      :placement :right
-                      :content   (r/as-element [view-definition-popup-form])}
-          [button/icon ""
-           icons/SettingOutlined
-           {:onClick (fn [_e] (dispatch [::c/toggle-settings-opened-id button-id]))
-            :style   {:border :none}
-            :id      button-id}]]]]
+         [button/icon ""
+          icons/SettingOutlined
+          {:onClick #(toggle-popover nil button-id)
+           :style   {:border :none}
+           :id      button-id}]]
+        [root-settings-modal {:open (= button-id opened-id)}]]
 
        (when error
          [alert :type :error :message error])
