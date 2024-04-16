@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Checkbox Col ConfigProvider Form Popover Row Space]]
+            [antd :refer [Checkbox Col Select ConfigProvider Form Popover Row Space]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
@@ -8,7 +8,7 @@
             [vd-designer.components.dropdown :refer [new-select]]
             [vd-designer.components.heading :refer [h4]]
             [vd-designer.components.input :refer [input input-number]]
-            [vd-designer.components.select :refer [select]]
+            [vd-designer.components.select :as select]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [calc-key]]
             [vd-designer.pages.vd-form.controller :as c]
@@ -128,13 +128,14 @@
 (defn resource-input [ctx vd-form]
   [base-input-row ctx
    [tag/default "resource"]
-   [select :placeholder "Resource type"
-    :options @(subscribe [::m/get-all-supported-resources])
-    :class "vd-resource"
-    :style {:min-width "200px"
-            :max-width "400px"}
-    :value (:resource vd-form)
-    :onSelect #(dispatch [::c/change-vd-resource %])]])
+   [:> Select (select/with-default-props
+                {:placeholder "Resource type"
+                 :options     @(subscribe [::m/get-all-supported-resources])
+                 :class       "vd-resource"
+                 :style       {:min-width "200px"
+                               :max-width "400px"}
+                 :value       (:resource vd-form)
+                 :onSelect    #(dispatch [::c/change-vd-resource %])})]])
 
 (defn- toggle-settings-popover-hover [ctx]
   (let [tree-element-id (calc-key (:value-path ctx))

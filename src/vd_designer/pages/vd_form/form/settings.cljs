@@ -1,18 +1,18 @@
 (ns vd-designer.pages.vd-form.form.settings
-  (:require [antd :refer [DatePicker Form Input Modal Switch Typography]]
+  (:require [antd :refer [DatePicker Form Input Modal Select Switch Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
-            [vd-designer.components.select :refer [select]]
+            [vd-designer.components.select :as select]
             [vd-designer.pages.vd-form.components :refer [popover-form-list
                                                           settings-base-form
                                                           toggle-popover]]
+            [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                            value-type-list]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]))
+            [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]
+            [vd-designer.pages.vd-form.model :as m]))
 
 (defn- save-popover [values ctx & extra-actions]
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))
@@ -36,18 +36,12 @@
        [:> Form.Item {:label "Description" :name "description"}
         [:> Input.TextArea {:autoSize true :allowClear true}]]
        [:> Form.Item {:label "Status" :name "status" :rules [{:required true}]}
-        [select
-         :placeholder "status"
-         :allowClear  false
-         :variant     :outlined
-         :options     [{:label "draft"
-                        :value "draft"}
-                       {:label "active"
-                        :value "active"}
-                       {:label "retired"
-                        :value "retired"}
-                       {:label "unknown"
-                        :value "unknown"}]]]
+        [:> Select (select/with-default-props
+                     {:placeholder "status"
+                      :allowClear  false
+                      :variant     :outlined
+                      :options     (select/options-from-vec
+                                    ["draft" "active" "retired" "unknown"])})]]
        [:> Form.Item {:label "Url" :name "url"} [:> Input]]
        [:> Form.Item {:label "Publisher" :name "publisher"} [:> Input]]
        [:> Form.Item {:label "Copyright" :name "copyright"}
@@ -60,13 +54,13 @@
                  (let [id :identifier]
                    [:<>
                     [:> Form.Item {:label "Use"      :name [id :use]}
-                     [select
-                      :variant :outlined
-                      :options [{:label "Usual"     :value "usual"}
-                                {:label "Official"  :value "official"}
-                                {:label "Temp"      :value "temp"}
-                                {:label "Secondary" :value "secondary"}
-                                {:label "Old"       :value "old"}]]]
+                     [:> Select (select/with-default-props
+                                  {:variant :outlined
+                                   :options [{:label "Usual"     :value "usual"}
+                                             {:label "Official"  :value "official"}
+                                             {:label "Temp"      :value "temp"}
+                                             {:label "Secondary" :value "secondary"}
+                                             {:label "Old"       :value "old"}]})]]
                     #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
                     [:> Form.Item {:label "Type"     :name [id :type]}
                      [:> Input]]
@@ -138,9 +132,9 @@
       :initialValues {:type (get-constant-type constant-map)}}
      [:<>
       [:> Form.Item {:label "Value type" :name "type"}
-       [select
-        :variant    :outlined
-        :allowClear false
-        :options    (mapv #(hash-map :label %
-                                     :value (str "value" (str/capitalize %)))
-                          value-type-list)]]]]))
+       [:> Select (select/with-default-props
+                    {:variant    :outlined
+                     :allowClear false
+                     :options    (mapv #(hash-map :label %
+                                                  :value (str "value" (str/capitalize %)))
+                                       value-type-list)})]]]]))
