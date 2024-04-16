@@ -68,40 +68,56 @@
           index))
       -1)))
 
-(defn autocomplete
-  [{:keys [spec-map] :as ctx}
-   {:keys [selection-start selection-end text type]}]
+(defn has-open-paren? [text]
+  (str/index-of text "("))
 
-  (if (not= selection-start selection-end)
-    {:functions [] :fields []}
-    (let [substracted-text (subs text 0 selection-start)
-          splitted-path (split-fhirpath substracted-text)
-          ;; Get minimal part with pointed carret
-          part-index (find-part-with-carret splitted-path selection-start)
-          context-path (interleave (take part-index splitted-path)
-                                   (repeat :elements))
-          part (get splitted-path part-index)
-          fhirschema-ctx (fhirschema/resolve-path
-                           ctx type (into [:elements]
-                                          (map keyword)
-                                          context-path))]
-      {:fields
-       (->> fhirschema-ctx
-            (keys)
-            (mapv name)
-            (filterv #(str/starts-with? % part))
-            (mapv
-             (fn [k]
-               {:label k :value k})))
-       :functions 
-       (->> fhirpath-fns
-            (filterv (fn [[k _]] (str/starts-with? (name k) part)))
-            (mapv 
-             (fn [[k v]]
-               {:label (name k)
-                :value (:value v)
-                :cursor (:cursor v)})))}))
-  ;; 1. Get minimal part with from carret position
-  ;; 2. Path before is used to get context 
-  ;; 3. 
-  )
+(defn fhirpath-function? [n]
+  (some 
+   (fn [[k _]]
+     (str/starts-with? n (name k)))
+   fhirpath-fns))
+
+(defn make-context-path [path part-index]
+  (interleave (->> path
+                   (take part-index)
+                   (filter (complement fhirpath-function?))
+                   (map keyword))
+              (repeat :elements)))
+
+(defn autocomplete
+  ([ctx options]
+   (autocomplete ctx [:elements] options))
+  ([ctx
+    context-path
+    {:keys [selection-start selection-end text type]}]
+   (if (not= selection-start selection-end)
+     {:functions [] :fields []}
+     (let [substracted-text (subs text 0 selection-start)
+           splitted-path (split-fhirpath substracted-text)
+           part-index (find-part-with-carret splitted-path selection-start)
+           part (get splitted-path part-index)
+           current-context-path (make-context-path splitted-path part-index)
+           complete-context-path (into context-path current-context-path)]
+       (if-let [paren-position (has-open-paren? part)]
+         (let [inner-fhirpath (subs part (inc paren-position))]
+           (autocomplete ctx complete-context-path {:text inner-fhirpath
+                                                    :selection-start (count inner-fhirpath)
+                                                    :selection-end (count inner-fhirpath)
+                                                    :type type}))
+         (let [fhirschema-ctx (fhirschema/resolve-path ctx type complete-context-path)]
+           {:fields
+            (->> fhirschema-ctx
+                 (keys)
+                 (mapv name)
+                 (filterv #(str/starts-with? % part))
+                 (mapv
+                  (fn [k]
+                    {:label k :value k})))
+            :functions
+            (->> fhirpath-fns
+                 (filterv (fn [[k _]] (str/starts-with? (name k) part)))
+                 (mapv
+                  (fn [[k v]]
+                    {:label (name k)
+                     :value (:value v)
+                     :cursor (:cursor v)})))}))))))
