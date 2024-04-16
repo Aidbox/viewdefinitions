@@ -68,11 +68,6 @@
           index))
       -1)))
 
-(defn matches-part [part elem]
-  (or (str/starts-with? part "where")
-      (str/starts-with? part "exists")
-      (str/starts-with? elem part)))
-
 (defn autocomplete
   [{:keys [spec-map] :as ctx}
    {:keys [selection-start selection-end text type]}]
@@ -94,13 +89,13 @@
        (->> fhirschema-ctx
             (keys)
             (mapv name)
-            (filterv #(matches-part part %))
+            (filterv #(str/starts-with? % part))
             (mapv
              (fn [k]
                {:label k :value k})))
        :functions 
        (->> fhirpath-fns
-            (filterv (fn [[k _]] (matches-part part (name k))))
+            (filterv (fn [[k _]] (str/starts-with? (name k) part)))
             (mapv 
              (fn [[k v]]
                {:label (name k)

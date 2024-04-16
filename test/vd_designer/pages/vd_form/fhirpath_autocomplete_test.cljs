@@ -1,10 +1,11 @@
 (ns vd-designer.pages.vd-form.fhirpath-autocomplete-test
   (:require
-   [cljs.test :refer-macros [deftest testing is run-test run-tests]]
-   [matcher-combinators.test :refer [match?]]
-   [matcher-combinators.matchers :as m]
-   [vd-designer.pages.vd-form.fhirpath-autocomplete :as fhirpath]
-   [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
+    [cljs.test :refer-macros [deftest testing is run-test run-tests]]
+    [clojure.string :as str]
+    [matcher-combinators.test :refer [match?]]
+    [matcher-combinators.matchers :as m]
+    [vd-designer.pages.vd-form.fhirpath-autocomplete :as fhirpath]
+    [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
 
 (def period-fhirschema
   {:constraints
@@ -204,16 +205,16 @@
   (testing "Empty string"
     (is (match? 0
                 (fhirpath/find-part-with-carret [""] 0)))
-    (is (match? -1 
+    (is (match? -1
                 (fhirpath/find-part-with-carret [""] 1))))
   (testing "One element"
     (is (match? 0
                 (fhirpath/find-part-with-carret ["name"] 2)))
     (is (match? 0
                 (fhirpath/find-part-with-carret ["name"] 0)))
-    (is (match? 0 
+    (is (match? 0
                 (fhirpath/find-part-with-carret ["name"] 4)))
-    (is (match? -1 
+    (is (match? -1
                 (fhirpath/find-part-with-carret ["name"] 7))))
   (testing "Several elements"
     (is (match? 0
@@ -231,6 +232,19 @@
 
 (comment
   (run-test find-part-with-carret-test))
+
+(defn pattern->map [pattern]
+  (let [cursor-idx (str/index-of pattern "|")]
+    {:selection-start cursor-idx
+     :selection-end cursor-idx
+     :text (str/replace pattern "|" "")}))
+
+(defn test-autocomplete [expectation resource-type text]
+  (is (match? expectation
+              (fhirpath/autocomplete
+                test-spec
+                (assoc (pattern->map text)
+                  :type resource-type)))))
 
 (deftest autocomplete-test
   (testing "Autocomplete doesn't work on selection region"
@@ -378,7 +392,7 @@
            (fhirpath/autocomplete
             test-spec
             {:text "name.where()"
-             :selection-start 11 
+             :selection-start 11
              :selection-end 11
              :type "Patient"}))))
     (testing "Base Patient 'name.exists(|)' autocomplete"
@@ -413,3 +427,17 @@
 (comment
   (run-test fhirpath-autocomplete-test))
 
+
+(deftest split-fhirpath-test
+  (is (match?
+        [""]
+        (fhirpath/split-fhirpath "")))
+  (is (match?
+        ["name"]
+        (fhirpath/split-fhirpath "name")))
+  (is (match?
+        ["name" ""]
+        (fhirpath/split-fhirpath "name.")))
+  (is (match?
+        ["name" "family"]
+        (fhirpath/split-fhirpath "name.family"))))
