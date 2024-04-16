@@ -12,7 +12,8 @@
             [vd-designer.pages.vd-form.components :refer [toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
-            [vd-designer.pages.vd-form.form :refer [form root-settings-modal]]
+            [vd-designer.pages.vd-form.form :refer [form]]
+            [vd-designer.pages.vd-form.form.settings :as form]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.sql :refer [sql]]))
 
@@ -44,7 +45,7 @@
           {:onClick #(toggle-popover nil button-id)
            :style   {:border :none}
            :id      button-id}]]
-        [root-settings-modal {:open (= button-id opened-id)}]]
+        [form/root-settings {:open (= button-id opened-id)}]]
 
        (when error
          [alert :type :error :message error])

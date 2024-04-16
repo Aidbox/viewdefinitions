@@ -6,7 +6,7 @@
             [vd-designer.components.switch :as switch]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.uuid-decoration :refer [remove-decoration]]
+            [vd-designer.pages.vd-form.form.uuid-decoration :refer [remove-decoration]]
             [vd-designer.utils.yaml :as yaml]))
 
 (defn format-vd [vd lang]

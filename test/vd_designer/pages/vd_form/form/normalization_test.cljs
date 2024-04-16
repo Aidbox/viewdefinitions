@@ -1,7 +1,6 @@
-(ns vd-designer.pages.vd-form.normalization-test
-  (:require
-   [cljs.test :as t]
-   [vd-designer.pages.vd-form.normalization :as normalization]))
+(ns vd-designer.pages.vd-form.form.normalization-test
+  (:require [cljs.test :as t]
+            [vd-designer.pages.vd-form.form.normalization :as normalization]))
 
 (t/deftest normalization-test
   (t/testing "Empty Select"
@@ -173,5 +172,5 @@
              :forEach "name"}]))))))
 
 (comment
-  (t/run-tests 'vd-designer.pages.vd-form.normalization-test))
+  (t/run-tests 'vd-designer.pages.vd-form.form.normalization-test))
 

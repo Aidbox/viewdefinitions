@@ -6,10 +6,10 @@
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                            get-select-path]]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.normalization :refer [normalize-vd]]
-            [vd-designer.pages.vd-form.uuid-decoration :refer [decorate
-                                                               remove-decoration
-                                                               uuid->idx]]
+            [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+            [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                                    remove-decoration
+                                                                    uuid->idx]]
             [vd-designer.utils.event :refer [response->error]]
             [vd-designer.utils.utils :as utils]))
 

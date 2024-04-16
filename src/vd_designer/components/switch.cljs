@@ -1,5 +1,5 @@
 (ns vd-designer.components.switch
-  (:require [antd :refer [ConfigProvider Switch]]
+  (:require [antd :refer [Switch]]
             [medley.core :as medley]))
 
 (defn code-label [text]

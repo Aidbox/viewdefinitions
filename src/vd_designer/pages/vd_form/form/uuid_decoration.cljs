@@ -1,8 +1,7 @@
-(ns vd-designer.pages.vd-form.uuid-decoration
+(ns vd-designer.pages.vd-form.form.uuid-decoration
   (:require [clojure.walk :refer [postwalk]]))
 
 (defn generate-uuid-key []
-  ;; (keyword (str (random-uuid)))
   (str (random-uuid)))
 
 (defn- decorate-form [form]
