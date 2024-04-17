@@ -58,7 +58,7 @@
         (recur (inc index) last-index instr? columns false parts))
       (conj parts (substr text last-index index)))))
 
-(defn find-part-with-carret [parts selection-start]
+(defn find-part-with-cursor [parts selection-start]
   (loop [text-length 0
          index 0]
     (if (< index (count parts))
@@ -94,7 +94,7 @@
      {:functions [] :fields []}
      (let [substracted-text (subs text 0 selection-start)
            splitted-path (split-fhirpath substracted-text)
-           part-index (find-part-with-carret splitted-path selection-start)
+           part-index (find-part-with-cursor splitted-path selection-start)
            part (get splitted-path part-index)
            current-context-path (make-context-path splitted-path part-index)
            complete-context-path (into context-path current-context-path)]

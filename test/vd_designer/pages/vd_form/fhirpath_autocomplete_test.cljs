@@ -18,37 +18,37 @@
   (is (match? ["name" "family"]
               (fhirpath/split-fhirpath "name.family"))))
 
-(deftest find-part-with-carret-test
+(deftest find-part-with-cursor-test
   (testing "Empty string"
     (is (match? 0
-                (fhirpath/find-part-with-carret [""] 0)))
+                (fhirpath/find-part-with-cursor [""] 0)))
     (is (match? -1
-                (fhirpath/find-part-with-carret [""] 1))))
+                (fhirpath/find-part-with-cursor [""] 1))))
   (testing "One element"
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name"] 2)))
+                (fhirpath/find-part-with-cursor ["name"] 2)))
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name"] 0)))
+                (fhirpath/find-part-with-cursor ["name"] 0)))
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name"] 4)))
+                (fhirpath/find-part-with-cursor ["name"] 4)))
     (is (match? -1
-                (fhirpath/find-part-with-carret ["name"] 7))))
+                (fhirpath/find-part-with-cursor ["name"] 7))))
   (testing "Several elements"
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name" "family"] 2)))
+                (fhirpath/find-part-with-cursor ["name" "family"] 2)))
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name" "family"] 0)))
+                (fhirpath/find-part-with-cursor ["name" "family"] 0)))
     (is (match? 0
-                (fhirpath/find-part-with-carret ["name" "family"] 4)))
+                (fhirpath/find-part-with-cursor ["name" "family"] 4)))
     (is (match? 1
-                (fhirpath/find-part-with-carret ["name" "family"] 6)))
+                (fhirpath/find-part-with-cursor ["name" "family"] 6)))
     (is (match? 1
-                (fhirpath/find-part-with-carret ["name" "family"] 11)))
+                (fhirpath/find-part-with-cursor ["name" "family"] 11)))
     (is (match? -1
-                (fhirpath/find-part-with-carret ["name" "family"] 12)))))
+                (fhirpath/find-part-with-cursor ["name" "family"] 12)))))
 
 (comment
-  (run-test find-part-with-carret-test))
+  (run-test find-part-with-cursor-test))
 
 (def test-spec
   {:spec-map (utils.fhir-spec/spec-map (rc/inline "fhir_schema.ndjson"))})
