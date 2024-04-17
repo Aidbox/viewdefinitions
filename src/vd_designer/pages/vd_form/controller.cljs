@@ -160,7 +160,7 @@
 
 (reg-event-db
  ::change-input-value
- (fn [db [_ path value]]
+ (fn-traced [db [_ path value]]
    (let [real-path (uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
@@ -378,6 +378,18 @@
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
 =======
+(reg-event-db
+  ::update-autocomplete-text
+  (fn [db [_ text]]
+    (assoc-in db [::m/autocomplete-ctx :text] text)))
+
+(reg-event-db
+  ::update-autocomplete-selection
+  (fn [db [_ start end]]
+    (-> db
+        (assoc-in [::m/autocomplete-ctx :selection-start] start)
+        (assoc-in [::m/autocomplete-ctx :selection-end] end))))
+
 (reg-event-db
   ::update-autocomplete-options
   (fn [db [_ autocomplete-params]]

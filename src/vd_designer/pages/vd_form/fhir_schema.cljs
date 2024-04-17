@@ -98,11 +98,16 @@
   (vec (apply map-indexed args)))
 
 (defn resolve-reference [{spec-map :spec-map} spec]
-  (if-let [ref (get spec "elementReference")]
-    (get-in spec-map ref)
-    spec))
+  (cond
+    (:elementReference spec)
+    (get spec-map (:elementReference spec))
 
-(defn resolve-path [ctx & next-steps]
+    (:type spec)
+    (get spec-map (:type spec))
+
+    :else spec))
+
+(defn resolve-path [ctx type steps]
   (resolve-reference
    ctx
    (reduce
@@ -111,20 +116,8 @@
         next-spec
         (some-> (resolve-reference ctx spec)
                 (get step))))
-    (:spec ctx)
-    (into (:spec-path ctx) next-steps))))
-
-(defn spec-map? [ctx next-step]
-  (resolve-path ctx next-step "elements"))
-
-(defn spec->elements [ctx]
-  (resolve-path ctx "elements"))
-
-(defn spec-field? [ctx next-step]
-  (resolve-path ctx next-step "datatype"))
-
-(defn spec-array? [ctx next-step]
-  (resolve-path ctx next-step "array"))
+    (get (:spec-map ctx) (name type))
+    steps)))
 
 (defn add-spec-path [ctx k]
   (update ctx :spec-path conj k))
@@ -135,10 +128,15 @@
 (defn drop-value-path [ctx]
   (update ctx :value-path pop))
 
+(defn add-fhirpath [ctx fhirpath]
+  (update ctx :fhirpath-ctx 
+          (fn [path]
+            (if (s/blank? path)
+              fhirpath
+              (str path "." fhirpath)))))
+
 (defn create-render-context []
-  {:spec-path ["elements"]
-   :spec vd-spec
-   :spec-map (hash-map (get vd-spec "url") vd-spec)
+  {:fhirpath-ctx ""
    :value-path []})
 
 (defn get-select-path [view]
