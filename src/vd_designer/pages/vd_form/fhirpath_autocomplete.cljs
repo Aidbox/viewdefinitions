@@ -18,9 +18,9 @@
    :first {:value "first()"
            :cursor 7}
    :lowBoundary {:value "lowBoundary"
-                 :curosr 11}
+                 :cursor 11}
    :highBoundary {:value "highBoundary"
-                  :curosr 12}})
+                  :cursor 12}})
 
 (defn charAt [text index]
   (. text charAt index))
