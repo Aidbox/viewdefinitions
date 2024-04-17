@@ -1,10 +1,9 @@
 (ns vd-designer.components.button
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button ConfigProvider Tooltip]]
+            [antd :refer [Button ConfigProvider Space Tooltip]]
             [medley.core :as medley]
             [reagent.core :as r]
             [vd-designer.utils.browser :as utils.browser]))
-
 
 (defn button
   "Button wrapper.
@@ -12,18 +11,21 @@
   [text & {:as opts}]
   [:> Button opts text])
 
-(defn add [text & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM 8
-                                                    :colorText       "#B5B5BC"
+(defn add-button-config [& {:as opts}]
+  (medley/deep-merge
+   {:colorText               "#7972D3"
+    :defaultBorderColor      "#7972D399"
 
-                                                    :textHoverBg     "var(--hover-color)"
-                                                    :defaultHoverBg  "var(--hover-color)"}}}}
-   [button text (medley/deep-merge
-                 {:type  "text"
-                  :size  "small"
-                  :ghost true
-                  :icon  (r/create-element icons/PlusOutlined)}
-                 opts)]])
+    :defaultHoverColor       "#7972D3"
+    :defaultHoverBorderColor "#7972D399"
+    :defaultHoverBg          "var(--hover-color)"}
+   opts))
+
+
+(defn add [text & {:as opts}]
+  [:> ConfigProvider {:theme {:components {:Button (add-button-config)}}}
+   [:> Button (medley/deep-merge {} opts)
+    [:> Space (r/create-element icons/PlusOutlined) text]]])
 
 (defn ghost [text icon & {:as opts}]
   [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM          8
@@ -37,13 +39,13 @@
                                                     :defaultHoverColor        "#B5B5BC"
                                                     :textHoverBg              "none"}}}}
    [button text (medley/deep-merge
-                  {:type  :default
-                   :size  :small
-                   :ghost true
-                   :icon  (r/create-element icon)
-                   :style {:border        :none
-                           :border-radius "5px"}}
-                  opts)]])
+                 {:type  :default
+                  :size  :small
+                  :ghost true
+                  :icon  (r/create-element icon)
+                  :style {:border        :none
+                          :border-radius "5px"}}
+                 opts)]])
 
 (defn invisible-icon [icon & {:as opts}]
   [ghost "" icon (merge-with
@@ -56,17 +58,6 @@
                 {:icon  (r/create-element icon)}
                 opts)])
 
-(defn add-view-definition [content & {:as opts}]
-  [:button (merge-with into
-                       {:style {:height           "32px"
-                                :padding          "4px 15px"
-                                :background-color "#1890FF"
-                                :color            "white"
-                                :border           :none
-                                :border-radius    "2px"}}
-                       opts)
-   content])
-
 (defn download-text-file [{:keys [filename text]}]
   (let [file (js/Blob. [text] {:type "text/plain"})]
     [:a {:download filename
@@ -77,8 +68,8 @@
 
 (defn label-copied []
   (r/as-element
-    [:div {:style {:text-align "center"}}
-     "copied!"]))
+   [:div {:style {:text-align "center"}}
+    "copied!"]))
 
 (defn copy [text-to-copy]
   [:> Tooltip

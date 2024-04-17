@@ -1,21 +1,20 @@
 (ns vd-designer.pages.settings.view
-  (:require
-    ["@ant-design/icons" :as icons]
-    [antd :refer [List Modal Row]]
-    [clojure.string :as str]
-    [vd-designer.components.modal :as modal]
-    [medley.core :as medley]
-    [re-frame.core :refer [dispatch subscribe]]
-    [reagent.core :as r]
-    [vd-designer.components.button :as button]
-    [vd-designer.components.input :as components.input]
-    [vd-designer.components.list :as components.list]
-    [vd-designer.components.tabs :as tabs]
-    [vd-designer.pages.settings.controller :as c]
-    [vd-designer.pages.settings.model :as m]
-    [vd-designer.utils.event :refer [target-value]]
-    [vd-designer.utils.react :refer [js-obj->clj-map]]
-    [vd-designer.utils.string :as string-utils]))
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [List Modal Row]]
+            [clojure.string :as str]
+            [vd-designer.components.modal :as modal]
+            [medley.core :as medley]
+            [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.input :as components.input]
+            [vd-designer.components.list :as components.list]
+            [vd-designer.components.tabs :as tabs]
+            [vd-designer.pages.settings.controller :as c]
+            [vd-designer.pages.settings.model :as m]
+            [vd-designer.utils.event :refer [target-value]]
+            [vd-designer.utils.react :refer [js-obj->clj-map]]
+            [vd-designer.utils.string :as string-utils]))
 
 (defn error-label [visible? text]
   [:label {:hidden (not visible?)
@@ -93,8 +92,8 @@
         existing-servers @(subscribe [::m/existing-servers])
         edit? (:server-name original-server)
         errors-set (cond-> #{}
-                           (some-empty-fields? fhir-server) (conj :empty-field)
-                           (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
+                     (some-empty-fields? fhir-server) (conj :empty-field)
+                     (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
     [:> Modal {:open      (boolean original-server)
                :title     (if edit? "Edit server" "Add server")
                :ok-text   (if edit? "Confirm" "Add")
@@ -109,8 +108,7 @@
     [:div
      [:label {:style {:color "red"}} (:status-text (:result connect-error))]
      " "
-     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]
-     ]
+     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]]
 
     (-> server-config :server-name (= request-sent-by))
     [:label {:style {:color "lightgrey"}} "connecting..."]
@@ -123,13 +121,13 @@
 
 (defn delete-server-modal [server-name]
   (modal/modal-confirm
-    {:title "Delete ViewDefinition"
-     :ok-text   "Delete"
-     :onOk  #(dispatch [::c/delete server-name])
-     :content
-     (r/as-element
-       [:div
-        (string-utils/format "Are you sure you want to delete server %s?" server-name)])}))
+   {:title "Delete ViewDefinition"
+    :ok-text   "Delete"
+    :onOk  #(dispatch [::c/delete server-name])
+    :content
+    (r/as-element
+     [:div
+      (string-utils/format "Are you sure you want to delete server %s?" server-name)])}))
 
 (defn server-list []
   (let [request-sent-by @(subscribe [::m/request-sent-by])
@@ -141,7 +139,7 @@
                     :align-items     :center
                     :width           "100%"}}
       [:h1 "Server list"]
-      [button/add-view-definition "New server"
+      [button/add "New server"
        {:on-click (fn [_e] (dispatch [::c/new-server]))}]]
      [modal-view]
      [components.list/data-list
@@ -149,16 +147,16 @@
       :renderItem
       (fn [raw-item]
         (r/as-element
-          (let [{:keys [server-name base-url] :as server-config}
-                (js-obj->clj-map raw-item)]
-            [:> List.Item
-             {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])
-                        (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                        (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])]}
-             [:> List.Item.Meta
-              {:title
-               (r/as-element
-                 [:a {:onClick #(dispatch [::c/start-edit server-config])}
-                  server-name])
-               :description base-url}]])))]]))
+         (let [{:keys [server-name base-url] :as server-config}
+               (js-obj->clj-map raw-item)]
+           [:> List.Item
+            {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])
+                       (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                       (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])]}
+            [:> List.Item.Meta
+             {:title
+              (r/as-element
+               [:a {:onClick #(dispatch [::c/start-edit server-config])}
+                server-name])
+              :description base-url}]])))]]))
 

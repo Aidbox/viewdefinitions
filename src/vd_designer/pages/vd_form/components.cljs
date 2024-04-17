@@ -1,11 +1,13 @@
 (ns vd-designer.pages.vd-form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Checkbox Col Select ConfigProvider Form Popover Row Space]]
+            [antd :refer [Checkbox Col ConfigProvider Form Popover Row Select
+                          Space]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
-            [vd-designer.components.dropdown :refer [new-select]]
+            [vd-designer.components.dropdown :refer [add-dropdown
+                                                     dropdown-item-img]]
             [vd-designer.components.heading :refer [h4]]
             [vd-designer.components.input :refer [input input-number]]
             [vd-designer.components.select :as select]
@@ -16,7 +18,6 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.js :refer [find-elements get-element-by-id
                                           remove-class toggle-class]]))
-
 
 ;;;; Tags
 
@@ -98,7 +99,16 @@
 
 (defn add-select-button [ctx]
   (let [requested-key #(keyword (.-key %))]
-    [new-select #(add-vd-item ctx (requested-key %) false)]))
+    [add-dropdown "select"
+     {:style {:width       "55px"
+              :height      "18px"
+              :flex-shrink 0}
+      :menu {:items   (interpose {:type "divider"}
+                                 [(dropdown-item-img "column"        "/img/form/column.svg")
+                                  (dropdown-item-img "forEach"       "/img/form/forEach.svg")
+                                  (dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
+                                  (dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
+             :on-click #(add-vd-item ctx (requested-key %) false)}}]))
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
