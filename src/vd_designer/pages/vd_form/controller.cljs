@@ -380,28 +380,34 @@
     (assoc db ::m/draggable-node draggable)))
 
 (reg-event-db
-  ::update-autocomplete-text
-  (fn [db [_ text]]
-    (assoc-in db [::m/autocomplete-ctx :text] text)))
-
-(reg-event-db
-  ::update-autocomplete-selection
-  (fn [db [_ start end]]
-    (-> db
-        (assoc-in [::m/autocomplete-ctx :selection-start] start)
-        (assoc-in [::m/autocomplete-ctx :selection-end] end))))
-
-(reg-event-db
-  ::update-autocomplete-options
-  (fn [db [_ autocomplete-params]]
-    (assoc db ::m/autocomplete-options (fhir-path autocomplete-params))))
-
-(reg-event-db
  ::tree-sitter-load-success
  (fn [db [_ parser-instance]]
    (assoc db ::m/parser-instance parser-instance)))
-  
+
 (reg-event-fx
  ::tree-sitter-load-error
- (fn [db [_ error-msg]]
+ (fn [{db :db} [_ error-msg]]
    {:notification-error error-msg}))
+
+(defn cursor-diff [old-ctx new-ctx]
+  {:startIndex (:selection-start old-ctx)
+   :oldEndIndex (:selection-end old-ctx)
+   :newEndIndex (:selection-end new-ctx)})
+
+(defn autocomplete [parser spec-ctx old-ctx new-ctx]
+  (if (not= (:id old-ctx) (:id new-ctx))
+    (autocomplete/suggest spec-ctx parser nil new-ctx)
+    (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
+      (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
+
+(reg-event-fx
+  ::update-autocomplete-text
+  (fn [{{old-ctx ::m/autocomplete-ctx parser ::m/parser-instance :as db} :db} [_ id text start end]]
+    ;; call edit
+    (let [new-ctx {:id id
+                   :text text
+                   :selection-start start
+                   :selection-end end}]
+      (let [tree (autocomplete parser {} old-ctx new-ctx)]
+        (js/console.log (. ^Node (. tree -rootNode) toString))
+        {:db (update db ::m/autocomplete-ctx (assoc new-ctx :tree tree))}))))

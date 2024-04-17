@@ -224,10 +224,11 @@
                       {:style        {:width "100%"}
                        :options      options
                        :defaultValue value
-                       :onSearch #(dispatch [::c/update-autocomplete-text %])
-                       :onChange #(dispatch [::c/change-input-value (conj (:value-path ctx) key) %])
-                       :onKeyDown #(dispatch [::c/update-autocomplete-selection (u/selection-start %) (u/selection-end %)])
-                       :onClick #(dispatch [::c/update-autocomplete-selection (u/selection-start %) (u/selection-end %)])
+                      ;;  :onSearch #(dispatch [::c/update-autocomplete-text %])
+                      ;;  :onChange #(dispatch [::c/change-input-value (conj (:value-path ctx) key) %])
+                       ;;:onKeyDown #(js/console.log (u/target-value %) (u/selection-start %) (u/selection-end %))
+                       :onInput #(dispatch [::c/update-autocomplete-text key (u/target-value %) (u/selection-start %) (u/selection-end %)])
+                       :onClick #(dispatch [::c/update-autocomplete-text key (u/target-value %) (u/selection-start %) (u/selection-end %)])
                        #_(dispatch [::c/update-autocomplete-options
                                     {:fhirpath        (:fhirpath-ctx ctx)
                                      :selection-start (u/selection-start %)

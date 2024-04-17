@@ -5,7 +5,10 @@
 
 (defn load-fhirpath-language []
   (-> (.load (.-Language Parser) "/tree-sitter-fhirpath.wasm")
-      (.then #(dispatch [::c/tree-sitter-load-success (new Parser)]))
+      (.then (fn [language]
+               (let [parser (new Parser)]
+                 (.setLanguage parser language)
+                 (dispatch [::c/tree-sitter-load-success parser]))))
       (.catch #(dispatch [::c/tree-sitter-load-error ":)"]))))
 
 (defn init-parser []
@@ -14,18 +17,23 @@
       (.then load-fhirpath-language)
       (.catch #(dispatch [::c/tree-sitter-load-error ":)"]))))
                                       
-(defn parse-fhirpath [parser fhirpath]
-  (.parse parser fhirpath))
+(defn parse-fhirpath
+  ([parser fhirpath]
+   (.parse parser fhirpath))
+  ([parser fhirpath tree]
+   (.parse parser fhirpath tree)))
 
-(defn edit-fhirpath [parser tree fhirpath indexes]
-  (.edit tree indexes)
-  (.parse parser fhirpath tree))
+
+(defn edit-fhirpath [tree indexes]
+  (.edit tree indexes))
 
 (comment
 
   (init-parser)
 
   (def code "name.family.period")
+
+  (.parse (:vd-designer.pages.vd-form.model/parser-instance @re-frame.db/app-db) code)
 
   (def tree (parse-fhirpath code))
 

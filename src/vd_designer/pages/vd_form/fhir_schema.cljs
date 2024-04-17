@@ -131,7 +131,7 @@
 (defn add-fhirpath [ctx fhirpath]
   (update ctx :fhirpath-ctx 
           (fn [path]
-            (if (s/blank? path)
+            (if (str/blank? path)
               fhirpath
               (str path "." fhirpath)))))
 

@@ -123,5 +123,20 @@
                      :value (:value v)
                      :cursor (:cursor v)})))}))))))
 
+(defn edit [tree indexes]
+  (tree-sitter/edit-fhirpath tree indexes))
+
+(defn parse [parser fhirpath tree]
+  (try
+    (if tree
+      (tree-sitter/parse-fhirpath parser fhirpath tree)
+      (tree-sitter/parse-fhirpath parser fhirpath))
+    (catch js/Error e
+      (js/console.log e))))
+
+(defn suggest [ctx parser tree {:keys [text selection-start]}]
+  (let [tree (parse parser text tree)]
+    tree))
+
 (defn init []
   (tree-sitter/init-parser))
