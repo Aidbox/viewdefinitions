@@ -409,5 +409,5 @@
                    :selection-start start
                    :selection-end end}]
       (let [tree (autocomplete parser {} old-ctx new-ctx)]
-        (js/console.log (. ^Node (. tree -rootNode) toString))
+        ;; (js/console.log (. ^Node (. tree -rootNode) toString))
         {:db (update db ::m/autocomplete-ctx (assoc new-ctx :tree tree))}))))

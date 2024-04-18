@@ -85,6 +85,29 @@
                    (map keyword))
               (repeat :elements)))
 
+(defn in-node-range? [^Node node cursor-position]
+  (>= (.. node -endPosition -column) 
+      cursor-position 
+      (.. node -startPosition -column)))
+
+(defn path-part? [^Node node]
+  (= (.-type node) "identifier"))
+
+(defn travers-sitter-tree [tree cursor-position]
+  (loop [[^Node node & children] [(.-rootNode ^Tree tree)]
+         ctx-path []]
+    (if node
+      (if (in-node-range? node cursor-position)
+        (if (zero? (.-childCount node))
+          {:ctx-path ctx-path
+           :part (.-text node)}
+          (recur (.-children node) ctx-path))
+        (recur children
+               (if (path-part? node)
+                 (conj ctx-path (.-text node))
+                 ctx-path)))
+      nil)))
+
 (defn autocomplete
   ([ctx options]
    (autocomplete ctx [:elements] options))
@@ -93,9 +116,11 @@
     {:keys [selection-start selection-end text type]}]
    (if (not= selection-start selection-end)
      {:functions [] :fields []}
-     (let [substracted-text (subs text 0 selection-start)
+     (let [
+           substracted-text (subs text 0 selection-start)
            splitted-path (split-fhirpath substracted-text)
            part-index (find-part-with-cursor splitted-path selection-start)
+
            part (get splitted-path part-index)
            current-context-path (make-context-path splitted-path part-index)
            complete-context-path (into context-path current-context-path)]
@@ -135,7 +160,14 @@
       (js/console.log e))))
 
 (defn suggest [ctx parser tree {:keys [text selection-start]}]
-  (let [tree (parse parser text tree)]
+  (let [tree (parse parser text tree)
+        result (travers-sitter-tree tree selection-start)
+        ;; We need to get two things:
+        ;; 1. Context path
+        ;; 1.5 With types
+        ;; 2. Actual part
+        ]
+        (println 'result result)
     tree))
 
 (defn init []
