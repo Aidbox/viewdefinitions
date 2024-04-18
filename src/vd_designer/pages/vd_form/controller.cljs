@@ -24,9 +24,10 @@
 (reg-event-fx
  ::start
  (fn [{db :db} [_ parameters]]
-   (let [vd-id (-> parameters :path :id)]
+   (let [vd-id     (-> parameters :path  :id)
+         imported? (-> parameters :query :imported)]
      {:db (cond-> db
-            :alway
+            :always
             (assoc ::m/language :language/yaml)
 
             (not vd-id)
@@ -35,13 +36,16 @@
             :always
             (conj [:dispatch [::get-supported-resource-types]])
 
+            imported?
+            (conj [:dispatch [::process-import]])
+
             vd-id
             (conj [:dispatch [::get-view-definition vd-id]]))})))
 
 (reg-event-fx
  ::stop
  (fn [{db :db} [_]]
-   {:db (dissoc db :current-vd ::m/resource-data)}))
+   {:db (dissoc db :current-vd ::m/resource-data ::m/language)}))
 
 (reg-event-fx
  ::get-supported-resource-types
@@ -65,6 +69,11 @@
                     (assoc :on-success [::choose-vd]
                            :on-failure [::on-vd-error]))}))
 
+(reg-event-fx
+ ::process-import
+ (fn [{:keys [db]} [_]]
+   {:db       (assoc db :loading true)
+    :dispatch [::choose-vd (:current-vd db)]}))
 
 (reg-event-fx
  ::choose-vd
@@ -77,7 +86,7 @@
            [:dispatch [::update-tree-expanded-nodes
                        (->> (get-select-path decorated-view)
                             (into #{[:constant] [:where] [:select]}))]]]
-      :db (assoc db :current-vd decorated-view)})))
+      :db (assoc db :current-vd decorated-view :loading false)})))
 
 (reg-event-fx
  ::eval-view-definition-data

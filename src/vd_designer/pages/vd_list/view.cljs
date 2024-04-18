@@ -11,6 +11,7 @@
             [vd-designer.pages.vd-list.components :refer [add-view-definition
                                                           search-input]]
             [vd-designer.pages.vd-list.controller :as c]
+            [vd-designer.pages.vd-list.import :refer [import-modal]]
             [vd-designer.pages.vd-list.model :as m]
             [vd-designer.utils.string :as string-utils]))
 
@@ -40,7 +41,9 @@
                :justify :space-between}
       [h1 "View Definitions" {:style {:padding-bottom "8px"}}]
       (when used-server-name
-        [add-view-definition])]
+        [:<>
+         [import-modal]
+         [add-view-definition]])]
      [:div
       [search-input]
       [vd-data-list

@@ -2,8 +2,7 @@
   (:require ["@ant-design/icons" :as icons]
             [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [dispatch
-                                                reg-event-db reg-event-fx
+            [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx
                                                 reg-sub subscribe]]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
@@ -54,18 +53,17 @@
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
 
 (reg-event-fx
-  ::initialize-db
-  (fn [{:keys [db]} _]
-    (if (seq db)
-      {:db db}
-      {:db {:view-definitions    []
-            :mode                :form
-            :side-menu-collapsed false
-            :cfg/fhir-servers    {:servers          default-servers
-                                  :used-server-name (-> default-servers
-                                                        first
-                                                        second
-                                                        :server-name)}}})))
+ ::initialize-db
+ (fn [{:keys [db]} _]
+   (if (seq db)
+     {:db db}
+     {:db {:view-definitions    []
+           :side-menu-collapsed false
+           :cfg/fhir-servers    {:servers          default-servers
+                                 :used-server-name (-> default-servers
+                                                       first
+                                                       second
+                                                       :server-name)}}})))
 
 (defn current-page []
   (let [route @routes/match

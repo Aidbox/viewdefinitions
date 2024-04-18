@@ -15,14 +15,14 @@
    (::view-definitions-loading db)))
 
 (reg-sub
-  ::filter-phrase
-  (fn [db _]
-    (::c/filter-phrase db)))
+ ::filter-phrase
+ (fn [db _]
+   (::c/filter-phrase db)))
 
 (reg-sub
  ::delete-fail
  (fn [db _]
-    (::delete-fail db)))
+   (::delete-fail db)))
 
 (defn vd-by-id [vds id]
   (medley/find-first (fn [entry] (= id (-> entry :resource :id))) vds))
@@ -30,6 +30,11 @@
 (reg-sub
  ::vd-name-by-id
  (fn [db [_ id]]
-  (-> (vd-by-id (:view-definitions db) id)
-      :resource
-      :name)))
+   (-> (vd-by-id (:view-definitions db) id)
+       :resource
+       :name)))
+
+(reg-sub
+ ::vd-import
+ (fn [db _]
+   (:vd-import db)))

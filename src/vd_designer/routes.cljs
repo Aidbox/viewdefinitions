@@ -13,43 +13,45 @@
 
 (def reitit-routes
   (rf/router
-    [["/" {:name :vd-list
-           :view vd-list/viewdefinition-list-view
-           :controllers [{:start #(dispatch [::vd-list-controller/start])}]}]
-     ["/vd"
-      ["" {:name :form-create
-           :view vd-form/viewdefinition-view
-           :controllers [{:start #(dispatch [::vd-form-controller/start])
-                          :stop #(dispatch [::vd-form-controller/stop])}]}]
-      ["/:id" {:name :form-edit
-               :view vd-form/viewdefinition-view
-               :parameters {:path {:id string?}}
-               :controllers [{:parameters {:path [:id]}
-                              :start #(dispatch [::vd-form-controller/start %])
-                              :stop #(dispatch [::vd-form-controller/stop %])}]}]]
-     ["/settings"
-      {:name :settings
-       :view settings/server-list
-       :controllers [{:start #(dispatch [::settings-controller/start])}]}]]))
+   [["/" {:name        :vd-list
+          :view        vd-list/viewdefinition-list-view
+          :controllers [{:start #(dispatch [::vd-list-controller/start])}]}]
+    ["/vd"
+     ["" {:name        :form-create
+          :view        vd-form/viewdefinition-view
+          :parameters  {:query {:imported boolean?}}
+          :controllers [{:parameters {:query [:imported]}
+                         :start      #(dispatch [::vd-form-controller/start %])
+                         :stop       #(dispatch [::vd-form-controller/stop  %])}]}]
+     ["/:id" {:name        :form-edit
+              :view        vd-form/viewdefinition-view
+              :parameters  {:path  {:id string?}}
+              :controllers [{:parameters {:path [:id]}
+                             :start      #(dispatch [::vd-form-controller/start %])
+                             :stop       #(dispatch [::vd-form-controller/stop  %])}]}]]
+    ["/settings"
+     {:name :settings
+      :view settings/server-list
+      :controllers [{:start #(dispatch [::settings-controller/start])}]}]]))
 
 (defonce match (reagent/atom nil))
 
 (defn start-reitit []
   (rfe/start!
-    reitit-routes
-    (fn [new-match]
-      (swap!
-        match
-        (fn [old-match]
-          (when new-match
-            (assoc new-match :controllers
-                   (rfc/apply-controllers (:controllers old-match) new-match))))))
-    {:use-fragment false}))
+   reitit-routes
+   (fn [new-match]
+     (swap!
+      match
+      (fn [old-match]
+        (when new-match
+          (assoc new-match :controllers
+                 (rfc/apply-controllers (:controllers old-match) new-match))))))
+   {:use-fragment false}))
 
 
 (reg-fx
  :navigate
- (fn [route-name & [params]]
+ (fn [[route-name params]]
    (rfe/navigate route-name params)))
 
 (reg-event-fx

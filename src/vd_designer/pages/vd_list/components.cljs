@@ -17,7 +17,9 @@
   [add-dropdown "ViewDefinition"
    {:arrow false
     :menu {:items   (interpose {:type "divider"}
-                               [(dropdown-item-ant "new"    icons/FileAddOutlined)])
+                               [(dropdown-item-ant "new"    icons/FileAddOutlined)
+                                (dropdown-item-ant "import" icons/UploadOutlined)])
            :onClick #(case (keyword (.-key %))
-                       :new    (rfe/navigate :form-create))}}
+                       :new    (rfe/navigate :form-create)
+                       :import (dispatch [::c/start-import]))}}
    {:size :default}])
