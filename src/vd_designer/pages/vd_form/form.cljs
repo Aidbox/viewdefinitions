@@ -9,9 +9,7 @@
             [vd-designer.utils.string :as str.utils]))
 
 (defn draggable? [node]
-  (let [node-key (-> (.-key node)
-                     (js->clj :keywordize-keys true)
-                     str.utils/parse-path)]
+  (let [node-key (-> (.-key node) js->clj str.utils/parse-path)]
     (cond
       (some (set [node-key]) m/tree-root-keys) false
       ;; we do not allow to move buttons
@@ -25,6 +23,14 @@
       (= :select (peek node-key)) false
       :else true)))
 
+(defn drop-allowed? [info]
+  (let [{:keys [dragNode dropNode dropPosition]}
+        (js->clj info :keywordize-keys true)]
+    #_(js/console.log dragNode)
+    #_(js/console.log dropNode)
+    #_(js/console.log dropPosition)
+    true))
+
 (defn form []
   (let [vd @(subscribe [::m/current-vd])
         ctx (create-render-context)
@@ -34,7 +40,10 @@
                                         (->> % js->clj (map str.utils/parse-path))])
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)
-             :draggable     draggable?}]
+             :draggable     draggable?
+             :allow-drop    drop-allowed?
+             :on-drop       #(dispatch [::c/change-tree-elements-order
+                                        (js->clj % :keywordize-keys true)])}]
       [:> Flex {:style   {:padding-top "50%"}
                 :justify :center
                 :align   :center

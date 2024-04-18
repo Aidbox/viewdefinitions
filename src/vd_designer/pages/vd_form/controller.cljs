@@ -5,12 +5,13 @@
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                            get-select-path]]
-            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
             [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
                                                                     remove-decoration
                                                                     uuid->idx]]
+            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :refer [response->error]]
+            [vd-designer.utils.string :as str.utils]
             [vd-designer.utils.utils :as utils]))
 
 #_"status is required"
@@ -135,17 +136,6 @@
                 (into [:current-vd] real-path)
                 medley/deep-merge value))))
 
-(defn vec-remove
-  "remove elem in coll"
-  [node key]
-  (into (subvec node 0 key)
-        (subvec node (inc key))))
-
-(defn remove-node [node key]
-  (cond
-    (map? node)    (dissoc node key)
-    (vector? node) (vec-remove node key)))
-
 (reg-event-db
  ::change-vd-resource
  (fn [db [_ value]]
@@ -185,17 +175,34 @@
                          (into (:current-tree-expanded-nodes db)
                                (mapv mk-expanded-path default-value))]}]]]})))
 
+;; TODO: move it somewhere else?
+(defn remove-tree-element [db path]
+  (let [vec-remove  (fn [node key]
+                      (into (subvec node 0 key)
+                            (subvec node (inc key))))
+        remove-node (fn [node key]
+                      (cond
+                        (map? node)    (dissoc node key)
+                        (vector? node) (vec-remove node key)))]
+    (update-in db (pop path) remove-node (peek path))))
+
+;; TODO: move it somewhere else?
+(defn insert-tree-element [db path element]
+  (let [insert-at (fn [coll index elem]
+                    (vec (concat (subvec coll 0 index)
+                                 [elem]
+                                 (subvec coll index))))]
+    (update-in db (pop path) insert-at (peek path) element)))
+
 (reg-event-fx
  ::delete-tree-element
  (fn [{:keys [db]} [_ path]]
    {:fx [[:dispatch [::update-tree-expanded-nodes
                      (->> (:current-tree-expanded-nodes db)
                           (remove #(utils/vector-starts-with % path)))]]]
-    :db (let [real-path (uuid->idx path (:current-vd db))]
-          (update-in db
-                     (into [:current-vd] (pop real-path))
-                     remove-node
-                     (peek real-path)))}))
+    :db (let [real-path (-> (into [:current-vd] path)
+                            (uuid->idx db))]
+          (remove-tree-element db real-path))}))
 
 (reg-event-fx
  ::save-view-definition
@@ -256,3 +263,19 @@
                    (assoc (keyword (:type constant-map))
                           (current-type   constant-map))
                    (dissoc :type))))))
+
+(reg-event-db
+ ::change-tree-elements-order
+ (fn [db [_ info]]
+   (let [get-key  #(-> info % :key str.utils/parse-path)
+         calc-idx #(-> (into [:current-vd] (get-key %))
+                       (uuid->idx db))
+
+         drop-idx     (-> (calc-idx :node)
+                          (#(when-not (number? (peek %))
+                              (conj % 0))))
+         drag-idx     (calc-idx :dragNode)
+         drag-element (get-in db drag-idx)]
+     (-> db
+         (remove-tree-element drag-idx)
+         (insert-tree-element drop-idx drag-element)))))
