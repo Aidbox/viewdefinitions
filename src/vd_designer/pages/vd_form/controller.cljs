@@ -13,7 +13,6 @@
             [vd-designer.utils.event :refer [response->error]]
             [vd-designer.utils.utils :as utils]))
 
-
 #_"status is required"
 (defn set-view-definition-status [db]
   (let [vd (:current-vd db)]
@@ -85,7 +84,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (->> (get-select-path decorated-view)
-                            (into #{[:constant] [:where] [:select]}))]]]
+                            (into m/tree-root-keys))]]]
       :db (assoc db :current-vd decorated-view :loading false)})))
 
 (reg-event-fx

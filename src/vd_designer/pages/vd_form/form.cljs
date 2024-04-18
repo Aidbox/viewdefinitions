@@ -1,5 +1,5 @@
 (ns vd-designer.pages.vd-form.form
-  (:require [antd :refer [Spin Flex]]
+  (:require [antd :refer [Flex Spin]]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.tree :refer [tree] :as tree]
             [vd-designer.pages.vd-form.controller :as c]
@@ -8,16 +8,33 @@
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.string :as str.utils]))
 
+(defn draggable? [node]
+  (let [node-key (-> (.-key node)
+                     (js->clj :keywordize-keys true)
+                     str.utils/parse-path)]
+    (cond
+      (some (set [node-key]) m/tree-root-keys) false
+      ;; we do not allow to move buttons
+      (some (set [:add]) node-key) false
+      ;; there is no too much sense to move constants and where clojures, but
+      ;; it'll add a css complexity to handle overlapping
+      (some (set [:constant]) node-key) false
+      (some (set [:where]) node-key) false
+      ;; this is foreach nodes
+      (some (set [:path]) node-key) false
+      (= :select (peek node-key)) false
+      :else true)))
+
 (defn form []
   (let [vd @(subscribe [::m/current-vd])
         ctx (create-render-context)
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
     (if vd
-      [tree
-       :onExpand #(dispatch [::c/update-tree-expanded-nodes
-                             (->> % js->clj (map str.utils/parse-path))])
-       :expandedKeys (map tree/calc-key expanded-keys)
-       :treeData (vd-tree ctx vd)]
+      [tree {:on-expand     #(dispatch [::c/update-tree-expanded-nodes
+                                        (->> % js->clj (map str.utils/parse-path))])
+             :expanded-keys (map tree/calc-key expanded-keys)
+             :tree-data     (vd-tree ctx vd)
+             :draggable     draggable?}]
       [:> Flex {:style   {:padding-top "50%"}
                 :justify :center
                 :align   :center

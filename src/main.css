@@ -85,3 +85,7 @@ button {
 .vd-tree .ant-tree-treenode {
   padding-bottom: 0 !important;
 }
+
+.vd-tree .ant-tree-draggable-icon {
+  position: absolute;
+}

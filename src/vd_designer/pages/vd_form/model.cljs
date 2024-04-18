@@ -12,6 +12,9 @@
  (fn [db _]
    (:current-vd db)))
 
+(def tree-root-keys
+  #{[:name] [:resource] [:constant] [:where] [:select]})
+
 (reg-sub
  ::current-tree-expanded-nodes
  (fn [db _]

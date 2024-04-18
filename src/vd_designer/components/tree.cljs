@@ -2,6 +2,7 @@
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [ConfigProvider Tree]]
             [clojure.string :as str]
+            [medley.core :as medley]
             [reagent.core :as r]))
 
 (defn calc-key [k]
@@ -11,7 +12,8 @@
   {:title      (r/as-element title)
    :key        (calc-key key)
    :selectable false
-   :children   children})
+   :children   children
+   :isLeaf     false})
 
 (defn tree-leaf [key title]
   {:title      (r/as-element title)
@@ -25,10 +27,10 @@
   [& {:as opts}]
   [:> ConfigProvider {:theme {:components {:Tree {:titleHeight 32
                                                   :nodeHoverBg "var(--hover-color)"}}}}
-   [:> Tree (merge-with into
-                        {:showIcon     true
-                         :showLine     true
-                         :blockNode    true
-                         :class        "vd-tree"
-                         :switcherIcon (r/create-element icons/DownOutlined)}
-                        opts)]])
+   [:> Tree (medley/deep-merge
+             {:showIcon     true
+              :showLine     true
+              :blockNode    true
+              :class        "vd-tree"
+              :switcherIcon (r/create-element icons/DownOutlined)}
+             opts)]])
