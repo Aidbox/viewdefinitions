@@ -16,3 +16,7 @@
 (defn selection-end [event]
   #?(:cljs (.. event -target -selectionEnd)
      :clj  (-> @event :target :selectionEnd)))
+
+(defn pressed-key [event]
+  #?(:cljs (.. event -key)
+     :clj  (-> @event :key)))

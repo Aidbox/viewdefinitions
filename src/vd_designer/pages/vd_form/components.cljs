@@ -258,7 +258,8 @@
                         :options      (->ui-options options)
                         :defaultValue value
                         ;;:onSearch #(dispatch [::c/update-autocomplete-text %])
-                        ;;:onKeyDown #(js/console.log (u/target-value %) (u/selection-start %) (u/selection-end %))
+                        :onKeyDown    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                         (trigger-update-autocomplete-text-event key %))
                         :onInput      #(trigger-update-autocomplete-text-event key %)
                         :onClick      #(trigger-update-autocomplete-text-event key %)
                         #_(dispatch [::c/update-autocomplete-options
@@ -266,7 +267,7 @@
                                       :selection-start (u/selection-start %)
                                       :selection-end   (u/selection-end %)
                                       :text            (u/target-value %)}])}
-                      opts)]))
+                       opts)]))
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
