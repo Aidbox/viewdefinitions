@@ -182,7 +182,7 @@
                             (subvec node (inc key))))
         remove-node (fn [node key]
                       (cond
-                        (map? node)    (dissoc node key)
+                        (map?    node) (dissoc node key)
                         (vector? node) (vec-remove node key)))]
     (update-in db (pop path) remove-node (peek path))))
 
@@ -267,14 +267,18 @@
 (reg-event-db
  ::change-tree-elements-order
  (fn [db [_ info]]
-   (let [get-key  #(-> info % :key str.utils/parse-path)
-         calc-idx #(-> (into [:current-vd] (get-key %))
-                       (uuid->idx db))
+   (let [calc-idx (fn [db k]
+                    (-> (into [:current-vd]
+                              (-> info k :key str.utils/parse-path))
+                        (uuid->idx db)))
 
-         drop-idx     (let [idx (calc-idx :node)]
-                        (if (number? (peek idx)) idx (conj idx 0)))
-         drag-idx     (calc-idx :dragNode)
-         drag-element (get-in db drag-idx)]
+         drag-idx     (let [idx (calc-idx db :dragNode)]
+                        (cond-> idx ;; checks whether it's node
+                          (-> idx peek keyword?) pop))
+         drag-element (force (get-in db drag-idx))
+         drop-idx    #(let [idx (calc-idx % :node)]
+                        (cond-> idx ;; checks whether it has vec idx
+                          ((complement number?) (peek idx)) (conj 0)))]
      (-> db
          (remove-tree-element drag-idx)
-         (insert-tree-element drop-idx drag-element)))))
+         (#(insert-tree-element % (drop-idx %) drag-element))))))
