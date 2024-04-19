@@ -92,6 +92,12 @@
 (defn path-part? [^Node node]
   (= (.-type node) "identifier"))
 
+(defn calc-part [node]
+  (let [text (.-text node)]
+    (case text
+      ("." "(") ""
+      text)))
+
 (defn travers-sitter-tree [tree cursor-position]
   (loop [[^Node node & children] [(.-rootNode ^Tree tree)]
          ctx-path []]
@@ -99,7 +105,7 @@
       (if (in-node-range? node cursor-position)
         (if (zero? (.-childCount node))
           {:ctx-path ctx-path
-           :part (.-text node)}
+           :part     (calc-part node)}
           (recur (.-children node) ctx-path))
         (recur children
                (if (path-part? node)
