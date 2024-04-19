@@ -24,12 +24,24 @@
       :else true)))
 
 (defn drop-allowed? [info]
-  (let [{:keys [dragNode dropNode dropPosition]}
-        (js->clj info :keywordize-keys true)]
-    #_(js/console.log dragNode)
-    #_(js/console.log dropNode)
-    #_(js/console.log dropPosition)
-    true))
+  (let [{:keys [dragNode dropNode]} (js->clj info :keywordize-keys true)
+
+        get-key #(-> % :key str.utils/parse-path)
+        node?   #(-> % peek keyword?)
+
+        drag-key         (get-key dragNode)
+        node-dragged?    (node? drag-key)
+        drop-key         (get-key dropNode)
+        dropped-in-node? (node? drop-key)]
+
+    (if node-dragged?
+      ;; it's node and can be moved into root select, foreach' select and union
+      (not-any? (-> drop-key peek vector set)
+                [:column :forEach :forEachOrNull])
+      ;; it's column, and can be moved only into column nodes
+      (if dropped-in-node?
+        (= :column (-> drop-key peek))
+        (= :column (-> drop-key pop peek))))))
 
 (defn form []
   (let [vd @(subscribe [::m/current-vd])
