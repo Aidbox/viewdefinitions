@@ -271,9 +271,8 @@
          calc-idx #(-> (into [:current-vd] (get-key %))
                        (uuid->idx db))
 
-         drop-idx     (-> (calc-idx :node)
-                          (#(when-not (number? (peek %))
-                              (conj % 0))))
+         drop-idx     (let [idx (calc-idx :node)]
+                        (if (number? (peek idx)) idx (conj idx 0)))
          drag-idx     (calc-idx :dragNode)
          drag-element (get-in db drag-idx)]
      (-> db
