@@ -183,6 +183,7 @@
     (update-in db (pop path) remove-node (peek path))))
 
 (defn insert-tree-element [db path element]
+  (js/console.log "db path element " [db path element])
   (update-in db (pop path) utils/insert-at (peek path) element))
 
 (reg-event-fx
@@ -255,21 +256,23 @@
                           (current-type   constant-map))
                    (dissoc :type))))))
 
+(defn calc-real-path [db node]
+  (-> (into [:current-vd] (-> node :key str.utils/parse-path))
+      (uuid->idx db)))
+
 (reg-event-db
   ::change-tree-elements-order
-  (fn [db [_ info]]
-    (let [calc-idx (fn [db k]
-                     (-> (into [:current-vd]
-                               (-> info k :key str.utils/parse-path))
-                         (uuid->idx db)))
-
-          drag-path (let [idx (calc-idx db :dragNode)]
-                      (cond-> idx                           ;; checks whether it's node
-                        (-> idx peek keyword?) pop))
-          drag-element (get-in db drag-path)
-          drop-path #(let [idx (calc-idx % :node)]
-                       (cond-> idx                          ;; checks whether it has vec idx
-                         ((complement number?) (peek idx)) (conj 0)))]
-      (-> db
-          (remove-tree-element drag-path)
-          (#(insert-tree-element % (drop-path %) drag-element))))))
+  (fn [db [_ from-node to-node]]
+    (let [draggable-element-path
+          (let [idx (calc-real-path db from-node)]
+            (cond-> idx
+              ;; checks whether it's node
+              (-> idx peek keyword?) pop))
+          draggable-element (get-in db draggable-element-path)
+          db-removed-dragged-element (remove-tree-element db draggable-element-path)
+          path (let [target-path (calc-real-path db-removed-dragged-element to-node)]
+                 (cond-> target-path
+                   ;; checks whether it has vec idx
+                   (not (number? (peek target-path)))
+                   (conj 0)))]
+      (insert-tree-element db-removed-dragged-element path draggable-element))))

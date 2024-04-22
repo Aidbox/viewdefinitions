@@ -10,6 +10,7 @@
         (subvec v (inc elem))))
 
 (defn insert-at [coll index elem]
+  (js/console.log [coll index elem])
   (-> (subvec coll 0 index)
       (conj elem)
       (into (subvec coll index))))
