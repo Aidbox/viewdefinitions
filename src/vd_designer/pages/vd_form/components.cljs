@@ -246,8 +246,8 @@
                                     :flex-direction :row
                                     :justify-content :space-between
                                     :width "100%"}}
-                      [:span 
-                       [:> icon] 
+                      [:span
+                       [:> icon]
                        (str " " label)]
                       [:div {:style {:font-style :italic
                                      :color "#1677ff"}} (str " " (:type option))]]))))
@@ -274,8 +274,8 @@
                        :options      (->ui-options options)
                        :defaultValue value
                         ;;:onSearch #(dispatch [::c/update-autocomplete-text %])
-                       :onKeyDown    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                        (trigger-update-autocomplete-text-event key %))
+                       :onKeyUp    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                      (trigger-update-autocomplete-text-event key %))
                        :onInput      #(trigger-update-autocomplete-text-event key %)
                        :onClick      #(trigger-update-autocomplete-text-event key %)
                        #_(dispatch [::c/update-autocomplete-options

@@ -3,7 +3,7 @@
             [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter :as tree-sitter]
             [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
 
-(def fhirpath-fns 
+(def fhirpath-fns
   {:where {:value "where()"
            :cursor 6
            :type "collection"}
@@ -33,7 +33,7 @@
                   :type "number"}})
 
 (defn fhirpath-function? [n]
-  (some 
+  (some
    (fn [[k _]]
      (str/starts-with? n (name k)))
    fhirpath-fns))
@@ -45,8 +45,8 @@
               (repeat :elements)))
 
 (defn in-node-range? [^Node node cursor-position]
-  (>= (.. node -endPosition -column) 
-      cursor-position 
+  (>= (.. node -endPosition -column)
+      cursor-position
       (.. node -startPosition -column)))
 
 (defn path-part? [^Node node]
@@ -76,10 +76,10 @@
 
 
 (defn filter-by-name [substr suggestions]
-  (filterv 
-   (fn [suggestion] 
-     (str/starts-with? 
-      (name (key suggestion)) substr)) 
+  (filterv
+   (fn [suggestion]
+     (str/starts-with?
+      (name (key suggestion)) substr))
    suggestions))
 
 (defn remove-base-polimorphics [suggestions]
@@ -89,7 +89,6 @@
   ([ctx resource-type options]
    (autocomplete ctx [:elements] resource-type options))
   ([ctx context-path resource-type {:keys [ctx-path part cursor-position]}]
-   (println cursor-position)
    (let [current-context-path (make-context-path ctx-path)
          complete-context-path (into context-path current-context-path)
          fhirschema-ctx (fhirschema/resolve-path ctx resource-type complete-context-path)
@@ -100,7 +99,9 @@
            (remove-base-polimorphics)
            (mapv
             (fn [[k v]]
-              {:label (name k) :value (name k) :type (:type v)})))
+              {:label (name k)
+               :value (name k)
+               :type  (:type v)})))
       :functions
       (->> fhirpath-fns
            (filter-by-name part)
