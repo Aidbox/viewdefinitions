@@ -18,8 +18,16 @@
                                         (->> % js->clj (map str.utils/parse-path))])
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)
-             :draggable     draggable?
-             :allow-drop    drop-allowed?
+             :draggable     #(-> (.-key %)
+                                 js->clj
+                                 str.utils/parse-path
+                                 draggable?)
+             :allow-drop    #(let [{:keys [dragNode dropNode]}
+                                   (js->clj % :keywordize-keys true)]
+                               (drop-allowed?
+                                 (-> dragNode :key str.utils/parse-path)
+                                 (-> dropNode :key str.utils/parse-path)))
+
              :on-drop       #(dispatch [::c/change-tree-elements-order
                                         (js->clj % :keywordize-keys true)])}]
       [:> Flex {:style   {:padding-top "50%"}

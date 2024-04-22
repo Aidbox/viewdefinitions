@@ -175,24 +175,15 @@
                          (into (:current-tree-expanded-nodes db)
                                (mapv mk-expanded-path default-value))]}]]]})))
 
-;; TODO: move it somewhere else?
 (defn remove-tree-element [db path]
-  (let [vec-remove  (fn [node key]
-                      (into (subvec node 0 key)
-                            (subvec node (inc key))))
-        remove-node (fn [node key]
+  (let [remove-node (fn [node key]
                       (cond
                         (map?    node) (dissoc node key)
-                        (vector? node) (vec-remove node key)))]
+                        (vector? node) (utils/remove-by-index node key)))]
     (update-in db (pop path) remove-node (peek path))))
 
-;; TODO: move it somewhere else?
 (defn insert-tree-element [db path element]
-  (let [insert-at (fn [coll index elem]
-                    (vec (concat (subvec coll 0 index)
-                                 [elem]
-                                 (subvec coll index))))]
-    (update-in db (pop path) insert-at (peek path) element)))
+  (update-in db (pop path) utils/insert-at (peek path) element))
 
 (reg-event-fx
  ::delete-tree-element
@@ -205,11 +196,11 @@
           (remove-tree-element db real-path))}))
 
 (reg-event-fx
- ::save-view-definition
- (fn [{:keys [db]} [_]]
-   (let [view-definition (remove-decoration (:current-vd db))
-         req (if (:id view-definition)
-               (http.fhir-server/put-view-definition
+  ::save-view-definition
+  (fn [{:keys [db]} [_]]
+    (let [view-definition (remove-decoration (:current-vd db))
+          req (if (:id view-definition)
+                (http.fhir-server/put-view-definition
                 db
                 (:id view-definition)
                 view-definition)
@@ -265,20 +256,20 @@
                    (dissoc :type))))))
 
 (reg-event-db
- ::change-tree-elements-order
- (fn [db [_ info]]
-   (let [calc-idx (fn [db k]
-                    (-> (into [:current-vd]
-                              (-> info k :key str.utils/parse-path))
-                        (uuid->idx db)))
+  ::change-tree-elements-order
+  (fn [db [_ info]]
+    (let [calc-idx (fn [db k]
+                     (-> (into [:current-vd]
+                               (-> info k :key str.utils/parse-path))
+                         (uuid->idx db)))
 
-         drag-idx     (let [idx (calc-idx db :dragNode)]
-                        (cond-> idx ;; checks whether it's node
-                          (-> idx peek keyword?) pop))
-         drag-element (force (get-in db drag-idx))
-         drop-idx    #(let [idx (calc-idx % :node)]
-                        (cond-> idx ;; checks whether it has vec idx
-                          ((complement number?) (peek idx)) (conj 0)))]
-     (-> db
-         (remove-tree-element drag-idx)
-         (#(insert-tree-element % (drop-idx %) drag-element))))))
+          drag-path (let [idx (calc-idx db :dragNode)]
+                      (cond-> idx                           ;; checks whether it's node
+                        (-> idx peek keyword?) pop))
+          drag-element (get-in db drag-path)
+          drop-path #(let [idx (calc-idx % :node)]
+                       (cond-> idx                          ;; checks whether it has vec idx
+                         ((complement number?) (peek idx)) (conj 0)))]
+      (-> db
+          (remove-tree-element drag-path)
+          (#(insert-tree-element % (drop-path %) drag-element))))))
