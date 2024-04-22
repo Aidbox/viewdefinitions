@@ -5,72 +5,32 @@
 
 (def fhirpath-fns 
   {:where {:value "where()"
-           :cursor 6}
+           :cursor 6
+           :type "collection"}
    :exists {:value "exists()"
-            :cursor 7}
+            :cursor 7
+            :type "boolean"}
    :empty {:value "empty()"
-           :cursor 7}
+           :cursor 7
+           :type "boolean"}
    :extension {:value "extension(url = )"
-               :cursor 16}
+               :cursor 16
+               :type "collection"}
    :join {:value "join()"
-          :cursor 5}
+          :cursor 5
+          :type "string"}
    :ofType {:value "ofType()"
-            :cursor 7}
+            :cursor 7
+            :type "collection"}
    :first {:value "first()"
-           :cursor 7}
+           :cursor 7
+           :type "collection"}
    :lowBoundary {:value "lowBoundary"
-                 :cursor 11}
+                 :cursor 11
+                 :type "number"}
    :highBoundary {:value "highBoundary"
-                  :cursor 12}})
-
-(defn charAt [text index]
-  (. text charAt index))
-
-(defn- substr [text start end]
-  (if (zero? start)
-    (subs text start end)
-    (subs text (inc start) end)))
-
-(defn split-fhirpath [text]
-  (loop [index 0
-         last-index 0
-         instr? false
-         columns 0
-         escape? false
-         parts []]
-    (if (< index (.-length text))
-      (case (charAt text index)
-        "\\" (if escape?
-               (recur (inc index) last-index instr? columns false parts)
-               (recur (inc index) last-index instr? columns true parts))
-        ("\"" "'") (if escape?
-                     (recur (inc index) last-index instr? columns false parts)
-                     (recur (inc index) last-index (not instr?) columns escape? parts))
-        "(" (if instr?
-              (recur (inc index) last-index instr? columns false parts)
-              (recur (inc index) last-index instr? (inc columns) false parts))
-        ")" (if instr?
-              (recur (inc index) last-index instr? columns false parts)
-              (recur (inc index) last-index instr? (dec columns) false parts))
-        "." (if (or instr? escape? (not (zero? columns)))
-              (recur (inc index) last-index instr? columns false parts)
-              (recur (inc index) index instr? columns false (conj parts
-                                                                  (substr text last-index index))))
-        (recur (inc index) last-index instr? columns false parts))
-      (conj parts (substr text last-index index)))))
-
-(defn find-part-with-cursor [parts selection-start]
-  (loop [text-length 0
-         index 0]
-    (if (< index (count parts))
-      (let [length-with-current-part (+ text-length (count (get parts index)))]
-        (if (> selection-start length-with-current-part)
-          (recur (inc length-with-current-part) (inc index))
-          index))
-      -1)))
-
-(defn has-open-paren? [text]
-  (str/index-of text "("))
+                  :cursor 12
+                  :type "number"}})
 
 (defn fhirpath-function? [n]
   (some 
@@ -105,7 +65,8 @@
       (if (in-node-range? node cursor-position)
         (if (zero? (.-childCount node))
           {:ctx-path ctx-path
-           :part     (calc-part node)}
+           :part     (calc-part node)
+           :cursor-position (- cursor-position (.. node -startPosition -column))}
           (recur (.-children node) ctx-path))
         (recur children
                (if (path-part? node)
@@ -113,29 +74,42 @@
                  ctx-path)))
       nil)))
 
+
+(defn filter-by-name [substr suggestions]
+  (filterv 
+   (fn [suggestion] 
+     (str/starts-with? 
+      (name (key suggestion)) substr)) 
+   suggestions))
+
+(defn remove-base-polimorphics [suggestions]
+  (remove #(-> % val :choices) suggestions))
+
 (defn autocomplete
   ([ctx resource-type options]
    (autocomplete ctx [:elements] resource-type options))
-  ([ctx context-path resource-type {:keys [ctx-path part]}]
+  ([ctx context-path resource-type {:keys [ctx-path part cursor-position]}]
+   (println cursor-position)
    (let [current-context-path (make-context-path ctx-path)
          complete-context-path (into context-path current-context-path)
-         fhirschema-ctx (fhirschema/resolve-path ctx resource-type complete-context-path)]
+         fhirschema-ctx (fhirschema/resolve-path ctx resource-type complete-context-path)
+         part (subs part 0 cursor-position)]
      {:fields
       (->> fhirschema-ctx
-           (keys)
-           (mapv name)
-           (filterv #(str/starts-with? % part))
+           (filter-by-name part)
+           (remove-base-polimorphics)
            (mapv
-             (fn [k]
-               {:label k :value k})))
+            (fn [[k v]]
+              {:label (name k) :value (name k) :type (:type v)})))
       :functions
       (->> fhirpath-fns
-           (filterv (fn [[k _]] (str/starts-with? (name k) part)))
+           (filter-by-name part)
            (mapv
-             (fn [[k v]]
-               {:label  (name k)
-                :value  (:value v)
-                :cursor (:cursor v)})))})))
+            (fn [[k v]]
+              {:label  (name k)
+               :value  (:value v)
+               :type   (:type v)
+               :cursor (:cursor v)})))})))
 
 (defn edit [tree indexes]
   (tree-sitter/edit-fhirpath tree indexes))

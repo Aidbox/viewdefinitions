@@ -237,18 +237,25 @@
                                         (str prev-text)))))
         options))
 
-(defn enrich-with-icon [icon options]
+(defn render-option [icon options]
   (mapv (fn [option]
           (update option :label
                   (fn [label]
                     (r/as-element
-                      [:span [:> icon]
-                       (str " " label)]))))
+                     [:div {:style {:display :flex
+                                    :flex-direction :row
+                                    :justify-content :space-between
+                                    :width "100%"}}
+                      [:span 
+                       [:> icon] 
+                       (str " " label)]
+                      [:div {:style {:font-style :italic
+                                     :color "#1677ff"}} (str " " (:type option))]]))))
         options))
 
 (defn ->ui-options [{:keys [fields functions previous-text]}]
-  (->> (into (enrich-with-icon icons/ContainerOutlined fields)
-             (enrich-with-icon icons/FunctionOutlined functions))
+  (->> (into (render-option icons/ContainerOutlined fields)
+             (render-option icons/FunctionOutlined functions))
        (cons-prev-text previous-text)))
 
 (defn get-completed-text [{:keys [cursor-pos value] :as _option} text pos]
@@ -263,20 +270,20 @@
 (defn autocomplete [ctx key value & {:as opts}]
   (let [options @(subscribe [::m/autocomplete-options])]
     [:> AutoComplete (medley/deep-merge
-                       {:style        {:width "100%"}
-                        :options      (->ui-options options)
-                        :defaultValue value
+                      {:style        {:width "100%"}
+                       :options      (->ui-options options)
+                       :defaultValue value
                         ;;:onSearch #(dispatch [::c/update-autocomplete-text %])
-                        :onKeyDown    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                         (trigger-update-autocomplete-text-event key %))
-                        :onInput      #(trigger-update-autocomplete-text-event key %)
-                        :onClick      #(trigger-update-autocomplete-text-event key %)
-                        #_(dispatch [::c/update-autocomplete-options
-                                     {:fhirpath        (:fhirpath-ctx ctx)
-                                      :selection-start (u/selection-start %)
-                                      :selection-end   (u/selection-end %)
-                                      :text            (u/target-value %)}])}
-                       opts)]))
+                       :onKeyDown    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                        (trigger-update-autocomplete-text-event key %))
+                       :onInput      #(trigger-update-autocomplete-text-event key %)
+                       :onClick      #(trigger-update-autocomplete-text-event key %)
+                       #_(dispatch [::c/update-autocomplete-options
+                                    {:fhirpath        (:fhirpath-ctx ctx)
+                                     :selection-start (u/selection-start %)
+                                     :selection-end   (u/selection-end %)
+                                     :text            (u/target-value %)}])}
+                      opts)]))
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
