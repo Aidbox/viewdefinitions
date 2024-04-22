@@ -16,9 +16,10 @@
             [vd-designer.utils.string :as string-utils]))
 
 (defn- grep-vd [vd filter-phrase]
-  (or (-> vd :resource :name (str/includes? filter-phrase))
-      (-> vd :resource :description (str/includes? filter-phrase))
-      (-> vd :resource :resource (str/includes? filter-phrase))))
+  (or (some-> vd :resource :title (str/includes? filter-phrase))
+      (some-> vd :resource :name (str/includes? filter-phrase))
+      (some-> vd :resource :description (str/includes? filter-phrase))
+      (some-> vd :resource :resource (str/includes? filter-phrase))))
 
 (defn- filter-vds [view-definitions]
   (let [filter-phrase @(subscribe [::m/filter-phrase])]
