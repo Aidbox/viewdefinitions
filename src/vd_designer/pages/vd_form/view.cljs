@@ -50,7 +50,8 @@
        (when error
          [alert :type :error :message error])
 
-       [tabs {:items [(tab-item {:key      "form"
+       [tabs {:animated true
+              :items [(tab-item {:key      "form"
                                  :label    "Form"
                                  :children [form]
                                  :icon     (r/create-element icons/EditOutlined)})

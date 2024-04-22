@@ -13,7 +13,8 @@
         ctx (create-render-context)
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
     (if vd
-      [tree {:on-expand     #(dispatch [::c/update-tree-expanded-nodes
+      [tree {:style         {:padding-right "16px"}
+             :on-expand     #(dispatch [::c/update-tree-expanded-nodes
                                         (->> % js->clj (map str.utils/parse-path))])
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)

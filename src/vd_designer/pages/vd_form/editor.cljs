@@ -28,7 +28,8 @@
         code (-> vd
                  (remove-decoration)
                  (format-vd lang))]
-    [:div {:style {:height "calc(100vh - 180px)"}}
+    [:div {:style {:height        "calc(100vh - 180px)"
+                   :padding-right "8px"}}
      [monaco {:id       "vd-yaml"
               :language (when lang (name lang))
               :value    code
