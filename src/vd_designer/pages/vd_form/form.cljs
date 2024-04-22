@@ -30,7 +30,9 @@
 
              :on-drop       #(let [{:keys [node dragNode]}
                                    (js->clj % :keywordize-keys true)]
-                               (dispatch [::c/change-tree-elements-order node dragNode]))}]
+                               (dispatch [::c/change-tree-elements-order
+                                          (-> dragNode :key str.utils/parse-path)
+                                          (-> node :key str.utils/parse-path)]))}]
       [:> Flex {:style   {:padding-top "50%"}
                 :justify :center
                 :align   :center

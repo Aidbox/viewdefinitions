@@ -189,8 +189,8 @@
     (some (set [:add]) node-key) false
     ;; there is no too much sense to move constants and where clojures, but
     ;; it'll add a css complexity to handle overlapping
-    (some (set [:constant]) node-key) false
-    (some (set [:where]) node-key) false
+    ;(some (set [:constant]) node-key) false
+    ;(some (set [:where]) node-key) false
     ;; this is foreach nodes
     (some (set [:path]) node-key) false
     (= :select (peek node-key)) false

@@ -175,26 +175,28 @@
                          (into (:current-tree-expanded-nodes db)
                                (mapv mk-expanded-path default-value))]}]]]})))
 
-(defn remove-tree-element [db path]
-  (let [remove-node (fn [node key]
-                      (cond
-                        (map?    node) (dissoc node key)
-                        (vector? node) (utils/remove-by-index node key)))]
-    (update-in db (pop path) remove-node (peek path))))
+(defn remove-node [node key]
+  (cond
+    (map? node) (dissoc node key)
+    (vector? node) (utils/remove-by-index node key)))
 
-(defn insert-tree-element [db path element]
-  (js/console.log "db path element " [db path element])
-  (update-in db (pop path) utils/insert-at (peek path) element))
+(defn remove-tree-element [vd path]
+  (update-in vd (pop path) remove-node (peek path)))
+
+(defn insert-tree-element-at [vd path element]
+  (update-in vd (pop path) utils/insert-at (peek path) element))
+
+(defn insert-tree-element-after [vd path element]
+  (update-in vd (pop path) utils/insert-after (peek path) element))
 
 (reg-event-fx
- ::delete-tree-element
- (fn [{:keys [db]} [_ path]]
-   {:fx [[:dispatch [::update-tree-expanded-nodes
-                     (->> (:current-tree-expanded-nodes db)
-                          (remove #(utils/vector-starts-with % path)))]]]
-    :db (let [real-path (-> (into [:current-vd] path)
-                            (uuid->idx db))]
-          (remove-tree-element db real-path))}))
+  ::delete-tree-element
+  (fn [{:keys [db]} [_ path]]
+    {:fx [[:dispatch [::update-tree-expanded-nodes
+                      (->> (:current-tree-expanded-nodes db)
+                           (remove #(utils/vector-starts-with % path)))]]]
+     :db (let [real-path (uuid->idx path (:current-vd db))]
+           (update db :current-vd remove-tree-element real-path))}))
 
 (reg-event-fx
   ::save-view-definition
@@ -257,22 +259,51 @@
                    (dissoc :type))))))
 
 (defn calc-real-path [db node]
-  (-> (into [:current-vd] (-> node :key str.utils/parse-path))
+  (-> (into [:current-vd] node)
       (uuid->idx db)))
+
+(defn on-same-level? [path-from path-to]
+  (= (pop path-from) (pop path-to)))
+
+(defn dec-last-elem [v]
+  (-> v pop
+      (conj (dec (peek v)))))
+
+(defn ? [o]
+  (println o)
+  o)
+
+(defn not-there-yet? [path-from path-to]
+  (not= (dec (peek path-from))
+        (peek path-to)))
+
+(defn inserting-to-head? [path-to]
+  (-> path-to peek keyword?))
+
+(defn move
+  "Assuming, vd is normalized and decorated.
+   Paths contain indexes: [:select 0 ...]"
+  [vd path-from path-to]
+  (let [moving-node (get-in vd path-from)]
+    (if (on-same-level? path-from path-to)
+      (cond-> vd
+        (not-there-yet? path-from path-to)
+        (-> (remove-tree-element path-from)
+            (insert-tree-element-after (dec-last-elem path-to) moving-node)))
+
+      (if (inserting-to-head? path-to)
+        (-> vd
+            (remove-tree-element path-from)
+            (insert-tree-element-at (conj path-to 0) moving-node))
+
+        ))))
+
+(defn move* [vd path-from path-to]
+  (move vd (uuid->idx path-from vd) (uuid->idx path-to vd)))
 
 (reg-event-db
   ::change-tree-elements-order
   (fn [db [_ from-node to-node]]
-    (let [draggable-element-path
-          (let [idx (calc-real-path db from-node)]
-            (cond-> idx
-              ;; checks whether it's node
-              (-> idx peek keyword?) pop))
-          draggable-element (get-in db draggable-element-path)
-          db-removed-dragged-element (remove-tree-element db draggable-element-path)
-          path (let [target-path (calc-real-path db-removed-dragged-element to-node)]
-                 (cond-> target-path
-                   ;; checks whether it has vec idx
-                   (not (number? (peek target-path)))
-                   (conj 0)))]
-      (insert-tree-element db-removed-dragged-element path draggable-element))))
+    (-> db (calc-real-path from-node) js/console.log)
+    (-> db (calc-real-path to-node) js/console.log)
+    (update db :current-vd move* from-node to-node)))
