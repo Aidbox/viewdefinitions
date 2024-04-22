@@ -54,5 +54,5 @@
                          :maxCount      1
                          :before-upload before-upload}
       [:p {:className "ant-upload-drag-icon"} (r/create-element icons/InboxOutlined)]
-      [:p {:className "ant-upload-text"} "Click or drag file to this area to upload"]
-      [:p {:className "ant-upload-hint"} "You can applod only .json and .yaml files"]]]))
+      [:p {:className "ant-upload-text"} "Choose a file or drag it here"]
+      [:p {:className "ant-upload-hint"} "Allowed tile types: *.json or *.yaml"]]]))
