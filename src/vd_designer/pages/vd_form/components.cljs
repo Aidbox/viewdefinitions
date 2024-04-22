@@ -229,13 +229,17 @@
 (defn cons-prev-text
   "Since round trip of input causes input lag,
    suggested values should already contain text before suggestion was selected"
-  [prev-text options]
-  (mapv (fn [option]
-          (let [intersection-length
-                (str.utils/tail-head-intersection prev-text (:value option))]
-            (update option :value #(->> (subs % intersection-length)
-                                        (str prev-text)))))
-        options))
+  [prev-text cursor-position options]
+  (let [start-text (subs prev-text 0 cursor-position)
+        rest-text (subs prev-text cursor-position)]
+    (mapv (fn [option]
+            (let [suggested-text (:value option)]
+              (assoc option :value (if (str/starts-with? rest-text suggested-text)
+                                     prev-text
+                                     (if (str/starts-with? suggested-text rest-text)
+                                       (str start-text suggested-text)
+                                       (str start-text suggested-text rest-text))))))
+          options)))
 
 (defn render-option [icon options]
   (mapv (fn [option]
@@ -253,10 +257,10 @@
                                      :color "#1677ff"}} (str " " (:type option))]]))))
         options))
 
-(defn ->ui-options [{:keys [fields functions previous-text]}]
+(defn ->ui-options [{:keys [fields functions previous-text cursor-position]}]
   (->> (into (render-option icons/ContainerOutlined fields)
              (render-option icons/FunctionOutlined functions))
-       (cons-prev-text previous-text)))
+       (cons-prev-text previous-text cursor-position)))
 
 (defn get-completed-text [{:keys [cursor-pos value] :as _option} text pos]
   (let [start-str (subs text 0 pos)

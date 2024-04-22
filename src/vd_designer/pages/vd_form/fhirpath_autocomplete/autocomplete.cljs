@@ -64,9 +64,11 @@
     (if node
       (if (in-node-range? node cursor-position)
         (if (zero? (.-childCount node))
-          {:ctx-path ctx-path
-           :part     (calc-part node)
-           :cursor-position (- cursor-position (.. node -startPosition -column))}
+          (let [part-text (calc-part node)
+                text-length-diff (abs (- (.-length part-text) (.. node -text -length)))]
+            {:ctx-path ctx-path
+             :part     part-text
+             :cursor-position (- cursor-position (.. node -startPosition -column) text-length-diff)})
           (recur (.-children node) ctx-path))
         (recur children
                (if (path-part? node)
@@ -99,16 +101,18 @@
            (remove-base-polimorphics)
            (mapv
             (fn [[k v]]
-              {:label (name k)
-               :value (name k)
-               :type  (:type v)})))
+              (let [k (name k)]
+                {:label (name k)
+                 :value (subs k cursor-position)
+                 :full-value (name k)
+                 :type  (:type v)}))))
       :functions
       (->> fhirpath-fns
            (filter-by-name part)
            (mapv
             (fn [[k v]]
               {:label  (name k)
-               :value  (:value v)
+               :value  (subs (:value v) cursor-position)
                :type   (:type v)
                :cursor (:cursor v)})))})))
 

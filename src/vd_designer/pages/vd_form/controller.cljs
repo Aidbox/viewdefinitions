@@ -433,4 +433,6 @@
       {:db (-> db
                (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options
-                      (assoc options :previous-text text)))})))
+                      (-> options
+                          (assoc :previous-text text)
+                          (assoc :cursor-position (:selection-start new-ctx)))))})))
