@@ -25,6 +25,9 @@
     (cond-> view-definitions
       filter-phrase (->> (filter #(grep-vd % filter-phrase))))))
 
+(defn sort-vds [view-definitions]
+  (sort-by #(-> % :resource :title) view-definitions))
+
 (defn delete-view-modal [id]
   (let [vd-name @(subscribe [::m/vd-name-by-id id])]
     (modal/modal-confirm
@@ -51,7 +54,9 @@
        [(fn [id]
           [:div [:a {:onClick #(delete-view-modal id)} "delete"]])]
        :loading @(subscribe [::m/view-defs-loading?])
-       :dataSource (filter-vds @(subscribe [::m/view-defs]))]
+       :dataSource (-> @(subscribe [::m/view-defs])
+                       filter-vds
+                       sort-vds)]
       (when-not used-server-name
         [:a {:on-click #(rfe/navigate :settings)}
          "Connect"])]]))

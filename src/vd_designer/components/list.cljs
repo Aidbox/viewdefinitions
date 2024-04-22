@@ -34,7 +34,8 @@
                     [:> List.Item
                      {:actions (map #(r/as-element (% key)) actions)}
                      [:> List.Item.Meta
-                      {:title       (r/as-element [:a {:onClick #(on-click key)} (:name resource)])
+                      {:title       (r/as-element [:a {:onClick #(on-click key)}
+                                                   (or (:title resource) (:name resource))])
                        :description (:description resource)}]
                      [:div (:resource resource)]])))
    opts])
