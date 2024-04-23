@@ -20,7 +20,6 @@
 (defn remove-decoration [vd]
   (postwalk remove-form-decoration vd))
 
-
 (defn- find-index [pred coll]
   (first (keep-indexed (fn [idx x]
                          (when (pred x)
@@ -31,7 +30,8 @@
   (reduce (fn [path step]
             (if (keyword? step)
               (conj path step)
-              (let [sub-form (get-in vd path)]
-                (conj path (find-index #(= step (:tree/key %)) sub-form)))))
+              (->> (get-in vd path)
+                   (find-index #(= step (:tree/key %)))
+                   (conj path))))
           []
           initial-path))

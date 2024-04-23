@@ -26,6 +26,7 @@
                                    (js->clj % :keywordize-keys true)]
                                ;; (js/console.log dropNode)
                                (drop-allowed?
+                                 vd
                                  (-> dragNode :key str.utils/parse-path)
                                  (-> dropNode :key str.utils/parse-path)))
 

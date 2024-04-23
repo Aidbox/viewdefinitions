@@ -176,23 +176,38 @@
     (testing "column to unionAll"
       (is (match?
             {:select [{:unionAll [{:forEach "name"
-                                   :select [{:column [1]}
-                                            {:column [2]}]}]}]}
+                                   :select  [{:column [1]}
+                                             {:column [2]}]}]}]}
             (move
               {:select [{:column [1]}
                         {:unionAll [{:forEach "name"
-                                     :select [{:column [2]}]}]}]}
+                                     :select  [{:column [2]}]}]}]}
               [:select 0 :column]
-              [:select 1 :unionAll 0 :select]))))))
+              [:select 1 :unionAll 0 :select]))))
+
+    (testing "nested cases"
+      (is (match?
+            {:select
+             [{:forEach  'expr
+               :select   [{:unionAll [{:column   [1 2]
+                                       :tree/key 'k1}]
+                           :tree/key 'k2}]
+               :tree/key 'k3}]}
+            (move {:select
+                   [{:column   [1 2]
+                     :tree/key 'k1}
+                    {:forEach  'expr
+                     :select   [{:unionAll []
+                                 :tree/key 'k2}]
+                     :tree/key 'k3}]}
+                  [:select 0 :column]
+                  [:select 1 :select 0 :unionAll]))))))
 
 
 ;; test cases
 (comment
-  ;; На самых верх
-  [:select 0 :column 1]
-  [:select 1 :column 0]
 
-  (-> @re-frame.db/app-db :current-vd)
+  (-> @re-frame.db/app-db :current-vd :select)
   )
 
 

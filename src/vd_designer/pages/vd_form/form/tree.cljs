@@ -21,6 +21,7 @@
                                                              constant-settings
                                                              where-settings]]
             [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.vd-form.form.uuid-decoration :as uuid-decor]
             [vd-designer.utils.event :as u]))
 
 ;; Leafs
@@ -192,23 +193,32 @@
 (defn draggable? [node-key]
   (not (immovable? node-key)))
 
-(defn drop-allowed? [drag-key drop-key]
-  (->> drag-key #_(drop 2) (js/console.log))
-  (->> drop-key #_(drop 2) (js/console.log))
+(defn pointless-drag? [vd path-from path-to]
+  (let [path-from* (uuid-decor/uuid->idx path-from vd)
+        path-to* (uuid-decor/uuid->idx path-to vd)]
+    (and (-> path-from* peek (= 0))
+         (-> path-from* pop (= path-to*)))))
 
-  (or (and (-> drag-key first (= :where))
-           (-> drop-key first (= :where)))
+(defn drop-allowed?
+  ([drag-key drop-key]
+   (->> drag-key #_(drop 2) (js/console.log))
+   (->> drop-key #_(drop 2) (js/console.log))
 
-      (and (-> drag-key first (= :constant))
-           (-> drop-key first (= :constant)))
+   (or (and (-> drag-key first (= :where))
+            (-> drop-key first (= :where)))
 
-      ;; columns in one level
-      (and (-> drag-key pop peek (= :column))
-           (or (-> drop-key peek (= :column))
-               (-> drop-key pop peek (= :column))))
+       (and (-> drag-key first (= :constant))
+            (-> drop-key first (= :constant)))
 
-      ;; different nodes for all levels
-      (and (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
-           (-> drop-key peek #{:select :unionAll})))
+       ;; columns in one level
+       (and (-> drag-key pop peek (= :column))
+            (or (-> drop-key peek (= :column))
+                (-> drop-key pop peek (= :column))))
 
-  )
+       ;; different nodes for all levels
+       (and (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+            (-> drop-key peek #{:select :unionAll}))))
+
+  ([vd drag-key drop-key]
+   (and (drop-allowed? drag-key drop-key)
+        (not (pointless-drag? vd drag-key drop-key)))))
