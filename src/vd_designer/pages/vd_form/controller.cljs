@@ -296,6 +296,10 @@
             (remove-tree-element path-from)
             (insert-tree-element-at (conj path-to 0) moving-node))
 
+        (-> vd
+            (remove-tree-element path-from)
+            (insert-tree-element-after path-to moving-node))
+
         ))))
 
 (defn move* [vd path-from path-to]

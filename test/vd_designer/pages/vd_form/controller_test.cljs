@@ -91,17 +91,44 @@
               [:select 0 :column 2]
               [:select 0 :column])))))
 
-  #_(testing "Different level leafs"
+  (testing "Different level leafs"
+    (testing "[1][] -> [][1]"
       (is (match?
-            {:select
-             [{:column ['leaf-1
-                        'leaf-2],}
-              {:column   ['leaf-3],
-               :tree/key 'bla}]
-             }
+            {:select [{:column []}
+                      {:column ['leaf-1]}]}
+            (move
+              {:select [{:column ['leaf-1]}
+                        {:column []}]}
+              [:select 0 :column 0]
+              [:select 1 :column]))))
 
-            ))
-      )
+    (testing "[1][2] -> [][1 2]"
+      (is (match?
+            {:select [{:column []}
+                      {:column ['leaf-1
+                                'leaf-2]}]}
+            (move
+              {:select [{:column ['leaf-1]}
+                        {:column ['leaf-2]}]}
+              [:select 0 :column 0]
+              [:select 1 :column]))))
+
+    (testing "[1 2 3][4] -> [1 2 4 3][]"
+      (is (match?
+            {:select [{:column ['leaf-1
+                                'leaf-2
+                                'leaf-4
+                                'leaf-3]}
+                      {:column []}]}
+            (move
+              {:select [{:column ['leaf-1
+                                  'leaf-2
+                                  'leaf-3]}
+                        {:column ['leaf-4]}]}
+              [:select 1 :column 0]
+              [:select 0 :column 1])))))
+
+  (testing "Nodes")
   )
 
 

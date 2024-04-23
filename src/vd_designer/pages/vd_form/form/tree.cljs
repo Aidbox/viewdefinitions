@@ -1,5 +1,6 @@
 (ns vd-designer.pages.vd-form.form.tree
   (:require [antd :refer [Flex]]
+            [clojure.set :as set]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tree :refer [tree-leaf tree-node]]
@@ -182,29 +183,33 @@
 
 ;; Drag-n-Drop
 
-(defn draggable? [node-key]
-  (cond
-    (some (set [node-key]) m/tree-root-keys) false
-    ;; we do not allow to move buttons
-    (some (set [:add]) node-key) false
-    ;; there is no too much sense to move constants and where clojures, but
-    ;; it'll add a css complexity to handle overlapping
-    ;(some (set [:constant]) node-key) false
-    ;(some (set [:where]) node-key) false
-    ;; this is foreach nodes
-    (some (set [:path]) node-key) false
-    (= :select (peek node-key)) false
-    :else true))
+(defn immovable? [node-key]
+  (or (m/tree-root-keys node-key)
+      (not-empty (set/intersection #{:add :path}
+                                   (set node-key)))
+      (= :select (peek node-key))))
 
-(defn- node? [path]
-  (-> path peek keyword?))
+(defn draggable? [node-key]
+  (not (immovable? node-key)))
 
 (defn drop-allowed? [drag-key drop-key]
-  (if (node? drag-key)
-    ;; it's node and can be moved into root select, foreach' select and union
-    (not-any? (-> drop-key peek vector set)
-              [:column :forEach :forEachOrNull :add])
-    ;; it's column, and can be moved only into column nodes
-    (if (node? drop-key)
-      (= :column (-> drop-key peek))
-      (= :column (-> drop-key pop peek)))))
+  (->> drag-key #_(drop 2) (js/console.log))
+  (->> drop-key #_(drop 2) (js/console.log))
+
+  (or (and (-> drag-key first (= :where))
+           (-> drop-key first (= :where)))
+
+      (and (-> drag-key first (= :constant))
+           (-> drop-key first (= :constant)))
+
+      (and (-> drag-key pop peek (= :column))
+           (or (-> drop-key peek (= :column))
+               (-> drop-key pop peek (= :column))))
+
+      (and (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+           (-> drop-key peek #{:select :unionAll})))
+
+  #_
+          true
+
+  )
