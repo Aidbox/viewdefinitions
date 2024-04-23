@@ -115,4 +115,14 @@
                      :tree/key 'k1}]
          :tree/key 'k0}
         [:select 'k1 :column 'k2]
-        [:select 'k1 :column])))
+        [:select 'k1 :column]))
+
+  (is (tree/pointless-drag?
+        {:select   [{:column   [{:name     'n1
+                                 :tree/key 'k2}
+                                {:name     'n2
+                                 :tree/key 'k3}]
+                     :tree/key 'k1}]
+         :tree/key 'k0}
+        [:select 'k1 :column 'k3]
+        [:select 'k1 :column 'k2])))

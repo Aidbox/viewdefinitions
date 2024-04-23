@@ -189,6 +189,9 @@
 (defn insert-tree-element-after [vd path element]
   (update-in vd (pop path) utils/insert-after (peek path) element))
 
+(defn insert-tree-element-as-1st-child [vd path element]
+  (update-in vd path utils/insert-at 0 element))
+
 (reg-event-fx
   ::delete-tree-element
   (fn [{:keys [db]} [_ path]]
@@ -265,6 +268,35 @@
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
 
+(defn dec-last-elem [v]
+  (-> v pop
+      (conj (dec (peek v)))))
+
+(defn leaf-insertion-to-head? [path-to]
+  (-> path-to peek keyword?))
+
+(defn move-leaf [vd path-from path-to]
+  (let [moving-leaf (get-in vd path-from)
+        insert (cond
+                 (leafs-on-same-level? path-from path-to)
+                 #(insert-tree-element-after % (dec-last-elem path-to) moving-leaf)
+
+                 (leaf-insertion-to-head? path-to)
+                 #(insert-tree-element-as-1st-child % path-to moving-leaf)
+
+                 :else
+                 #(insert-tree-element-after % path-to moving-leaf))]
+    (-> vd
+        (remove-tree-element path-from)
+        (insert))))
+
+(defn dec-node-index [path]
+  ;;[:select 1 :unionAll] -> [:select 0 :unionAll]
+  (update path (dec (dec (count path))) dec))
+
+(defn inserting-to-node-head? [moving-node-path path-to]
+  (-> moving-node-path pop (= path-to)))
+
 (defn nodes-on-same-level? [path-from path-to]
   (or
     ;; head
@@ -273,55 +305,20 @@
       (= (count path-to) (count path-from))
       (= (pop (pop path-from)) (pop (pop path-to))))))
 
-(defn dec-last-elem [v]
-  (-> v pop
-      (conj (dec (peek v)))))
-
-(defn leaf-not-there-yet? [path-from path-to]
-  (not= (dec (peek path-from))
-        (peek path-to)))
-
-(defn inserting-to-head? [path-to]
-  (-> path-to peek keyword?))
-
-(defn move-leaf [vd path-from path-to]
-  (let [moving-leaf (get-in vd path-from)]
-    (if (leafs-on-same-level? path-from path-to)
-      (cond-> vd
-        (leaf-not-there-yet? path-from path-to)
-        (-> (remove-tree-element path-from)
-            (insert-tree-element-after (dec-last-elem path-to) moving-leaf)))
-      (if (inserting-to-head? path-to)
-        (-> vd
-            (remove-tree-element path-from)
-            (insert-tree-element-at (conj path-to 0) moving-leaf))
-        (-> vd
-            (remove-tree-element path-from)
-            (insert-tree-element-after path-to moving-leaf))))))
-
-(defn dec-node-index [path]
-  ;;[:select 1 :unionAll] -> [:select 0 :unionAll]
-  (update path (dec (dec (count path))) dec))
-
-(defn inserting-to-node-head? [path-from path-to]
-  (-> path-from pop pop (= path-to)))
-
 (defn move-node [vd path-from path-to]
-  (let [moving-node (get-in vd (pop path-from))]
+  (let [moving-node-path (pop path-from)
+        moving-node (get-in vd moving-node-path)]
     (if (nodes-on-same-level? path-from path-to)
-      (let [inserting-to-head? (inserting-to-node-head? path-from path-to)
+      (let [inserting-to-head? (inserting-to-node-head? moving-node-path path-to)
             path-to* (if inserting-to-head?
-                       (conj path-to 0)
-                       (conj (dec-node-index path-to) 0))]
+                       path-to
+                       (dec-node-index path-to))]
         (-> vd
-            (remove-tree-element (pop path-from))
-            (insert-tree-element-at
-              path-to*
-              moving-node)))
+            (remove-tree-element moving-node-path)
+            (insert-tree-element-as-1st-child path-to* moving-node)))
       (-> vd
-          (insert-tree-element-at (conj path-to 0)
-                                  moving-node)
-          (remove-tree-element (pop path-from))))))
+          (insert-tree-element-as-1st-child path-to moving-node)
+          (remove-tree-element moving-node-path)))))
 
 (defn move
   "Assuming, vd is normalized and decorated.

@@ -16,25 +16,6 @@
             [:select 0 :column 1])))
 
     (is (match?
-          {:select [{:column ['leaf-1
-                              'leaf-2]}]}
-          (move
-            {:select [{:column ['leaf-1
-                                'leaf-2]}]}
-            [:select 0 :column 1]
-            [:select 0 :column 0])))
-
-    ;; FIXME: in this case deletion and insertion happens anyway
-    (is (match?
-          {:select [{:column ['leaf-1
-                              'leaf-2]}]}
-          (move
-            {:select [{:column ['leaf-1
-                                'leaf-2]}]}
-            [:select 0 :column 0]
-            [:select 0 :column])))
-
-    (is (match?
           {:select [{:column ['leaf-2
                               'leaf-1]}]}
           (move
@@ -202,14 +183,6 @@
                      :tree/key 'k3}]}
                   [:select 0 :column]
                   [:select 1 :select 0 :unionAll]))))))
-
-
-;; test cases
-(comment
-
-  (-> @re-frame.db/app-db :current-vd :select)
-  )
-
 
 (comment
   (run-test move-test)

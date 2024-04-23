@@ -196,8 +196,13 @@
 (defn pointless-drag? [vd path-from path-to]
   (let [path-from* (uuid-decor/uuid->idx path-from vd)
         path-to* (uuid-decor/uuid->idx path-to vd)]
-    (and (-> path-from* peek (= 0))
-         (-> path-from* pop (= path-to*)))))
+    (or
+      ;; element with index 0 is dragged into the head of its own parent
+      (and (-> path-from* peek (= 0))
+           (-> path-from* pop (= path-to*)))
+      ;; element is already there
+      (= (peek path-from*)
+         (inc (peek path-to*))))))
 
 (defn drop-allowed?
   ([drag-key drop-key]
