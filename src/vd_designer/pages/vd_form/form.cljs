@@ -24,6 +24,7 @@
                                  draggable?)
              :allow-drop    #(let [{:keys [dragNode dropNode]}
                                    (js->clj % :keywordize-keys true)]
+                               ;; (js/console.log dropNode)
                                (drop-allowed?
                                  (-> dragNode :key str.utils/parse-path)
                                  (-> dropNode :key str.utils/parse-path)))

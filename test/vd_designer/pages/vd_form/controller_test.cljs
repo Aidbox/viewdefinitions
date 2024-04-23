@@ -128,8 +128,62 @@
               [:select 1 :column 0]
               [:select 0 :column 1])))))
 
-  (testing "Nodes")
-  )
+  (testing "Nodes"
+    (testing "to head"
+      (is (match?
+            {:select [{:column [2]}
+                      {:column [1]}]}
+            (move
+              {:select [{:column [1]}
+                        {:column [2]}]}
+              [:select 1 :column]
+              [:select]))))
+
+    (testing "column to unionAll"
+      (is (match?
+            {:select [{:unionAll [{:column [1]}]}]}
+            (move
+              {:select [{:column [1]}
+                        {:unionAll []}]}
+              [:select 0 :column]
+              [:select 1 :unionAll])))
+      (is (match?
+            {:select [{:unionAll [{:column [1]} {:column [2]}]}]}
+            (move
+              {:select [{:column [1]}
+                        {:unionAll [{:column [2]}]}]}
+              [:select 0 :column]
+              [:select 1 :unionAll]))))
+
+    (testing "forEach to unionAll"
+      (doseq [foreach [:forEach :forEachOrNull]]
+        (is (match?
+              {:select [{:unionAll [{foreach "name"}]}]}
+              (move
+                {:select [{foreach "name"}
+                          {:unionAll []}]}
+                [:select 0 foreach]
+                [:select 1 :unionAll])))
+        (is (match?
+              {:select [{:unionAll [{foreach "name"}
+                                    {:column [1]}]}]}
+              (move
+                {:select [{foreach "name"}
+                          {:unionAll [{:column [1]}]}]}
+                [:select 0 foreach]
+                [:select 1 :unionAll])))))
+
+    (testing "column to unionAll"
+      (is (match?
+            {:select [{:unionAll [{:forEach "name"
+                                   :select [{:column [1]}
+                                            {:column [2]}]}]}]}
+            (move
+              {:select [{:column [1]}
+                        {:unionAll [{:forEach "name"
+                                     :select [{:column [2]}]}]}]}
+              [:select 0 :column]
+              [:select 1 :unionAll 0 :select]))))))
 
 
 ;; test cases
@@ -138,7 +192,7 @@
   [:select 0 :column 1]
   [:select 1 :column 0]
 
-  (-> @re-frame.db/app-db :current-vd :select)
+  (-> @re-frame.db/app-db :current-vd)
   )
 
 

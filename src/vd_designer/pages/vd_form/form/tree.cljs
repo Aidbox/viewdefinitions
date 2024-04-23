@@ -202,14 +202,13 @@
       (and (-> drag-key first (= :constant))
            (-> drop-key first (= :constant)))
 
+      ;; columns in one level
       (and (-> drag-key pop peek (= :column))
            (or (-> drop-key peek (= :column))
                (-> drop-key pop peek (= :column))))
 
+      ;; different nodes for all levels
       (and (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
            (-> drop-key peek #{:select :unionAll})))
-
-  #_
-          true
 
   )

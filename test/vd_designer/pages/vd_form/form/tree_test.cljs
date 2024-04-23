@@ -27,11 +27,6 @@
      :select  []}
     :forEach))
 
-(comment
-  (run-tests 'vd-designer.pages.vd-form.form.tree-test)
-  (run-test drop-allowed?-test)
-  )
-
 (deftest drop-allowed?-test
   (testing "where -> where only"
     (is (tree/drop-allowed? [:where 'k1]
@@ -96,6 +91,19 @@
     (is (tree/drop-allowed? [:select 'k1 :unionAll]
                             [:select 'k2 :unionAll])))
 
-  ;; TODO: rearrangement
+  (testing "change arrangement on one level"
+    (testing "select 1 column -> select 0 column"
+      (is (tree/drop-allowed? [:select 'k1 :column]
+                              [:select]))
+      (is (tree/drop-allowed? [:select 'k1 :forEach]
+                              [:select]))
 
-  )
+      (is (tree/drop-allowed? [:select 'k1 :forEachOrNull]
+                              [:select]))
+
+      (is (tree/drop-allowed? [:select 'k1 :unionAll]
+                              [:select])))))
+
+(comment
+  (run-tests 'vd-designer.pages.vd-form.form.tree-test)
+  (run-test drop-allowed?-test))
