@@ -11,7 +11,6 @@
                                                                     uuid->idx]]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :refer [response->error]]
-            [vd-designer.utils.string :as str.utils]
             [vd-designer.utils.utils :as utils]))
 
 #_"status is required"
@@ -261,10 +260,6 @@
                           (current-type   constant-map))
                    (dissoc :type))))))
 
-(defn calc-real-path [db node]
-  (-> (into [:current-vd] node)
-      (uuid->idx db)))
-
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
 
@@ -350,6 +345,4 @@
 (reg-event-db
   ::change-tree-elements-order
   (fn [db [_ from-node to-node]]
-    (-> db (calc-real-path from-node) js/console.log)
-    (-> db (calc-real-path to-node) js/console.log)
     (update db :current-vd move* from-node to-node)))
