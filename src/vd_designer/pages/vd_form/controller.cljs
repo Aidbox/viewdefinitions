@@ -182,9 +182,6 @@
 (defn remove-tree-element [vd path]
   (update-in vd (pop path) remove-node (peek path)))
 
-(defn insert-tree-element-at [vd path element]
-  (update-in vd (pop path) utils/insert-at (peek path) element))
-
 (defn insert-tree-element-after [vd path element]
   (update-in vd (pop path) utils/insert-after (peek path) element))
 

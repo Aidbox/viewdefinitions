@@ -1,10 +1,7 @@
 (ns vd-designer.components.input
   (:require
    [antd :refer [ConfigProvider Input InputNumber]]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]]
-   [vd-designer.pages.vd-form.controller :as form-controller]
-   [reagent.core :as r]))
+   [medley.core :as medley]))
 
 (defn search [& {:as opts}]
   [:> Input.Search (merge-with into

@@ -1,7 +1,5 @@
 (ns vd-designer.pages.vd-form.form
   (:require [antd :refer [Flex Spin]]
-            ["@ant-design/icons" :as icons]
-            [reagent.core :as r]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.tree :refer [tree] :as tree]
             [vd-designer.pages.vd-form.controller :as c]
