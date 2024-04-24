@@ -206,8 +206,6 @@
 
 (defn drop-allowed?
   ([drag-key drop-key]
-   (->> drag-key #_(drop 2) (js/console.log))
-   (->> drop-key #_(drop 2) (js/console.log))
 
    (or (and (-> drag-key first (= :where))
             (-> drop-key first (= :where)))

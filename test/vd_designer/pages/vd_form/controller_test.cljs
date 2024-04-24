@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.controller-test
   (:require
-    [cljs.test :refer [deftest is run-test testing]]
+    [cljs.test :refer-macros [deftest is run-test testing]]
     [matcher-combinators.test :refer [match?]]
     [vd-designer.pages.vd-form.controller :refer [move]]))
 
@@ -154,7 +154,7 @@
                 [:select 0 foreach]
                 [:select 1 :unionAll])))))
 
-    (testing "column to unionAll"
+    (testing "column to forEach"
       (is (match?
             {:select [{:unionAll [{:forEach "name"
                                    :select  [{:column [1]}
@@ -182,7 +182,31 @@
                                  :tree/key 'k2}]
                      :tree/key 'k3}]}
                   [:select 0 :column]
-                  [:select 1 :select 0 :unionAll]))))))
+                  [:select 1 :select 0 :unionAll])))
+
+      (is (match?
+            {:select [{:unionAll [{:column ['leaf1
+                                            'leaf2]
+                                   :tree/key 'k1}
+                                  {:column ['leaf3]
+                                   :tree/key 'k2}]
+                       :tree/key 'k3
+                       :select nil}
+                      {:forEach 'expr
+                       :select []
+                       :tree/key 'k5}]}
+
+            (move {:select [{:forEach 'expr
+                             :select [{:unionAll [{:column ['leaf1
+                                                            'leaf2]
+                                                   :tree/key 'k1}
+                                                  {:column ['leaf3]
+                                                   :tree/key 'k2}]
+                                       :tree/key 'k3
+                                       :select nil}]
+                             :tree/key 'k5}]}
+                  [:select 0 :select 0 :unionAll]
+                  [:select]))))))
 
 (comment
   (run-test move-test)

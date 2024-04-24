@@ -305,20 +305,36 @@
       (= (count path-to) (count path-from))
       (= (pop (pop path-from)) (pop (pop path-to))))))
 
+(defn adjust-indexes-of-path-to [path-from path-to]
+  (let [path-from-root (-> path-from pop pop)]
+    (if
+      (< (count path-to)
+         (count path-from-root))
+      path-to
+
+      (let [node-index (-> path-from pop peek)
+            destination-root (subvec path-to 0 (count path-from-root))
+            destination-index (nth path-to (count path-from-root))]
+        (if (and (= destination-root path-from-root)
+                 (< node-index destination-index))
+          (update path-to (count path-from-root) dec)
+          path-to)))))
+
 (defn move-node [vd path-from path-to]
   (let [moving-node-path (pop path-from)
-        moving-node (get-in vd moving-node-path)]
-    (if (nodes-on-same-level? path-from path-to)
-      (let [inserting-to-head? (inserting-to-node-head? moving-node-path path-to)
-            path-to* (if inserting-to-head?
-                       path-to
-                       (dec-node-index path-to))]
-        (-> vd
-            (remove-tree-element moving-node-path)
-            (insert-tree-element-as-1st-child path-to* moving-node)))
-      (-> vd
-          (insert-tree-element-as-1st-child path-to moving-node)
-          (remove-tree-element moving-node-path)))))
+        moving-node (get-in vd moving-node-path)
+        path-to* (cond
+                   (not (nodes-on-same-level? path-from path-to))
+                   (adjust-indexes-of-path-to path-from path-to)
+
+                   (inserting-to-node-head? moving-node-path path-to)
+                   path-to
+
+                   :else
+                   (dec-node-index path-to))]
+    (-> vd
+        (remove-tree-element moving-node-path)
+        (insert-tree-element-as-1st-child path-to* moving-node))))
 
 (defn move
   "Assuming, vd is normalized and decorated.
