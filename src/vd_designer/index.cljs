@@ -2,8 +2,7 @@
   (:require ["@ant-design/icons" :as icons]
             [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [reg-event-db reg-event-fx
-                                                reg-sub subscribe]]
+            [re-frame.core :as re-frame :refer [reg-event-fx subscribe]]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
             [vd-designer.notifications]
@@ -15,16 +14,6 @@
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
-
-(reg-event-db
- ::toggle-side-menu
- (fn [db []]
-   (assoc-in db [:side-menu-collapsed] (not (:side-menu-collapsed db)))))
-
-(reg-sub
- ::side-menu-collapsed
- (fn [db _]
-   (:side-menu-collapsed db)))
 
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])

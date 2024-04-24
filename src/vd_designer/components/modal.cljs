@@ -4,6 +4,3 @@
 (defn modal-confirm [opts]
   (Modal.confirm
    (clj->js opts)))
-
-(defn modal [opts content]
-  [:> Modal opts content])

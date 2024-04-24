@@ -2,7 +2,6 @@
   (:require
    [clojure.string :as str]
    [lambdaisland.uri :as uri]
-   [vd-designer.pages.settings.model :as m]
    [re-frame.core :refer [reg-event-db reg-event-fx]]
    [vd-designer.http.fhir-server :as http]
    [vd-designer.notifications]

@@ -9,12 +9,6 @@
 (defn column [& {:as args}]
   (icon "/img/form/column.svg" args))
 
-(defn foreach [& {:as args}]
-  (icon "/img/form/forEach.svg" args))
-
-(defn union-all [& {:as args}]
-  (icon "/img/form/unionAll.svg" args))
-
 (defn expression [& {:as args}]
   (icon "/img/form/expr.svg" args))
 
