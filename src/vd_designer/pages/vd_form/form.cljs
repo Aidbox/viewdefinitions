@@ -1,5 +1,7 @@
 (ns vd-designer.pages.vd-form.form
   (:require [antd :refer [Flex Spin]]
+            ["@ant-design/icons" :as icons]
+            [reagent.core :as r]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.tree :refer [tree] :as tree]
             [vd-designer.pages.vd-form.controller :as c]
@@ -11,6 +13,7 @@
 (defn form []
   (let [vd @(subscribe [::m/current-vd])
         ctx (create-render-context)
+        drag-enabled? @(subscribe [::m/draggable-node])
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
     (if vd
       [tree {:style         {:padding-right "16px"}
@@ -18,10 +21,11 @@
                                         (->> % js->clj (map str.utils/parse-path))])
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)
-             :draggable     #(-> (.-key %)
-                                 js->clj
-                                 str.utils/parse-path
-                                 draggable?)
+             :draggable (and drag-enabled?
+                             #(-> (.-key %)
+                                  js->clj
+                                  str.utils/parse-path
+                                  draggable?))
              :allow-drop    #(let [{:keys [dragNode dropNode]}
                                    (js->clj % :keywordize-keys true)]
                                (drop-allowed?

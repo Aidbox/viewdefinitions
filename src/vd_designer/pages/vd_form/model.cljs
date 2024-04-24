@@ -54,3 +54,8 @@
  ::settings-opened-id
  (fn [db _]
    (::settings-opened-id db)))
+
+(reg-sub
+ ::draggable-node
+ (fn [db _]
+   (::draggable-node db)))

@@ -1,28 +1,28 @@
 (ns vd-designer.pages.vd-form.form.tree
-  (:require [antd :refer [Flex]]
-            [clojure.set :as set]
-            [vd-designer.components.icon :as icon]
-            [vd-designer.components.input :refer [input]]
-            [vd-designer.components.tree :refer [tree-leaf tree-node]]
-            [vd-designer.pages.vd-form.components :refer [add-element-button
-                                                          add-select-button
-                                                          base-input-row
-                                                          base-node-row
-                                                          change-input-value
-                                                          delete-button
-                                                          fhir-path-input
-                                                          name-input
-                                                          resource-input
-                                                          tree-tag]]
-            [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                           drop-value-path
-                                                           get-constant-type]]
-            [vd-designer.pages.vd-form.form.settings :refer [column-settings
-                                                             constant-settings
-                                                             where-settings]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.form.uuid-decoration :as uuid-decor]
-            [vd-designer.utils.event :as u]))
+  (:require
+   [antd :refer [Flex]]
+   [clojure.set :as set]
+   [re-frame.core :refer [dispatch]]
+   [vd-designer.components.icon :as icon]
+   [vd-designer.components.input :refer [input]]
+   [vd-designer.components.tree :refer [tree-leaf tree-node]]
+   [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                 add-select-button
+                                                 base-input-row base-node-row
+                                                 change-input-value
+                                                 delete-button fhir-path-input
+                                                 name-input resource-input
+                                                 tree-tag]]
+   [vd-designer.pages.vd-form.controller :as form-controller]
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+                                                  drop-value-path
+                                                  get-constant-type]]
+   [vd-designer.pages.vd-form.form.settings :refer [column-settings
+                                                    constant-settings
+                                                    where-settings]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :as uuid-decor]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :as u]))
 
 ;; Leafs
 
@@ -39,6 +39,8 @@
         [input {:value       name
                 :placeholder "name"
                 :style       {:font-style "normal"}
+                :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
+                :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                 :onChange    #(change-input-value ctx name-key (u/target-value %))}])]
      [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 

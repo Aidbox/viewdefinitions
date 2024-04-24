@@ -346,3 +346,8 @@
   ::change-tree-elements-order
   (fn [db [_ from-node to-node]]
     (update db :current-vd move* from-node to-node)))
+
+(reg-event-db
+  ::change-draggable-node
+  (fn [db [_ draggable]]
+    (assoc db ::m/draggable-node draggable)))
