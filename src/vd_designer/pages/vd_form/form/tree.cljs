@@ -208,22 +208,28 @@
 
 (defn drop-allowed?
   ([drag-key drop-key]
+   (drop-allowed? nil drag-key drop-key 0))
 
-   (or (and (-> drag-key first (= :where))
-            (-> drop-key first (= :where)))
+  ([vd drag-key drop-key drop-position]
+   (and
+     (not (pointless-drag? vd drag-key drop-key))
+     (or (and (-> drag-key first (= :where))
+              (-> drop-key first (= :where)))
 
-       (and (-> drag-key first (= :constant))
-            (-> drop-key first (= :constant)))
+         (and (-> drag-key first (= :constant))
+              (-> drop-key first (= :constant)))
 
-       ;; columns in one level
-       (and (-> drag-key pop peek (= :column))
-            (or (-> drop-key peek (= :column))
-                (-> drop-key pop peek (= :column))))
+         ;; columns in one level
+         (and (-> drag-key pop peek (= :column))
+              (or (-> drop-key peek (= :column))
+                  (-> drop-key pop peek (= :column))))
 
-       ;; different nodes for all levels
-       (and (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
-            (-> drop-key peek #{:select :unionAll}))))
+         (and
+           (= drop-position 1)
+           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+           (-> drop-key peek #{:column :forEach :forEachOrNull :unionAll}))
 
-  ([vd drag-key drop-key]
-   (and (drop-allowed? drag-key drop-key)
-        (not (pointless-drag? vd drag-key drop-key)))))
+         (and
+           (= drop-position 0)
+           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+           (-> drop-key peek #{:select :unionAll}))))))

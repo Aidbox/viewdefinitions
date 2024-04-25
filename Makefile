@@ -13,3 +13,6 @@ build-all: build build-tests
 shadow: init
 	rm -rf ./.shadow-cljs
 	clj -M:shadow
+
+test: build-tests
+	node out/node-tests.js

@@ -206,8 +206,35 @@
                                        :select nil}]
                              :tree/key 'k5}]}
                   [:select 0 :select 0 :unionAll]
-                  [:select]))))))
+                  [:select])))))
+
+  (is
+    (match?
+      {:select [{:unionAll
+                 [{:unionAll
+                   [{:column
+                     [{:name "" :path ""}]}
+                    {:forEach ""
+                     :select
+                     [{:column [{:name "" :path ""}]}
+                      {:column [{:name "" :path ""}]}
+                      {:column [{:name "" :path ""}]}]}]}]}]}
+
+      (move
+        {:select [{:column [{:name "" :path ""}]}
+                  {:unionAll
+                   [{:unionAll
+                     [{:column [{:name "" :path ""}]}
+                      {:forEach ""
+                       :select
+                       [{:column [{:name "" :path ""}]}
+                        {:column [{:name "" :path ""}]}]}]}]}]}
+        [:select 0 :column]
+        [:select 1 :unionAll 0 :unionAll 1 :select 0 :column] 1))))
 
 (comment
   (run-test move-test)
+
+  (get-in @re-frame.db/app-db [:current-vd :select])
+
   )

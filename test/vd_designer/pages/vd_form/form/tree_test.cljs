@@ -104,10 +104,6 @@
       (is (tree/drop-allowed? [:select 'k1 :unionAll]
                               [:select])))))
 
-(comment
-  (run-tests 'vd-designer.pages.vd-form.form.tree-test)
-  (run-test drop-allowed?-test))
-
 (deftest pointless-drag?-test
   (is (tree/pointless-drag?
         {:select   [{:column   [{:name 'whatever
@@ -126,3 +122,7 @@
          :tree/key 'k0}
         [:select 'k1 :column 'k3]
         [:select 'k1 :column 'k2])))
+
+(comment
+  (run-tests 'vd-designer.pages.vd-form.form.tree-test)
+  (run-test drop-allowed?-test))

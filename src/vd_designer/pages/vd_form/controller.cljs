@@ -282,26 +282,14 @@
         (remove-tree-element path-from)
         (insert))))
 
-(defn dec-node-index [path]
-  ;;[:select 1 :unionAll] -> [:select 0 :unionAll]
-  (update path (dec (dec (count path))) dec))
-
 (defn inserting-to-node-head? [moving-node-path path-to]
   (-> moving-node-path pop (= path-to)))
-
-(defn nodes-on-same-level? [path-from path-to]
-  (or
-    ;; head
-    (= (pop (pop path-from)) path-to)
-    (and
-      (= (count path-to) (count path-from))
-      (= (pop (pop path-from)) (pop (pop path-to))))))
 
 (defn adjust-indexes-of-path-to [path-from path-to]
   (let [path-from-root (-> path-from pop pop)]
     (if
-      (< (count path-to)
-         (count path-from-root))
+      (<= (count path-to)
+          (count path-from-root))
       path-to
 
       (let [node-index (-> path-from pop peek)
@@ -312,37 +300,40 @@
           (update path-to (count path-from-root) dec)
           path-to)))))
 
-(defn move-node [vd path-from path-to]
+(defn move-node
+  [vd path-from path-to drop-position]
   (let [moving-node-path (pop path-from)
         moving-node (get-in vd moving-node-path)
-        path-to* (cond
-                   (not (nodes-on-same-level? path-from path-to))
-                   (adjust-indexes-of-path-to path-from path-to)
+        path-to*
+        (if (inserting-to-node-head? moving-node-path path-to)
+          path-to
+          (adjust-indexes-of-path-to path-from path-to))]
 
-                   (inserting-to-node-head? moving-node-path path-to)
-                   path-to
-
-                   :else
-                   (dec-node-index path-to))]
-    (-> vd
-        (remove-tree-element moving-node-path)
-        (insert-tree-element-as-1st-child path-to* moving-node))))
+    (if (= 0 drop-position)
+      (-> vd
+          (remove-tree-element moving-node-path)
+          (insert-tree-element-as-1st-child path-to* moving-node))
+      (-> vd
+          (remove-tree-element moving-node-path)
+          (insert-tree-element-after (pop path-to*) moving-node)))))
 
 (defn move
   "Assuming, vd is normalized and decorated.
    Paths contain indexes: [:select 0 ...]"
-  [vd path-from path-to]
+   ([vd path-from path-to]
+    (move vd path-from path-to 0))
+   ([vd path-from path-to drop-position]
     (if (number? (peek path-from))
       (move-leaf vd path-from path-to)
-      (move-node vd path-from path-to)))
+      (move-node vd path-from path-to drop-position))))
 
-(defn move* [vd path-from path-to]
-  (move vd (uuid->idx path-from vd) (uuid->idx path-to vd)))
+(defn move* [vd path-from path-to drop-position]
+  (move vd (uuid->idx path-from vd) (uuid->idx path-to vd) drop-position))
 
 (reg-event-db
   ::change-tree-elements-order
-  (fn [db [_ from-node to-node]]
-    (update db :current-vd move* from-node to-node)))
+  (fn [db [_ from-node to-node drop-position]]
+    (update db :current-vd move* from-node to-node drop-position)))
 
 (reg-event-db
   ::change-draggable-node
