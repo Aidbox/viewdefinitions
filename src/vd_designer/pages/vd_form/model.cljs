@@ -12,6 +12,9 @@
  (fn [db _]
    (:current-vd db)))
 
+(def tree-root-keys
+  #{[:name] [:resource] [:constant] [:where] [:select]})
+
 (reg-sub
  ::current-tree-expanded-nodes
  (fn [db _]
@@ -51,3 +54,8 @@
  ::settings-opened-id
  (fn [db _]
    (::settings-opened-id db)))
+
+(reg-sub
+ ::draggable-node
+ (fn [db _]
+   (::draggable-node db)))

@@ -5,14 +5,13 @@
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                            get-select-path]]
-            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
             [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
                                                                     remove-decoration
                                                                     uuid->idx]]
+            [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.event :refer [response->error]]
             [vd-designer.utils.utils :as utils]))
-
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -85,7 +84,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (->> (get-select-path decorated-view)
-                            (into #{[:constant] [:where] [:select]}))]]]
+                            (into m/tree-root-keys))]]]
       :db (assoc db :current-vd decorated-view :loading false)})))
 
 (reg-event-fx
@@ -136,17 +135,6 @@
                 (into [:current-vd] real-path)
                 medley/deep-merge value))))
 
-(defn vec-remove
-  "remove elem in coll"
-  [node key]
-  (into (subvec node 0 key)
-        (subvec node (inc key))))
-
-(defn remove-node [node key]
-  (cond
-    (map? node)    (dissoc node key)
-    (vector? node) (vec-remove node key)))
-
 (reg-event-db
  ::change-vd-resource
  (fn [db [_ value]]
@@ -186,24 +174,35 @@
                          (into (:current-tree-expanded-nodes db)
                                (mapv mk-expanded-path default-value))]}]]]})))
 
-(reg-event-fx
- ::delete-tree-element
- (fn [{:keys [db]} [_ path]]
-   {:fx [[:dispatch [::update-tree-expanded-nodes
-                     (->> (:current-tree-expanded-nodes db)
-                          (remove #(utils/vector-starts-with % path)))]]]
-    :db (let [real-path (uuid->idx path (:current-vd db))]
-          (update-in db
-                     (into [:current-vd] (pop real-path))
-                     remove-node
-                     (peek real-path)))}))
+(defn remove-node [node key]
+  (cond
+    (map? node) (dissoc node key)
+    (vector? node) (utils/remove-by-index node key)))
+
+(defn remove-tree-element [vd path]
+  (update-in vd (pop path) remove-node (peek path)))
+
+(defn insert-tree-element-after [vd path element]
+  (update-in vd (pop path) utils/insert-after (peek path) element))
+
+(defn insert-tree-element-as-1st-child [vd path element]
+  (update-in vd path utils/insert-at 0 element))
 
 (reg-event-fx
- ::save-view-definition
- (fn [{:keys [db]} [_]]
-   (let [view-definition (remove-decoration (:current-vd db))
-         req (if (:id view-definition)
-               (http.fhir-server/put-view-definition
+  ::delete-tree-element
+  (fn [{:keys [db]} [_ path]]
+    {:fx [[:dispatch [::update-tree-expanded-nodes
+                      (->> (:current-tree-expanded-nodes db)
+                           (remove #(utils/vector-starts-with % path)))]]]
+     :db (let [real-path (uuid->idx path (:current-vd db))]
+           (update db :current-vd remove-tree-element real-path))}))
+
+(reg-event-fx
+  ::save-view-definition
+  (fn [{:keys [db]} [_]]
+    (let [view-definition (remove-decoration (:current-vd db))
+          req (if (:id view-definition)
+                (http.fhir-server/put-view-definition
                 db
                 (:id view-definition)
                 view-definition)
@@ -257,3 +256,86 @@
                    (assoc (keyword (:type constant-map))
                           (current-type   constant-map))
                    (dissoc :type))))))
+
+(defn leafs-on-same-level? [path-from path-to]
+  (= (pop path-from) (pop path-to)))
+
+(defn dec-last-elem [v]
+  (-> v pop
+      (conj (dec (peek v)))))
+
+(defn leaf-insertion-to-head? [path-to]
+  (-> path-to peek keyword?))
+
+(defn move-leaf [vd path-from path-to]
+  (let [moving-leaf (get-in vd path-from)
+        insert (cond
+                 (leafs-on-same-level? path-from path-to)
+                 #(insert-tree-element-after % (dec-last-elem path-to) moving-leaf)
+
+                 (leaf-insertion-to-head? path-to)
+                 #(insert-tree-element-as-1st-child % path-to moving-leaf)
+
+                 :else
+                 #(insert-tree-element-after % path-to moving-leaf))]
+    (-> vd
+        (remove-tree-element path-from)
+        (insert))))
+
+(defn inserting-to-node-head? [moving-node-path path-to]
+  (-> moving-node-path pop (= path-to)))
+
+(defn adjust-indexes-of-path-to [path-from path-to]
+  (let [path-from-root (-> path-from pop pop)]
+    (if
+      (<= (count path-to)
+          (count path-from-root))
+      path-to
+
+      (let [node-index (-> path-from pop peek)
+            destination-root (subvec path-to 0 (count path-from-root))
+            destination-index (nth path-to (count path-from-root))]
+        (if (and (= destination-root path-from-root)
+                 (< node-index destination-index))
+          (update path-to (count path-from-root) dec)
+          path-to)))))
+
+(defn move-node
+  [vd path-from path-to drop-position]
+  (let [moving-node-path (pop path-from)
+        moving-node (get-in vd moving-node-path)
+        path-to*
+        (if (inserting-to-node-head? moving-node-path path-to)
+          path-to
+          (adjust-indexes-of-path-to path-from path-to))]
+
+    (if (= 0 drop-position)
+      (-> vd
+          (remove-tree-element moving-node-path)
+          (insert-tree-element-as-1st-child path-to* moving-node))
+      (-> vd
+          (remove-tree-element moving-node-path)
+          (insert-tree-element-after (pop path-to*) moving-node)))))
+
+(defn move
+  "Assuming, vd is normalized and decorated.
+   Paths contain indexes: [:select 0 ...]"
+   ([vd path-from path-to]
+    (move vd path-from path-to 0))
+   ([vd path-from path-to drop-position]
+    (if (number? (peek path-from))
+      (move-leaf vd path-from path-to)
+      (move-node vd path-from path-to drop-position))))
+
+(defn move* [vd path-from path-to drop-position]
+  (move vd (uuid->idx path-from vd) (uuid->idx path-to vd) drop-position))
+
+(reg-event-db
+  ::change-tree-elements-order
+  (fn [db [_ from-node to-node drop-position]]
+    (update db :current-vd move* from-node to-node drop-position)))
+
+(reg-event-db
+  ::change-draggable-node
+  (fn [db [_ draggable]]
+    (assoc db ::m/draggable-node draggable)))

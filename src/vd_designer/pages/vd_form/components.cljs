@@ -192,6 +192,8 @@
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
 
     [input {:placeholder  (or placeholder "path")
+            :onMouseEnter #(dispatch [::c/change-draggable-node false])
+            :onMouseLeave #(dispatch [::c/change-draggable-node true])
             :defaultValue value
             :onChange     #(change-input-value ctx kind (u/target-value %))}]))
 

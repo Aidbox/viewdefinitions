@@ -1,25 +1,28 @@
 (ns vd-designer.pages.vd-form.form.tree
-  (:require [antd :refer [Flex]]
-            [vd-designer.components.icon :as icon]
-            [vd-designer.components.input :refer [input]]
-            [vd-designer.components.tree :refer [tree-leaf tree-node]]
-            [vd-designer.pages.vd-form.components :refer [add-element-button
-                                                          add-select-button
-                                                          base-input-row
-                                                          base-node-row
-                                                          change-input-value
-                                                          delete-button
-                                                          fhir-path-input
-                                                          name-input
-                                                          resource-input
-                                                          tree-tag]]
-            [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                           drop-value-path
-                                                           get-constant-type]]
-            [vd-designer.pages.vd-form.form.settings :refer [column-settings
-                                                             constant-settings
-                                                             where-settings]]
-            [vd-designer.utils.event :as u]))
+  (:require
+   [antd :refer [Flex]]
+   [clojure.set :as set]
+   [re-frame.core :refer [dispatch]]
+   [vd-designer.components.icon :as icon]
+   [vd-designer.components.input :refer [input]]
+   [vd-designer.components.tree :refer [tree-leaf tree-node]]
+   [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                 add-select-button
+                                                 base-input-row base-node-row
+                                                 change-input-value
+                                                 delete-button fhir-path-input
+                                                 name-input resource-input
+                                                 tree-tag]]
+   [vd-designer.pages.vd-form.controller :as form-controller]
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+                                                  drop-value-path
+                                                  get-constant-type]]
+   [vd-designer.pages.vd-form.form.settings :refer [column-settings
+                                                    constant-settings
+                                                    where-settings]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :as uuid-decor]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :as u]))
 
 ;; Leafs
 
@@ -36,6 +39,8 @@
         [input {:value       name
                 :placeholder "name"
                 :style       {:font-style "normal"}
+                :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
+                :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                 :onChange    #(change-input-value ctx name-key (u/target-value %))}])]
      [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 
@@ -178,3 +183,53 @@
                 (add-value-path ctx :where)    (:where    vd))
    (nested-node :select
                 (add-value-path ctx :select)   (:select   vd))])
+
+;; Drag-n-Drop
+
+(defn immovable? [node-key]
+  (or (m/tree-root-keys node-key)
+      (not-empty (set/intersection #{:add :path}
+                                   (set node-key)))
+      (= :select (peek node-key))))
+
+(defn draggable? [node-key]
+  (not (immovable? node-key)))
+
+(defn pointless-drag? [vd path-from path-to]
+  (let [path-from* (uuid-decor/uuid->idx path-from vd)
+        path-to* (uuid-decor/uuid->idx path-to vd)]
+    (or
+      ;; element with index 0 is dragged into the head of its own parent
+      (and (-> path-from* peek (= 0))
+           (-> path-from* pop (= path-to*)))
+      ;; element is already there
+      (= (peek path-from*)
+         (inc (peek path-to*))))))
+
+(defn drop-allowed?
+  ([drag-key drop-key]
+   (drop-allowed? nil drag-key drop-key 0))
+
+  ([vd drag-key drop-key drop-position]
+   (and
+     (not (pointless-drag? vd drag-key drop-key))
+     (or (and (-> drag-key first (= :where))
+              (-> drop-key first (= :where)))
+
+         (and (-> drag-key first (= :constant))
+              (-> drop-key first (= :constant)))
+
+         ;; columns in one level
+         (and (-> drag-key pop peek (= :column))
+              (or (-> drop-key peek (= :column))
+                  (-> drop-key pop peek (= :column))))
+
+         (and
+           (= drop-position 1)
+           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+           (-> drop-key peek #{:column :forEach :forEachOrNull :unionAll}))
+
+         (and
+           (= drop-position 0)
+           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+           (-> drop-key peek #{:select :unionAll}))))))

@@ -85,3 +85,15 @@ button {
 .vd-tree .ant-tree-treenode {
   padding-bottom: 0 !important;
 }
+
+.vd-tree .ant-tree-draggable-icon {
+  position: absolute;
+  right: -8px;
+  z-index: 999;
+  width: 40px !important;
+}
+
+.vd-tree .ant-tree-draggable-icon:hover {
+  opacity: 1;
+
+}
