@@ -59,3 +59,8 @@
  ::draggable-node
  (fn [db _]
    (::draggable-node db)))
+
+(reg-sub
+ ::empty-inputs?
+ (fn [db _]
+   (::empty-inputs? db)))

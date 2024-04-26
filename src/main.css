@@ -50,6 +50,10 @@ button {
   border-bottom: 1px solid #7972D3 !important;
 }
 
+.red-input {
+  border-bottom: 1px solid #FF0000 !important;
+}
+
 /* BUTTONS */
 
 .invisible-button {
