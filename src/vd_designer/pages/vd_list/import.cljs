@@ -1,15 +1,17 @@
 (ns vd-designer.pages.vd-list.import
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Modal Upload]]
+            [antd :refer [Modal Upload Input]]
             [clojure.string :as str]
             [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.monaco-editor :as monaco]
             [reagent.core :as r]
+            [vd-designer.components.tabs :as tabs]
             [vd-designer.pages.vd-list.controller :as c]
             [vd-designer.pages.vd-list.model :as m]
             [vd-designer.utils.yaml :refer [str->yaml]]))
 
 (def supported-extensions
-  [".json" ".yaml"])
+  [".json" ".yaml" ".yml"])
 
 (defn- get-file-extension [file]
   (-> (.-name file)
@@ -32,27 +34,52 @@
   (let [extension (get-file-extension file)]
     (case extension
       ".json" (js->clj (.parse js/JSON content) :keywordize-keys true)
-      ".yaml" (js->clj (str->yaml      content) :keywordize-keys true))))
+      (".yml" ".yaml") (js->clj (str->yaml content) :keywordize-keys true))))
 
-(defn- import-vd-file [file]
-  (-> (.text file)
-      (.then  #(dispatch [::c/import-success (parse-vd-file file %)]))
-      (.catch #(dispatch [::c/on-import-error
-                          (str "Cannot import " (.-name file) ". " %)]))))
+(defn- import-vd [{:keys [file text]}]
+  (cond
+    file
+    (-> (.text file)
+        (.then  #(dispatch [::c/import-success (parse-vd-file file %)]))
+        (.catch #(dispatch [::c/on-import-error
+                            (str "Cannot import " (.-name file) ". " %)])))
+    text
+    (try
+      (dispatch [::c/import-success (js->clj (str->yaml text) :keywordize-keys true)])
+      (catch js/Error e
+        (dispatch [::c/on-import-error (str "Cannot import " e)])))))
+
+(defn upload-file []
+  [:> Upload.Dragger {:accept        (str/join ", " supported-extensions)
+                      :maxCount      1
+                      :before-upload before-upload}
+   [:p {:className "ant-upload-drag-icon"} (r/create-element icons/InboxOutlined)]
+   [:p {:className "ant-upload-text"} "Choose a file or drag it here"]
+   [:p {:className "ant-upload-hint"} "Allowed tile types: *.json or *.yaml"]])
+
+(defn upload-text []
+  (let [text-value (:text @(subscribe [::m/vd-import]))]
+    [:div {:style {:height "185px"}}
+     [monaco/monaco {:id       "upload-text"
+                     :value text-value
+                     :onChange #(dispatch [::c/change-upload-text %])
+                     :options {:readOnly false}}]]))
 
 (defn import-modal []
-  (let [vd-import @(subscribe [::m/vd-import])
-        file       (:file vd-import)]
-    [:> Modal {:open             (boolean vd-import)
+  (let [vd-import @(subscribe [::m/vd-import])]
+    [:> Modal {:open             (boolean vd-import) #_true
                :title            "Import ViewDefinition"
                :ok-text          "Import"
-               :on-ok            #(import-vd-file file)
-               :ok-button-props  {:disabled (nil? file)}
+               :on-ok            #(import-vd vd-import)
+               :ok-button-props  {:disabled (and (nil? (:text vd-import)) (nil? (:file vd-import)))}
                :on-cancel        #(dispatch [::c/close-import-modal])
                :destroy-on-close true}
-     [:> Upload.Dragger {:accept        (str/join ", " supported-extensions)
-                         :maxCount      1
-                         :before-upload before-upload}
-      [:p {:className "ant-upload-drag-icon"} (r/create-element icons/InboxOutlined)]
-      [:p {:className "ant-upload-text"} "Choose a file or drag it here"]
-      [:p {:className "ant-upload-hint"} "Allowed tile types: *.json or *.yaml"]]]))
+     [tabs/tabs
+      {:animated true
+       :onChange #(dispatch [::c/remove-import-content])
+       :items [(tabs/tab-item {:destroyInactiveTabPane true
+                               :key "file" :label "Import file"
+                               :children [upload-file]})
+               (tabs/tab-item {:destroyInactiveTabPane true
+                               :key "text" :label "Import from text"
+                               :children [upload-text]})]}]]))
