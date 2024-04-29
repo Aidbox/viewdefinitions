@@ -1,8 +1,8 @@
 (ns vd-designer.pages.vd-form.controller-test
   (:require
-    [cljs.test :refer-macros [deftest is run-test testing]]
+    [cljs.test :refer-macros [deftest is run-test testing run-tests]]
     [matcher-combinators.test :refer [match?]]
-    [vd-designer.pages.vd-form.controller :refer [move]]))
+    [vd-designer.pages.vd-form.controller :refer [move] :as sut]))
 
 (deftest move-test
   (testing "Same level leafs"
@@ -232,9 +232,21 @@
         [:select 0 :column]
         [:select 1 :unionAll 0 :unionAll 1 :select 0 :column] 1))))
 
+(deftest empty-inputs-in-vd-test
+
+  (is (= true (sut/empty-inputs-in-vd? {:select [{:column [{:path "" :name "1"}]}]})))
+
+  (is (= true (sut/empty-inputs-in-vd? {:select [{:column [{:path "1" :name "1"}]}]})))
+
+  (is (= true (sut/empty-inputs-in-vd? {:name ""
+                                        :resource ""
+                                        :select [{:column [{:path "1" :name "1"}]}]}))))
+
 (comment
   (run-test move-test)
+  (run-tests)
 
   (get-in @re-frame.db/app-db [:current-vd :select])
 
   )
+

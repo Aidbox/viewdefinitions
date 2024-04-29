@@ -2,7 +2,8 @@
   (:require
    [antd :refer [Flex]]
    [clojure.set :as set]
-   [re-frame.core :refer [dispatch]]
+   [clojure.string :as str]
+   [re-frame.core :refer [dispatch subscribe]]
    [vd-designer.components.icon :as icon]
    [vd-designer.components.input :refer [input]]
    [vd-designer.components.tree :refer [tree-leaf tree-node]]
@@ -36,12 +37,17 @@
       [icon]
       (if (nil? name-key)
         name
-        [input {:value       name
-                :placeholder "name"
-                :style       {:font-style "normal"}
-                :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
-                :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
-                :onChange    #(change-input-value ctx name-key (u/target-value %))}])]
+        (let [errors? @(subscribe [::m/empty-inputs?])]
+          [input {:value       name
+                  :placeholder "name"
+                  :classNames {:input
+                               (if (and (str/blank? name) errors?)
+                                 "default-input red-input"
+                                 "default-input")}
+                  :style       {:font-style "normal"}
+                  :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
+                  :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
+                  :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
      [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 
 (defn column-leaf [ctx {:keys [name path]}]

@@ -1,23 +1,23 @@
 (ns vd-designer.pages.vd-form.components
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Checkbox Col ConfigProvider Form Popover Row Select
-                          Space]]
-            [medley.core :as medley]
-            [re-frame.core :refer [dispatch subscribe]]
-            [reagent.core :as r]
-            [vd-designer.components.button :as button]
-            [vd-designer.components.dropdown :refer [add-dropdown
-                                                     dropdown-item-img]]
-            [vd-designer.components.heading :refer [h4]]
-            [vd-designer.components.input :refer [input input-number]]
-            [vd-designer.components.select :as select]
-            [vd-designer.components.tag :as tag]
-            [vd-designer.components.tree :refer [calc-key]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.utils.event :as u]
-            [vd-designer.utils.js :refer [find-elements get-element-by-id
-                                          remove-class toggle-class]]))
+  (:require
+   ["@ant-design/icons" :as icons]
+   [antd :refer [Checkbox Col ConfigProvider Form Popover Row Select Space]]
+   [clojure.string :as str]
+   [medley.core :as medley]
+   [re-frame.core :refer [dispatch subscribe]]
+   [reagent.core :as r]
+   [vd-designer.components.button :as button]
+   [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
+   [vd-designer.components.heading :refer [h4]]
+   [vd-designer.components.input :refer [input input-number]]
+   [vd-designer.components.select :as select]
+   [vd-designer.components.tag :as tag]
+   [vd-designer.components.tree :refer [calc-key]]
+   [vd-designer.pages.vd-form.controller :as c]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :as u]
+   [vd-designer.utils.js :refer [find-elements get-element-by-id remove-class
+                                 toggle-class]]))
 
 ;;;; Tags
 
@@ -126,26 +126,34 @@
              value]))
 
 (defn name-input [ctx vd-form]
-  [base-input-row ctx
-   [tag/default "name"]
-   [input {:value       (:name vd-form)
-           :placeholder "ViewDefinition"
-           :style       {:font-style "normal"
-                         :min-width "200px"
-                         :max-width "400px"}
-           :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]])
+  (let [errors? @(subscribe [::m/empty-inputs?])]
+    [base-input-row ctx
+     [tag/default "name"]
+     [input {:value       (:name vd-form)
+             :placeholder "ViewDefinition"
+             :classNames {:input
+                          (if (and (str/blank? (:name vd-form)) errors?)
+                            "default-input red-input"
+                            "default-input")}
+             :style       {:font-style "normal"
+                           :min-width "200px"
+                           :max-width "400px"}
+             :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]))
 
 (defn resource-input [ctx vd-form]
-  [base-input-row ctx
-   [tag/default "resource"]
-   [:> Select (select/with-default-props
-                {:placeholder "Resource type"
-                 :options     @(subscribe [::m/get-all-supported-resources])
-                 :class       "vd-resource"
-                 :style       {:min-width "200px"
-                               :max-width "400px"}
-                 :value       (:resource vd-form)
-                 :onSelect    #(dispatch [::c/change-vd-resource %])})]])
+  (let [errors? @(subscribe [::m/empty-inputs?])]
+    [base-input-row ctx
+     [tag/default "resource"]
+     [:> Select (select/with-default-props
+                  {:placeholder "Resource type"
+                   :options     @(subscribe [::m/get-all-supported-resources])
+                   :class (if (and (str/blank? (:resource vd-form)) errors?)
+                            "vd-resource red-input"
+                            "vd-resource")
+                   :style       {:min-width "200px"
+                                 :max-width "400px"}
+                   :value       (:resource vd-form)
+                   :onSelect    #(dispatch [::c/change-vd-resource %])})]]))
 
 (defn- toggle-settings-popover-hover [ctx]
   (let [tree-element-id (calc-key (:value-path ctx))
@@ -191,11 +199,16 @@
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
 
-    [input {:placeholder  (or placeholder "path")
-            :onMouseEnter #(dispatch [::c/change-draggable-node false])
-            :onMouseLeave #(dispatch [::c/change-draggable-node true])
-            :defaultValue value
-            :onChange     #(change-input-value ctx kind (u/target-value %))}]))
+    (let [errors? @(subscribe [::m/empty-inputs?])]
+      [input {:placeholder  (or placeholder "path")
+              :onMouseEnter #(dispatch [::c/change-draggable-node false])
+              :onMouseLeave #(dispatch [::c/change-draggable-node true])
+              :defaultValue value
+              :classNames {:input
+                           (if (and (str/blank? value) errors?)
+                             "default-input red-input"
+                             "default-input")}
+              :onChange     #(change-input-value ctx kind (u/target-value %))}])))
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true

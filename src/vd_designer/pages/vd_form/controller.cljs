@@ -1,17 +1,21 @@
 (ns vd-designer.pages.vd-form.controller
-  (:require [day8.re-frame.tracing :refer-macros [fn-traced]]
-            [medley.core :as medley]
-            [re-frame.core :refer [reg-event-db reg-event-fx]]
-            [vd-designer.http.fhir-server :as http.fhir-server]
-            [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                           get-select-path]]
-            [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-            [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                                    remove-decoration
-                                                                    uuid->idx]]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.utils.event :refer [response->error]]
-            [vd-designer.utils.utils :as utils]))
+  (:require
+    [clojure.string :as str]
+    [clojure.set :as set]
+    [day8.re-frame.tracing :refer-macros [fn-traced]]
+    [medley.core :as medley]
+    [vd-designer.utils.string :as utils.string]
+    [re-frame.core :refer [reg-event-db reg-event-fx]]
+    [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                   get-select-path]]
+    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                            remove-decoration
+                                                            uuid->idx]]
+    [vd-designer.pages.vd-form.model :as m]
+    [vd-designer.utils.event :refer [response->error]]
+    [vd-designer.utils.utils :as utils]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -87,16 +91,49 @@
                             (into m/tree-root-keys))]]]
       :db (assoc db :current-vd decorated-view :loading false)})))
 
+(defn contains-blank-string? [element]
+ (cond
+    (string? element) (str/blank? element)
+    (map? element) (some (fn [[_ v]] (contains-blank-string? v)) element)
+    (vector? element) (some contains-blank-string? element)
+    :else false))
+
+(defn empty-inputs-in-vd? [vd]
+  (contains-blank-string?
+    #_"ignore non necessary fields if somehow they ended up to be blank strings"
+    (select-keys vd [:constant :where :select :column :name :resource])))
+
+(def required-fields #{:name :resource :select})
+
+(defn missing-required-fields [vd]
+  (set/difference required-fields (set (keys vd))))
+
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
-   (let [view-definition (remove-decoration (:current-vd db))]
-     {:db         (assoc db ::m/eval-loading true)
-      :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
-                                                       :params {:limit 100
-                                                                :view  view-definition}})
-                      (assoc :on-success [::on-eval-view-definition-success]
-                             :on-failure [::on-eval-view-definition-error]))})))
+   (let [view-definition (remove-decoration (:current-vd db))
+         empty-fields? (empty-inputs-in-vd? view-definition)
+         missing-required-fields (missing-required-fields view-definition)]
+     (cond
+       (seq missing-required-fields)
+       {:db         (assoc db ::m/empty-inputs? true)
+        :notification-error
+        (let [fields (mapv name missing-required-fields)
+              fields-str (str/join ", " fields)]
+          (utils.string/format
+            "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
+
+       empty-fields?
+       {:db         (assoc db ::m/empty-inputs? true)}
+
+       :else
+       {:db         (-> (assoc db ::m/eval-loading true)
+                        (dissoc ::m/empty-inputs?))
+        :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
+                                                         :params {:limit 100
+                                                                  :view  view-definition}})
+                        (assoc :on-success [::on-eval-view-definition-success]
+                               :on-failure [::on-eval-view-definition-error]))}))))
 
 (reg-event-db
  ::reset-vd-error
