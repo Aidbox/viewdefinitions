@@ -236,7 +236,7 @@
 
   (is (= true (sut/empty-inputs-in-vd? {:select [{:column [{:path "" :name "1"}]}]})))
 
-  (is (= true (sut/empty-inputs-in-vd? {:select [{:column [{:path "1" :name "1"}]}]})))
+  (is (not= true (sut/empty-inputs-in-vd? {:select [{:column [{:path "1" :name "1"}]}]})))
 
   (is (= true (sut/empty-inputs-in-vd? {:name ""
                                         :resource ""
