@@ -76,10 +76,14 @@
 
 (defonce root-element (rdom-client/create-root (.getElementById js/document "app")))
 
+(def functional-compiler
+  "https://github.com/reagent-project/reagent/blob/master/doc/ReagentCompiler.md"
+  (reagent.core/create-compiler {:function-components true}))
+
 (defn init []
   (routes/start-reitit)
   (re-frame/dispatch-sync [::initialize-db])
-  (.render root-element (r/as-element [(fn [] current-page)])))
+  (rdom-client/render root-element (r/as-element [(fn [] current-page)]) functional-compiler))
 
 (defn ^:dev/after-load re-render []
   (re-frame/clear-subscription-cache!)

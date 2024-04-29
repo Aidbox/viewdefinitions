@@ -1,6 +1,6 @@
 (ns vd-designer.pages.settings.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [List Modal Row]]
+            [antd :refer [List Modal Row App]]
             [clojure.string :as str]
             [vd-designer.components.modal :as modal]
             [medley.core :as medley]
