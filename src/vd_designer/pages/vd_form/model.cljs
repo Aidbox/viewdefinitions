@@ -1,6 +1,8 @@
 (ns vd-designer.pages.vd-form.model
-  (:require [re-frame.core :refer [reg-sub]]
-            [vd-designer.components.select :refer [options-from-vec]]))
+  (:require
+   [re-frame.core :refer [reg-sub]]
+   [vd-designer.components.select :refer [options-from-vec]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]))
 
 (reg-sub
  ::view-definition-data
@@ -64,3 +66,9 @@
  ::empty-inputs?
  (fn [db _]
    (::empty-inputs? db)))
+
+(reg-sub
+ ::children
+ (fn [db [_ path]]
+  (get-in db (into [:current-vd]
+                   (uuid->idx path (:current-vd db))))))

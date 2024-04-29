@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.form.tree
   (:require
-   [antd :refer [Flex]]
+   [antd :refer [Flex Space]]
    [clojure.set :as set]
    [clojure.string :as str]
    [re-frame.core :refer [dispatch subscribe]]
@@ -115,12 +115,22 @@
     :constant      false
     :where         false))
 
+(defn render-column-names [node-key]
+  (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
+        column-closed? (not (expanded-nodes node-key))
+        column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
+    [:span.cut-text (str/join ", " column-names)]))
+
 (defn- general-node [kind ctx render-children]
   (let [node-key (:value-path ctx)
-        tag      (tree-tag kind)]
-    (js/console.debug (str "(node key)["   (name kind) "]: " node-key))
+        tag      (tree-tag kind)
+        column? (= :column kind)]
     (tree-node node-key
-               (cond-> [base-node-row node-key tag]
+               (cond-> [base-node-row node-key
+                        [:> Space {:align :center :style {:height "30px"}}
+                         tag
+                         (when column?
+                           [render-column-names node-key])]]
                  (node-deletable? kind) (conj [delete-button (drop-value-path ctx)]))
                (render-children node-key))))
 

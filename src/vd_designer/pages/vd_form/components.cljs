@@ -60,6 +60,7 @@
   (->> cols
        (mapv (fn [col] [:> Col {:flex "30px"} col]))
        (into [:> Row {:align :middle
+                      :wrap false
                       :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
               [:> Col {:flex :auto} col1]])))
 

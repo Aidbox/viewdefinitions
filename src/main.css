@@ -101,3 +101,12 @@ button {
   opacity: 1;
 
 }
+
+.vd-tree .ant-tree-title .cut-text {
+  display: inline-flex;
+  height: 30px;
+  overflow: hidden;
+  color: #B5B5BC;
+  word-break: break-all;
+  align-self: stretch
+}
