@@ -125,11 +125,17 @@
              (conj (:value-path ctx) key)
              value]))
 
+(defn eval-on-ctrl-enter [event]
+  (when (and (= "Enter" (.-key event))
+             (or (.-ctrlKey event) (.-metaKey event)))
+    (dispatch [::c/eval-view-definition-data])))
+
 (defn name-input [ctx vd-form]
   (let [errors? @(subscribe [::m/empty-inputs?])]
     [base-input-row ctx
      [tag/default "name"]
      [input {:value       (:name vd-form)
+             :onKeyDown   eval-on-ctrl-enter
              :placeholder "ViewDefinition"
              :classNames {:input
                           (if (and (str/blank? (:name vd-form)) errors?)
@@ -201,6 +207,7 @@
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
+              :onKeyDown eval-on-ctrl-enter
               :onMouseEnter #(dispatch [::c/change-draggable-node false])
               :onMouseLeave #(dispatch [::c/change-draggable-node true])
               :defaultValue value
@@ -214,7 +221,7 @@
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   (render-input ctx input-type placeholder kind value)
+   [render-input ctx input-type placeholder kind value]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])

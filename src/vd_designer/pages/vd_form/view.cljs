@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Row Space]]
+            [antd :refer [Flex Row Space Tooltip Button]]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
@@ -68,10 +68,14 @@
               :tabBarExtraContent {:right (r/as-element
                                            [:> Flex {:gap 9
                                                      :style {:margin-right "8px"}}
-                                            [button/button "Run" {:onClick #(dispatch [::c/eval-view-definition-data])
-                                                                  :icon    (r/create-element icons/PlayCircleOutlined)
-                                                                  :loading @(subscribe [::m/eval-loading])
-                                                                  :style   {:max-width "80px"}}]
+                                            [:> Tooltip
+                                             {:placement       "bottom"
+                                              :mouseEnterDelay 0.5
+                                              :title           "Ctrl+Enter"}
+                                             [:> Button {:onClick #(dispatch [::c/eval-view-definition-data])
+                                                         :icon    (r/create-element icons/PlayCircleOutlined)
+                                                         :loading @(subscribe [::m/eval-loading])
+                                                         :style   {:max-width "80px"}} "Run"]]
                                             [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])
                                                                    :icon    (r/create-element icons/SaveOutlined)
                                                                    :loading @(subscribe [::m/save-loading])
