@@ -99,5 +99,18 @@ button {
 
 .vd-tree .ant-tree-draggable-icon:hover {
   opacity: 1;
+}
 
+
+.vd-table .ant-table-thead>tr>th {
+  overflow-wrap: break-word;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  word-break: keep-all;
+}
+
+.vd-table .ant-table-tbody>tr>td {
+  min-width: 48px;
+  max-width: 128px;
 }

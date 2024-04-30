@@ -20,6 +20,7 @@
                                                 :headerBorderRadius 0}}}}
      [:> Table (medley/deep-merge
                 {:columns    columns
+                 :sticky     true
                  :dataSource data
                  :rowKey     (fn [row] (hash (js->clj row {:keywordize-keys true})))}
                 opts)]]))
