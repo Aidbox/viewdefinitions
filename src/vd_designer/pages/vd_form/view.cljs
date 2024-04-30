@@ -86,5 +86,6 @@
      [:> Panel {:minSize 20}
       [h1 "Results" :style {:margin-left "20px"}]
       [table (:data resources)
-       {:scroll {:y 1000
+       {:class  "vd-table"
+        :scroll {:y 1000
                  :x true}}]]]))
