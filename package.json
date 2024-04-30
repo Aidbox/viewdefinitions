@@ -18,7 +18,7 @@
     "react-resizable-panels": "^2.0.16",
     "sql-formatter": "^15.3.0",
     "xmlhttprequest": "^1.8.0",
-    "yaml": "^2.4.1"
+    "yaml": "^2.4.2"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
