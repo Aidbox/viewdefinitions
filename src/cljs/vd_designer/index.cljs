@@ -27,6 +27,7 @@
                          {:title "New"}]}]
     (m route)))
 
+
 ;;;; Initialization
 
 (def default-servers {"Aidbox Default"
@@ -50,6 +51,7 @@
      {:db db}
      {:db {:view-definitions    []
            :side-menu-collapsed false
+           :authorized?         false ;; TODO
            :cfg/fhir-servers    {:servers          default-servers
                                  :used-server-name (-> default-servers
                                                        first
