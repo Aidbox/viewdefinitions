@@ -9,11 +9,11 @@
             [vd-designer.components.input :as components.input]
             [vd-designer.components.list :as components.list]
             [vd-designer.components.modal :as modal]
-            [vd-designer.components.pop-confirm :refer [auth-required]]
             [vd-designer.components.tabs :as tabs]
+            [vd-designer.pages.auth.model :as auth-model]
+            [vd-designer.pages.auth.view :refer [auth-required]]
             [vd-designer.pages.settings.controller :as c]
             [vd-designer.pages.settings.model :as m]
-            [vd-designer.pages.auth.model :as auth-model]
             [vd-designer.utils.event :refer [target-value]]
             [vd-designer.utils.react :refer [js-obj->clj-map]]
             [vd-designer.utils.string :as string-utils]))
@@ -133,7 +133,7 @@
 (defn- add-server-button [authorized?]
   (if authorized?
     [button/add "New server" {:on-click #(dispatch [::c/new-server])}]
-    [auth-required [button/add "New server"] #(js/alert "TODO")]))
+    [auth-required [button/add "New server"]]))
 
 (defn server-list []
   (let [request-sent-by  @(subscribe [::m/request-sent-by])

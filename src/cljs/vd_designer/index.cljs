@@ -1,18 +1,19 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
-            [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
             [re-frame.core :as re-frame :refer [reg-event-fx
                                                 subscribe]]
             [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
-            [vd-designer.notifications]
+            [reitit.frontend.easy :as rfe]
             [vd-designer.components.layout :refer [layout]]
+            [vd-designer.notifications]
+            [vd-designer.pages.auth.model :refer [auth-db]]
+            [vd-designer.pages.settings.view]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.view]
-            [vd-designer.pages.settings.view]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
@@ -51,7 +52,7 @@
      {:db db}
      {:db {:view-definitions    []
            :side-menu-collapsed false
-           :authorized?         false ;; TODO
+           :auth                auth-db
            :cfg/fhir-servers    {:servers          default-servers
                                  :used-server-name (-> default-servers
                                                        first
@@ -92,4 +93,3 @@
 (defn ^:dev/after-load re-render []
   (re-frame/clear-subscription-cache!)
   (init))
-

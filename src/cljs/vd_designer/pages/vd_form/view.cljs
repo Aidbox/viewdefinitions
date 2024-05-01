@@ -1,24 +1,24 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [Flex Row Space Tooltip]]
+            [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
             [vd-designer.components.alert :refer [alert]]
             [vd-designer.components.button :as button]
             [vd-designer.components.heading :refer [h1]]
-            [vd-designer.components.pop-confirm :refer [auth-required]]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
+            [vd-designer.pages.auth.model :as auth-model]
+            [vd-designer.pages.auth.view :refer [auth-required]]
             [vd-designer.pages.vd-form.components :refer [toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
             [vd-designer.pages.vd-form.form :refer [form]]
             [vd-designer.pages.vd-form.form.settings :as form]
             [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.auth.model :as auth-model]
-            [vd-designer.pages.vd-form.sql :refer [sql]]
-            [medley.core :as medley]))
+            [vd-designer.pages.vd-form.sql :refer [sql]]))
 
 (defn- save-vd-button [authorized?]
   (let [button (fn [overrides]
@@ -31,7 +31,7 @@
     (if authorized?
       (button {:onClick #(dispatch [::c/save-view-definition])
                :loading @(subscribe [::m/save-loading])})
-      [auth-required (button {}) #(js/alert "TODO")])))
+      [auth-required (button {})])))
 
 (defn viewdefinition-view []
   (let [resources @(subscribe [::m/view-definition-data])
