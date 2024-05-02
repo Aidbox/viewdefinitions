@@ -81,6 +81,11 @@
  (fn [db [_ file]]
    (assoc-in db [:vd-import :file] file)))
 
+(reg-event-db
+ ::remove-import-content
+ (fn [db [_]]
+  (update db :vd-import dissoc :file :text)))
+
 (reg-event-fx
  ::import-success
  (fn [{:keys [db]} [_ vd]]
@@ -88,3 +93,8 @@
     :dispatch        [::close-import-modal]
     :message-success "Import completed"
     :navigate        [:form-create {:query-params {:imported true}}]}))
+
+(reg-event-db
+ ::change-upload-text
+ (fn [db [_ text]]
+   (assoc-in db [:vd-import :text] text)))
