@@ -25,7 +25,7 @@
 
 
 (defn edit-fhirpath [tree indexes]
-  (.edit tree indexes))
+  (.edit ^Tree tree indexes))
 
 (comment
 
