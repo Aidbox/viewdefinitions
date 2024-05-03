@@ -144,13 +144,11 @@
 
 (defn suggest [ctx parser tree {:keys [text selection-start resource-type]}]
   (let [tree (parse parser text tree)
-        result (travers-sitter-tree tree selection-start)
         ;; We need to get two things:
         ;; 1. Context path
         ;; 1.5 With types
         ;; 2. Actual part
         ]
-    (println 'result result)
     {:tree    tree
      :options (->> (travers-sitter-tree tree selection-start)
                    (autocomplete ctx resource-type))}))

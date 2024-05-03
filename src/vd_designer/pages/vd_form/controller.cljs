@@ -1,11 +1,14 @@
+(ns vd-designer.pages.vd-form.controller
   (:require
     [clojure.string :as str]
-    [clojure.set :as set]
+    [clojure.set :as set] 
+    [shadow.resource :as rc]
     [medley.core :as medley]
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]] 
+    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
     [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
     [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
                                                             remove-decoration
@@ -32,7 +35,11 @@
             (assoc ::m/language :language/yaml)
 
             (not vd-id)
-            (set-view-definition-status))
+            (set-view-definition-status)
+
+            ;; TODO: rework
+            :always
+            (assoc :spec-map (utils.fhir-spec/spec-map (rc/inline "fhir_schema.ndjson"))))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
@@ -413,14 +420,16 @@
   (fn [{{old-ctx    ::m/autocomplete-ctx
          parser     ::m/parser-instance
          current-vd :current-vd
+         spec-map   :spec-map
          :as        db} :db}
        [_ {:keys [text] :as new-ctx}]]
     ;; call edit
-    (let [new-ctx (assoc new-ctx
-                    :resource-type (:resource current-vd))
-          {:keys [tree options]} (autocomplete parser {} old-ctx new-ctx)]
+    (let [new-ctx
+          (assoc new-ctx :resource-type (:resource current-vd))
+
+          {:keys [tree options]}
+          (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
       ;; (js/console.log (. ^Node (. tree -rootNode) toString))
-      (println options)
       {:db (-> db
                (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options
