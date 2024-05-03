@@ -17,7 +17,8 @@
    [vd-designer.pages.vd-form.model :as m]
    [vd-designer.utils.event :as u]
    [vd-designer.utils.js :refer [find-elements get-element-by-id remove-class
-                                 toggle-class]]))
+                                 toggle-class]] 
+   [vd-designer.utils.string :as str.utils]))
 
 ;;;; Tags
 
@@ -225,11 +226,36 @@
               :selection-start (u/selection-start event)
               :selection-end   (u/selection-end event)}]))
 
+(defn cons-prev-text
+  "Since round trip of input causes input lag,
+   suggested values should already contain text before suggestion was selected"
+  [prev-text options]
+  (mapv (fn [option]
+          (let [intersection-length
+                (str.utils/tail-head-intersection prev-text (:value option))]
+            (update option :value #(->> (subs % intersection-length)
+                                        (str prev-text)))))
+        options))
+
+(defn enrich-with-icon [icon options]
+  (mapv (fn [option]
+          (update option :label
+                  (fn [label]
+                    (r/as-element
+                      [:span [:> icon]
+                       (str " " label)]))))
+        options))
+
+(defn ->ui-options [{:keys [fields functions previous-text]}]
+  (->> (into (enrich-with-icon icons/ContainerOutlined fields)
+             (enrich-with-icon icons/FunctionOutlined functions))
+       (cons-prev-text previous-text)))
+
 (defn autocomplete [ctx key value & {:as opts}]
   (let [options @(subscribe [::m/autocomplete-options])]
     [:> AutoComplete (medley/deep-merge
                        {:style        {:width "100%"}
-                        :options      options
+                        :options      (->ui-options options)
                         :defaultValue value
                         ;;:onSearch #(dispatch [::c/update-autocomplete-text %])
                         ;;:onKeyDown #(js/console.log (u/target-value %) (u/selection-start %) (u/selection-end %))
