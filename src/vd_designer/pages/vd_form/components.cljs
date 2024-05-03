@@ -289,7 +289,6 @@
                       {:style        {:width "100%"}
                        :options      rendered-options
                        :defaultValue value
-                       :getInputElement (fn [] (println "hello world") [:input])
                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
                                      (.preventDefault %))
                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
@@ -297,13 +296,14 @@
                        :onInput  #(update-autocomplete-fn %)
                        :onClick  update-autocomplete-fn
                        :onChange #(change-input-value ctx key %)}
-                      opts)]))
+                      opts)
+     [input {:placeholder "path"}]]))
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [:f> autocomplete ctx kind value {:placeholder "path"}]
+   [autocomplete ctx kind value {:placeholder "path"}]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])

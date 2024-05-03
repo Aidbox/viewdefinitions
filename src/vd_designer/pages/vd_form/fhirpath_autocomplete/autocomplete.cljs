@@ -91,11 +91,7 @@
   (mapv
    (fn [[k v :as suggection]]
      (if (-> v :choiceOf)
-       (do
-         (println k v)
-         [k
-          (doto (assoc v :value (str (:choiceOf v) ".ofType(" (:type v) ")"))
-            println)])
+       [k (assoc v :value (str (:choiceOf v) ".ofType(" (:type v) ")"))]
        suggection))
    suggestions))
 

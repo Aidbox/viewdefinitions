@@ -429,13 +429,11 @@
          spec-map   :spec-map
          :as        db} :db}
        [_ new-ctx]]
-    ;; call edit
     (let [new-ctx
           (assoc new-ctx :resource-type (:resource current-vd))
 
           {:keys [tree options]}
           (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
-      ;; (js/console.log (. ^Node (. tree -rootNode) toString))
       {:db (-> db
                (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options
