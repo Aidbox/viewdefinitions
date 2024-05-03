@@ -72,3 +72,8 @@
  (fn [db [_ path]]
   (get-in db (into [:current-vd]
                    (uuid->idx path (:current-vd db))))))
+
+(reg-sub
+  ::autocomplete-options
+  (fn [db _]
+    (::autocomplete-options db)))

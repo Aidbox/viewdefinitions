@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [Checkbox Col ConfigProvider Form Popover Row Select Space]]
+   [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]]
@@ -218,11 +218,24 @@
                              "default-input")}
               :onChange     #(change-input-value ctx kind (u/target-value %))}])))
 
+(defn autocomplete [ctx value & {:as opts}]
+  (let [options @(subscribe [::m/autocomplete-options])]
+    [:> AutoComplete (medley/deep-merge
+                     {:style        {:width "100%"}
+                      :options      options
+                      :defaultValue value}
+                     opts)
+   [:> Input {:onChange #(dispatch [::c/update-autocomplete-options
+                                    {:ctx             ctx
+                                     :selection-start (u/selection-start %)
+                                     :selection-end   (u/selection-end %)
+                                     :text            (u/target-value %)}])}]]))
+
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx input-type placeholder kind value]
+   [autocomplete ctx value {:placeholder "path"}]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])

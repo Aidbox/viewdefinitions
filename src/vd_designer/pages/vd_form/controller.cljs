@@ -294,6 +294,7 @@
                           (current-type   constant-map))
                    (dissoc :type))))))
 
+<<<<<<< HEAD
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
 
@@ -376,3 +377,9 @@
   ::change-draggable-node
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
+=======
+(reg-event-db
+  ::update-autocomplete-options
+  (fn [db [_ autocomplete-params]]
+    (assoc db ::m/autocomplete-options (fhir-path autocomplete-params))))
+>>>>>>> 7d730a8 (add(#71): autocomplete with hard-coded logic)
