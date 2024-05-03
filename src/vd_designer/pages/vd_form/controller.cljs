@@ -394,10 +394,10 @@
    {:notification-error error-msg}))
 
 (defn cursor-start [ctx]
-  (+ (:selection-start ctx) (.-length (:fhirpath-prefix ctx))))
+  (+ (:cursor-start ctx) (.-length (:fhirpath-prefix ctx))))
 
 (defn cursor-end [ctx]
-  (+ (:selection-end ctx) (.-length (:fhirpath-prefix ctx))))
+  (+ (:cursor-end ctx) (.-length (:fhirpath-prefix ctx))))
 
 (defn cursor-diff [old-ctx new-ctx]
   {:startIndex (cursor-start old-ctx)
@@ -428,7 +428,7 @@
          current-vd :current-vd
          spec-map   :spec-map
          :as        db} :db}
-       [_ {:keys [text] :as new-ctx}]]
+       [_ new-ctx]]
     ;; call edit
     (let [new-ctx
           (assoc new-ctx :resource-type (:resource current-vd))
@@ -439,6 +439,6 @@
       {:db (-> db
                (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options
-                      (-> options
-                          (assoc :previous-text text)
-                          (assoc :cursor-position (:selection-start new-ctx)))))})))
+                      (-> {}
+                          (assoc :options options)
+                          (assoc :request new-ctx))))})))

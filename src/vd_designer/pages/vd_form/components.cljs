@@ -4,7 +4,8 @@
    [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]]
+   [re-frame.core :refer [dispatch subscribe]] 
+   ["react" :as react]
    [reagent.core :as r]
    [vd-designer.components.button :as button]
    [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
@@ -224,8 +225,8 @@
              {:id              key
               :text            (u/target-value event)
               :fhirpath-prefix fhirpath-prefix
-              :selection-start (u/selection-start event)
-              :selection-end   (u/selection-end event)}]))
+              :cursor-start (u/selection-start event)
+              :cursor-end   (u/selection-end event)}]))
 
 (defn cons-prev-text
   "Since round trip of input causes input lag,
@@ -236,11 +237,13 @@
         rest-text (subs prev-text cursor-position)]
     (mapv (fn [option]
             (let [suggested-text (:value option)]
-              (assoc option :value (if (str/starts-with? rest-text suggested-text)
-                                     prev-text
-                                     (if (str/starts-with? suggested-text rest-text)
-                                       (str start-text suggested-text)
-                                       (str start-text suggested-text rest-text))))))
+              (-> option
+                  (assoc :value (if (str/starts-with? rest-text suggested-text)
+                                  prev-text
+                                  (if (str/starts-with? suggested-text rest-text)
+                                    (str start-text suggested-text)
+                                    (str start-text suggested-text rest-text))))
+                  (update :cursor + cursor-position))))
           options)))
 
 (defn render-option [icon options]
@@ -259,10 +262,10 @@
                                      :color "#1677ff"}} (str " " (:type option))]]))))
         options))
 
-(defn ->ui-options [{:keys [fields functions previous-text cursor-position]}]
+(defn ->ui-options [{:keys [text cursor-start]} {:keys [fields functions]} ]
   (->> (into (render-option icons/ContainerOutlined fields)
              (render-option icons/FunctionOutlined functions))
-       (cons-prev-text previous-text cursor-position)))
+       (cons-prev-text text cursor-start)))
 
 (defn get-completed-text [{:keys [cursor-pos value] :as _option} text pos]
   (let [start-str (subs text 0 pos)
@@ -274,15 +277,25 @@
              (str start-str value rest-str))}))
 
 (defn autocomplete [ctx key value & {:as opts}]
-  (let [options @(subscribe [::m/autocomplete-options])]
+  (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        update-autocomplete-fn #(trigger-update-autocomplete-text-event
+                                 (:value-path ctx)
+                                 (:fhirpath-ctx ctx)
+                                 %)
+        rendered-options (if (= (:value-path ctx) (:id request))
+                           (->ui-options request options)
+                           [])]
     [:> AutoComplete (medley/deep-merge
                       {:style        {:width "100%"}
-                       :options      (->ui-options options)
+                       :options      rendered-options
                        :defaultValue value
+                       :getInputElement (fn [] (println "hello world") [:input])
+                       :onKeyDown #(when (= "Escape" (u/pressed-key %))
+                                     (.preventDefault %))
                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                    (trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %))
-                       :onInput  #(trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %)
-                       :onClick  #(trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %)
+                                    (update-autocomplete-fn %))
+                       :onInput  #(update-autocomplete-fn %)
+                       :onClick  update-autocomplete-fn
                        :onChange #(change-input-value ctx key %)}
                       opts)]))
 
@@ -290,7 +303,7 @@
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [autocomplete ctx kind value {:placeholder "path"}]
+   [:f> autocomplete ctx kind value {:placeholder "path"}]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])

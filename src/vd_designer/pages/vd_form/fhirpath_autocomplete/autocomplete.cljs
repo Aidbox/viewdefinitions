@@ -87,6 +87,18 @@
 (defn remove-base-polimorphics [suggestions]
   (remove #(-> % val :choices) suggestions))
 
+(defn change-value-for-polymorphics [suggestions]
+  (mapv
+   (fn [[k v :as suggection]]
+     (if (-> v :choiceOf)
+       (do
+         (println k v)
+         [k
+          (doto (assoc v :value (str (:choiceOf v) ".ofType(" (:type v) ")"))
+            println)])
+       suggection))
+   suggestions))
+
 (defn autocomplete
   ([ctx resource-type options]
    (autocomplete ctx [:elements] resource-type options))
@@ -99,11 +111,12 @@
       (->> fhirschema-ctx
            (filter-by-name part)
            (remove-base-polimorphics)
+           (change-value-for-polymorphics)
            (mapv
             (fn [[k v]]
               (let [k (name k)]
                 {:label (name k)
-                 :value (subs k cursor-position)
+                 :value (subs (or (:value v) k) cursor-position)
                  :full-value (name k)
                  :type  (:type v)}))))
       :functions
@@ -111,10 +124,11 @@
            (filter-by-name part)
            (mapv
             (fn [[k v]]
-              {:label  (name k)
-               :value  (subs (:value v) cursor-position)
-               :type   (:type v)
-               :cursor (:cursor v)})))})))
+              (let [value (subs (:value v) cursor-position)]
+                {:label  (name k)
+                 :value  value  
+                 :type   (:type v)
+                 :cursor (- (:cursor v) cursor-position)}))))})))
 
 (defn edit [tree indexes]
   (tree-sitter/edit-fhirpath tree indexes))
@@ -127,9 +141,9 @@
     (catch js/Error e
       (js/console.log e))))
 
-(defn suggest [ctx parser tree {:keys [text fhirpath-prefix selection-start resource-type]}]
+(defn suggest [ctx parser tree {:keys [text fhirpath-prefix cursor-start resource-type]}]
   (let [text (str fhirpath-prefix text)
-        cursor-start (+ selection-start (.-length fhirpath-prefix))
+        cursor-start (+ cursor-start (.-length fhirpath-prefix))
         tree (parse parser text tree)
         traverse-result (travers-sitter-tree tree cursor-start)
         ;; We need to get two things:
