@@ -13,10 +13,9 @@
       (js/JSON.parse)
       (js->clj :keywordize-keys true)))
 
-(defn spec-map [json-str]
-  (let [curr-spec (spec json-str)
-        als (aliases curr-spec)]
-    (->> curr-spec
+(defn spec-map [spec]
+  (let [als (aliases spec)]
+    (->> spec
          (group-by :id)
          (medley/map-vals first)
          (reduce (fn [acc [k v]]

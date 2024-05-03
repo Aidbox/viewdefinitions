@@ -1,8 +1,8 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
+   [ajax.core :as ajax]
    [clojure.string :as str]
    [clojure.set :as set]
-   [shadow.resource :as rc]
    [medley.core :as medley]
    [re-frame.core :refer [reg-event-db reg-event-fx]]
    [vd-designer.http.fhir-server :as http.fhir-server]
@@ -38,10 +38,9 @@
 
             (not vd-id)
             (set-view-definition-status)
-
-            ;; TODO: rework
+            
             :always
-            (assoc :spec-map (utils.fhir-spec/spec-map (rc/inline "fhir_schema.ndjson"))))
+            (assoc :spec-map {}))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
@@ -50,12 +49,35 @@
             (conj [:dispatch [::process-import]])
 
             vd-id
-            (conj [:dispatch [::get-view-definition vd-id]]))})))
+            (conj [:dispatch [::get-view-definition vd-id]])
+
+            :always
+            (conj [:dispatch [::load-fhir-schemas]]))})))
 
 (reg-event-fx
  ::stop
  (fn [{db :db} [_]]
    {:db (dissoc db :current-vd ::m/resource-data ::m/language)}))
+
+(reg-event-fx
+ ::load-fhir-schemas
+ (fn [_ _]
+   {:http-xhrio {:uri "/fhir_schemas.json"
+                 :timeout 8000
+                 :format (ajax/json-request-format)
+                 :response-format  (ajax/json-response-format {:keywords? true})
+                 :on-success [::load-fhir-schemas-success]
+                 :on-failure [::load-fhir-schemas-error]}}))
+
+(reg-event-db
+ ::load-fhir-schemas-success 
+ (fn [db [_ schemas]]
+   (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
+
+(reg-event-fx
+ ::load-fhir-schemas-error 
+ (fn [_ _]
+   {:notification-error "Error on downloading fhir schemas!"}))
 
 (reg-event-fx
  ::get-supported-resource-types
