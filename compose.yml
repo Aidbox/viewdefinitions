@@ -5,7 +5,6 @@ services:
     pull_policy: always
     ports:
       - "8280:80"
-      - "8243:443"
 
   watchtower:
     image: containrrr/watchtower
