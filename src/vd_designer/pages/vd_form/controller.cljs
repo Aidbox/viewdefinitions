@@ -1,21 +1,23 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
-    [clojure.string :as str]
-    [clojure.set :as set] 
-    [shadow.resource :as rc]
-    [medley.core :as medley]
-    [re-frame.core :refer [reg-event-db reg-event-fx]]
-    [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                   get-select-path]] 
-    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                            remove-decoration
-                                                            uuid->idx]]
-    [vd-designer.pages.vd-form.model :as m]
-    [vd-designer.utils.event :refer [response->error]]
-    [vd-designer.utils.utils :as utils]))
+   [clojure.string :as str]
+   [clojure.set :as set]
+   [shadow.resource :as rc]
+   [medley.core :as medley]
+   [re-frame.core :refer [reg-event-db reg-event-fx]]
+   [vd-designer.http.fhir-server :as http.fhir-server]
+   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                  get-select-path]]
+   [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
+   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                           remove-decoration
+                                                           uuid->idx]]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :refer [response->error]]
+   [vd-designer.utils.utils :as utils]
+   [vd-designer.utils.string :as utils.string]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -147,8 +149,8 @@
 
 (reg-event-db
  ::on-vd-error
- (fn-traced [db [_ result]]
-            (assoc db ::m/current-vd-error (response->error result))))
+ (fn [db [_ result]]
+   (assoc db ::m/current-vd-error (response->error result))))
 
 (reg-event-db
  ::on-eval-view-definition-success
@@ -165,7 +167,7 @@
 
 (reg-event-db
  ::change-input-value
- (fn-traced [db [_ path value]]
+ (fn [db [_ path value]]
    (let [real-path (uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
@@ -299,7 +301,6 @@
                           (current-type   constant-map))
                    (dissoc :type))))))
 
-<<<<<<< HEAD
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
 
@@ -409,17 +410,6 @@
     (autocomplete/suggest spec-ctx parser nil new-ctx)
     (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
       (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
-
-(defn cons-prev-text
-  "Since round trip of input causes input lag,
-   suggested values should already contain text before suggestion was selected"
-  [prev-text options]
-  (mapv (fn [option]
-          (let [chars-to-cut (utils/tail-head-intersection
-                               prev-text (:value option))]
-            (update option :value #(->> (subs % chars-to-cut)
-                                        (str prev-text)))))
-        options))
 
 (reg-event-fx
   ::update-autocomplete-text

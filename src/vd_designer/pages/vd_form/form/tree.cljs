@@ -39,7 +39,7 @@
       (if (nil? name-key)
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
-          [input {:value       name
+          [input {:defaultValue name
                   :placeholder "name"
                   :classNames {:input
                                (if (and (str/blank? name) errors?)
@@ -49,7 +49,7 @@
                   :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
                   :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                   :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
-     [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
+     [fhir-path-input ctx value-key value deletable? settings-form placeholder :fhirpath]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
   [general-leaf ctx

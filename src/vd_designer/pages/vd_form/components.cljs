@@ -1,11 +1,10 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input Popover Row Select Space]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]] 
-   ["react" :as react]
    [reagent.core :as r]
    [vd-designer.components.button :as button]
    [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
@@ -18,8 +17,7 @@
    [vd-designer.pages.vd-form.model :as m]
    [vd-designer.utils.event :as u]
    [vd-designer.utils.js :refer [find-elements get-element-by-id remove-class
-                                 toggle-class]] 
-   [vd-designer.utils.string :as str.utils]))
+                                 toggle-class]]))
 
 ;;;; Tags
 
@@ -198,28 +196,6 @@
                                            (toggle-popover nil nil))
                              :id        button-id}]]]))
 
-(defn render-input [ctx input-type placeholder kind value]
-  (case input-type
-    :number [input-number {:placeholder  (or placeholder "path")
-                           :defaultValue value
-                           :onChange #(change-input-value ctx kind %)}]
-    :boolean [:div {:style {:width "100%"}}
-              [:> Checkbox
-               {:checked  value
-                :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
-
-    (let [errors? @(subscribe [::m/empty-inputs?])]
-      [input {:placeholder  (or placeholder "path")
-              :onKeyDown eval-on-ctrl-enter
-              :onMouseEnter #(dispatch [::c/change-draggable-node false])
-              :onMouseLeave #(dispatch [::c/change-draggable-node true])
-              :defaultValue value
-              :classNames {:input
-                           (if (and (str/blank? value) errors?)
-                             "default-input red-input"
-                             "default-input")}
-              :onChange     #(change-input-value ctx kind (u/target-value %))}])))
-
 (defn trigger-update-autocomplete-text-event [key fhirpath-prefix event]
   (dispatch [::c/update-autocomplete-text
              {:id              key
@@ -267,15 +243,6 @@
              (render-option icons/FunctionOutlined functions))
        (cons-prev-text text cursor-start)))
 
-(defn get-completed-text [{:keys [cursor-pos value] :as _option} text pos]
-  (let [start-str (subs text 0 pos)
-        rest-str (subs text pos)
-        cursor-offset (or cursor-pos (count value))]
-    {:pos  (+ pos cursor-offset)
-     :text (if (str/starts-with? rest-str value)
-             text
-             (str start-str value rest-str))}))
-
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         update-autocomplete-fn #(trigger-update-autocomplete-text-event
@@ -284,26 +251,68 @@
                                  %)
         rendered-options (if (= (:value-path ctx) (:id request))
                            (->ui-options request options)
-                           [])]
-    [:> AutoComplete (medley/deep-merge
-                      {:style        {:width "100%"}
-                       :options      rendered-options
-                       :defaultValue value
-                       :onKeyDown #(when (= "Escape" (u/pressed-key %))
-                                     (.preventDefault %))
-                       :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                    (update-autocomplete-fn %))
-                       :onInput  #(update-autocomplete-fn %)
-                       :onClick  update-autocomplete-fn
-                       :onChange #(change-input-value ctx key %)}
-                      opts)
-     [input {:placeholder "path"}]]))
+                           [])
+        errors? @(subscribe [::m/empty-inputs?])]
+    [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
+                                                     :hoverBorderColor  "#7972D3"
+                                                     :paddingInline     0}}}}
+     [:> AutoComplete (medley/deep-merge
+                       {:style        {:width "100%"}
+                        :options      rendered-options
+                        :defaultValue value
+                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
+                                      (.preventDefault %))
+                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                     (update-autocomplete-fn %))
+                        :onInput  #(update-autocomplete-fn %)
+                        :onClick  update-autocomplete-fn
+                        :onChange #(change-input-value ctx key %)}
+                       opts)
+      [:> Input (medley/deep-merge
+                 {:style
+                  {:font-style       "italic"
+                   :border           "none"
+                   :border-bottom    "1px solid transparent"
+                   :border-radius    0
+                   :background-color "transparent"}
+                  :classNames {:input
+                               (if (and (str/blank? value) errors?)
+                                 "default-input red-input"
+                                 "default-input")}
+                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
+                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}
+                 opts)]]]))
+
+(defn render-input [ctx input-type placeholder kind value]
+  (case input-type
+    :number [input-number {:placeholder  (or placeholder "path")
+                           :defaultValue value
+                           :onChange #(change-input-value ctx kind %)}]
+    :boolean [:div {:style {:width "100%"}}
+              [:> Checkbox
+               {:checked  value
+                :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
+    
+    :fhirpath [autocomplete ctx kind value placeholder]
+
+    (let [errors? @(subscribe [::m/empty-inputs?])]
+      [input {:placeholder  (or placeholder "path")
+              :onKeyDown eval-on-ctrl-enter
+              :onMouseEnter #(dispatch [::c/change-draggable-node false])
+              :onMouseLeave #(dispatch [::c/change-draggable-node true])
+              :defaultValue value
+              :classNames {:input
+                           (if (and (str/blank? value) errors?)
+                             "default-input red-input"
+                             "default-input")}
+              :onChange     #(change-input-value ctx kind (u/target-value %))}])))
+
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [autocomplete ctx kind value {:placeholder "path"}]
+   [render-input ctx input-type placeholder kind value]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
