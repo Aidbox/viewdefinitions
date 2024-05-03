@@ -1,10 +1,7 @@
-(ns vd-designer.pages.vd-form.controller
   (:require
     [clojure.string :as str]
     [clojure.set :as set]
-    [day8.re-frame.tracing :refer-macros [fn-traced]]
     [medley.core :as medley]
-    [vd-designer.utils.string :as utils.string]
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
@@ -400,14 +397,33 @@
     (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
       (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
 
+(defn cons-prev-text
+  "Since round trip of input causes input lag,
+   suggested values should already contain text before suggestion was selected"
+  [prev-text options]
+  (mapv (fn [option]
+          (let [chars-to-cut (utils/tail-head-intersection
+                               prev-text (:value option))]
+            (update option :value #(->> (subs % chars-to-cut)
+                                        (str prev-text)))))
+        options))
+
 (reg-event-fx
   ::update-autocomplete-text
-  (fn [{{old-ctx ::m/autocomplete-ctx parser ::m/parser-instance :as db} :db} [_ id text start end]]
+  (fn [{{old-ctx    ::m/autocomplete-ctx
+         parser     ::m/parser-instance
+         current-vd :current-vd
+         :as        db} :db}
+       [_ {:keys [text] :as new-ctx}]]
     ;; call edit
-    (let [new-ctx {:id id
-                   :text text
-                   :selection-start start
-                   :selection-end end}]
-      (let [tree (autocomplete parser {} old-ctx new-ctx)]
-        ;; (js/console.log (. ^Node (. tree -rootNode) toString))
-        {:db (update db ::m/autocomplete-ctx (assoc new-ctx :tree tree))}))))
+    (let [new-ctx (assoc new-ctx
+                    :resource-type (:resource current-vd))
+          {:keys [tree options]} (autocomplete parser {} old-ctx new-ctx)]
+      ;; (js/console.log (. ^Node (. tree -rootNode) toString))
+      (println options)
+      {:db (-> db
+               (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
+               (assoc ::m/autocomplete-options
+                      (->> (into (:fields options)
+                                 (:functions options))
+                           (cons-prev-text text))))})))

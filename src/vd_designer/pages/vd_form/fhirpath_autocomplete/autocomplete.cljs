@@ -78,10 +78,9 @@
      (str/starts-with? n (name k)))
    fhirpath-fns))
 
-(defn make-context-path [path part-index]
+(defn make-context-path [path]
   (interleave (->> path
-                   (take part-index)
-                   (filter (complement fhirpath-function?))
+                   (remove fhirpath-function?)
                    (map keyword))
               (repeat :elements)))
 
@@ -109,44 +108,28 @@
       nil)))
 
 (defn autocomplete
-  ([ctx options]
-   (autocomplete ctx [:elements] options))
-  ([ctx
-    context-path
-    {:keys [selection-start selection-end text type]}]
-   (if (not= selection-start selection-end)
-     {:functions [] :fields []}
-     (let [
-           substracted-text (subs text 0 selection-start)
-           splitted-path (split-fhirpath substracted-text)
-           part-index (find-part-with-cursor splitted-path selection-start)
-
-           part (get splitted-path part-index)
-           current-context-path (make-context-path splitted-path part-index)
-           complete-context-path (into context-path current-context-path)]
-       (if-let [paren-position (has-open-paren? part)]
-         (let [inner-fhirpath (subs part (inc paren-position))]
-           (autocomplete ctx complete-context-path {:text inner-fhirpath
-                                                    :selection-start (count inner-fhirpath)
-                                                    :selection-end (count inner-fhirpath)
-                                                    :type type}))
-         (let [fhirschema-ctx (fhirschema/resolve-path ctx type complete-context-path)]
-           {:fields
-            (->> fhirschema-ctx
-                 (keys)
-                 (mapv name)
-                 (filterv #(str/starts-with? % part))
-                 (mapv
-                  (fn [k]
-                    {:label k :value k})))
-            :functions
-            (->> fhirpath-fns
-                 (filterv (fn [[k _]] (str/starts-with? (name k) part)))
-                 (mapv
-                  (fn [[k v]]
-                    {:label (name k)
-                     :value (:value v)
-                     :cursor (:cursor v)})))}))))))
+  ([ctx resource-type options]
+   (autocomplete ctx [:elements] resource-type options))
+  ([ctx context-path resource-type {:keys [ctx-path part]}]
+   (let [current-context-path (make-context-path ctx-path)
+         complete-context-path (into context-path current-context-path)
+         fhirschema-ctx (fhirschema/resolve-path ctx resource-type complete-context-path)]
+     {:fields
+      (->> fhirschema-ctx
+           (keys)
+           (mapv name)
+           (filterv #(str/starts-with? % part))
+           (mapv
+             (fn [k]
+               {:label k :value k})))
+      :functions
+      (->> fhirpath-fns
+           (filterv (fn [[k _]] (str/starts-with? (name k) part)))
+           (mapv
+             (fn [[k v]]
+               {:label  (name k)
+                :value  (:value v)
+                :cursor (:cursor v)})))})))
 
 (defn edit [tree indexes]
   (tree-sitter/edit-fhirpath tree indexes))
@@ -159,7 +142,7 @@
     (catch js/Error e
       (js/console.log e))))
 
-(defn suggest [ctx parser tree {:keys [text selection-start]}]
+(defn suggest [ctx parser tree {:keys [text selection-start resource-type]}]
   (let [tree (parse parser text tree)
         result (travers-sitter-tree tree selection-start)
         ;; We need to get two things:
@@ -167,8 +150,10 @@
         ;; 1.5 With types
         ;; 2. Actual part
         ]
-        (println 'result result)
-    tree))
+    (println 'result result)
+    {:tree    tree
+     :options (->> (travers-sitter-tree tree selection-start)
+                   (autocomplete ctx resource-type))}))
 
 (defn init []
   (tree-sitter/init-parser))
