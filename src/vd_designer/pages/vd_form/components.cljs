@@ -251,6 +251,15 @@
              (enrich-with-icon icons/FunctionOutlined functions))
        (cons-prev-text previous-text)))
 
+(defn get-completed-text [{:keys [cursor-pos value] :as _option} text pos]
+  (let [start-str (subs text 0 pos)
+        rest-str (subs text pos)
+        cursor-offset (or cursor-pos (count value))]
+    {:pos  (+ pos cursor-offset)
+     :text (if (str/starts-with? rest-str value)
+             text
+             (str start-str value rest-str))}))
+
 (defn autocomplete [ctx key value & {:as opts}]
   (let [options @(subscribe [::m/autocomplete-options])]
     [:> AutoComplete (medley/deep-merge
