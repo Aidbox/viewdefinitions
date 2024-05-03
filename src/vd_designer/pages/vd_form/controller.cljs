@@ -393,10 +393,16 @@
  (fn [{db :db} [_ error-msg]]
    {:notification-error error-msg}))
 
+(defn cursor-start [ctx]
+  (+ (:selection-start ctx) (.-length (:fhirpath-prefix ctx))))
+
+(defn cursor-end [ctx]
+  (+ (:selection-end ctx) (.-length (:fhirpath-prefix ctx))))
+
 (defn cursor-diff [old-ctx new-ctx]
-  {:startIndex (:selection-start old-ctx)
-   :oldEndIndex (:selection-end old-ctx)
-   :newEndIndex (:selection-end new-ctx)})
+  {:startIndex (cursor-start old-ctx)
+   :oldEndIndex (cursor-end old-ctx)
+   :newEndIndex (cursor-end new-ctx)})
 
 (defn autocomplete [parser spec-ctx old-ctx new-ctx]
   (if (not= (:id old-ctx) (:id new-ctx))

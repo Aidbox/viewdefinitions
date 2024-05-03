@@ -132,8 +132,8 @@
   (update ctx :fhirpath-ctx 
           (fn [path]
             (if (str/blank? path)
-              fhirpath
-              (str path "." fhirpath)))))
+              (str fhirpath ".")
+              (str path fhirpath ".")))))
 
 (defn create-render-context []
   {:fhirpath-ctx ""

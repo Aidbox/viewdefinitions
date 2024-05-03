@@ -127,16 +127,20 @@
     (catch js/Error e
       (js/console.log e))))
 
-(defn suggest [ctx parser tree {:keys [text selection-start resource-type]}]
-  (let [tree (parse parser text tree)
+(defn suggest [ctx parser tree {:keys [text fhirpath-prefix selection-start resource-type]}]
+  (let [text (str fhirpath-prefix text)
+        cursor-start (+ selection-start (.-length fhirpath-prefix))
+        tree (parse parser text tree)
+        traverse-result (travers-sitter-tree tree cursor-start)
         ;; We need to get two things:
         ;; 1. Context path
         ;; 1.5 With types
         ;; 2. Actual part
         ]
     {:tree    tree
-     :options (->> (travers-sitter-tree tree selection-start)
-                   (autocomplete ctx resource-type))}))
+     :options (if (:part traverse-result)
+                (autocomplete ctx resource-type traverse-result)
+                {:fields [] :functions []})}))
 
 (defn init []
   (tree-sitter/init-parser))

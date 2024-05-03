@@ -219,10 +219,11 @@
                              "default-input")}
               :onChange     #(change-input-value ctx kind (u/target-value %))}])))
 
-(defn trigger-update-autocomplete-text-event [key event]
+(defn trigger-update-autocomplete-text-event [key fhirpath-prefix event]
   (dispatch [::c/update-autocomplete-text
              {:id              key
               :text            (u/target-value event)
+              :fhirpath-prefix fhirpath-prefix
               :selection-start (u/selection-start event)
               :selection-end   (u/selection-end event)}]))
 
@@ -230,7 +231,8 @@
   "Since round trip of input causes input lag,
    suggested values should already contain text before suggestion was selected"
   [prev-text cursor-position options]
-  (let [start-text (subs prev-text 0 cursor-position)
+  (let [prev-text (or prev-text "")
+        start-text (subs prev-text 0 cursor-position)
         rest-text (subs prev-text cursor-position)]
     (mapv (fn [option]
             (let [suggested-text (:value option)]
@@ -277,23 +279,18 @@
                       {:style        {:width "100%"}
                        :options      (->ui-options options)
                        :defaultValue value
-                        ;;:onSearch #(dispatch [::c/update-autocomplete-text %])
-                       :onKeyUp    #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                      (trigger-update-autocomplete-text-event key %))
-                       :onInput      #(trigger-update-autocomplete-text-event key %)
-                       :onClick      #(trigger-update-autocomplete-text-event key %)
-                       #_(dispatch [::c/update-autocomplete-options
-                                    {:fhirpath        (:fhirpath-ctx ctx)
-                                     :selection-start (u/selection-start %)
-                                     :selection-end   (u/selection-end %)
-                                     :text            (u/target-value %)}])}
+                       :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                    (trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %))
+                       :onInput  #(trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %)
+                       :onClick  #(trigger-update-autocomplete-text-event key (:fhirpath-ctx ctx) %)
+                       :onChange #(change-input-value ctx key %)}
                       opts)]))
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [autocomplete ctx key value {:placeholder "path"}]
+   [autocomplete ctx kind value {:placeholder "path"}]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])

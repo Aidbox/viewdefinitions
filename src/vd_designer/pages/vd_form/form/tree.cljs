@@ -15,7 +15,8 @@
                                                  name-input resource-input
                                                  tree-tag]]
    [vd-designer.pages.vd-form.controller :as form-controller]
-   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path 
+                                                  add-fhirpath
                                                   drop-value-path
                                                   get-constant-type]]
    [vd-designer.pages.vd-form.form.settings :refer [column-settings
@@ -159,7 +160,11 @@
                   (let [ctx (drop-value-path ctx)]
                     [(tree-leaf (conj (:value-path ctx) :path)
                                 (foreach-expr-leaf ctx kind path))
-                     (nested-node :select (add-value-path ctx :select) select)]))))
+                     (nested-node :select 
+                                  (-> ctx
+                                      (add-value-path :select)
+                                      (add-fhirpath path)) 
+                                  select)]))))
 
 (defn determine-key
   "Expects an element of normalized view definition"
