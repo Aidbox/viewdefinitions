@@ -88,6 +88,26 @@ jobs:
           "echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
             docker compose down; docker compose up -d"
 
+  # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- #
+
+  prod-deployment:
+    name: Deploy to prod
+    needs:
+      - ui-docker
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'schedule' }}
+    # environment: prod
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authorize Google Account
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCLOUD_SERVICE_ACCOUNT_KEY }}'
+
+  # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- #
+
   on-failure:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}

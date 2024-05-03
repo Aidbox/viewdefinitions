@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vd-designer
+  namespace: viewdefinition
+  annotations:
+    acme.cert-manager.io/http01-ingress-class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+    - hosts:
+        - sqlonfhir.aidbox.app
+      secretName: vd-designer-tls
+  rules:
+    - host: sqlonfhir.aidbox.app
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: vd-designer
+                port:
+                  number: 80

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vd-designer
+  namespace: viewdefinition
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      service: vd-designer
+  template:
+    metadata:
+      labels:
+        service: vd-designer
+    spec:
+      containers:
+        - name: ui
+          image: ghcr.io/aidbox/viewdefinitions-ui:latest
+          ports:
+            - containerPort: 80
+              protocol: TCP
