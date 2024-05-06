@@ -110,13 +110,13 @@ jobs:
       - name: Get the GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
-          cluster_name: aidbox2
+          cluster_name: aidbox
           location: us-central1-a
 
       - name: Apply resources
         run: |-
-          kubectl apply -n ${{ env.K8S_NAMESPACE }} ./k8s/service.yaml
-          kubectl apply -n ${{ env.K8S_NAMESPACE }} ./k8s/ingress.yaml
+          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/service.yaml
+          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/ingress.yaml
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/prod
           kubectl rollout status deployment vd-designer -n ${{ env.K8S_NAMESPACE }}
           kubectl get services -n ${{ env.K8S_NAMESPACE }} -o wide
