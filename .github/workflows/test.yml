@@ -13,11 +13,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
 
       - uses: DeLaGuardo/setup-clojure@12.5
         with:
-          cli: 1.11.3.1456
+          cli: 1.11.3.1463
 
       - name: Cache clj deps
         id: cache-clj-deps
