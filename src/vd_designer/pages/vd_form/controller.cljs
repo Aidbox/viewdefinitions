@@ -8,7 +8,7 @@
     [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                   get-select-path]]
+                                                   get-select-path]] 
     [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
     [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
                                                             remove-decoration
@@ -29,6 +29,7 @@
  (fn [{db :db} [_ parameters]]
    (let [vd-id     (-> parameters :path  :id)
          imported? (-> parameters :query :imported)]
+     (autocomplete/init)
      {:db (cond-> db
             :always
             (assoc ::m/language :language/yaml)
@@ -377,7 +378,7 @@
   ::change-draggable-node
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
-=======
+
 (reg-event-db
   ::update-autocomplete-text
   (fn [db [_ text]]
@@ -394,4 +395,13 @@
   ::update-autocomplete-options
   (fn [db [_ autocomplete-params]]
     (assoc db ::m/autocomplete-options (fhir-path autocomplete-params))))
->>>>>>> 7d730a8 (add(#71): autocomplete with hard-coded logic)
+
+(reg-event-db
+ ::tree-sitter-load-success
+ (fn [db [_ parser-instance]]
+   (assoc db ::m/parser-instance parser-instance)))
+  
+(reg-event-fx
+ ::tree-sitter-load-error
+ (fn [db [_ error-msg]]
+   {:notification-error error-msg}))

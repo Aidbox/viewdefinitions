@@ -1,5 +1,6 @@
-(ns vd-designer.pages.vd-form.fhirpath-autocomplete
+(ns vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete
   (:require [clojure.string :as str]
+            [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter :as tree-sitter]
             [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
 
 (def fhirpath-fns 
@@ -121,3 +122,6 @@
                     {:label (name k)
                      :value (:value v)
                      :cursor (:cursor v)})))}))))))
+
+(defn init []
+  (tree-sitter/init-parser))

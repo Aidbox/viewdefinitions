@@ -18,6 +18,8 @@
                     :why "URI building"
                     :github "https://github.com/lambdaisland/uri"}
 
+  org.clojure/core.async {:mvn/version "1.6.681"}
+
   dev.weavejester/medley {:mvn/version "1.8.0"
                           :why "Functions we wish were in Clojure core"
                           :github "https://github.com/weavejester/medley"}}
