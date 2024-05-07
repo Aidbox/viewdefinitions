@@ -89,10 +89,10 @@
 
 (defn change-value-for-polymorphics [suggestions]
   (mapv
-   (fn [[k v :as suggection]]
+   (fn [[k v :as suggestion]]
      (if (-> v :choiceOf)
        [k (assoc v :value (str (:choiceOf v) ".ofType(" (:type v) ")"))]
-       suggection))
+       suggestion))
    suggestions))
 
 (defn autocomplete

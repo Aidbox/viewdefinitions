@@ -18,20 +18,3 @@
 
 (defn format [& args]
   (apply gstring/format args))
-
-(defn tail-head-intersection [^String s1, ^String s2]
-  (if (or (str/blank? s1)
-          (str/blank? s2))
-    0
-    (let [lesser-len (min (count s1) (count s2))]
-      (if (= 0 lesser-len)
-        0
-        (loop [pretender "", i 0]
-          (if (> i lesser-len)
-            (count pretender)
-            (let [tail-subs (subs s1 (-> (count s1) (- i) dec))
-                  head-subs (subs s2 0 (inc i))
-                  new-pretender (if (= tail-subs head-subs)
-                                  tail-subs
-                                  pretender)]
-              (recur new-pretender (inc i)))))))))

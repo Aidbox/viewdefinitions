@@ -2,9 +2,8 @@
   (:require ["@ant-design/icons" :as icons]
             [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [dispatch
-                                                reg-event-db reg-event-fx
-                                                reg-sub subscribe]]
+            [re-frame.core :as re-frame :refer [reg-event-fx
+                                                subscribe]]
             [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]

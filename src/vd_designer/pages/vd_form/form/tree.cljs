@@ -49,7 +49,7 @@
                   :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
                   :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                   :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
-     [fhir-path-input ctx value-key value deletable? settings-form placeholder :fhirpath]]))
+     [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
   [general-leaf ctx
@@ -59,6 +59,7 @@
     :value-key     :path
     :value         path
     :settings-form column-settings
+    :input-type :fhirpath
     :deletable?    true}])
 
 (defn constant-type->input-type [constant-type]
@@ -92,6 +93,7 @@
     :value-key     :path
     :value         path
     :settings-form where-settings
+    :input-type :fhirpath
     :deletable?    true}])
 
 (defn foreach-expr-leaf [ctx value-key path]
@@ -100,6 +102,7 @@
     :name          "expression"
     :value-key     value-key
     :value         path
+    :input-type :fhirpath
     :deletable?    false}])
 
 ;; Nodes

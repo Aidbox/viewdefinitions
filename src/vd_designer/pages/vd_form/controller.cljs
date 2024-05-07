@@ -4,7 +4,7 @@
    [clojure.string :as str]
    [clojure.set :as set]
    [medley.core :as medley]
-   [re-frame.core :refer [reg-event-db reg-event-fx]]
+   [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
    [vd-designer.http.fhir-server :as http.fhir-server]
    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                   get-select-path]]
@@ -31,7 +31,6 @@
  (fn [{db :db} [_ parameters]]
    (let [vd-id     (-> parameters :path  :id)
          imported? (-> parameters :query :imported)]
-     (autocomplete/init)
      {:db (cond-> db
             :always
             (assoc ::m/language :language/yaml)
@@ -44,6 +43,9 @@
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
+            
+            :always
+            (conj [:dispatch [::autocomplete-init]])
 
             imported?
             (conj [:dispatch [::process-import]])
@@ -53,6 +55,12 @@
 
             :always
             (conj [:dispatch [::load-fhir-schemas]]))})))
+
+(reg-event-fx
+ ::autocomplete-init
+ (fn [_ _]
+   (autocomplete/init)
+   {}))
 
 (reg-event-fx
  ::stop
@@ -428,7 +436,8 @@
    :newEndIndex (cursor-end new-ctx)})
 
 (defn autocomplete [parser spec-ctx old-ctx new-ctx]
-  (if (not= (:id old-ctx) (:id new-ctx))
+  (autocomplete/suggest spec-ctx parser nil new-ctx)
+  #_(if (not= (:id old-ctx) (:id new-ctx))
     (autocomplete/suggest spec-ctx parser nil new-ctx)
     (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
       (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
@@ -447,8 +456,6 @@
           {:keys [tree options]}
           (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
       {:db (-> db
-               (update ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-               (assoc ::m/autocomplete-options
-                      (-> {}
-                          (assoc :options options)
-                          (assoc :request new-ctx))))})))
+               (assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
+               (assoc ::m/autocomplete-options {:options options
+                                                :request new-ctx}))})))

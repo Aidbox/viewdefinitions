@@ -9,13 +9,13 @@
                (let [parser (new Parser)]
                  (.setLanguage parser language)
                  (dispatch [::c/tree-sitter-load-success parser]))))
-      (.catch #(dispatch [::c/tree-sitter-load-error ":)"]))))
+      (.catch #(dispatch [::c/tree-sitter-load-error "Error on load tree-sitter"]))))
 
 (defn init-parser []
   (-> (.init Parser
              (clj->js {:locateFile (fn [n dir] "/tree-sitter.wasm")}))
       (.then load-fhirpath-language)
-      (.catch #(dispatch [::c/tree-sitter-load-error ":)"]))))
+      (.catch #(dispatch [::c/tree-sitter-load-error  "Error on load tree-sitter"]))))
                                       
 (defn parse-fhirpath
   ([parser fhirpath]

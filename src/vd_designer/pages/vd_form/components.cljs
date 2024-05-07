@@ -196,11 +196,11 @@
                                            (toggle-popover nil nil))
                              :id        button-id}]]]))
 
-(defn trigger-update-autocomplete-text-event [key fhirpath-prefix event]
+(defn trigger-update-autocomplete-text-event [ctx event]
   (dispatch [::c/update-autocomplete-text
-             {:id              key
+             {:id              (:value-path ctx)
               :text            (u/target-value event)
-              :fhirpath-prefix fhirpath-prefix
+              :fhirpath-prefix (:fhirpath-ctx ctx)
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
@@ -245,10 +245,7 @@
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
-        update-autocomplete-fn #(trigger-update-autocomplete-text-event
-                                 (:value-path ctx)
-                                 (:fhirpath-ctx ctx)
-                                 %)
+        update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
         rendered-options (if (= (:value-path ctx) (:id request))
                            (->ui-options request options)
                            [])
