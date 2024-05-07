@@ -9,6 +9,8 @@ on:
     workflows: [Test]
     branches: [master]
     types: [completed]
+  release:
+    types: [published]
 
 env:
   REGISTRY: ghcr.io
@@ -96,11 +98,15 @@ jobs:
     needs:
       - ui-docker
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'schedule' }}
+    if: ${{ github.event_name == 'release' }}
     # environment: prod
 
     steps:
       - uses: actions/checkout@v4
+      - uses: olegtarasov/get-tag@v2.1.3
+        id: versionTag
+        with:
+          tagRegex: "v(.*)"
 
       - name: Authorize Google Account
         uses: google-github-actions/auth@v2
@@ -113,15 +119,24 @@ jobs:
           cluster_name: aidbox
           location: us-central1-a
 
+      - name: Prepare kustomize
+        run: |-
+          sed -i 's/{VERSION_TAG}/${{ steps.versionTag.outputs.tag }}/g' k8s/prod/kustomization.yaml
+          sed -i 's/{REGISTRY}/${{ env.REGISTRY }}/g' k8s/prod/kustomization.yaml
+          sed -i 's/{UI_IMAGE_NAME}/${{ env.UI_IMAGE_NAME }}/g' k8s/prod/kustomization.yaml
+          kubectl kustomize ./k8s/prod
+
       - name: Apply resources
         run: |-
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/service.yaml
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/ingress.yaml
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/prod
+
           kubectl rollout status deployment vd-designer -n ${{ env.K8S_NAMESPACE }}
           kubectl get services -n ${{ env.K8S_NAMESPACE }} -o wide
 
   # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- #
+
   on-failure:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
