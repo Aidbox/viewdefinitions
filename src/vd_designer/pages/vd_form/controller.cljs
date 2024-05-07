@@ -1,21 +1,23 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
-    [clojure.string :as str]
-    [clojure.set :as set]
-    [day8.re-frame.tracing :refer-macros [fn-traced]]
-    [medley.core :as medley]
-    [vd-designer.utils.string :as utils.string]
-    [re-frame.core :refer [reg-event-db reg-event-fx]]
-    [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                   get-select-path]]
-    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                            remove-decoration
-                                                            uuid->idx]]
-    [vd-designer.pages.vd-form.model :as m]
-    [vd-designer.utils.event :refer [response->error]]
-    [vd-designer.utils.utils :as utils]))
+   [ajax.core :as ajax]
+   [clojure.string :as str]
+   [clojure.set :as set]
+   [medley.core :as medley]
+   [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
+   [vd-designer.http.fhir-server :as http.fhir-server]
+   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                  get-select-path]]
+   [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
+   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                           remove-decoration
+                                                           uuid->idx]]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :refer [response->error]]
+   [vd-designer.utils.utils :as utils]
+   [vd-designer.utils.string :as utils.string]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -34,21 +36,56 @@
             (assoc ::m/language :language/yaml)
 
             (not vd-id)
-            (set-view-definition-status))
+            (set-view-definition-status)
+            
+            :always
+            (assoc :spec-map {}))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
+            
+            :always
+            (conj [:dispatch [::autocomplete-init]])
 
             imported?
             (conj [:dispatch [::process-import]])
 
             vd-id
-            (conj [:dispatch [::get-view-definition vd-id]]))})))
+            (conj [:dispatch [::get-view-definition vd-id]])
+
+            :always
+            (conj [:dispatch [::load-fhir-schemas]]))})))
+
+(reg-event-fx
+ ::autocomplete-init
+ (fn [_ _]
+   (autocomplete/init)
+   {}))
 
 (reg-event-fx
  ::stop
  (fn [{db :db} [_]]
    {:db (dissoc db :current-vd ::m/resource-data ::m/language)}))
+
+(reg-event-fx
+ ::load-fhir-schemas
+ (fn [_ _]
+   {:http-xhrio {:uri "/fhir_schemas.json"
+                 :timeout 8000
+                 :format (ajax/json-request-format)
+                 :response-format  (ajax/json-response-format {:keywords? true})
+                 :on-success [::load-fhir-schemas-success]
+                 :on-failure [::load-fhir-schemas-error]}}))
+
+(reg-event-db
+ ::load-fhir-schemas-success 
+ (fn [db [_ schemas]]
+   (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
+
+(reg-event-fx
+ ::load-fhir-schemas-error 
+ (fn [_ _]
+   {:notification-error "Error on downloading fhir schemas!"}))
 
 (reg-event-fx
  ::get-supported-resource-types
@@ -142,8 +179,8 @@
 
 (reg-event-db
  ::on-vd-error
- (fn-traced [db [_ result]]
-            (assoc db ::m/current-vd-error (response->error result))))
+ (fn [db [_ result]]
+   (assoc db ::m/current-vd-error (response->error result))))
 
 (reg-event-db
  ::on-eval-view-definition-success
@@ -376,3 +413,49 @@
   ::change-draggable-node
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
+
+(reg-event-db
+ ::tree-sitter-load-success
+ (fn [db [_ parser-instance]]
+   (assoc db ::m/parser-instance parser-instance)))
+
+(reg-event-fx
+ ::tree-sitter-load-error
+ (fn [{db :db} [_ error-msg]]
+   {:notification-error error-msg}))
+
+(defn cursor-start [ctx]
+  (+ (:cursor-start ctx) (.-length (:fhirpath-prefix ctx))))
+
+(defn cursor-end [ctx]
+  (+ (:cursor-end ctx) (.-length (:fhirpath-prefix ctx))))
+
+(defn cursor-diff [old-ctx new-ctx]
+  {:startIndex (cursor-start old-ctx)
+   :oldEndIndex (cursor-end old-ctx)
+   :newEndIndex (cursor-end new-ctx)})
+
+(defn autocomplete [parser spec-ctx old-ctx new-ctx]
+  (autocomplete/suggest spec-ctx parser nil new-ctx)
+  #_(if (not= (:id old-ctx) (:id new-ctx))
+    (autocomplete/suggest spec-ctx parser nil new-ctx)
+    (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
+      (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
+
+(reg-event-fx
+  ::update-autocomplete-text
+  (fn [{{old-ctx    ::m/autocomplete-ctx
+         parser     ::m/parser-instance
+         current-vd :current-vd
+         spec-map   :spec-map
+         :as        db} :db}
+       [_ new-ctx]]
+    (let [new-ctx
+          (assoc new-ctx :resource-type (:resource current-vd))
+
+          {:keys [tree options]}
+          (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
+      {:db (-> db
+               (assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
+               (assoc ::m/autocomplete-options {:options options
+                                                :request new-ctx}))})))

@@ -1,10 +1,10 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [Checkbox Col ConfigProvider Form Popover Row Select Space]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]]
+   [re-frame.core :refer [dispatch subscribe]] 
    [reagent.core :as r]
    [vd-designer.components.button :as button]
    [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
@@ -196,6 +196,90 @@
                                            (toggle-popover nil nil))
                              :id        button-id}]]]))
 
+(defn trigger-update-autocomplete-text-event [ctx event]
+  (dispatch [::c/update-autocomplete-text
+             {:id              (:value-path ctx)
+              :text            (u/target-value event)
+              :fhirpath-prefix (:fhirpath-ctx ctx)
+              :cursor-start (u/selection-start event)
+              :cursor-end   (u/selection-end event)}]))
+
+(defn cons-prev-text
+  "Since round trip of input causes input lag,
+   suggested values should already contain text before suggestion was selected"
+  [prev-text cursor-position options]
+  (let [prev-text (or prev-text "")
+        start-text (subs prev-text 0 cursor-position)
+        rest-text (subs prev-text cursor-position)]
+    (mapv (fn [option]
+            (let [suggested-text (:value option)]
+              (-> option
+                  (assoc :value (if (str/starts-with? rest-text suggested-text)
+                                  prev-text
+                                  (if (str/starts-with? suggested-text rest-text)
+                                    (str start-text suggested-text)
+                                    (str start-text suggested-text rest-text))))
+                  (update :cursor + cursor-position))))
+          options)))
+
+(defn render-option [icon options]
+  (mapv (fn [option]
+          (update option :label
+                  (fn [label]
+                    (r/as-element
+                     [:div {:style {:display :flex
+                                    :flex-direction :row
+                                    :justify-content :space-between
+                                    :width "100%"}}
+                      [:span
+                       [:> icon]
+                       (str " " label)]
+                      [:div {:style {:font-style :italic
+                                     :color "#1677ff"}} (str " " (:type option))]]))))
+        options))
+
+(defn ->ui-options [{:keys [text cursor-start]} {:keys [fields functions]} ]
+  (->> (into (render-option icons/ContainerOutlined fields)
+             (render-option icons/FunctionOutlined functions))
+       (cons-prev-text text cursor-start)))
+
+(defn autocomplete [ctx key value & {:as opts}]
+  (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
+        rendered-options (if (= (:value-path ctx) (:id request))
+                           (->ui-options request options)
+                           [])
+        errors? @(subscribe [::m/empty-inputs?])]
+    [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
+                                                     :hoverBorderColor  "#7972D3"
+                                                     :paddingInline     0}}}}
+     [:> AutoComplete (medley/deep-merge
+                       {:style        {:width "100%"}
+                        :options      rendered-options
+                        :defaultValue value
+                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
+                                      (.preventDefault %))
+                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                     (update-autocomplete-fn %))
+                        :onInput  #(update-autocomplete-fn %)
+                        :onClick  update-autocomplete-fn
+                        :onChange #(change-input-value ctx key %)}
+                       opts)
+      [:> Input (medley/deep-merge
+                 {:style
+                  {:font-style       "italic"
+                   :border           "none"
+                   :border-bottom    "1px solid transparent"
+                   :border-radius    0
+                   :background-color "transparent"}
+                  :classNames {:input
+                               (if (and (str/blank? value) errors?)
+                                 "default-input red-input"
+                                 "default-input")}
+                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
+                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}
+                 opts)]]]))
+
 (defn render-input [ctx input-type placeholder kind value]
   (case input-type
     :number [input-number {:placeholder  (or placeholder "path")
@@ -205,6 +289,8 @@
               [:> Checkbox
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
+    
+    :fhirpath [autocomplete ctx kind value placeholder]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
@@ -217,6 +303,7 @@
                              "default-input red-input"
                              "default-input")}
               :onChange     #(change-input-value ctx kind (u/target-value %))}])))
+
 
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true

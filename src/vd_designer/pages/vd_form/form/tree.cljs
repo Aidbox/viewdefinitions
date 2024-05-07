@@ -15,7 +15,8 @@
                                                  name-input resource-input
                                                  tree-tag]]
    [vd-designer.pages.vd-form.controller :as form-controller]
-   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path 
+                                                  add-fhirpath
                                                   drop-value-path
                                                   get-constant-type]]
    [vd-designer.pages.vd-form.form.settings :refer [column-settings
@@ -38,7 +39,7 @@
       (if (nil? name-key)
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
-          [input {:value       name
+          [input {:defaultValue name
                   :placeholder "name"
                   :classNames {:input
                                (if (and (str/blank? name) errors?)
@@ -58,6 +59,7 @@
     :value-key     :path
     :value         path
     :settings-form column-settings
+    :input-type :fhirpath
     :deletable?    true}])
 
 (defn constant-type->input-type [constant-type]
@@ -91,6 +93,7 @@
     :value-key     :path
     :value         path
     :settings-form where-settings
+    :input-type :fhirpath
     :deletable?    true}])
 
 (defn foreach-expr-leaf [ctx value-key path]
@@ -99,6 +102,7 @@
     :name          "expression"
     :value-key     value-key
     :value         path
+    :input-type :fhirpath
     :deletable?    false}])
 
 ;; Nodes
@@ -159,7 +163,11 @@
                   (let [ctx (drop-value-path ctx)]
                     [(tree-leaf (conj (:value-path ctx) :path)
                                 (foreach-expr-leaf ctx kind path))
-                     (nested-node :select (add-value-path ctx :select) select)]))))
+                     (nested-node :select 
+                                  (-> ctx
+                                      (add-value-path :select)
+                                      (add-fhirpath path)) 
+                                  select)]))))
 
 (defn determine-key
   "Expects an element of normalized view definition"
