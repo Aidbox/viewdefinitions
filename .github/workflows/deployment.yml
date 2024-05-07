@@ -121,9 +121,9 @@ jobs:
 
       - name: Prepare kustomize
         run: |-
-          sed -i ${{ format('s/{0}/{1}/g', '{VERSION_TAG}', steps.versionTag.outputs.tag) }} k8s/prod/kustomization.yaml
-          sed -i ${{ format('s/{0}/{1}/g', '{REGISTRY}', env.REGISTRY) }} k8s/prod/kustomization.yaml
-          sed -i ${{ format('s/{0}/{1}/g', '{UI_IMAGE_NAME}', env.UI_IMAGE_NAME) }} k8s/prod/kustomization.yaml
+          sed -i ${{ format('s/{{VERSION_TAG}}/{0}/g', steps.versionTag.outputs.tag) }} k8s/prod/kustomization.yaml
+          sed -i ${{ format('s/{{REGISTRY}}/{0}/g', env.REGISTRY) }} k8s/prod/kustomization.yaml
+          sed -i ${{ format('s/{{UI_IMAGE_NAME}}/{0}/g', env.UI_IMAGE_NAME) }} k8s/prod/kustomization.yaml
           kubectl kustomize ./k8s/prod
 
       - name: Apply resources
