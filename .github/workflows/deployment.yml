@@ -20,7 +20,7 @@ env:
 jobs:
   ui-docker:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name =='release' }}
 
     permissions:
       contents: read
@@ -67,7 +67,7 @@ jobs:
     needs:
       - ui-docker
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'schedule' }}
+    if: ${{ github.event_name != 'schedule' && github.event_name != 'release' }}
     # environment: dev
 
     steps:

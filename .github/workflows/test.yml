@@ -2,6 +2,13 @@ name: Test
 
 on:
   push:
+    paths:
+      - "src/**"
+      - "test/**"
+      - "resources/**"
+      - "package.json"
+      - "**.edn"
+      - "**.js"
 
 jobs:
   build:
