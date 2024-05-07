@@ -119,18 +119,13 @@ jobs:
           cluster_name: aidbox
           location: us-central1-a
 
-      - name: Prepare kustomize
-        run: |-
-          sed -i 's#{VERSION_TAG}#${{ steps.versionTag.outputs.tag }}#g' k8s/prod/kustomization.yaml
-          sed -i 's#{REGISTRY}#${{ env.REGISTRY }}#g' k8s/prod/kustomization.yaml
-          sed -i 's#{UI_IMAGE_NAME}#${{ env.UI_IMAGE_NAME }}#g' k8s/prod/kustomization.yaml
-          kubectl kustomize ./k8s/prod
-
       - name: Apply resources
         run: |-
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/service.yaml
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/ingress.yaml
-          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/prod
+
+          sed -i 's#{VERSION_TAG}#${{ steps.versionTag.outputs.tag }}#g' k8s/prod/kustomization.yaml
+          kubectl kustomize ./k8s/prod | kubectl apply -n ${{ env.K8S_NAMESPACE }} -f -
 
           kubectl rollout status deployment vd-designer -n ${{ env.K8S_NAMESPACE }}
           kubectl get services -n ${{ env.K8S_NAMESPACE }} -o wide

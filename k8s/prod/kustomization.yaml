@@ -1,5 +1,5 @@
 resources:
 - ./ui-deployment.yaml
 images:
-- name: "{REGISTRY}/{UI_IMAGE_NAME}"
+- name: ghcr.io/aidbox/viewdefinitions-ui
   newTag: "{VERSION_TAG}"
