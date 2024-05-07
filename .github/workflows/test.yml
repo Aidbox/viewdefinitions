@@ -9,6 +9,8 @@ on:
       - "package.json"
       - "**.edn"
       - "**.js"
+    tags-ignore:
+      - "**"
 
 jobs:
   build:
