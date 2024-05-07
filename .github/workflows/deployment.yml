@@ -20,7 +20,7 @@ env:
 jobs:
   ui-docker:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name =='release' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' }}
 
     permissions:
       contents: read
@@ -46,8 +46,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.UI_IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}}
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
+            type=raw,value=latest,enable=${{ github.event_name != 'release' }}
 
       - name: Build and push ui image
         uses: docker/build-push-action@v5
