@@ -48,7 +48,7 @@ jobs:
         run: clj -M:client:client-build
 
       - name: Compile tests
-        run: clj -M:client:client-build-tests
+        run: clj -M:client:client-test:client-build-tests
 
       - name: Run tests
         run: node out/node-tests.js
