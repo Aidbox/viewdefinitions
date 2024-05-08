@@ -135,7 +135,7 @@
                    :column]
                   raw-vd-with-id)))
 
-  (is (nil? (+ 1 2))))
+  (is (nil? (+ 1 3))))
 
 (comment
   (run-tests 'vd-designer.pages.vd-form.form.uuid-decoration-test))
