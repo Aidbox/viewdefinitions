@@ -1,4 +1,4 @@
-name: Client test
+name: ClientTest
 
 on:
   push:
