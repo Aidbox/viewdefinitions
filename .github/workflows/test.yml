@@ -45,10 +45,10 @@ jobs:
         run: npm ci
 
       - name: Compile project
-        run: clj -M:client:build
+        run: clj -M:client:client-build
 
       - name: Compile tests
-        run: clj -M:client:build-tests
+        run: clj -M:client:client-build-tests
 
       - name: Run tests
         run: node out/node-tests.js
