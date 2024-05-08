@@ -3,9 +3,9 @@ name: ClientTest
 on:
   push:
     paths:
-      - "src/cljs/**"
-      - "test/cljs/**"
-      - "resources/client/**"
+      - "src/**"
+      - "test/**"
+      - "resources/**"
       - "package.json"
       - "**.edn"
       - "**.js"
