@@ -1,11 +1,11 @@
-name: Test
+name: Client test
 
 on:
   push:
     paths:
-      - "src/**"
-      - "test/**"
-      - "resources/**"
+      - "src/cljs/**"
+      - "test/cljs/**"
+      - "resources/client/**"
       - "package.json"
       - "**.edn"
       - "**.js"
@@ -45,10 +45,10 @@ jobs:
         run: npm ci
 
       - name: Compile project
-        run: clj -M:build
+        run: clj -M:client:client-build
 
       - name: Compile tests
-        run: clj -M:build-tests
+        run: clj -M:client:client-test:client-build-tests
 
       - name: Run tests
         run: node out/node-tests.js

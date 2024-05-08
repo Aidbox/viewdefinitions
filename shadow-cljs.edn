@@ -1,13 +1,13 @@
-{:deps true
+{:deps {:aliases [:client]}
 
  :dev-http
- {8280 ["resources/public" #_"classpath:public"]
+ {8280 ["resources/client/public" #_"classpath:public"]
   #_#_8290 "target/browser-test"}
 
  :builds
  {:app
   {:target :browser
-   :output-dir "resources/public"
+   :output-dir "resources/client/public"
    :asset-path "/"
 
    :compiler-options {:warnings {:fn-deprecated false}}
@@ -24,10 +24,10 @@
                          [:formatters :hints]}}
                        :closure-defines {re-frame.trace.trace-enabled?        true
                                          day8.re-frame.tracing.trace-enabled? true}}
-    :build-hooks [(postcss/watch "src/main.css" "resources/public/app.css")]}
+    :build-hooks [(postcss/watch "src/cljs/main.css" "resources/client/public/app.css")]}
 
    :release
-   {:build-hooks [(postcss/release "src/main.css" "resources/public/app.css")]
+   {:build-hooks [(postcss/release "src/cljs/main.css" "resources/client/public/app.css")]
     :build-options {:ns-aliases
                     {day8.re-frame.tracing day8.re-frame.tracing-stubs}}}}
   :test

@@ -9,10 +9,10 @@
 node_modules/
 
 # generated
-resources/public/cljs-runtime/
-resources/public/manifest.edn
-resources/public/app.css
-resources/public/app.js
+resources/client/public/cljs-runtime/
+resources/client/public/manifest.edn
+resources/client/public/app.css
+resources/client/public/app.js
 out/
 
 .idea/*
