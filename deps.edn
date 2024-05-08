@@ -48,7 +48,7 @@
                                              :why         "Better tests"
                                              :github      "https://github.com/nubank/matcher-combinators"}}}
 
-  :shadow
+  :client-repl
   {:main-opts  ["-m" "shadow.cljs.devtools.cli" "watch" "app"]
    :extra-deps {cider/cider-nrepl          {:mvn/version "0.47.1"}
                 binaryage/devtools         {:mvn/version "1.0.7"}

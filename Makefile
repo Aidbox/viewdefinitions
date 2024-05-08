@@ -10,9 +10,9 @@ build-tests:
 
 build-all: build build-tests
 
-shadow: init
+client-repl: init
 	rm -rf ./.shadow-cljs
-	clj -M:client:client-test:shadow
+	clj -M:client:client-test:client-repl
 
 test: build-tests
 	node out/node-tests.js
