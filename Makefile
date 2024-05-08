@@ -6,7 +6,7 @@ build:
 	clj -M:client:client-build
 
 build-tests:
-	clj -M:client:client-build-tests
+	clj -M:client:client-test:client-build-tests
 
 build-all: build build-tests
 
