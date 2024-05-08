@@ -133,7 +133,9 @@
        (uuid->idx [:select "2b37ccad-57e3-4d1e-8f97-e6f4c6944ff5"
                    :select "5bc906ff-dc27-4198-8200-10d6fd5493b6"
                    :column]
-                  raw-vd-with-id))))
+                  raw-vd-with-id)))
+
+  (is (nil? (+ 1 2))))
 
 (comment
   (run-tests 'vd-designer.pages.vd-form.form.uuid-decoration-test))
