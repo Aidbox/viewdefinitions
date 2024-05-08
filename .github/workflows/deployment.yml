@@ -6,7 +6,7 @@ concurrency:
 
 on:
   workflow_run:
-    workflows: [Test]
+    workflows: ["Client test"]
     branches: [master]
     types: [completed]
   release:

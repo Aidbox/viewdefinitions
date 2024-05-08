@@ -1,11 +1,11 @@
-name: Test
+name: Client test
 
 on:
   push:
     paths:
-      - "src/**"
-      - "test/**"
-      - "resources/**"
+      - "src/cljs/**"
+      - "test/cljs/**"
+      - "resources/client/**"
       - "package.json"
       - "**.edn"
       - "**.js"
