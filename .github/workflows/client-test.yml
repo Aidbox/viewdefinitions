@@ -8,7 +8,7 @@ on:
       - "src/cljs/**"
       - "test/cljs/**"
       - "resources/client/**"
-      - "test-resources/client"
+      - "test-resources/client/**"
       - "package.json"
       - "**.edn"
       - "**.js"
