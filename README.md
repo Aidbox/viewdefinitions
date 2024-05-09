@@ -12,3 +12,5 @@ Each commit should adhere a variation of [conventional commits](https://www.conv
 - body is optional
 
 NOTE: each commit should not address more than one issue!
+
+test CI
