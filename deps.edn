@@ -14,7 +14,8 @@
 
   dev.weavejester/medley {:mvn/version "1.8.0"
                           :why         "Functions we wish were in Clojure core"
-                          :github      "https://github.com/weavejester/medley"}}
+                          :github      "https://github.com/weavejester/medley"
+                          :test-ci "test CI"}}
 
  :aliases
  {:client
