@@ -2,15 +2,16 @@ name: Client test
 
 on:
   push:
+    branches:
+      - "**"
     paths:
       - "src/cljs/**"
       - "test/cljs/**"
       - "resources/client/**"
+      - "test-resources/client"
       - "package.json"
       - "**.edn"
       - "**.js"
-    tags-ignore:
-      - "**"
 
 jobs:
   build:
