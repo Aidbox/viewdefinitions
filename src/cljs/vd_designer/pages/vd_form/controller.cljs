@@ -318,10 +318,21 @@
       (assoc db ::m/settings-opened-id settings-opened-id))}))
 
 (defn cast-value [constant-type v]
-  (if (= constant-type :valueBoolean)
+  (case constant-type
+    :valueBoolean
     (not (or (= "false" v)
              (str/blank? v)))
-    v))
+
+    (:valueInteger :valueInteger64)
+    (js/parseInt v)
+
+    :valueDecimal
+    (js/parseFloat v)
+
+    (:valuePositiveInt :valueUnsignedInt)
+    (-> v js/parseInt abs)
+
+    (str v)))
 
 (reg-event-db
  ::normalize-constant-value
