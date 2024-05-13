@@ -282,9 +282,9 @@
 
 (defn render-input [ctx input-type placeholder kind value]
   (case input-type
-    :number [input-number {:placeholder  (or placeholder "path")
-                           :defaultValue value
-                           :onChange #(change-input-value ctx kind %)}]
+    :number [input-number {:placeholder (or placeholder "path")
+                           :value       value
+                           :onChange    #(change-input-value ctx kind %)}]
     :boolean [:div {:style {:width "100%"}}
               [:> Checkbox
                {:checked  value

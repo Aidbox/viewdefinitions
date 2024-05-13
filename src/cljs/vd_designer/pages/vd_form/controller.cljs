@@ -317,18 +317,37 @@
       (assoc db ::m/settings-opened-id nil)
       (assoc db ::m/settings-opened-id settings-opened-id))}))
 
+(defn cast-value [constant-type v]
+  (case constant-type
+    :valueBoolean
+    (not (or (= "false" v)
+             (str/blank? v)))
+
+    (:valueInteger :valueInteger64)
+    (js/parseInt v)
+
+    :valueDecimal
+    (js/parseFloat v)
+
+    (:valuePositiveInt :valueUnsignedInt)
+    (-> v js/parseInt abs)
+
+    (str v)))
+
 (reg-event-db
  ::normalize-constant-value
  (fn [db [_ path]]
    (let [real-path    (-> (into [:current-vd] path)
                           (uuid->idx db))
          constant-map (get-in db real-path)
-         current-type (get-constant-type constant-map)]
+         current-type (get-constant-type constant-map)
+         new-type (keyword (:type constant-map))
+         new-value (->> (current-type constant-map)
+                        (cast-value new-type))]
      (assoc-in db real-path
                (-> constant-map
                    (dissoc current-type)
-                   (assoc (keyword (:type constant-map))
-                          (current-type   constant-map))
+                   (assoc new-type new-value)
                    (dissoc :type))))))
 
 (defn leafs-on-same-level? [path-from path-to]

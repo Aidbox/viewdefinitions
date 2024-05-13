@@ -12,7 +12,8 @@
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                            value-type-list]]
             [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]
-            [vd-designer.pages.vd-form.model :as m]))
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.utils.string :as str.utils]))
 
 (defn- save-popover [values ctx & extra-actions]
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))
@@ -136,5 +137,5 @@
                     {:variant    :outlined
                      :allowClear false
                      :options    (mapv #(hash-map :label %
-                                                  :value (str "value" (str/capitalize %)))
+                                                  :value (str "value" (str.utils/capitalize %)))
                                        value-type-list)})]]]]))

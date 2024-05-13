@@ -18,3 +18,10 @@
 
 (defn format [& args]
   (apply gstring/format args))
+
+(defn capitalize
+  "In contrast to str/capitalize, doesn't convert the rest to lower case."
+  [s]
+  (when s
+    (str (-> s first str/upper-case)
+         (subs s 1))))
