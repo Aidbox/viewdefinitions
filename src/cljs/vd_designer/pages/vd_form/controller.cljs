@@ -156,7 +156,9 @@
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
-   (let [view-definition (remove-decoration (:current-vd db))
+   (let [view-definition (-> (:current-vd db)
+                             remove-decoration
+                             strip-empty-collections)
          empty-fields? (empty-inputs-in-vd? view-definition)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
@@ -173,7 +175,6 @@
 
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
-                        (update :current-vd strip-empty-collections)
                         (dissoc ::m/empty-inputs?))
         :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                          :params {:limit 100
@@ -283,15 +284,15 @@
 (reg-event-fx
   ::save-view-definition
   (fn [{:keys [db]} [_]]
-    (let [view-definition (remove-decoration (:current-vd db))
+    (let [view-definition (-> (:current-vd db)
+                              remove-decoration
+                              strip-empty-collections)
           req (if (:id view-definition)
-                (http.fhir-server/put-view-definition
-                db
-                (:id view-definition)
-                view-definition)
-               (http.fhir-server/post-view-definition
-                db
-                view-definition))]
+                (http.fhir-server/put-view-definition db
+                                                      (:id view-definition)
+                                                      view-definition)
+                (http.fhir-server/post-view-definition db
+                                                       view-definition))]
      {:db (assoc db
                  ::m/save-view-definition-loading true
                  ::m/save-loading true)
