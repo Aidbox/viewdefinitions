@@ -246,7 +246,25 @@
   (run-test move-test)
   (run-tests)
 
-  (get-in @re-frame.db/app-db [:current-vd :select])
-
   )
 
+(deftest strip-empty-collections-test
+  (is (match?
+        {:title    'title
+         :resource "Patient"
+         :select   ['col]}
+        (sut/strip-empty-collections
+          {:fhirVersion []
+           :title       'title
+           :extension   []
+           :resource    "Patient"
+           :select      ['col]})))
+
+  (is (match?
+        {:title    'title
+         :resource "Patient"
+         :select   []}
+        (sut/strip-empty-collections
+          {:title       'title
+           :resource    "Patient"
+           :select      []}))))

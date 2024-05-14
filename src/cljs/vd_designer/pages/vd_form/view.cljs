@@ -75,7 +75,8 @@
                                              [:> Button {:onClick #(dispatch [::c/eval-view-definition-data])
                                                          :icon    (r/create-element icons/PlayCircleOutlined)
                                                          :loading @(subscribe [::m/eval-loading])
-                                                         :style   {:max-width "80px"}} "Run"]]
+                                                         :style   {:max-width "80px"}}
+                                              "Run"]]
                                             [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])
                                                                    :icon    (r/create-element icons/SaveOutlined)
                                                                    :loading @(subscribe [::m/save-loading])

@@ -145,6 +145,14 @@
 (defn missing-required-fields [vd]
   (set/difference required-fields (set (keys vd))))
 
+(defn strip-empty-collections [vd]
+  (medley/remove-kv
+    (fn [k v]
+      (and (not (= k :select))
+           (coll? v)
+           (empty? v)))
+    vd))
+
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
@@ -165,6 +173,7 @@
 
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
+                        (update :current-vd strip-empty-collections)
                         (dissoc ::m/empty-inputs?))
         :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
                                                          :params {:limit 100
