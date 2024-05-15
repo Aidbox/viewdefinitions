@@ -213,7 +213,9 @@
 
 (defn merge-and-strip [m1 m2]
   (->> (medley/deep-merge m1 m2)
-       (medley/remove-vals (every-pred coll? empty?))))
+       (medley/remove-vals (some-fn
+                             str/blank?
+                             (every-pred coll? empty?)))))
 
 (reg-event-db
  ::change-input-value-merge
