@@ -37,13 +37,13 @@
 
             (not vd-id)
             (set-view-definition-status)
-            
+
             :always
             (assoc :spec-map {}))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
-            
+
             :always
             (conj [:dispatch [::autocomplete-init]])
 
@@ -78,12 +78,12 @@
                  :on-failure [::load-fhir-schemas-error]}}))
 
 (reg-event-db
- ::load-fhir-schemas-success 
+ ::load-fhir-schemas-success
  (fn [db [_ schemas]]
    (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
 
 (reg-event-fx
- ::load-fhir-schemas-error 
+ ::load-fhir-schemas-error
  (fn [_ _]
    {:notification-error "Error on downloading fhir schemas!"}))
 
@@ -454,8 +454,38 @@
    :oldEndIndex (cursor-end old-ctx)
    :newEndIndex (cursor-end new-ctx)})
 
+(defn get-kind [kind]
+  (get {3 :function
+        5 :field
+        12 :value
+        24 :operator} kind))
+
 (defn autocomplete [parser spec-ctx old-ctx new-ctx]
-  (autocomplete/suggest spec-ctx parser nil new-ctx)
+  ;; here will be new result from autocomplete-ts library
+  (let  [result-from-antlr {:result
+                            [{:label "deceasedBoolean",
+                              :kind 5 ; field
+                              :detail "Boolean"
+                              :textEdit {:range {:start {:line 0 :character 0}
+                                                 :end   {:line 0 :character 3}}
+                                         :newText "deceased.ofType(boolean)"}}
+
+                             {:label "deceasedDateTime",
+                              :kind 5 ; field
+                              :detail "dateTime"
+                              :textEdit {:range {:start {:line 0 :character 0}
+                                                 :end   {:line 0 :character 3}}
+                                         :newText "deceased.ofType(dateTime)"}}]}
+         options (->> result-from-antlr
+                      :result
+                      (mapv (fn [item] (update item :kind get-kind))))]
+
+  ;; 0123
+  ;; dece| => deceased.ofType(boolean)
+  ;; dece| => deceased.ofType(dateTime)
+  {:options options})
+
+  ;; (autocomplete/suggest spec-ctx parser nil new-ctx)
   #_(if (not= (:id old-ctx) (:id new-ctx))
     (autocomplete/suggest spec-ctx parser nil new-ctx)
     (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
@@ -472,9 +502,9 @@
     (let [new-ctx
           (assoc new-ctx :resource-type (:resource current-vd))
 
-          {:keys [tree options]}
+          {:keys [#_tree options]}
           (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
       {:db (-> db
-               (assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
+               #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options {:options options
                                                 :request new-ctx}))})))

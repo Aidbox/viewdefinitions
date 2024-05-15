@@ -4,7 +4,7 @@
    [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]] 
+   [re-frame.core :refer [dispatch subscribe]]
    [reagent.core :as r]
    [vd-designer.components.button :as button]
    [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
@@ -204,44 +204,70 @@
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
-(defn cons-prev-text
-  "Since round trip of input causes input lag,
-   suggested values should already contain text before suggestion was selected"
-  [prev-text cursor-position options]
+(defn get-text-from-option [option]
+  (-> option :textEdit :newText))
+
+;; (defn cons-prev-text
+;;   "Since round trip of input causes input lag,
+;;    suggested values should already contain text before suggestion was selected"
+;;   [prev-text cursor-position options]
+;;   (let [prev-text (or prev-text "")
+;;         start-text (subs prev-text 0 cursor-position)
+;;         rest-text (subs prev-text cursor-position)]
+;;     (mapv (fn [option]
+;;             (let [suggested-text (get-text-from-option option)]
+;;               (-> option
+;;                   (assoc :value (if (str/starts-with? rest-text suggested-text)
+;;                                   prev-text
+;;                                   (if (str/starts-with? suggested-text rest-text)
+;;                                     (str start-text suggested-text)
+;;                                     (str start-text suggested-text rest-text))))
+;;                   (update :cursor (fnil + 0) cursor-position))))
+;;           options)))
+
+(defn change-text [prev-text text-edit]
   (let [prev-text (or prev-text "")
-        start-text (subs prev-text 0 cursor-position)
-        rest-text (subs prev-text cursor-position)]
-    (mapv (fn [option]
-            (let [suggested-text (:value option)]
-              (-> option
-                  (assoc :value (if (str/starts-with? rest-text suggested-text)
-                                  prev-text
-                                  (if (str/starts-with? suggested-text rest-text)
-                                    (str start-text suggested-text)
-                                    (str start-text suggested-text rest-text))))
-                  (update :cursor + cursor-position))))
-          options)))
+        start (-> text-edit :range :start :character)
+        end   (-> text-edit :range :end :character)
+        text  (-> text-edit :newText)
+        left (subs prev-text 0 start)
+        right (subs prev-text (inc end))]
+    (str left text right)))
 
-(defn render-option [icon options]
-  (mapv (fn [option]
-          (update option :label
-                  (fn [label]
-                    (r/as-element
-                     [:div {:style {:display :flex
-                                    :flex-direction :row
-                                    :justify-content :space-between
-                                    :width "100%"}}
-                      [:span
-                       [:> icon]
-                       (str " " label)]
-                      [:div {:style {:font-style :italic
-                                     :color "#1677ff"}} (str " " (:type option))]]))))
-        options))
+(defn render-option* [icon kind label]
+  (r/as-element
+    [:div {:style {:display :flex
+                   :flex-direction :row
+                   :justify-content :space-between
+                   :width "100%"}}
+     [:span
+      [:> icon]
+      (str " " label)]
+     [:div {:style {:font-style :italic
+                    :color "#1677ff"}} (str " " kind)]]))
 
-(defn ->ui-options [{:keys [text cursor-start]} {:keys [fields functions]} ]
-  (->> (into (render-option icons/ContainerOutlined fields)
-             (render-option icons/FunctionOutlined functions))
-       (cons-prev-text text cursor-start)))
+(defn render-option [option]
+  (when-let [kind (:kind option)]
+    (into option
+          {:render
+           (cond
+             (= :field kind)
+             (render-option* icons/ContainerOutlined (name kind) (:label option))
+
+             (= :function kind)
+             (render-option* icons/FunctionOutlined (name kind) (:label option)))})))
+
+(defn ->ui-options [{:keys [text cursor-start]} options]
+  (->> (mapv render-option options)
+       (mapv
+         (fn [option] (merge option {:value (change-text text (:textEdit option))
+                                     :label (:render option)})))
+       ;; (cons-prev-text text cursor-start)
+       )
+  ;; (->> (into (render-option icons/ContainerOutlined fields)
+  ;;            (render-option icons/FunctionOutlined functions))
+  ;;      (cons-prev-text text cursor-start))
+  )
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
@@ -289,7 +315,7 @@
               [:> Checkbox
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
-    
+
     :fhirpath [autocomplete ctx kind value placeholder]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
