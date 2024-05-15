@@ -339,10 +339,29 @@
                              :type     "primary"
                              :htmlType "submit"}]]]]])
 
+(defn- set-keys-to-names
+  "After removing the list element, mapping between names and keys is broken:
+
+  [...
+   {:name 2, :key 2, ...}
+   ...] ->
+  [...
+   {:name 1, :key 2, ...}
+   ...]
+
+  In practice, setting key to be equal to name allows to maintain the correct order of list elements.
+  If for some reason you need the key that the list item originally had, :fieldKey is still available."
+  [fields]
+  (mapv (fn [m]
+          (assoc m :key (:name m)))
+        fields))
+
 (defn popover-form-list [name render-list-items]
   [:> Form.List {:name name}
    (fn [raw-fields actions]
-     (let [fields (js->clj raw-fields :keywordize-keys true)
+     (let [fields (-> raw-fields
+                      (js->clj :keywordize-keys true)
+                      set-keys-to-names)
            {:keys [add remove]} (js->clj actions :keywordize-keys true)]
        (r/as-element
         [:div
