@@ -14,13 +14,11 @@
 
 (defn construct-aidbox-sso-url [current-route]
   ;; TODO extract this to some env
-  (let [sso-host     "http://127.0.0.1.nip.io:8789"
-        sso-client   "vd-designer"
-        sso-callback "http://localhost:8280/auth"
-        sso-state    (js/btoa current-route)]
+  (let [sso-host   "http://127.0.0.1.nip.io:8789"
+        sso-client "vd-designer"
+        sso-state  (js/btoa current-route)]
     (str sso-host "/ui/portal"
          "?response_type=code"
-         "&client_id="    sso-client
-         "&redirect_uri=" sso-callback
-         "&state="        sso-state
+         "&client_id=" sso-client
+         "&state="     sso-state
          "#/signin")))
