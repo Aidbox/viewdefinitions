@@ -1,16 +1,19 @@
 (ns vd-designer.web.routes.router
-  (:require
-    [reitit.ring.middleware.parameters :as parameters]
-    [reitit.ring :as ring]
-    [ring.util.http-response :as http-response]
-    [vd-designer.web.controllers.health :as health]))
+  (:require [reitit.ring :as ring]
+            [reitit.ring.middleware.muuntaja :as muuntaja]
+            [reitit.ring.coercion :as coercion]
+            [muuntaja.core :as m]
+            [reitit.ring.middleware.parameters :as parameters]
+            [vd-designer.web.controllers.health :as health]))
 
 (defn router []
   (ring/router
-    ["/api"
-     ["/health" {:get #'health/check}]
-     ["/echo" {:get (fn [req]
-                      (http-response/ok req))}]]
+   ["/api"
+    ["/health" {:get #'health/check}]]
 
-    #_{:data {:middleware [parameters/parameters-middleware]}}
-    ))
+   {:data {:muuntaja   m/instance
+           :middleware [parameters/parameters-middleware
+                        muuntaja/format-response-middleware
+                        coercion/coerce-exceptions-middleware
+                        coercion/coerce-request-middleware
+                        coercion/coerce-response-middleware]}}))
