@@ -1,16 +1,27 @@
 (ns vd-designer.web.controllers.auth
-  (:require [ring.util.http-response :as http-response]
-            [vd-designer.utils.base64 :as base64]))
+  (:require [martian.core :as martian]
+            [ring.util.http-response :as http-response]
+            [lambdaisland.uri :as uri]
+            [vd-designer.utils.base64 :as base64]
+            [vd-designer.web.clients.portal :refer [portal-client]]))
 
+;; TODO save auth state to db / create user if required
 (defn sso-callback [{{:keys [code state]} :query-params}]
-  ;; get code from query params and send POST request to aidbox to change it to token
-  ;; http://127.0.0.1.nip.io:8789/auth/token -H "Content-type: application/json" -d '{"client_id":"vd-designer","client_secret":"changeme","code":"<code>","grant_type":"authorization_code"}'
-  ;; then redirect to url from state with a result
-  (if (empty? code)
-    (http-response/bad-request
-     {:error "Authorization code is not provided"})
+  ;; TODO handle case when state is missing - use default url
+  ;; TODO handle case when state do not has a valid url
+  (let [redirect-url (-> (base64/decode state)
+                         (uri/assoc-query (if (empty? code)
+                                            {:sso/error "Authorization code is not provided"}
 
-    (http-response/ok
-     {:code  code
-      ;; TODO: handle case when state is absent
-      :state (base64/decode state)})))
+                                            (let [exchange @(martian/response-for
+                                                             portal-client :sso-code-exchange
+                                                  ;; TODO extract these to env
+                                                             {:client-id     "vd-designer"
+                                                              :client-secret "changeme"
+                                                              :code          code
+                                                              :grant-type    "authorization_code"})]
+                                              (if (empty? (-> exchange :body :error))
+                                                (:body exchange)
+                                                {:sso/error (-> exchange :body :error_description)}))))
+                         uri/uri-str)]
+    (http-response/found redirect-url)))

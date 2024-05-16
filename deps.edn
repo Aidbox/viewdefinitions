@@ -19,8 +19,7 @@
   org.slf4j/slf4j-nop    {:mvn/version "2.0.13"
                           :why         "There's an annoying error message on start.
                                             We might want to replace no-op logger with
-                                            something meaningful though."}
-  }
+                                            something meaningful though."}}
 
  :aliases
  {:client
@@ -58,7 +57,9 @@
 
   :server
   {:extra-paths ["src/clj" "resources/server"]
-   :extra-deps  {ring/ring-jetty-adapter    {:mvn/version "1.12.1"}
-                 metosin/ring-http-response {:mvn/version "0.9.3"}}}
-
-  }}
+   :extra-deps  {ring/ring-jetty-adapter           {:mvn/version "1.12.1"}
+                 metosin/ring-http-response        {:mvn/version "0.9.3"}
+                 com.github.oliyh/martian          {:mvn/version "0.1.26"
+                                                    :why         "Abstraction over HTTP"
+                                                    :github      "https://github.com/oliyh/martian"}
+                 com.github.oliyh/martian-httpkit {:mvn/version "0.1.26"}}}}}
