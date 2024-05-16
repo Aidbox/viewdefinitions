@@ -59,7 +59,7 @@
     :value-key     :path
     :value         path
     :settings-form column-settings
-    :input-type :fhirpath
+    :input-type    :fhirpath
     :deletable?    true}])
 
 (defn constant-type->input-type [constant-type]
@@ -93,17 +93,17 @@
     :value-key     :path
     :value         path
     :settings-form where-settings
-    :input-type :fhirpath
+    :input-type    :fhirpath
     :deletable?    true}])
 
 (defn foreach-expr-leaf [ctx value-key path]
   [general-leaf ctx
-   {:icon          icon/expression
-    :name          "expression"
-    :value-key     value-key
-    :value         path
+   {:icon       icon/expression
+    :name       "expression"
+    :value-key  value-key
+    :value      path
     :input-type :fhirpath
-    :deletable?    false}])
+    :deletable? false}])
 
 ;; Nodes
 

@@ -145,10 +145,20 @@
 (defn missing-required-fields [vd]
   (set/difference required-fields (set (keys vd))))
 
+(defn strip-empty-collections [vd]
+  (medley/remove-kv
+    (fn [k v]
+      (and (not (= k :select))
+           (coll? v)
+           (empty? v)))
+    vd))
+
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
-   (let [view-definition (remove-decoration (:current-vd db))
+   (let [view-definition (-> (:current-vd db)
+                             remove-decoration
+                             strip-empty-collections)
          empty-fields? (empty-inputs-in-vd? view-definition)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
@@ -201,13 +211,20 @@
    (let [real-path (uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
+(def empty-coll?
+  (every-pred coll? empty?))
+
+(defn merge-and-strip [m1 m2]
+  (->> (medley/deep-merge m1 m2)
+       (medley/remove-vals (some-fn str/blank? empty-coll?))))
+
 (reg-event-db
  ::change-input-value-merge
  (fn [db [_ path value]]
    (let [real-path (uuid->idx path (:current-vd db))]
      (update-in db
                 (into [:current-vd] real-path)
-                medley/deep-merge value))))
+                merge-and-strip value))))
 
 (reg-event-db
  ::change-vd-resource
@@ -274,15 +291,15 @@
 (reg-event-fx
   ::save-view-definition
   (fn [{:keys [db]} [_]]
-    (let [view-definition (remove-decoration (:current-vd db))
+    (let [view-definition (-> (:current-vd db)
+                              remove-decoration
+                              strip-empty-collections)
           req (if (:id view-definition)
-                (http.fhir-server/put-view-definition
-                db
-                (:id view-definition)
-                view-definition)
-               (http.fhir-server/post-view-definition
-                db
-                view-definition))]
+                (http.fhir-server/put-view-definition db
+                                                      (:id view-definition)
+                                                      view-definition)
+                (http.fhir-server/post-view-definition db
+                                                       view-definition))]
      {:db (assoc db
                  ::m/save-view-definition-loading true
                  ::m/save-loading true)

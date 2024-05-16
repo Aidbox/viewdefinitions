@@ -1,6 +1,5 @@
 (ns vd-designer.pages.vd-form.form.settings
   (:require [antd :refer [DatePicker Form Input Modal Select Switch Typography]]
-            [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
