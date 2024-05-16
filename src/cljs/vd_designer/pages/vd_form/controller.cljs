@@ -211,11 +211,12 @@
    (let [real-path (uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
+(def empty-coll?
+  (every-pred coll? empty?))
+
 (defn merge-and-strip [m1 m2]
   (->> (medley/deep-merge m1 m2)
-       (medley/remove-vals (some-fn
-                             str/blank?
-                             (every-pred coll? empty?)))))
+       (medley/remove-vals (some-fn str/blank? empty-coll?))))
 
 (reg-event-db
  ::change-input-value-merge
