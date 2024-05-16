@@ -11,12 +11,14 @@
 
 (defonce server
   (let [port 8080]
-    (println "starting server on" port)
-    (jetty/run-jetty #'app {:port 8080 :join? false})))
+    (println "Starting server on port" port)
+    (jetty/run-jetty #'app {:port 8080, :join? false})))
 
 (comment
   (.stop server)
-
   (.start server)
+  (do
+    (.stop server)
+    (.start server))
 
   :rcf)
