@@ -5,23 +5,44 @@
             [vd-designer.utils.base64 :as base64]
             [vd-designer.web.clients.portal :refer [portal-client]]))
 
-;; TODO save auth state to db / create user if required
-(defn sso-callback [{{:keys [code state]} :query-params}]
-  ;; TODO handle case when state is missing - use default url
-  ;; TODO handle case when state do not has a valid url
-  (let [redirect-url (-> (base64/decode state)
-                         (uri/assoc-query (if (empty? code)
-                                            {:sso/error "Authorization code is not provided"}
+;; TODO extract these to global config / env
+(def sso-config
+  {:client-id            "vd-designer"
+   :client-secret        "changeme"
+   :default-redirect-url "https://localhost:8280"})
 
-                                            (let [exchange @(martian/response-for
-                                                             portal-client :sso-code-exchange
-                                                  ;; TODO extract these to env
-                                                             {:client-id     "vd-designer"
-                                                              :client-secret "changeme"
-                                                              :code          code
-                                                              :grant-type    "authorization_code"})]
-                                              (if (empty? (-> exchange :body :error))
-                                                (:body exchange)
-                                                {:sso/error (-> exchange :body :error_description)}))))
-                         uri/uri-str)]
-    (http-response/found redirect-url)))
+(defn- exchange-code
+  "Ecxchange outh2 code to access token, will return a map with either :error or
+   :result key"
+  [code]
+  (let [{:keys [client-id client-secret]} sso-config
+        req {:client-id     client-id
+             :client-secret client-secret
+             :code          code
+             :grant-type    "authorization_code"}
+        exchange (martian/response-for portal-client :sso-code-exchange req)
+        resp (:body @exchange)]
+    (if (empty? code)
+      {:error "Authorization code is not provided"}
+      (if (empty? (:error resp))
+        {:result (:body resp)}
+        {:error  (:error_description resp)}))))
+
+(defn- construct-redirect-url [state exchange-result]
+  ;; TODO handle case when state do not has a valid url
+  (let [base-url (if (empty? state)
+                   (:default-redirect-url sso-config)
+                   (base64/decode state))]
+    (-> base-url
+        (uri/assoc-query exchange-result)
+        uri/uri-str)))
+
+;; TODO save auth state to db / create user if required
+(defn- authenticate [exchange-result]
+  exchange-result)
+
+(defn sso-callback [{{:keys [code state]} :query-params}]
+  (->> (exchange-code code)
+       authenticate
+       (construct-redirect-url state)
+       http-response/found))
