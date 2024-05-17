@@ -280,6 +280,7 @@
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
         rendered-options (if (= (:value-path ctx) (:id request))
                            (->ui-options request options)
@@ -288,32 +289,39 @@
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete (medley/deep-merge
-                       {:style        {:width "100%"}
-                        :options      rendered-options
-                        :defaultValue value
-                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
-                                      (.preventDefault %))
-                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                     (update-autocomplete-fn %))
-                        :onInput  #(update-autocomplete-fn %)
-                        :onClick  update-autocomplete-fn
-                        :onChange #(change-input-value ctx key %)}
-                       opts)
-      [:> Input (medley/deep-merge
-                 {:style
-                  {:font-style       "italic"
-                   :border           "none"
-                   :border-bottom    "1px solid transparent"
-                   :border-radius    0
-                   :background-color "transparent"}
-                  :classNames {:input
-                               (if (and (str/blank? value) errors?)
-                                 "default-input red-input"
-                                 "default-input")}
-                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
-                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}
-                 opts)]]]))
+       [:> AutoComplete (medley/deep-merge
+                          {:style        {:width "100%"}
+                           :options      rendered-options
+                           :defaultValue value
+                           :onKeyDown #(when (= "Escape" (u/pressed-key %))
+                                         (.preventDefault %))
+                           :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                        (update-autocomplete-fn %))
+                           :onInput  #(update-autocomplete-fn %)
+                           :onClick  (fn [e] (update-autocomplete-fn e))
+                           :onChange (fn [e] (change-input-value ctx key e))
+                           :onSelect (fn [_value option]
+                                       (when-let [r @auto-complete-ref]
+                                         (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                           (js/setTimeout (fn [_]
+                                                            (.focus r)
+                                                            (.setSelectionRange r cursor cursor)) 0))))}
+                          opts)
+        [:> Input (medley/deep-merge
+                    {:style
+                     {:font-style       "italic"
+                      :border           "none"
+                      :border-bottom    "1px solid transparent"
+                      :border-radius    0
+                      :background-color "transparent"}
+                     :classNames {:input
+                                  (if (and (str/blank? value) errors?)
+                                    "default-input red-input"
+                                    "default-input")}
+                     :ref (fn [el] (reset! auto-complete-ref el))
+                     :onMouseEnter #(dispatch [::c/change-draggable-node false])
+                     :onMouseLeave #(dispatch [::c/change-draggable-node true])}
+                    opts)]]]))
 
 (defn render-input [ctx input-type placeholder kind value]
   (case input-type

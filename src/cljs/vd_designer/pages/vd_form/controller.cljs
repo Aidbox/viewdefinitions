@@ -463,19 +463,12 @@
 (defn autocomplete-new [text cursor-position]
   {:options
    (->> {:result
-         [{:label "deceasedBoolean",
-           :kind 5 ; field
-           :detail "Boolean"
-           :textEdit {:range {:start {:line 0 :character 0}
-                              :end   {:line 0 :character 3}}
-                      :newText "deceased.ofType(boolean)"}}
-
-          {:label "deceasedDateTime",
-           :kind 5 ; field
-           :detail "dateTime"
-           :textEdit {:range {:start {:line 0 :character 0}
-                              :end   {:line 0 :character 3}}
-                      :newText "deceased.ofType(dateTime)"}}]}
+         [{:label "where",
+           :kind 3
+           :detail nil
+           :textEdit {:range {:start {:character 0}
+                              :end   {:character 3}}
+                      :newText "where($0)"}}]}
         :result
         (mapv (fn [item] (update item :kind get-kind))))})
 
@@ -513,7 +506,7 @@
          ;; parser     ::m/parser-instance
          ;; spec-map   :spec-map
          current-vd :current-vd :as db} :db}
-       [_ {:keys [text cursor-start cursor-end] :as new-ctx}]]
+       [_ {:keys [text cursor-start cursor-end ref] :as new-ctx}]]
 
     (let [new-ctx
           (assoc new-ctx :resource-type (:resource current-vd))
@@ -523,4 +516,5 @@
       {:db (-> db
                #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options {:options options
+                                                :ref ref
                                                 :request new-ctx}))})))
