@@ -1,3 +1,5 @@
+name: view-definition-designer
+
 services:
   vd-designer-ui:
     image: ghcr.io/aidbox/viewdefinitions-ui:latest
@@ -6,9 +8,34 @@ services:
     ports:
       - "8280:80"
 
+  database:
+    container_name: postgres-db
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - vdd-data:/var/lib/postgresql/data/
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    healthcheck:
+      test: pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5454:5432"
+
+
   watchtower:
     image: containrrr/watchtower
     restart: unless-stopped
     command: --schedule "0 */5 * * * *"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  vdd-data:
+    external: true
