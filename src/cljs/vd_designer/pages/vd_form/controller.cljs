@@ -460,8 +460,26 @@
         12 :value
         24 :operator} kind))
 
+(defn autocomplete-new [text cursor-position]
+  {:options
+   (->> {:result
+         [{:label "deceasedBoolean",
+           :kind 5 ; field
+           :detail "Boolean"
+           :textEdit {:range {:start {:line 0 :character 0}
+                              :end   {:line 0 :character 3}}
+                      :newText "deceased.ofType(boolean)"}}
+
+          {:label "deceasedDateTime",
+           :kind 5 ; field
+           :detail "dateTime"
+           :textEdit {:range {:start {:line 0 :character 0}
+                              :end   {:line 0 :character 3}}
+                      :newText "deceased.ofType(dateTime)"}}]}
+        :result
+        (mapv (fn [item] (update item :kind get-kind))))})
+
 (defn autocomplete [parser spec-ctx old-ctx new-ctx]
-  ;; here will be new result from autocomplete-ts library
   (let  [result-from-antlr {:result
                             [{:label "deceasedBoolean",
                               :kind 5 ; field
@@ -480,9 +498,6 @@
                       :result
                       (mapv (fn [item] (update item :kind get-kind))))]
 
-  ;; 0123
-  ;; dece| => deceased.ofType(boolean)
-  ;; dece| => deceased.ofType(dateTime)
   {:options options})
 
   ;; (autocomplete/suggest spec-ctx parser nil new-ctx)
@@ -493,17 +508,18 @@
 
 (reg-event-fx
   ::update-autocomplete-text
-  (fn [{{old-ctx    ::m/autocomplete-ctx
-         parser     ::m/parser-instance
-         current-vd :current-vd
-         spec-map   :spec-map
-         :as        db} :db}
-       [_ new-ctx]]
+  (fn [{{
+         ;; old-ctx    ::m/autocomplete-ctx
+         ;; parser     ::m/parser-instance
+         ;; spec-map   :spec-map
+         current-vd :current-vd :as db} :db}
+       [_ {:keys [text cursor-start cursor-end] :as new-ctx}]]
+
     (let [new-ctx
           (assoc new-ctx :resource-type (:resource current-vd))
 
           {:keys [#_tree options]}
-          (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
+          (autocomplete-new text cursor-start)]
       {:db (-> db
                #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
                (assoc ::m/autocomplete-options {:options options

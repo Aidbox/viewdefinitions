@@ -225,12 +225,25 @@
 ;;                   (update :cursor (fnil + 0) cursor-position))))
 ;;           options)))
 
+(defn calc-cursor [_cursor-start text-edit]
+  (let [start-idx (-> text-edit :range :start :character)
+        end-idx (-> text-edit :range :end :character)
+        text (:newText text-edit)
+        $0-index (str/index-of text "$0")]
+    (cond
+      $0-index
+      (+ start-idx $0-index)
+
+      end-idx
+      (+ start-idx (count text))
+      :else 0)))
+
 (defn change-text [prev-text text-edit]
   (let [prev-text (or prev-text "")
         start (-> text-edit :range :start :character)
         end   (-> text-edit :range :end :character)
-        text  (-> text-edit :newText)
-        left (subs prev-text 0 start)
+        text  (str/replace (-> text-edit :newText) #"\$0" "")
+        left  (subs prev-text 0 start)
         right (subs prev-text (inc end))]
     (str left text right)))
 
@@ -260,14 +273,10 @@
 (defn ->ui-options [{:keys [text cursor-start]} options]
   (->> (mapv render-option options)
        (mapv
-         (fn [option] (merge option {:value (change-text text (:textEdit option))
-                                     :label (:render option)})))
-       ;; (cons-prev-text text cursor-start)
-       )
-  ;; (->> (into (render-option icons/ContainerOutlined fields)
-  ;;            (render-option icons/FunctionOutlined functions))
-  ;;      (cons-prev-text text cursor-start))
-  )
+         (fn [option]
+           (merge option {:value (change-text text (:textEdit option))
+                          :label (:render option)
+                          :cursor (calc-cursor cursor-start (:textEdit option))})))))
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
