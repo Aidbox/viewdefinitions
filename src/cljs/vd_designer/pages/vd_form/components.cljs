@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space Typography]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]]
@@ -204,9 +204,6 @@
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
-(defn get-text-from-option [option]
-  (-> option :textEdit :newText))
-
 ;; (defn cons-prev-text
 ;;   "Since round trip of input causes input lag,
 ;;    suggested values should already contain text before suggestion was selected"
@@ -238,16 +235,39 @@
       (+ start-idx (count text))
       :else 0)))
 
+
+(defn function-called
+"Return true if text of function contains call.
+
+ token end is last char index before possible '('
+ where() -> true
+ where(expr) -> true
+ where -> false"
+  [text token-end]
+  [(= "(" (get text token-end))
+   (= ")" (get text (inc token-end)))])
+
+(defn hack-option
+  "If function kind, change end range based on () present."
+  [text option]
+  (if (= :function (:kind option))
+    (let [end-path [:textEdit :range :end :character]
+          end (get-in option end-path)
+          [left right] (function-called text end)
+          new-end (cond-> end left inc right inc)]
+      (assoc-in option end-path new-end))
+    option))
+
 (defn change-text [prev-text text-edit]
   (let [prev-text (or prev-text "")
         start (-> text-edit :range :start :character)
         end   (-> text-edit :range :end :character)
         text  (str/replace (-> text-edit :newText) #"\$0" "")
         left  (subs prev-text 0 start)
-        right (subs prev-text (inc end))]
+        right (subs prev-text end)]
     (str left text right)))
 
-(defn render-option* [icon kind label]
+(defn render-option* [icon type-or-kind label & [matched-count]]
   (r/as-element
     [:div {:style {:display :flex
                    :flex-direction :row
@@ -255,28 +275,62 @@
                    :width "100%"}}
      [:span
       [:> icon]
-      (str " " label)]
+      (if matched-count
+        [:<>
+         [:b (subs label 0 matched-count)]
+         (subs label matched-count)]
+        label)]
      [:div {:style {:font-style :italic
-                    :color "#1677ff"}} (str " " kind)]]))
+                    :color "#1677ff"}}
+      (str " " type-or-kind)]]))
 
-(defn render-option [option]
-  (when-let [kind (:kind option)]
-    (into option
-          {:render
-           (cond
-             (= :field kind)
-             (render-option* icons/ContainerOutlined (name kind) (:label option))
+(defn get-current-token [option whole-text]
+  (when whole-text
+    (let [start (-> option :textEdit :range :start :character)
+          end   (-> option :textEdit :range :end :character)]
+      (subs whole-text start end))))
 
-             (= :function kind)
-             (render-option* icons/FunctionOutlined (name kind) (:label option)))})))
+(defn render-option [text option]
+  (let [kind (:kind option)]
+    (render-option*
+      (cond
+        (= :field kind) icons/ContainerOutlined
+        (= :function kind) icons/FunctionOutlined
+        :else icons/ContainerOutlined)
+      (or (:detail option) (name kind)) (:label option) (count (get-current-token option text)))))
+
+
+(defn new-cursor-idx
+"Change cursor index.
+ name.whe|r, C = 8
+ token = wher
+ C' = 3"
+  [cursor-idx input-text token]
+  (let [new-cursor (- cursor-idx (- (count input-text) (count token)))]
+    (if (>= new-cursor 0) new-cursor cursor-idx)))
+
+(defn filter-options [input-value cursor-start option]
+  (let [text-to-filter (get-current-token option input-value)
+        filter-by (or (:filterText option) (:label option))
+        truncate-len (count filter-by)
+        cursor-new-idx (new-cursor-idx cursor-start input-value text-to-filter) ]
+    (when filter-by
+      (or
+        (str/starts-with? filter-by
+                          (subs text-to-filter 0 cursor-new-idx))
+        (str/starts-with? filter-by
+                          (subs text-to-filter 0 truncate-len))))))
 
 (defn ->ui-options [{:keys [text cursor-start]} options]
-  (->> (mapv render-option options)
-       (mapv
-         (fn [option]
-           (merge option {:value (change-text text (:textEdit option))
-                          :label (:render option)
-                          :cursor (calc-cursor cursor-start (:textEdit option))})))))
+  (->> options
+      (filterv #(filter-options text cursor-start %))
+      (mapv #(hack-option text %))
+      (mapv
+        (fn [option]
+          (merge option {:label-option (:label option)
+                         :value  (change-text text (:textEdit option))
+                         :label  (render-option text option)
+                         :cursor (calc-cursor cursor-start (:textEdit option))})))))
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])

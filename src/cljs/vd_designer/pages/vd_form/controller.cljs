@@ -461,18 +461,29 @@
         24 :operator} kind))
 
 (defn autocomplete-new [text cursor-position]
+  ;; name.where
+  ;; name.wh| => name.where|
+  ;; name.fa| => name.family
   {:options
    (->> {:result
          [{:label "where",
            :kind 3
-           :detail nil
-           :textEdit {:range {:start {:character 0}
-                              :end   {:character 3}}
-                      :newText "where($0)"}}]}
+           :detail "function"
+           :filterText "where"
+           :textEdit {:range {:start {:character 5}
+                              :end   {:character 6}}
+                      :newText "where($0)"}}
+          {:label "family",
+           :kind 5
+           :detail "string"
+           :filterText "family"
+           :textEdit {:range {:start {:character 5}
+                              :end   {:character 6}}
+                      :newText "family"}}]}
         :result
         (mapv (fn [item] (update item :kind get-kind))))})
 
-(defn autocomplete [parser spec-ctx old-ctx new-ctx]
+#_(defn autocomplete [parser spec-ctx old-ctx new-ctx]
   (let  [result-from-antlr {:result
                             [{:label "deceasedBoolean",
                               :kind 5 ; field
