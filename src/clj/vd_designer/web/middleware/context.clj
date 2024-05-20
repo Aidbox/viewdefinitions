@@ -1,9 +1,8 @@
 (ns vd-designer.web.middleware.context)
 
-(def query-string-middleware
-  {:name ::portal-client
+(defn app-context-middleware [ctx]
+  {:name ::app-context
    :wrap (fn [handler]
            (fn [req]
-             (let [context "TODO"]
-               (handler
-                 (merge context req)))))})
+             (handler
+              (merge ctx req))))})

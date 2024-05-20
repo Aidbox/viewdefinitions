@@ -16,8 +16,8 @@
 
 (defn- upcase [^String s]
   (str
-    (.toUpperCase (.substring s 0 1))
-    (.substring s 1)))
+   (.toUpperCase (.substring s 0 1))
+   (.substring s 1)))
 
 (defn- propertize [k]
   (let [parts (str/split (name k) #"-")]
@@ -27,7 +27,7 @@
   (let [props (Properties.)]
     (.setProperty props "dataSourceClassName" "org.postgresql.ds.PGSimpleDataSource")
     (doseq [[k v] (assoc pool-config
-                    :data-source.url (jdbc.conn/jdbc-url db-config))]
+                         :data-source.url (jdbc.conn/jdbc-url db-config))]
       (when (and k v)
         (.setProperty props (propertize k) (str v))))
     (-> props

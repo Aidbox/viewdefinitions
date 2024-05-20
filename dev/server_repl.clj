@@ -1,70 +1,68 @@
 (ns server-repl                                             ;; TODO: learn and apply the best practices of REPL namespaces
-  (:require [martian.core :as martian]
-            [martian.httpkit :as martian-http]
-            [vd-designer.core :refer [app]]
-            [vd-designer.web.clients.portal :refer [portal-client]]
-            [next.jdbc :as jdbc]
-            [honey.sql.helpers :as sql-helpers]
-            [vd-designer.db.pool :as pool]
-            ))
+   (:require [honey.sql.helpers :as sql-helpers]
+             [martian.core :as martian]
+             [next.jdbc :as jdbc]
+             [vd-designer.clients.portal :refer [client]]
+             [vd-designer.core :refer [app]]
+             [vd-designer.kit :as kit]
+             [vd-designer.model.account :as account]))
 
-(comment
+ (comment
 
-  (jdbc/execute!
+   (def kit
+     (kit/mk-ctx))
+
+   (jdbc/execute!
 
     "create table user ( id serial primary key, uuid uuid unique, email varchar(256) unique )")
 
-  (sql-helpers/create-table :user)
+   (sql-helpers/create-table :user)
 
-  (martian/explore portal-client)
+   (martian/explore client)
 
-  (martian/url-for portal-client :sso-code-exchange)
+   (martian/url-for client :sso-code-exchange)
 
-  (martian/request-for
-    portal-client :sso-code-exchange
+   (martian/request-for
+    (:aidbox.portal/client kit) :sso-code-exchange
     {:client-id     "vd-designer"
      :client-secret "changeme"
      :code          "<code>"
      :grant-type    "authorization_code"})
 
-  @(martian/response-for
-     portal-client :sso-code-exchange
+   @(martian/response-for
+     (:aidbox.portal/client kit) :sso-code-exchange
      {:client-id     "vd-designer"
       :client-secret "changeme"
       :code          "<code>"
       :grant-type    "authorization_code"})
 
+   @(martian/response-for
+     (:aidbox.portal/client kit) :sso-code-exchange
+     {:client-id     "vd-designer"
+      :client-secret "changeme"
+      :code          nil
+      :grant-type    "authorization_code"})
 
 
-  (app {:request-method :get
-        :uri            "/api/health"})
 
-  (app {:request-method :get
-        :uri            "/api/echo"
-        :query-params   {:test 123}})
+   (app {:request-method :get
+         :uri            "/api/health"})
 
-  (app {:request-method :get
-        :uri            "/bad-route"}))
+   (app {:request-method :get
+         :uri            "/api/echo"
+         :query-params   {:test 123}})
 
-(comment
-
-  (def pool
-    (pool/create-pool
-      {:data-source.url "jdbc:postgresql://localhost:5454/vd-dev?user=vd-dev&password=vd-dev"}))
-
-  (jdbc/execute! pool ["create table if not exists public.user ( id serial primary key, uuid uuid unique, email varchar(256) unique )"])
+   (app {:request-method :get
+         :uri            "/bad-route"}))
 
 
-  )
 
-(comment
-  (with-open [conn (jdbc/get-connection datasource)]
-    (jdbc/prepare conn))
+ (jdbc/execute! (:db kit)
+                ["create table if not exists public.accounts ( id serial primary key, uuid uuid unique, email varchar(256) unique )"])
 
-  (jdbc.conn/jdbc-url db-config)
+ (account/get-accounts (:db kit))
 
-  (jdbc/execute!
-    datasource
-    ["create table if not exists public.user ( id serial primary key, uuid uuid unique, email varchar(256) unique )"])
+ (account/create-account (:db kit)
+                         {:email "<EMAIL>" :uuid #uuid "0000-0000-0000-0000-0000"})
 
-  )
+ :rcf)
