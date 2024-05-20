@@ -1,8 +1,7 @@
-(ns vd-designer.kit
-  (:require
-    [clojure.test :refer :all]
-    [next.jdbc :as jdbc]
-    [vd-designer.fake.portal-client :as portal.fake]))
+(ns vd-designer.test-kit
+  (:require [vd-designer.config :as config]
+            [next.jdbc :as jdbc]
+            [vd-designer.fake.portal-client :as portal.fake]))
 
 (def db-config
   {:dbtype   "postgresql"
@@ -13,9 +12,7 @@
    :user     (System/getenv "POSTGRES_USER")
    :password (System/getenv "POSTGRES_PASSWORD")})
 
-(def datasource
-  (jdbc/get-datasource db-config))
-
-(defn kit []
+(defn mk []
   {:aidbox.portal/client (portal.fake/client)
-   :db                   })
+   :db                   (jdbc/get-datasource db-config)
+   :cfg                  config/config})
