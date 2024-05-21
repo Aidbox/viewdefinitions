@@ -201,24 +201,6 @@
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
-;; (defn cons-prev-text
-;;   "Since round trip of input causes input lag,
-;;    suggested values should already contain text before suggestion was selected"
-;;   [prev-text cursor-position options]
-;;   (let [prev-text (or prev-text "")
-;;         start-text (subs prev-text 0 cursor-position)
-;;         rest-text (subs prev-text cursor-position)]
-;;     (mapv (fn [option]
-;;             (let [suggested-text (get-text-from-option option)]
-;;               (-> option
-;;                   (assoc :value (if (str/starts-with? rest-text suggested-text)
-;;                                   prev-text
-;;                                   (if (str/starts-with? suggested-text rest-text)
-;;                                     (str start-text suggested-text)
-;;                                     (str start-text suggested-text rest-text))))
-;;                   (update :cursor (fnil + 0) cursor-position))))
-;;           options)))
-
 (defn calc-cursor [_cursor-start text-edit]
   (let [start-idx (-> text-edit :range :start :character)
         end-idx (-> text-edit :range :end :character)
@@ -232,71 +214,26 @@
       (+ start-idx (count text))
       :else 0)))
 
-(defn function-called
-  "Return true if text of function contains call.
-
- token end is last char index before possible '('
- where() -> true
- where(expr) -> true
- where -> false"
-  [text token-end]
-  [(= "(" (get text token-end))
-   (= ")" (get text (inc token-end)))])
-
-(defn hack-option
-  "If function kind, change end range based on () present."
-  [text option]
-  (if (= :function (:kind option))
-    (let [end-path [:textEdit :range :end :character]
-          end (get-in option end-path)
-          [left right] (function-called text end)
-          new-end (cond-> end left inc right inc)]
-      (assoc-in option end-path new-end))
-    option))
-
 (defn change-text-function [prev-text text-edit]
   (let [prev-text (or prev-text "")
         start (-> text-edit :range :start :character)
         end   (-> text-edit :range :end :character)
         contains-$0? (-> text-edit :newText (str/includes? "$0"))
         left  (subs prev-text 0 start)
-        right (subs prev-text end)
-        center (subs prev-text start end)
-        #_#_already-expr-in-parens
-        (and
-         (str/includes? center "(")
-         (not (str/includes? center "()"))
-         (not= ")" (first right)))]
+        right (subs prev-text end)]
     (if contains-$0?
-      (if (str/includes? right "()")
+      (if (re-matches #"\(.*\).*" right)
+        ;; where(), where(expr).abc
         (str left
              (str/replace (:newText text-edit) #"\(\$0\)" right))
+        ;; where (no parens)
         (str left
              (str/replace (:newText text-edit) #"\$0" "")
              right))
       ;; first()
       (str left
            (str/replace (-> text-edit :newText) #"\$0" "")
-           (if (str/starts-with? right "()") (subs right 2) right)))
-
-    #_(if already-expr-in-parens
-      ;; first(expr) or where(expr)
-      (if contains-$0?
-        ;; where(expr) -> save expr
-        ;; TODO: where(expr  -> add ), save expr
-        (do
-          (str left
-               (str/replace (-> text-edit :newText) #"\(\$0\)" right)))
-        ;; only first(expr) -> remove expr
-        (do
-          (str left
-               (str/replace (-> text-edit :newText) #"\$0" "")
-               (subs right (inc (str/index-of right ")"))))))
-      ;; where(), first()
-      (do
-        (str left
-             (str/replace (-> text-edit :newText) #"\$0" "")
-             right)))))
+           (if (str/starts-with? right "()") (subs right 2) right)))))
 
 (defn change-text [prev-text text-edit & [kind]]
   (if (= :function kind)

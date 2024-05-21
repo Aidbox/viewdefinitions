@@ -452,21 +452,19 @@
          (options-where {:text "name.where()" :cursor-start 8} [5 10])))
 
     ;; name.whe|re(expr) → name.where(expr)|
-    ;; FIXME: bug
-    ;; (is (match?
-    ;;      [{:value "name.where(expr)"
-    ;;         ;; TODO: cursor is not working
-    ;;        #_#_:cursor 16}]
-    ;;      (options-where {:text "name.where(expr)" :cursor-start 8}
-    ;;                     [5 10])))
+    (is (match?
+         [{:value "name.where(expr)"
+            ;; TODO: cursor is not working
+           #_#_:cursor 16}]
+         (options-where {:text "name.where(expr)" :cursor-start 8}
+                        [5 10])))
 
-    ;; FIXME: bug
-    ;; (is (= "name.where(expr).hui"
-    ;;        (u/change-text-function "name.where(expr).hui"
-    ;;                                {:newText "where($0)"
-    ;;                                 :kind :function
-    ;;                                 :range {:start {:character 5}
-    ;;                                         :end   {:character 10}}})))
+    (is (= "name.where(expr).hui"
+           (u/change-text-function "name.where(expr).hui"
+                                   {:newText "where($0)"
+                                    :kind :function
+                                    :range {:start {:character 5}
+                                            :end   {:character 10}}})))
     (is (= "name.first().hui"
            (u/change-text-function "name.first().hui"
                                    {:newText "first()"
