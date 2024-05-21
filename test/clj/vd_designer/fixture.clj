@@ -1,4 +1,4 @@
-(ns clj.vd-designer.fixture
+(ns vd-designer.fixture
   (:require [vd-designer.db.query :as q]
             [vd-designer.kit :as kit]))
 

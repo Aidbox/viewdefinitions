@@ -55,7 +55,23 @@
              (http-response/found (redirect-uri-matcher "localhost" :result))
              (callback-fn {:query-params {:code code}})))))
 
-    (testing "happy path"
+    (testing "user exists"
+      (let [{:keys [db] :as kit} (test-kit/mk-ctx)]
+        (clean-database (:db kit))
+        (account/create db {:email "<email>" :uuid (random-uuid)})
+        (testing "user created"
+          (is (match?
+               (http-response/found (redirect-uri-matcher "localhost" :result))
+               (sso-callback (merge kit {:query-params {:code code}}))))
+          (let [all-accounts (account/get-all db)]
+            (is (match?
+                 [{:accounts/id    number?
+                   :accounts/uuid  uuid?
+                   :accounts/email "<email>"}]
+                 all-accounts)
+                "account created")))))
+
+    (testing "full flow"
       (let [{:keys [db] :as kit} (test-kit/mk-ctx)]
         (clean-database (:db kit))
         (testing "user created"

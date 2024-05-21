@@ -62,7 +62,9 @@
 
  (account/get-accounts (:db kit))
 
- (account/create-account (:db kit)
-                         {:email "<EMAIL>" :uuid #uuid "0000-0000-0000-0000-0000"})
+ (account/get-by-email (:db kit) "<email>")
+
+ (account/create (:db kit)
+                 {:email "<EMAIL>" :uuid #uuid "0000-0000-0000-0000-0000"})
 
  :rcf)
