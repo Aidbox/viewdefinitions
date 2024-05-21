@@ -4,7 +4,8 @@
 (def config
   {:sso {:client-id            "vd-designer"
          :client-secret        "changeme"
-         :default-redirect-url "http://localhost:8280"}
+         :default-redirect-url "http://localhost:8280"
+         :provider-url         "http://127.0.0.1.nip.io:8789/ui/portal"}
 
    :db  {:dbtype   "postgresql"
          :dbname   (System/getenv "POSTGRES_DB")

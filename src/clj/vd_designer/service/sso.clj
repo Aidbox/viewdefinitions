@@ -28,6 +28,7 @@
           {:keys [email id]} (:userinfo res)]
 
       (jdbc/with-transaction [tx db]
+        ;; TODO do not create user if there is already one with the same email
         (let [[{account-id :accounts/id}] (account/create tx {:uuid  (parse-uuid id)
                                                               :email email})]
           (sso-token/create tx (-> res

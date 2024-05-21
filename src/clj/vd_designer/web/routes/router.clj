@@ -13,6 +13,9 @@
    ["/api"
     ["/health" {:get #'health/check}]
     ["/auth"
+     ["/sso" {:get
+              {:summary "Redirect to SSO provider"
+               :handler #'auth/sso-redirect}}]
      ["/sso-callback" {:get
                        {:summary    "Callback for SSO auth"
                         :parameters {:query {:code  string?
