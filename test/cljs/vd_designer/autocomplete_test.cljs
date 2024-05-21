@@ -471,7 +471,7 @@
                                     :range {:start {:character 5}
                                             :end   {:character 10}}})))
 
-;; TODO: how to do it?
+    ;; TODO: how to do it?
     #_(is (= "name.where(expr)"
              (u/change-text "name.where(expr"
                             {:newText "where($0)"

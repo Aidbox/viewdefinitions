@@ -291,14 +291,11 @@
 (defn filter-options [input-value cursor-start option]
   (let [text-to-filter (get-current-token option input-value)
         filter-by (or (:filterText option) (:label option))
-        truncate-len (count filter-by)
+        ;; truncate-len (count filter-by)
         cursor-new-idx (new-cursor-idx cursor-start input-value text-to-filter)]
     (when (and text-to-filter filter-by)
-      (or
-       (str/starts-with? filter-by
-                         (subs text-to-filter 0 cursor-new-idx))
-       (str/starts-with? filter-by
-                         (subs text-to-filter 0 truncate-len))))))
+      (str/starts-with? filter-by
+                        (subs text-to-filter 0 cursor-new-idx)))))
 
 (defn ->ui-options [{:keys [text cursor-start]} options]
   (->> options
