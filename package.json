@@ -10,7 +10,8 @@
     "sql-formatter": "^15.3.0",
     "web-tree-sitter": "^0.22.5",
     "xmlhttprequest": "^1.8.0",
-    "yaml": "^2.4.2"
+    "yaml": "^2.4.2",
+    "fhirpath-autocomplete-ts": "git+ssh://git@github.com:Aidbox/fhirpath-autocomplete-ts.git"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.7",
