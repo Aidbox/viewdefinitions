@@ -201,52 +201,6 @@
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
-(defn calc-cursor [_cursor-start text-edit]
-  (let [start-idx (-> text-edit :range :start :character)
-        end-idx (-> text-edit :range :end :character)
-        text (:newText text-edit)
-        $0-index (str/index-of text "$0")]
-    (cond
-      $0-index
-      (+ start-idx $0-index)
-
-      end-idx
-      (+ start-idx (count text))
-      :else 0)))
-
-(defn change-text-function [prev-text text-edit]
-  (let [prev-text (or prev-text "")
-        start (-> text-edit :range :start :character)
-        end   (-> text-edit :range :end :character)
-        contains-$0? (-> text-edit :newText (str/includes? "$0"))
-        left  (subs prev-text 0 start)
-        right (subs prev-text end)]
-    (if contains-$0?
-      (if (re-matches #"\(.*\).*" right)
-        ;; where(), where(expr).abc
-        (str left
-             (str/replace (:newText text-edit) #"\(\$0\)" right))
-        ;; where (no parens)
-        (str left
-             (str/replace (:newText text-edit) #"\$0" "")
-             right))
-      ;; first()
-      (str left
-           (str/replace (-> text-edit :newText) #"\$0" "")
-           (if (str/starts-with? right "()") (subs right 2) right)))))
-
-(defn change-text [prev-text text-edit & [kind]]
-  (if (= :function kind)
-    (change-text-function prev-text text-edit)
-    (let [prev-text (or prev-text "")
-          start (-> text-edit :range :start :character)
-          end   (-> text-edit :range :end :character)
-          left  (subs prev-text 0 start)
-          right (subs prev-text end)]
-      (str left
-           (str/replace (-> text-edit :newText) #"\$0" "")
-           right))))
-
 (defn render-option* [icon type-or-kind label & [matched-count]]
   (r/as-element
    [:div {:style {:display :flex
@@ -276,6 +230,7 @@
      (cond
        (= :field kind) icons/ContainerOutlined
        (= :function kind) icons/FunctionOutlined
+       (= :class kind) "T"
        :else icons/ContainerOutlined)
      (or (:detail option) (name kind)) (:label option) (count (get-current-token option text)))))
 
@@ -291,22 +246,53 @@
 (defn filter-options [input-value cursor-start option]
   (let [text-to-filter (get-current-token option input-value)
         filter-by (or (:filterText option) (:label option))
-        ;; truncate-len (count filter-by)
         cursor-new-idx (new-cursor-idx cursor-start input-value text-to-filter)]
     (when (and text-to-filter filter-by)
       (str/starts-with? filter-by
                         (subs text-to-filter 0 cursor-new-idx)))))
 
+(defn change-text-and-cursor [input-text _cursor-start option]
+  (let [text-edit (:textEdit option)
+        kind (:kind option)
+        start-idx (-> text-edit :range :start :character)
+        end-idx (-> text-edit :range :end :character)
+        text-new (:newText text-edit)
+        left  (subs input-text 0 start-idx)
+        right (subs input-text end-idx)
+        contains-$0? (str/includes? text-new "$0")
+        $0-index (str/index-of text-new "$0")]
+    (cond
+      (not (= :function kind)) ; name
+      {:value  (str left (str/replace text-new #"\$0" "") right)
+       :cursor (+ start-idx (count text-new))}
+
+      (not contains-$0?) ;first()
+      {:value  (str left (str/replace text-new #"\$0" "")
+                   (if (str/starts-with? right "()") (subs right 2) right))
+       :cursor (+ start-idx (count text-new))}
+
+      (not (re-matches #"\(.*\).*" right)) ; where, whe (no parens)
+      {:value  (str left (str/replace text-new #"\$0" "") right)
+       :cursor (+ start-idx $0-index)}
+
+      (re-matches #"\(\).*" right) ; where()
+      {:value  (str left (str/replace text-new #"\(\$0\)" right))
+       :cursor (+ start-idx $0-index)}
+
+      :else ; where(expr), where(expr).abc
+      {:value  (str left (str/replace text-new #"\(\$0\)" right))
+       :cursor (inc (+ start-idx (str/index-of (subs input-text start-idx) ")")))})))
+
 (defn ->ui-options [{:keys [text cursor-start]} options]
   (->> options
        (filterv #(filter-options text cursor-start %))
-       ;; (mapv #(hack-option text %))
        (mapv
         (fn [option]
-          (merge option {:label-option (:label option)
-                         :value  (change-text text (:textEdit option) (:kind option))
-                         :label  (render-option text option)
-                         :cursor (calc-cursor cursor-start (:textEdit option))})))))
+          (let [{:keys [value cursor]} (change-text-and-cursor text cursor-start option)]
+            (assoc option :label-option (:label option)
+                   :label (render-option text option)
+                   :value value
+                   :cursor cursor))))))
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])

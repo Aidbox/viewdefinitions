@@ -445,45 +445,12 @@
  (fn [{db :db} [_ error-msg]]
    {:notification-error error-msg}))
 
-(defn cursor-start [ctx]
-  (+ (:cursor-start ctx) (.-length (:fhirpath-prefix ctx))))
-
-(defn cursor-end [ctx]
-  (+ (:cursor-end ctx) (.-length (:fhirpath-prefix ctx))))
-
-(defn cursor-diff [old-ctx new-ctx]
-  {:startIndex (cursor-start old-ctx)
-   :oldEndIndex (cursor-end old-ctx)
-   :newEndIndex (cursor-end new-ctx)})
-
 (defn get-kind [kind]
   (get {2 :function
         5 :field
+        7 :class
         12 :value
         24 :operator} kind))
-
-(defn autocomplete-new [text cursor-position]
-  ;; name.where
-  ;; name.wh| => name.where|
-  ;; name.fa| => name.family
-  {:options
-   (->> {:result
-         [{:label "where",
-           :kind 3
-           :detail "function"
-           :filterText "where"
-           :textEdit {:range {:start {:character 5}
-                              :end   {:character 6}}
-                      :newText "where($0)"}}
-          {:label "family",
-           :kind 5
-           :detail "string"
-           :filterText "family"
-           :textEdit {:range {:start {:character 5}
-                              :end   {:character 6}}
-                      :newText "family"}}]}
-        :result
-        (mapv (fn [item] (update item :kind get-kind))))})
 
 (reg-event-fx
  ::update-autocomplete-text
@@ -498,9 +465,9 @@
          items (.-items result)]
      {:db (-> db
               #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-              (assoc ::m/autocomplete-options {:options (mapv (fn [item] (-> item
-                                                                             (interop/obj->clj)
-                                                                             (update :kind get-kind)))
+              (assoc ::m/autocomplete-options {:options (mapv #(-> %
+                                                                   (interop/obj->clj)
+                                                                   (update :kind get-kind))
                                                               items)
                                                :ref ref
                                                :request new-ctx}))})))

@@ -10,24 +10,6 @@
 
 #_(deftest autocomplete-test
 
-  ;; before : ""
-  ;; start = 0 end = 0 text = "hui"
-  ;; => hui
-
-  ;; before : "h"
-  ;; start = 0 end = 0 text = "ui"
-  ;; => uih
-
-  ;; before : "h"
-  ;; start = 1 end = 1 text = "ui"
-  ;; => hui
-
-  ;; CASE
-  ;; |names => name|names
-  ;; REQUEST: text = names, cursor-position = 0
-  ;; RESPONSE: start = 0,
-  ;;           end = 4
-
   ;; | => name|
     (match?
      (c/autocomplete-new "" 0)
@@ -446,44 +428,51 @@
                                :end   {:character 10}}
                        :newText "where($0)"}}])))
 
-    ;; 	name.whe|re() → name.where(|)
+    ;; name.whe|re() → name.where(|)
     (is (match?
          [{:value "name.where()" :cursor 11}]
          (options-where {:text "name.where()" :cursor-start 8} [5 10])))
 
+
+    ;; name.|where(expr) → name.where(expr)|
+    (is (match?
+          [{:value "name.where(expr)"
+            :cursor 16}]
+          (options-where {:text "name.where(expr)" :cursor-start 5}
+                         [5 10])))
+
     ;; name.whe|re(expr) → name.where(expr)|
     (is (match?
-         [{:value "name.where(expr)"
-            ;; TODO: cursor is not working
-           #_#_:cursor 16}]
-         (options-where {:text "name.where(expr)" :cursor-start 8}
-                        [5 10])))
+          [{:value "name.where(expr)"
+            :cursor 16}]
+          (options-where {:text "name.where(expr)" :cursor-start 8}
+                         [5 10])))
 
-    (is (= "name.where(expr).hui"
-           (u/change-text-function "name.where(expr).hui"
-                                   {:newText "where($0)"
-                                    :kind :function
-                                    :range {:start {:character 5}
-                                            :end   {:character 10}}})))
-    (is (= "name.first().hui"
-           (u/change-text-function "name.first().hui"
-                                   {:newText "first()"
-                                    :range {:start {:character 5}
-                                            :end   {:character 10}}})))
+    ;; name.|where(expr).abc => name.where(expr)|.abc
+    (is (match?
+          [{:value "name.where(expr).abc"
+            :cursor 16}]
+          (options-where {:text "name.where(expr).abc" :cursor-start 5}
+                         [5 10])))
 
-    ;; TODO: how to do it?
-    #_(is (= "name.where(expr)"
-             (u/change-text "name.where(expr"
-                            {:newText "where($0)"
-                             :range {:start {:character 5}
-                                     :end   {:character 10}}})))
+    ;; name.|first().abc => name.first()|.abc
+    (is (match?
+          [{:value "name.first().abc"
+            :cursor 12}]
+          (u/->ui-options
+            {:text "name.first().abc" :cursor-start 5}
+            [{:label "first",
+              :kind :function
+              :detail nil
+              :textEdit {:range {:start {:character 5}
+                                 :end   {:character 10}}
+                         :newText "first()"}}])))
 
-    ;; 	TODO: name.|where(expr) → name.where(expr)|
     ;; 	name.whe|re( → name.where(|)
-    ;; TODO: fix this
+    ;; TODO: is it ok?
     #_(is (match?
-           [{:value "name.where()" :cursor 11}]
-           (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
+          [{:value "name.where()" :cursor 11}]
+          (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
 
 (comment
   (run-test ui-options-field-test)
