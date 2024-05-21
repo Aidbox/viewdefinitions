@@ -4,7 +4,7 @@
     [clojure.string :as str]
     [clojure.set :as set]
     [medley.core :as medley]
-    [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
+    [re-frame.core :refer [reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]]
@@ -18,7 +18,6 @@
     [vd-designer.pages.vd-form.model :as m]
     [vd-designer.utils.event :refer [response->error]]
     [vd-designer.utils.utils :as utils]
-    [vd-designer.interop :as interop]
     [vd-designer.utils.string :as utils.string]))
 
 #_"status is required"
@@ -442,15 +441,8 @@
 
 (reg-event-fx
  ::tree-sitter-load-error
- (fn [{db :db} [_ error-msg]]
+ (fn [{_db :db} [_ error-msg]]
    {:notification-error error-msg}))
-
-(defn get-kind [kind]
-  (get {2 :function
-        5 :field
-        7 :class
-        12 :value
-        24 :operator} kind))
 
 (reg-event-fx
  ::update-autocomplete-text
@@ -459,15 +451,9 @@
         spec-map   :spec-map
         current-vd :current-vd :as db} :db}
       [_ {:keys [text cursor-start _cursor-end ref] :as new-ctx}]]
-
    (let [new-ctx (assoc new-ctx :resource-type (:resource current-vd))
-         result (antlr/complete spec-map (:resource current-vd) [] text cursor-start)
-         items (.-items result)]
+         result (antlr/complete spec-map (:resource current-vd) [] text cursor-start)]
      {:db (-> db
-              #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-              (assoc ::m/autocomplete-options {:options (mapv #(-> %
-                                                                   (interop/obj->clj)
-                                                                   (update :kind get-kind))
-                                                              items)
+              (assoc ::m/autocomplete-options {:options result
                                                :ref ref
                                                :request new-ctx}))})))

@@ -1,12 +1,13 @@
 (ns vd-designer.autocomplete-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests run-test]]
-            [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.components :as u]
-            [clojure.core]
-            [matcher-combinators.test :refer [match?]]
-            [vd-designer.utils.utils :refer [insert-after
-                                             insert-at
-                                             remove-by-index]]))
+            [clojure.string :as str]
+            ;; [clojure.core]
+            [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+            [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+            [matcher-combinators.test :refer [match?]])
+  (:require-macros [vd-designer.interop :refer [inline-resource]])
+  )
 
 #_(deftest autocomplete-test
 
@@ -473,6 +474,26 @@
     #_(is (match?
           [{:value "name.where()" :cursor 11}]
           (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
+
+
+(def json (inline-resource "fhir_schema.ndjson"))
+(def spec (clj->js (utils.fhir-spec/spec-map (utils.fhir-spec/spec json))))
+
+(defn ui-opts [text]
+  ;; text and cursor are repeated, we have to do it
+  (let [cursor-start (str/index-of text "|")
+        text (str/replace text "|" "")
+        options (antlr/complete spec "Patient" [] text cursor-start)]
+    (mapv #(dissoc % :label)
+          (u/->ui-options
+            {:text text :cursor-start cursor-start}
+            options))))
+
+(deftest autocomplete-with-fhir-spec
+  (is (match? [{:value "name.where()", :cursor 11}]
+              (ui-opts "name.where|")))
+
+  )
 
 (comment
   (run-test ui-options-field-test)
