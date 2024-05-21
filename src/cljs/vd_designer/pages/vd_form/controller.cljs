@@ -1,24 +1,25 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
-   [ajax.core :as ajax]
-   [clojure.string :as str]
-   [clojure.set :as set]
-   [medley.core :as medley]
-   [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
-   [vd-designer.http.fhir-server :as http.fhir-server]
-   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                  get-select-path]]
-   [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
-   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                           remove-decoration
-                                                           uuid->idx]]
-   [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
-   [vd-designer.pages.vd-form.model :as m]
-   [vd-designer.utils.event :refer [response->error]]
-   [vd-designer.utils.utils :as utils]
-   [vd-designer.utils.string :as utils.string]))
+    [ajax.core :as ajax]
+    [clojure.string :as str]
+    [clojure.set :as set]
+    [medley.core :as medley]
+    [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
+    [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                   get-select-path]]
+    [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
+    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                            remove-decoration
+                                                            uuid->idx]]
+    [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+    [vd-designer.pages.vd-form.model :as m]
+    [vd-designer.utils.event :refer [response->error]]
+    [vd-designer.utils.utils :as utils]
+    [vd-designer.interop :as interop]
+    [vd-designer.utils.string :as utils.string]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -456,7 +457,7 @@
    :newEndIndex (cursor-end new-ctx)})
 
 (defn get-kind [kind]
-  (get {3 :function
+  (get {2 :function
         5 :field
         12 :value
         24 :operator} kind))
@@ -484,52 +485,22 @@
         :result
         (mapv (fn [item] (update item :kind get-kind))))})
 
-#_(defn autocomplete [parser spec-ctx old-ctx new-ctx]
-  (let  [result-from-antlr {:result
-                            [{:label "deceasedBoolean",
-                              :kind 5 ; field
-                              :detail "Boolean"
-                              :textEdit {:range {:start {:line 0 :character 0}
-                                                 :end   {:line 0 :character 3}}
-                                         :newText "deceased.ofType(boolean)"}}
-
-                             {:label "deceasedDateTime",
-                              :kind 5 ; field
-                              :detail "dateTime"
-                              :textEdit {:range {:start {:line 0 :character 0}
-                                                 :end   {:line 0 :character 3}}
-                                         :newText "deceased.ofType(dateTime)"}}]}
-         options (->> result-from-antlr
-                      :result
-                      (mapv (fn [item] (update item :kind get-kind))))]
-
-  {:options options})
-
-  ;; (autocomplete/suggest spec-ctx parser nil new-ctx)
-  #_(if (not= (:id old-ctx) (:id new-ctx))
-    (autocomplete/suggest spec-ctx parser nil new-ctx)
-    (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
-      (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
-
 (reg-event-fx
  ::update-autocomplete-text
  (fn [{{;; old-ctx    ::m/autocomplete-ctx
          ;; parser     ::m/parser-instance
         spec-map   :spec-map
         current-vd :current-vd :as db} :db}
-      [_ {:keys [text cursor-start cursor-end ref] :as new-ctx}]]
+      [_ {:keys [text cursor-start _cursor-end ref] :as new-ctx}]]
 
-   (let [new-ctx
-         (assoc new-ctx :resource-type (:resource current-vd))
-
-         {:keys [#_tree options]}
-         (autocomplete-new text cursor-start)
+   (let [new-ctx (assoc new-ctx :resource-type (:resource current-vd))
          result (antlr/complete spec-map (:resource current-vd) [] text cursor-start)
          items (.-items result)]
-     (println (first (js->clj items :keywordize-keys true)))
      {:db (-> db
               #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-              (assoc ::m/autocomplete-options {:options (mapv (fn [item] (update item :kind get-kind))
-                                                              (js->clj items :keywordize-keys true))
+              (assoc ::m/autocomplete-options {:options (mapv (fn [item] (-> item
+                                                                             (interop/obj->clj)
+                                                                             (update :kind get-kind)))
+                                                              items)
                                                :ref ref
                                                :request new-ctx}))})))

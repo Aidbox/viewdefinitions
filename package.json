@@ -19,9 +19,6 @@
     "highlight.js": "11.9.0",
     "postcss": "^8.4.38",
     "postcss-cli": "^11.0.0",
-    "shadow-cljs": "^2.28.4",
-    "tailwindcss": "^3.4.3",
-    "tree-sitter-cli": "^0.22.5",
-    "tree-sitter-javascript": "^0.21.0"
+    "shadow-cljs": "^2.28.4"
   }
 }
