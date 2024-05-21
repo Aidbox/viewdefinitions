@@ -14,6 +14,7 @@
    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
                                                            remove-decoration
                                                            uuid->idx]]
+   [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
    [vd-designer.pages.vd-form.model :as m]
    [vd-designer.utils.event :refer [response->error]]
    [vd-designer.utils.utils :as utils]
@@ -80,7 +81,7 @@
 (reg-event-db
  ::load-fhir-schemas-success
  (fn [db [_ schemas]]
-   (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
+   (assoc db :spec-map (clj->js (utils.fhir-spec/spec-map schemas)))))
 
 (reg-event-fx
  ::load-fhir-schemas-error
@@ -511,21 +512,24 @@
       (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
 
 (reg-event-fx
-  ::update-autocomplete-text
-  (fn [{{
-         ;; old-ctx    ::m/autocomplete-ctx
+ ::update-autocomplete-text
+ (fn [{{;; old-ctx    ::m/autocomplete-ctx
          ;; parser     ::m/parser-instance
-         ;; spec-map   :spec-map
-         current-vd :current-vd :as db} :db}
-       [_ {:keys [text cursor-start cursor-end ref] :as new-ctx}]]
+        spec-map   :spec-map
+        current-vd :current-vd :as db} :db}
+      [_ {:keys [text cursor-start cursor-end ref] :as new-ctx}]]
 
-    (let [new-ctx
-          (assoc new-ctx :resource-type (:resource current-vd))
+   (let [new-ctx
+         (assoc new-ctx :resource-type (:resource current-vd))
 
-          {:keys [#_tree options]}
-          (autocomplete-new text cursor-start)]
-      {:db (-> db
-               #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-               (assoc ::m/autocomplete-options {:options options
-                                                :ref ref
-                                                :request new-ctx}))})))
+         {:keys [#_tree options]}
+         (autocomplete-new text cursor-start)
+         result (antlr/complete spec-map (:resource current-vd) [] text cursor-start)
+         items (.-items result)]
+     (println (first (js->clj items :keywordize-keys true)))
+     {:db (-> db
+              #_(assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
+              (assoc ::m/autocomplete-options {:options (mapv (fn [item] (update item :kind get-kind))
+                                                              (js->clj items :keywordize-keys true))
+                                               :ref ref
+                                               :request new-ctx}))})))

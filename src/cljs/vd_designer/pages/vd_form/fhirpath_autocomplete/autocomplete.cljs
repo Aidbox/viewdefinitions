@@ -1,7 +1,8 @@
 (ns vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete
   (:require [clojure.string :as str]
             [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter :as tree-sitter]
-            [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
+            [vd-designer.pages.vd-form.fhir-schema :as fhirschema]
+            [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]))
 
 (def fhirpath-fns
   {:where {:value "where()"
@@ -146,6 +147,7 @@
         ;; 1. Context path
         ;; 1.5 With types
         ;; 2. Actual part
+        ;; suggest(specmap: Map<string, Object>, type: string, parentExpressions: Array<string>, fhirpath: string, cursor: number) {
         ]
     {:tree    tree
      :options (if (:part traverse-result)
