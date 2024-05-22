@@ -495,6 +495,33 @@
 
   (is (> (count (ui-opts "name.|ofType()")) 1))
 
+  (is (match?
+       [{:label-option "deceasedDateTime",
+         :value "deceased.ofType(dateTime)",
+         :cursor 25}
+        {:label-option "deceasedBoolean",
+         :value "deceased.ofType(boolean)",
+         :cursor 24}]
+        (ui-opts "decea|")))
+
+  (is (> (count (ui-opts "|name.ofType()")) 1))
+
+  (is (match?
+        [{:label-option "deceasedDateTime",
+          :value "deceased.ofType(dateTime)",
+          :cursor 25}]
+        (ui-opts "deceasedDateTime|")))
+
+  (is (match?
+        [{:label-option "where",
+          :value "name.where()",
+          :cursor 11}]
+        (ui-opts "name.wh|ere")))
+
+  (is (= [] (ui-opts "hello|")))
+  (is (= [] (ui-opts "where|")))
+  ;; why?
+  #_(is (= [] (ui-opts "name.use.where|")))
   )
 
 (comment
