@@ -347,17 +347,6 @@
                                 (if (and (str/blank? value) errors?)
                                   "default-input red-input"
                                   "default-input")}
-                   :onKeyDown (fn [e]
-                                (js/console.log "pressed " (u/pressed-key e))
-                                (when (= "Escape" (u/pressed-key e))
-                                  (.preventDefault e))
-
-                                (when (= "Tab" (u/pressed-key e))
-                                  (.preventDefault e)))
-                   :onKeyUp  (fn [e]
-                               (js/console.log "pressed onkeyup" (u/pressed-key e))
-                               (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                 (update-autocomplete-fn e)))
                    :value value
                    :ref (fn [el] (reset! auto-complete-ref el))
                    :onMouseEnter #(dispatch [::c/change-draggable-node false])
