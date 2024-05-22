@@ -325,6 +325,7 @@
                          :onKeyDown (fn [e]
                                       (when (= "Escape" (u/pressed-key e))
                                         (.preventDefault e)))
+                         :popupMatchSelectWidth 300
                          :backfill true
                          :onKeyUp  (fn [e]
                                      (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
