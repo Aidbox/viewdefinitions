@@ -208,7 +208,7 @@
                   :justify-content :space-between
                   :width "100%"}}
     [:span
-     [:> icon]
+     icon
      (if matched-count
        [:<>
         [:b (subs label 0 matched-count)]
@@ -235,16 +235,15 @@
   (let [kind (:kind option)]
     (render-option*
      (cond
-       (= :field kind) icons/ContainerOutlined
-       (= :function kind) icons/FunctionOutlined
-       (= :class kind) "T"
-       :else icons/ContainerOutlined)
-     (or (:detail option) (name kind)) 
-     (render-text (:label option) 
+       (= :field kind) [:> icons/ContainerOutlined]
+       (= :function kind) [:> icons/FunctionOutlined]
+       (= :class kind) "T "
+       :else [:> icons/ContainerOutlined])
+     (or (:detail option) (name kind))
+     (render-text (:label option)
                   (some-> (get-current-token option text)
                           count
-                          (min cursor-start)))
-     #_(count (get-current-token option text)))))
+                          (min cursor-start))))))
 
 (defn new-cursor-idx
   "Change cursor index.
