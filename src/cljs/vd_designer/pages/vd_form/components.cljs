@@ -248,8 +248,10 @@
         filter-by (or (:filterText option) (:label option))
         cursor-new-idx (new-cursor-idx cursor-start input-value text-to-filter)]
     (when (and text-to-filter filter-by)
-      (str/starts-with? filter-by
-                        (subs text-to-filter 0 cursor-new-idx)))))
+      (or
+        (= cursor-start (-> option :textEdit :range :start :character))
+        (str/starts-with? filter-by
+                        (subs text-to-filter 0 cursor-new-idx))))))
 
 (defn change-text-and-cursor [input-text _cursor-start option]
   (let [text-edit (:textEdit option)
@@ -321,7 +323,12 @@
                                         (.preventDefault e)
                                         (when-let [options (js->clj rendered-options :keywordize-keys true)]
                                           (when (= 1 (count options))
-                                            (change-input-value ctx key (:value (first options)))))))
+                                            (change-input-value ctx key (:value (first options)))
+                                            (when-let [r @auto-complete-ref]
+                                              (when-let [cursor (:cursor (first options))]
+                                                (js/setTimeout (fn [_]
+                                                                 (.focus r)
+                                                                 (.setSelectionRange r cursor cursor)) 0)))))))
                          :backfill true
                          :onKeyUp  (fn [e]
                                      (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))

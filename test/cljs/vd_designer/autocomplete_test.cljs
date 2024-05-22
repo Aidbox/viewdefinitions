@@ -493,6 +493,8 @@
   (is (match? [{:value "name.where()", :cursor 11}]
               (ui-opts "name.where|")))
 
+  (is (> (count (ui-opts "name.|ofType()")) 1))
+
   )
 
 (comment
