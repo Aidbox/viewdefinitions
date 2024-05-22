@@ -1,70 +1,46 @@
-(ns server-repl                                             ;; TODO: learn and apply the best practices of REPL namespaces
-   (:require [honey.sql.helpers :as sql-helpers]
-             [martian.core :as martian]
-             [next.jdbc :as jdbc]
-             [vd-designer.clients.portal :refer [client]]
-             [vd-designer.core :refer [app]]
-             [vd-designer.kit :as kit]
-             [vd-designer.model.account :as account]))
+(ns server-repl
+  ;; TODO: learn and apply the best practices of REPL namespaces
+  (:require [martian.core :as martian]
+            [ragtime.repl]
+            [ragtime.jdbc :as jdbc]
+            [vd-designer.config]
+            [vd-designer.core :as core]
+            [vd-designer.kit :as kit]))
 
- (comment
+(def ctx (kit/mk-ctx))
 
-   (def kit
-     (kit/mk-ctx))
+;;; Try out Aidbox portal client
+(comment
+  (def portal-client (:aidbox.portal/client ctx))
 
-   (jdbc/execute!
+  (martian/explore portal-client)
+  (let [req {:client-id     "vd-designer"
+             :client-secret "changeme"
+             :code          "<code>"
+             :grant-type    "authorization_code"}]
+    #_(martian/request-for portal-client :sso-code-exchange req)
+    #_@(martian/response-for portal-client :sso-code-exchange req))
 
-    "create table user ( id serial primary key, uuid uuid unique, email varchar(256) unique )")
+  )
 
-   (sql-helpers/create-table :user)
+;;; Try out server endpoints
+(comment
+  (core/app {:request-method :get
+             :uri            "/api/health"})
 
-   (martian/explore client)
+  (core/app {:request-method :get
+             :uri            "/bad-route"})
 
-   (martian/url-for client :sso-code-exchange)
+  )
 
-   (martian/request-for
-    (:aidbox.portal/client kit) :sso-code-exchange
-    {:client-id     "vd-designer"
-     :client-secret "changeme"
-     :code          "<code>"
-     :grant-type    "authorization_code"})
+;;; Try out applying migrations
+(comment
+  (def ragtime-cfg {:datastore  (jdbc/sql-database (:db vd-designer.config/config))
+                    :migrations (jdbc/load-resources "migrations")})
 
-   @(martian/response-for
-     (:aidbox.portal/client kit) :sso-code-exchange
-     {:client-id     "vd-designer"
-      :client-secret "changeme"
-      :code          "<code>"
-      :grant-type    "authorization_code"})
+  ;; it's creating `ragtime_migrations` table
+  (ragtime.repl/migrate ragtime-cfg)
+  ;; it's doing 1 rollback at the time
+  (ragtime.repl/rollback ragtime-cfg)
 
-   @(martian/response-for
-     (:aidbox.portal/client kit) :sso-code-exchange
-     {:client-id     "vd-designer"
-      :client-secret "changeme"
-      :code          nil
-      :grant-type    "authorization_code"})
-
-
-
-   (app {:request-method :get
-         :uri            "/api/health"})
-
-   (app {:request-method :get
-         :uri            "/api/echo"
-         :query-params   {:test 123}})
-
-   (app {:request-method :get
-         :uri            "/bad-route"}))
-
-
-
- (jdbc/execute! (:db kit)
-                ["create table if not exists public.accounts ( id serial primary key, uuid uuid unique, email varchar(256) unique )"])
-
- (account/get-accounts (:db kit))
-
- (account/get-by-email (:db kit) "<email>")
-
- (account/create (:db kit)
-                 {:email "<EMAIL>" :uuid #uuid "0000-0000-0000-0000-0000"})
-
- :rcf)
+  )
