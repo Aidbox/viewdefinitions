@@ -1,4 +1,4 @@
-name: view-definition-designer
+name: vd-designer
 
 services:
   vd-designer-ui:
@@ -7,6 +7,8 @@ services:
     pull_policy: always
     ports:
       - "8280:80"
+    profiles:
+      - dev
 
   database:
     container_name: postgres-db
@@ -27,6 +29,25 @@ services:
       retries: 5
     ports:
       - "${POSTGRES_PORT}:5432"
+    profiles:
+      - dev
+      - local
+
+  test-db:
+    container_name: test-db
+    build:
+      context: .
+      dockerfile: ./docker/test_db.dockerfile
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    # NOTE: this ports are exposed because each time we create a temp db a new
+    #   port should be used; this way we provide a range to secure our tests
+    # ! IMPORTANT: this range specified in docker/test-db/getsocket.c as well
+    ports:
+      - "14500-15000:14500-15000"
+    profiles:
+      - local
+      - tests
 
   watchtower:
     image: containrrr/watchtower
@@ -34,6 +55,8 @@ services:
     command: --schedule "0 */5 * * * *"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    profiles:
+      - dev
 
 volumes:
   vdd-data:

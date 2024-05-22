@@ -10,13 +10,13 @@
 
 (def app
   (ring/ring-handler
-    (router ctx)
-    (ring/create-default-handler)))
+   (router ctx)
+   (ring/create-default-handler)))
 
 (defonce server
   (let [port 8080]
     (print "Applying migrations... ")
-    (migrate/migrate! {:datasource (:db ctx)})
+    (migrate/migrate! (:db ctx))
     (println "Done.")
     (println "Starting server on port" port)
     (jetty/run-jetty #'app {:port 8080, :join? false})))
