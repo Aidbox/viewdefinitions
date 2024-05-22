@@ -224,7 +224,14 @@
           end   (-> option :textEdit :range :end :character)]
       (subs whole-text start end))))
 
-(defn render-option [text option]
+(defn render-text [label matched-count]
+  (if matched-count
+   [:<>
+     [:b (subs label 0 matched-count)]
+     (subs label matched-count)]
+  label))
+
+(defn render-option [text cursor-start option]
   (let [kind (:kind option)]
     (render-option*
      (cond
@@ -232,7 +239,12 @@
        (= :function kind) icons/FunctionOutlined
        (= :class kind) "T"
        :else icons/ContainerOutlined)
-     (or (:detail option) (name kind)) (:label option) (count (get-current-token option text)))))
+     (or (:detail option) (name kind)) 
+     (render-text (:label option) 
+                  (some-> (get-current-token option text)
+                          count
+                          (min cursor-start)))
+     #_(count (get-current-token option text)))))
 
 (defn new-cursor-idx
   "Change cursor index.
@@ -292,7 +304,7 @@
         (fn [option]
           (let [{:keys [value cursor]} (change-text-and-cursor text cursor-start option)]
             (assoc option :label-option (:label option)
-                   :label (render-option text option)
+                   :label (render-option text cursor-start option)
                    :value value
                    :cursor cursor))))))
 
@@ -300,35 +312,20 @@
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
-        rendered-options
-        (if (= (:value-path ctx) (:id request))
-          (->ui-options request options)
-          [])
+        rendered-options (if (= (:value-path ctx) (:id request))
+                           (->ui-options request options)
+                           [])
         errors? @(subscribe [::m/empty-inputs?])]
-    (println "value " value)
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
      [:> AutoComplete (medley/deep-merge
                         {:style        {:width "100%"}
                          :options      rendered-options
-                         ;; :defaultValue value
-                         :value value
+                         :defaultValue value
                          :onKeyDown (fn [e]
                                       (when (= "Escape" (u/pressed-key e))
-                                        (.preventDefault e))
-
-                                      (when (or (= "Enter" (u/pressed-key e))
-                                                (= "Tab" (u/pressed-key e)))
-                                        (.preventDefault e)
-                                        (when-let [options (js->clj rendered-options :keywordize-keys true)]
-                                          (when (= 1 (count options))
-                                            (change-input-value ctx key (:value (first options)))
-                                            (when-let [r @auto-complete-ref]
-                                              (when-let [cursor (:cursor (first options))]
-                                                (js/setTimeout (fn [_]
-                                                                 (.focus r)
-                                                                 (.setSelectionRange r cursor cursor)) 0)))))))
+                                        (.preventDefault e)))
                          :backfill true
                          :onKeyUp  (fn [e]
                                      (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
@@ -354,7 +351,6 @@
                                 (if (and (str/blank? value) errors?)
                                   "default-input red-input"
                                   "default-input")}
-                   :value value
                    :ref (fn [el] (reset! auto-complete-ref el))
                    :onMouseEnter #(dispatch [::c/change-draggable-node false])
                    :onMouseLeave #(dispatch [::c/change-draggable-node true])}
