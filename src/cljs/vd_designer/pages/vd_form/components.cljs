@@ -303,41 +303,65 @@
           (->ui-options request options)
           [])
         errors? @(subscribe [::m/empty-inputs?])]
+    (println "value " value)
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
      [:> AutoComplete (medley/deep-merge
-                       {:style        {:width "100%"}
-                        :options      rendered-options
-                        :defaultValue value
-                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
-                                      (.preventDefault %))
-                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                     (update-autocomplete-fn %))
-                        :onInput  #(update-autocomplete-fn %)
-                        :onClick  (fn [e] (update-autocomplete-fn e))
-                        :onChange (fn [e] (change-input-value ctx key e))
-                        :onSelect (fn [_value option]
-                                    (when-let [r @auto-complete-ref]
-                                      (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
-                                        (js/setTimeout (fn [_]
-                                                         (.focus r)
-                                                         (.setSelectionRange r cursor cursor)) 0))))}
+                        {:style        {:width "100%"}
+                         :options      rendered-options
+                         ;; :defaultValue value
+                         :value value
+                         :onKeyDown (fn [e]
+                                      (when (= "Escape" (u/pressed-key e))
+                                        (.preventDefault e))
+
+                                      (when (or (= "Enter" (u/pressed-key e))
+                                                (= "Tab" (u/pressed-key e)))
+                                        (.preventDefault e)
+                                        (when-let [options (js->clj rendered-options :keywordize-keys true)]
+                                          (when (= 1 (count options))
+                                            (change-input-value ctx key (:value (first options)))))))
+                         :backfill true
+                         :onKeyUp  (fn [e]
+                                     (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                       (update-autocomplete-fn e)))
+                         :onInput  #(update-autocomplete-fn %)
+                         :onClick  (fn [e] (update-autocomplete-fn e))
+                         :onChange (fn [e] (change-input-value ctx key e))
+                         :onSelect (fn [_value option]
+                                     (when-let [r @auto-complete-ref]
+                                       (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                         (js/setTimeout (fn [_]
+                                                          (.focus r)
+                                                          (.setSelectionRange r cursor cursor)) 0))))}
                        opts)
       [:> Input (medley/deep-merge
-                 {:style
-                  {:font-style       "italic"
-                   :border           "none"
-                   :border-bottom    "1px solid transparent"
-                   :border-radius    0
-                   :background-color "transparent"}
-                  :classNames {:input
-                               (if (and (str/blank? value) errors?)
-                                 "default-input red-input"
-                                 "default-input")}
-                  :ref (fn [el] (reset! auto-complete-ref el))
-                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
-                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}
+                  {:style
+                   {:font-style       "italic"
+                    :border           "none"
+                    :border-bottom    "1px solid transparent"
+                    :border-radius    0
+                    :background-color "transparent"}
+                   :classNames {:input
+                                (if (and (str/blank? value) errors?)
+                                  "default-input red-input"
+                                  "default-input")}
+                   :onKeyDown (fn [e]
+                                (js/console.log "pressed " (u/pressed-key e))
+                                (when (= "Escape" (u/pressed-key e))
+                                  (.preventDefault e))
+
+                                (when (= "Tab" (u/pressed-key e))
+                                  (.preventDefault e)))
+                   :onKeyUp  (fn [e]
+                               (js/console.log "pressed onkeyup" (u/pressed-key e))
+                               (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                 (update-autocomplete-fn e)))
+                   :value value
+                   :ref (fn [el] (reset! auto-complete-ref el))
+                   :onMouseEnter #(dispatch [::c/change-draggable-node false])
+                   :onMouseLeave #(dispatch [::c/change-draggable-node true])}
                  opts)]]]))
 
 (defn render-input [ctx input-type placeholder kind value]
