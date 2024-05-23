@@ -1,0 +1,27 @@
+(ns vd-designer.auth.controller
+  (:require [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
+
+(reg-fx
+ :set-authentication
+ (fn [v]
+   (.setItem (.-localStorage js/window)
+              ;; TODO: keyword or string?
+             :authentication
+             v)))
+
+(reg-event-fx
+ ::store-authentication
+ (fn [{:keys [db]}
+      [_ {:keys [authentication error]}]]
+   (cond
+     error {:notification-error error}
+     authentication {:set-authentication authentication
+                     :db                 (assoc db :authorized? true)
+                     :message-success    "Authenticated"})))
+
+(reg-cofx
+ :get-authentication-token
+ (fn [coeffects]
+   (assoc coeffects
+          :authentication-token
+          (js->clj (.getItem js/localStorage :authentication)))))

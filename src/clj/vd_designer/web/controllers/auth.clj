@@ -17,14 +17,18 @@
         uri/uri-str
         http-response/found)))
 
+
 (defn- construct-sso-callback-response [sso-config state sso-result]
   (let [default-url (:default-redirect-url sso-config)
         base-url (if (empty? state)
                    default-url
                    (try (base64/decode state)
-                        (catch Exception _ default-url)))]
+                        (catch Exception _ default-url)))
+        query-map (if (empty? (:error sso-result))
+                    {:authentication (:result sso-result)}
+                    sso-result)]
     (-> base-url
-        (uri/assoc-query sso-result)
+        (uri/assoc-query query-map)
         uri/uri-str
         http-response/found)))
 

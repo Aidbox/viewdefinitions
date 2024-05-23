@@ -1,16 +1,16 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [reg-event-fx
-                                                subscribe]]
-            [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter]
+            [re-frame.core :refer [clear-subscription-cache! dispatch-sync
+                                   inject-cofx reg-event-fx subscribe]]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
             [reitit.frontend.easy :as rfe]
             [vd-designer.components.layout :refer [layout]]
             [vd-designer.notifications]
-            [vd-designer.pages.auth.model :refer [auth-db]]
+            [vd-designer.auth.controller :as auth.controller]
             [vd-designer.pages.settings.view]
+            [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.view]
@@ -47,12 +47,13 @@
 
 (reg-event-fx
  ::initialize-db
- (fn [{:keys [db]} _]
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} _]
    (if (seq db)
      {:db db}
      {:db {:view-definitions    []
            :side-menu-collapsed false
-           :auth                auth-db
+           :authorized?         (boolean authentication-token)
            :cfg/fhir-servers    {:servers          default-servers
                                  :used-server-name (-> default-servers
                                                        first
@@ -87,9 +88,10 @@
 
 (defn init []
   (routes/start-reitit)
-  (re-frame/dispatch-sync [::initialize-db])
+  (dispatch-sync [::initialize-db])
+  (dispatch-sync [::auth.controller/store-authentication (:query-params @routes/match)])
   (rdom-client/render root-element (r/as-element [(fn [] current-page)]) functional-compiler))
 
 (defn ^:dev/after-load re-render []
-  (re-frame/clear-subscription-cache!)
+  (clear-subscription-cache!)
   (init))

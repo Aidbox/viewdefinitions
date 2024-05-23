@@ -53,19 +53,19 @@
 
       (testing "state cannot be decoded"
         (is (match?
-             (http-response/found (redirect-uri-matcher "localhost" :result))
+             (http-response/found (redirect-uri-matcher "localhost" :authentication))
              (callback-fn {:query-params {:code  code
                                           :state "<invalid state>"}}))))
       (testing "missing state"
         (is (match?
-             (http-response/found (redirect-uri-matcher "localhost" :result))
+             (http-response/found (redirect-uri-matcher "localhost" :authentication))
              (callback-fn {:query-params {:code code}})))))
 
     (testing "user exists"
       (clean-database db)
       (account/create db {:email "<email>" :uuid (random-uuid)})
       (is (match?
-           (http-response/found (redirect-uri-matcher "localhost" :result))
+           (http-response/found (redirect-uri-matcher "localhost" :authentication))
            (sso-callback (merge ctx {:query-params {:code code}}))))
       (let [all-accounts (account/get-all db)]
         (is (match?
@@ -89,7 +89,7 @@
         (is (match? {:result (:accounts/id (first all-accounts))}
                     (let [jwt (-> (http/get-header response "Location")
                                   uri/parse uri/query-map
-                                  :result)]
+                                  :authentication)]
                       (jwt/validate cfg (:ui-url cfg) jwt)))
             "redirect URI has valid JWT")
 

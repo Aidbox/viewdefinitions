@@ -1,4 +1,4 @@
-(ns vd-designer.pages.auth.view
+(ns vd-designer.auth.view
   (:require [reagent.core :as r]
             [vd-designer.components.pop-confirm :refer [pop-confirm]]))
 

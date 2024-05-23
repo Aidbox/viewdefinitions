@@ -7,7 +7,7 @@
             [vd-designer.components.heading :refer [h1]]
             [vd-designer.components.list :refer [vd-data-list]]
             [vd-designer.components.modal :as modal]
-            [vd-designer.pages.auth.model :as auth-model]
+            [vd-designer.auth.model :as auth-model]
             [vd-designer.pages.settings.model :as settings-model]
             [vd-designer.pages.vd-list.components :refer [add-view-definition
                                                           search-input]]
