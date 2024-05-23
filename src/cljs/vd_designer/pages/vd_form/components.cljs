@@ -237,7 +237,7 @@
     (render-option*
      (cond
        (= :field kind) [:> icons/ContainerOutlined]
-       (= :function kind) [:> icons/FunctionOutlined]
+       (= :method kind) [:> icons/FunctionOutlined]
        (= :class kind) "T "
        :else [:> icons/ContainerOutlined])
      (or (:detail option) (name kind))
@@ -264,32 +264,16 @@
   (let [constants-possible (constants-possible-strings (:label option))
         text (subs text-to-filter 0
                    (new-cursor-idx cursor-start input-value text-to-filter))]
-    (mapv
-      #(str/starts-with? % text)
-      constants-possible)
-    #_(or
-      (str/starts-with?
-        (str "%" (:label option))
-        )
-      (str/starts-with?
-        (str "%" (:filterText option))
-        (subs
-          text-to-filter 0
-          (new-cursor-idx cursor-start input-value text-to-filter)))))
-  )
+    (some true?
+          (mapv #(str/starts-with? % text) constants-possible))))
 
 (defn filter-options [input-value cursor-start option]
   (let [text-to-filter (get-current-token option input-value)
         filter-by (or (:filterText option) (:label option))]
-    (prn "texttofilter" text-to-filter)
-    (prn "option" option)
-    ;; option
     (when (and text-to-filter filter-by)
       (or
         (when (= :constant (:kind option))
-          (println "!!!!!!" (filter-constant input-value cursor-start text-to-filter option))
-          (filter-constant input-value cursor-start text-to-filter option)
-          )
+          (filter-constant input-value cursor-start text-to-filter option))
 
         (= cursor-start (-> option :textEdit :range :start :character))
         (str/starts-with?
@@ -309,7 +293,7 @@
         contains-$0? (str/includes? text-new "$0")
         $0-index (str/index-of text-new "$0")]
     (cond
-      (not (= :function kind)) ; name
+      (not (= :method kind)) ; name
       {:value  (str left (str/replace text-new #"\$0" "") right)
        :cursor (+ start-idx (count text-new))}
 
