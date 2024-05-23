@@ -129,14 +129,10 @@
   (update ctx :value-path pop))
 
 (defn add-fhirpath [ctx fhirpath]
-  (update ctx :fhirpath-ctx 
-          (fn [path]
-            (if (str/blank? path)
-              (str fhirpath ".")
-              (str path fhirpath ".")))))
+  (update ctx :fhirpath-ctx conj fhirpath))
 
 (defn create-render-context []
-  {:fhirpath-ctx ""
+  {:fhirpath-ctx []
    :value-path []})
 
 (defn get-select-path [view]
@@ -145,6 +141,12 @@
        (apply concat)))
 
 (defn get-constant-type [constant]
+  (->> constant
+       (filterv (fn [[k _]] (str/starts-with? (name k) "value")))
+       first
+       first))
+
+(defn get-constant-real-type [constant]
   (->> constant
        (filterv (fn [[k _]] (str/starts-with? (name k) "value")))
        first

@@ -256,13 +256,15 @@
 
 (defn filter-options [input-value cursor-start option]
   (let [text-to-filter (get-current-token option input-value)
-        filter-by (or (:filterText option) (:label option))
-        cursor-new-idx (new-cursor-idx cursor-start input-value text-to-filter)]
+        filter-by (or (:filterText option) (:label option))]
     (when (and text-to-filter filter-by)
       (or
         (= cursor-start (-> option :textEdit :range :start :character))
-        (str/starts-with? filter-by
-                        (subs text-to-filter 0 cursor-new-idx))))))
+        (str/starts-with?
+          filter-by
+          (subs
+            text-to-filter 0
+            (new-cursor-idx cursor-start input-value text-to-filter)))))))
 
 (defn change-text-and-cursor [input-text _cursor-start option]
   (let [text-edit (:textEdit option)

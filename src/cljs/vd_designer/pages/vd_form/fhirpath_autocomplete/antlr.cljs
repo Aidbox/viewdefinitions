@@ -10,8 +10,10 @@
         12 :value
         24 :operator} kind))
 
-(defn complete [spec-map type expressions fhirpath cursor]
-  (->> (autocomplete/suggest spec-map type (clj->js expressions) fhirpath cursor)
+(defn complete [spec-map {:keys [type expressions fhirpath cursor constants]}]
+  ;; (prn "const" constants)
+  ;; (prn "expr" expressions)
+  (->> (autocomplete/suggest spec-map type (clj->js expressions) fhirpath cursor #_(clj->js constants))
        (.-items)
        (mapv #(-> %
                   (interop/obj->clj)

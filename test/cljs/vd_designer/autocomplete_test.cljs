@@ -520,6 +520,10 @@
 
   (is (= [] (ui-opts "hello|")))
   (is (= [] (ui-opts "where|")))
+
+  #_(is (= [] (ui-opts "NAM|")))
+  (is (match? [{:value "name"}] (ui-opts "nam|")))
+
   ;; why?
   #_(is (= [] (ui-opts "name.use.where|")))
   )

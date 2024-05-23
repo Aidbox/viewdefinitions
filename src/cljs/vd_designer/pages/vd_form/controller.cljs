@@ -444,15 +444,28 @@
  (fn [{_db :db} [_ error-msg]]
    {:notification-error error-msg}))
 
+(defn convert-constants [constant]
+  (when-let [type-fhir (get-constant-type constant)] ; valueString
+    (let [type (subs (name type-fhir) 5) ;String
+          type (str (str/lower-case (subs type 0 1)) (subs type 1)) ; string
+          value (type-fhir constant)
+          casted-value (cast-value type-fhir value)]
+      {:name (:name constant)
+       :type type
+       :value casted-value})))
+
 (reg-event-fx
  ::update-autocomplete-text
- (fn [{{;; old-ctx    ::m/autocomplete-ctx
-         ;; parser     ::m/parser-instance
-        spec-map   :spec-map
+ (fn [{{spec-map   :spec-map
         current-vd :current-vd :as db} :db}
-      [_ {:keys [text cursor-start _cursor-end ref] :as new-ctx}]]
+      [_ {:keys [text cursor-start _cursor-end ref fhirpath-prefix] :as new-ctx}]]
    (let [new-ctx (assoc new-ctx :resource-type (:resource current-vd))
-         result (antlr/complete spec-map (:resource current-vd) [] text cursor-start)]
+         constants (mapv convert-constants (:constant current-vd))
+         result (antlr/complete spec-map {:type (:resource current-vd)
+                                          :expressions fhirpath-prefix
+                                          :fhirpath text
+                                          :cursor cursor-start
+                                          :constants constants})]
      {:db (-> db
               (assoc ::m/autocomplete-options {:options result
                                                :ref ref
