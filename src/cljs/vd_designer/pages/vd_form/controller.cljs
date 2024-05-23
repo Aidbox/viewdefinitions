@@ -4,7 +4,7 @@
     [clojure.string :as str]
     [clojure.set :as set]
     [medley.core :as medley]
-    [re-frame.core :refer [reg-event-db reg-event-fx]]
+    [re-frame.core :refer [dispatch reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]]
@@ -454,20 +454,28 @@
        :type type
        :value casted-value})))
 
+(reg-event-db
+ ::update-autocomplete-options
+ (fn [db [_ data]]
+   (assoc db ::m/autocomplete-options data)))
+
 (reg-event-fx
  ::update-autocomplete-text
  (fn [{{spec-map   :spec-map
         current-vd :current-vd :as db} :db}
       [_ {:keys [text cursor-start _cursor-end ref fhirpath-prefix] :as new-ctx}]]
    (let [new-ctx (assoc new-ctx :resource-type (:resource current-vd))
-         constants (mapv convert-constants (:constant current-vd))
-         result (antlr/complete {:type (:resource current-vd)
-                                 :fhirschemas spec-map
-                                 :forEachExpressions fhirpath-prefix
-                                 :externalConstants constants
-                                 :fhirpath text
-                                 :cursor cursor-start})]
-     {:db (-> db
-              (assoc ::m/autocomplete-options {:options result
-                                               :ref ref
-                                               :request new-ctx}))})))
+         constants (mapv convert-constants (:constant current-vd))]
+     (-> (js/Promise.resolve
+          (antlr/complete {:type (:resource current-vd)
+                           :fhirschemas spec-map
+                           :forEachExpressions fhirpath-prefix
+                           :externalConstants constants
+                           :fhirpath text
+                           :cursor cursor-start}))
+         (.then #(dispatch [::update-autocomplete-options
+                            {:options %
+                             :ref ref
+                             :request new-ctx}]))
+         (.catch #(js/console.error %)))
+     {:db db})))
