@@ -73,7 +73,10 @@
                                                     :github      "https://github.com/seancorfield/honeysql"}
                  dev.weavejester/ragtime           {:mvn/version "0.9.4"
                                                     :why         "Migrations"
-                                                    :github      "https://github.com/weavejester/ragtime"}}}
+                                                    :github      "https://github.com/weavejester/ragtime"}
+                 buddy/buddy-sign                  {:mvn/version "3.5.351"
+                                                    :why         "JWT signing/verification"
+                                                    :github      "https://github.com/funcool/buddy-sign"}}}
 
   :server-test
   {:extra-paths ["test/clj" "test-resources/server"]

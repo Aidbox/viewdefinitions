@@ -8,8 +8,10 @@
             [vd-designer.model.account :as account]
             [vd-designer.model.auth-log :as auth-log]
             [vd-designer.model.sso-token :as sso-token]
+            [vd-designer.service.jwt :as jwt]
             [vd-designer.test-kit :as test-kit]
             [vd-designer.utils.base64 :as base64]
+            [vd-designer.utils.http :as http]
             [vd-designer.web.controllers.auth :refer [sso-callback]]))
 
 ;; TODO decide where to put this
@@ -26,9 +28,7 @@
            (-> uri :host (= host))))))
 
 (deftest sso-callback-test
-  (let [ctx (test-kit/mk-ctx)
-        db  (:db ctx)
-
+  (let [{:keys [db cfg] :as ctx} (test-kit/mk-ctx)
         code "<code>"
         state (base64/encode "http://api.com")
 
@@ -53,7 +53,6 @@
 
       (testing "state cannot be decoded"
         (is (match?
-              ;; TODO: CHECK MORE
              (http-response/found (redirect-uri-matcher "localhost" :result))
              (callback-fn {:query-params {:code  code
                                           :state "<invalid state>"}}))))
@@ -65,43 +64,47 @@
     (testing "user exists"
       (clean-database db)
       (account/create db {:email "<email>" :uuid (random-uuid)})
-      (testing "user created"
+      (is (match?
+           (http-response/found (redirect-uri-matcher "localhost" :result))
+           (sso-callback (merge ctx {:query-params {:code code}}))))
+      (let [all-accounts (account/get-all db)]
         (is (match?
-             (http-response/found (redirect-uri-matcher "localhost" :result))
-             (sso-callback (merge ctx {:query-params {:code code}}))))
-        (let [all-accounts (account/get-all db)]
-          (is (match?
-               [{:accounts/id    number?
-                 :accounts/uuid  uuid?
-                 :accounts/email "<email>"}]
-               all-accounts)
-              "account created"))))
+             [{:accounts/id    number?
+               :accounts/uuid  uuid?
+               :accounts/email "<email>"}]
+             all-accounts))))
 
     (testing "full flow"
       (clean-database db)
-      (testing "user created"
-        (is (match?
-             (http-response/found (redirect-uri-matcher "localhost" :result))
-             (sso-callback (merge ctx {:query-params {:code code}}))))
-        (let [all-accounts (account/get-all db)]
-          (is (match?
-               [{:accounts/id    number?
-                 :accounts/uuid  uuid?
-                 :accounts/email "<email>"}]
-               all-accounts)
-              "account created")
-          (is (match?
-               [{:sso_tokens/id            number?
-                 :sso_tokens/account_id    (-> all-accounts first :accounts/id)
-                 :sso_tokens/access_token  "<access token>"
-                 :sso_tokens/refresh_token "<refresh token>"
-                 :sso_tokens/expires_in    number?}]
-               (sso-token/get-all db))
-              "Aidbox session stored")
 
-          (is (match?
-               [{:auth_log/id        number?
-                 :auth_log/email     "<email>"
-                 :auth_log/issued_at any?}]
-               (auth-log/get-all db))
-              "VDD session created"))))))
+      (let [response (sso-callback (merge ctx {:query-params {:code code}}))
+            all-accounts (account/get-all db)]
+        (is (match?
+             [{:accounts/id    number?
+               :accounts/uuid  uuid?
+               :accounts/email "<email>"}]
+             all-accounts)
+            "account created")
+
+        (is (match? {:result (:accounts/id (first all-accounts))}
+                    (let [jwt (-> (http/get-header response "Location")
+                                  uri/parse uri/query-map
+                                  :result)]
+                      (jwt/validate cfg (:ui-url cfg) jwt)))
+            "redirect URI has valid JWT")
+
+        (is (match?
+             [{:sso_tokens/id            number?
+               :sso_tokens/account_id    (-> all-accounts first :accounts/id)
+               :sso_tokens/access_token  "<access token>"
+               :sso_tokens/refresh_token "<refresh token>"
+               :sso_tokens/expires_in    number?}]
+             (sso-token/get-all db))
+            "Aidbox session stored")
+
+        (is (match?
+             [{:auth_log/id        number?
+               :auth_log/email     "<email>"
+               :auth_log/issued_at any?}]
+             (auth-log/get-all db))
+            "VDD session created")))))

@@ -1,13 +1,13 @@
 (ns vd-designer.web.controllers.auth
-  (:require [lambdaisland.uri :as uri]
+  (:require [clojure.string :as str]
+            [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
             [vd-designer.service.sso :as sso-service]
-            [vd-designer.utils.base64 :as base64]
-            [clojure.string :as str]))
+            [vd-designer.utils.base64 :as base64]))
 
 (defn sso-redirect
   [{{:keys [route]} :query-params
-    config :cfg}]
+    config          :cfg}]
   (let [{:keys [client-id provider-url]} (:sso config)]
     (-> provider-url
         (uri/assoc-query {:response_type "code"
@@ -32,7 +32,7 @@
   [{{:keys [code state]} :query-params
     config               :cfg
     :as                  ctx}]
-  (if (str/blank? code)
-    (construct-sso-callback-response (:sso config) state {:error "Missing authorization code"})
-    (->> (sso-service/authenticate ctx code)
-         (construct-sso-callback-response (:sso config) state))))
+  (let [sso-result (if (str/blank? code)
+                     {:error "Missing authorization code"}
+                     (sso-service/authenticate ctx code))]
+    (construct-sso-callback-response (:sso config) state sso-result)))
