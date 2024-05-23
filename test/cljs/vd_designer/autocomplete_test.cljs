@@ -483,7 +483,13 @@
   ;; text and cursor are repeated, we have to do it
   (let [cursor-start (str/index-of text "|")
         text (str/replace text "|" "")
-        options (antlr/complete spec "Patient" [] text cursor-start)]
+        options (antlr/complete
+                  {:type "Patient"
+                   :fhirschemas spec
+                   :forEachExpressions []
+                   :externalConstants [{:type "string" :value "abcde" :name "abcde"}]
+                   :fhirpath text
+                   :cursor cursor-start})]
     (mapv #(dissoc % :label)
           (u/->ui-options
             {:text text :cursor-start cursor-start}
@@ -517,6 +523,29 @@
           :value "name.where()",
           :cursor 11}]
         (ui-opts "name.wh|ere")))
+
+  (testing "constants"
+
+    (is (match?
+          [{:value "%abcde",
+            :cursor 6}]
+          (ui-opts "%a|")))
+
+    (is (match?
+          [{:value "%abcde",
+            :cursor 6}]
+          (ui-opts "abcd|")))
+
+    (is (match?
+          [{:value "%`abcde`",
+            :cursor 8}]
+          (ui-opts "%`ab|")))
+
+
+    )
+
+
+
 
   (is (= [] (ui-opts "hello|")))
   (is (= [] (ui-opts "where|")))

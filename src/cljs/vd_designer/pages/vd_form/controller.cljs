@@ -461,11 +461,12 @@
       [_ {:keys [text cursor-start _cursor-end ref fhirpath-prefix] :as new-ctx}]]
    (let [new-ctx (assoc new-ctx :resource-type (:resource current-vd))
          constants (mapv convert-constants (:constant current-vd))
-         result (antlr/complete spec-map {:type (:resource current-vd)
-                                          :expressions fhirpath-prefix
-                                          :fhirpath text
-                                          :cursor cursor-start
-                                          :constants constants})]
+         result (antlr/complete {:type (:resource current-vd)
+                                 :fhirschemas spec-map
+                                 :forEachExpressions fhirpath-prefix
+                                 :externalConstants constants
+                                 :fhirpath text
+                                 :cursor cursor-start})]
      {:db (-> db
               (assoc ::m/autocomplete-options {:options result
                                                :ref ref

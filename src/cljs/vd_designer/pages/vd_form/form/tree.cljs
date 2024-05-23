@@ -15,7 +15,7 @@
                                                  name-input resource-input
                                                  tree-tag]]
    [vd-designer.pages.vd-form.controller :as form-controller]
-   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path 
+   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
                                                   add-fhirpath
                                                   drop-value-path
                                                   get-constant-type]]
@@ -163,10 +163,10 @@
                   (let [ctx (drop-value-path ctx)]
                     [(tree-leaf (conj (:value-path ctx) :path)
                                 (foreach-expr-leaf ctx kind path))
-                     (nested-node :select 
+                     (nested-node :select
                                   (-> ctx
                                       (add-value-path :select)
-                                      (add-fhirpath path)) 
+                                      (add-fhirpath path))
                                   select)]))))
 
 (defn determine-key
@@ -183,8 +183,6 @@
     (first (keys element))))
 
 (defn- select->node [ctx element]
-  (js/console.debug (str "{select->node}(ctx): " (:value-path ctx)))
-  (js/console.debug (str "{select->node}(element): " element))
   (let [key (determine-key element)]
     ((case key
        :column        (partial flat-node    :column column-leaf)

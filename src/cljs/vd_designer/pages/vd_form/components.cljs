@@ -231,8 +231,9 @@
      (subs label matched-count)]
   label))
 
-(defn render-option [text cursor-start option]
-  (let [kind (:kind option)]
+(defn render-option [text cursor option]
+  (let [kind (:kind option)
+        cursor-relative-pos (- cursor (-> option :textEdit :range :start :character))]
     (render-option*
      (cond
        (= :field kind) [:> icons/ContainerOutlined]
@@ -243,7 +244,7 @@
      (render-text (:label option)
                   (some-> (get-current-token option text)
                           count
-                          (min cursor-start))))))
+                          (min cursor-relative-pos))))))
 
 (defn new-cursor-idx
   "Change cursor index.
@@ -254,11 +255,42 @@
   (let [new-cursor (- cursor-idx (- (count input-text) (count token)))]
     (if (>= new-cursor 0) new-cursor cursor-idx)))
 
+(defn constants-possible-strings [constant-label]
+  [(str "%" constant-label)
+   (str "%'" constant-label "'")
+   (str "%`" constant-label "`")])
+
+(defn filter-constant [input-value cursor-start text-to-filter option]
+  (let [constants-possible (constants-possible-strings (:label option))
+        text (subs text-to-filter 0
+                   (new-cursor-idx cursor-start input-value text-to-filter))]
+    (mapv
+      #(str/starts-with? % text)
+      constants-possible)
+    #_(or
+      (str/starts-with?
+        (str "%" (:label option))
+        )
+      (str/starts-with?
+        (str "%" (:filterText option))
+        (subs
+          text-to-filter 0
+          (new-cursor-idx cursor-start input-value text-to-filter)))))
+  )
+
 (defn filter-options [input-value cursor-start option]
   (let [text-to-filter (get-current-token option input-value)
         filter-by (or (:filterText option) (:label option))]
+    (prn "texttofilter" text-to-filter)
+    (prn "option" option)
+    ;; option
     (when (and text-to-filter filter-by)
       (or
+        (when (= :constant (:kind option))
+          (println "!!!!!!" (filter-constant input-value cursor-start text-to-filter option))
+          (filter-constant input-value cursor-start text-to-filter option)
+          )
+
         (= cursor-start (-> option :textEdit :range :start :character))
         (str/starts-with?
           filter-by
@@ -283,7 +315,7 @@
 
       (not contains-$0?) ;first()
       {:value  (str left (str/replace text-new #"\$0" "")
-                   (if (str/starts-with? right "()") (subs right 2) right))
+                   (if (and right (str/starts-with? right "()")) (subs right 2) right))
        :cursor (+ start-idx (count text-new))}
 
       (not (re-matches #"\(.*\).*" right)) ; where, whe (no parens)
