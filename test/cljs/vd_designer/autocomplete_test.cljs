@@ -356,29 +356,29 @@
 
       ;; TODO: end should be 19, not 20
       #_(is (match?
-            [{:value "name.where(use = %'abcde')", :cursor 25}]
-            (ui-opts "name.where(use = %'|)")))
+              [{:value "name.where(use = %'abcde')", :cursor 25}]
+              (ui-opts "name.where(use = %'|)")))
 
       ;; TODO: end should be 21, not 22
       #_(is (match?
-            [{:value "name.where(use = %'abcde')", :cursor 25}]
-            (ui-opts "name.where(use = %'ab|)")))
+              [{:value "name.where(use = %'abcde')", :cursor 25}]
+              (ui-opts "name.where(use = %'ab|)")))
 
       ;; TODO: end should be 19, not 20
       #_(is (match?
-            [{:value "name.where(use = %`abcde`)", :cursor 25}]
-            (ui-opts "name.where(use = %`|)")))
+              [{:value "name.where(use = %`abcde`)", :cursor 25}]
+              (ui-opts "name.where(use = %`|)")))
 
       ;; TODO: end should be 21, not 22
       #_(is (match?
-            [{:value "name.where(use = %`abcde`)", :cursor 25}]
-            (ui-opts "name.where(use = %`ab|)")))
+              [{:value "name.where(use = %`abcde`)", :cursor 25}]
+              (ui-opts "name.where(use = %`ab|)")))
 
       ;; TODO: name.where(use = |) suggests things like name.where(use = given)??
+      ;; TODO: how to handle name.where(use |) ? now suggests use, given etc
 
       )
 
-    ;;TODO: how to handle name.where(use |) ? now suggests use, given etc
 
     (testing "name.where(use = %'name_use') by steps")
 

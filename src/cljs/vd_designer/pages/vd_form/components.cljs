@@ -283,36 +283,37 @@
             (new-cursor-idx cursor-start input-value text-to-filter)))))))
 
 (defn change-text-and-cursor [input-text _cursor-start option]
-  (let [text-edit (:textEdit option)
-        kind (:kind option)
-        start-idx (-> text-edit :range :start :character)
-        end-idx (-> text-edit :range :end :character)
-        text-new (:newText text-edit)
-        left  (subs input-text 0 start-idx)
-        right (subs input-text end-idx)
-        contains-$0? (str/includes? text-new "$0")
-        $0-index (str/index-of text-new "$0")]
-    (cond
-      (not (= :method kind)) ; name
-      {:value  (str left (str/replace text-new #"\$0" "") right)
-       :cursor (+ start-idx (count text-new))}
+  (when (:textEdit option)
+    (let [text-edit (:textEdit option)
+          kind (:kind option)
+          start-idx (-> text-edit :range :start :character)
+          end-idx (-> text-edit :range :end :character)
+          text-new (:newText text-edit)
+          left  (subs input-text 0 start-idx)
+          right (subs input-text end-idx)
+          contains-$0? (str/includes? text-new "$0")
+          $0-index (str/index-of text-new "$0")]
+      (cond
+        (not (= :method kind)) ; name
+        {:value  (str left (str/replace text-new #"\$0" "") right)
+         :cursor (+ start-idx (count text-new))}
 
-      (not contains-$0?) ;first()
-      {:value  (str left (str/replace text-new #"\$0" "")
-                   (if (and right (str/starts-with? right "()")) (subs right 2) right))
-       :cursor (+ start-idx (count text-new))}
+        (not contains-$0?) ;first()
+        {:value  (str left (str/replace text-new #"\$0" "")
+                      (if (and right (str/starts-with? right "()")) (subs right 2) right))
+         :cursor (+ start-idx (count text-new))}
 
-      (not (re-matches #"\(.*\).*" right)) ; where, whe (no parens)
-      {:value  (str left (str/replace text-new #"\$0" "") right)
-       :cursor (+ start-idx $0-index)}
+        (not (re-matches #"\(.*\).*" right)) ; where, whe (no parens)
+        {:value  (str left (str/replace text-new #"\$0" "") right)
+         :cursor (+ start-idx $0-index)}
 
-      (re-matches #"\(\).*" right) ; where()
-      {:value  (str left (str/replace text-new #"\(\$0\)" right))
-       :cursor (+ start-idx $0-index)}
+        (re-matches #"\(\).*" right) ; where()
+        {:value  (str left (str/replace text-new #"\(\$0\)" right))
+         :cursor (+ start-idx $0-index)}
 
-      :else ; where(expr), where(expr).abc
-      {:value  (str left (str/replace text-new #"\(\$0\)" right))
-       :cursor (inc (+ start-idx (str/index-of (subs input-text start-idx) ")")))})))
+        :else ; where(expr), where(expr).abc
+        {:value  (str left (str/replace text-new #"\(\$0\)" right))
+         :cursor (inc (+ start-idx (str/index-of (subs input-text start-idx) ")")))}))))
 
 (defn ->ui-options [{:keys [text cursor-start]} options]
   (->> options
