@@ -8,13 +8,13 @@ client-build:
 client-build-tests:
 	clj -M:client:client-test:client-build-tests
 
-client-build-all: build build-tests
+client-build-all: client-build client-build-tests
 
-client-repl: init
+client-repl: client-init
 	rm -rf ./.shadow-cljs
 	clj -M:client:client-test:client-repl
 
-client-test: build-tests
+client-test: client-build-tests
 	node out/node-tests.js
 
 server-test:
