@@ -1,18 +1,21 @@
 
-init:
+client-init:
 	npm install
 
-build:
+client-build:
 	clj -M:client:client-build
 
-build-tests:
+client-build-tests:
 	clj -M:client:client-test:client-build-tests
 
-build-all: build build-tests
+client-build-all: build build-tests
 
 client-repl: init
 	rm -rf ./.shadow-cljs
 	clj -M:client:client-test:client-repl
 
-test: build-tests
+client-test: build-tests
 	node out/node-tests.js
+
+server-test:
+	clj -M:server:server-test -m kaocha.runner
