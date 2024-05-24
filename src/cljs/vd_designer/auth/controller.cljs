@@ -9,6 +9,11 @@
              :authentication
              v)))
 
+(reg-fx
+ :delete-authentication
+ (fn []
+   (.removeItem (.-localStorage js/window) :authentication)))
+
 (reg-event-fx
  ::store-authentication
  (fn [{:keys [db]}
@@ -25,3 +30,10 @@
    (assoc coeffects
           :authentication-token
           (js->clj (.getItem js/localStorage :authentication)))))
+
+(reg-event-fx
+ ::sign-out
+ (fn [{:keys [db]} [_ _]]
+   {:delete-authentication nil
+    :db                    (assoc db :authorized? false)
+    :message-success       "Signed out"}))

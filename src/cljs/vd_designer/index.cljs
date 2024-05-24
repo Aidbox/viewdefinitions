@@ -73,7 +73,7 @@
              {:key "settings"
               :icon (r/create-element icons/SettingOutlined)
               :size 64}
-             {:key "3" :icon (r/create-element icons/BookOutlined)}]
+             #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
       :breadcrumbs (breadcrumbs current-route)}
      (if route
        (let [view (:view (:data route))]
