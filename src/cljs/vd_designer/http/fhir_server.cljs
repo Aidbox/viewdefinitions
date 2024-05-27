@@ -10,7 +10,7 @@
   (merge {:headers          (-> db active-server :headers)
           :timeout          8000
           :with-credentials true
-          :format (ajax/json-request-format)
+          :format           (ajax/json-request-format)
           :response-format  (ajax/json-response-format {:keywords? true})
           ;; do we need this by default?
           :on-failure       [:bad-http-result]}
@@ -31,37 +31,37 @@
 
 (defn get-view-definitions [db & [opts]]
   (-> {:method :get
-       :uri    (base-url+path db "/ViewDefinition")}
+       :uri    (base-url+path db "/fhir/ViewDefinition")}
       (with-defaults db)
       (merge opts)))
 
 (defn get-view-definition [db vd-id]
   (-> {:method :get
-       :uri    (base-url+path db (str "/ViewDefinition/" vd-id))}
+       :uri    (base-url+path db (str "/fhir/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
 (defn get-metadata [db & [opts]]
   (-> {:method :get
-       :uri    (base-url+path db "/metadata")}
+       :uri    (base-url+path db "/fhir/metadata")}
       (with-defaults db)
       (dissoc :headers)
       (merge opts)))
 
 (defn delete-view-definition [db vd-id]
   (-> {:method :delete
-       :uri    (base-url+path db (str "/ViewDefinition/" vd-id))}
+       :uri    (base-url+path db (str "/fhir/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
 (defn put-view-definition [db vd-id params]
   (-> {:method :put
-       :uri    (base-url+path db (str "/ViewDefinition/" vd-id))
+       :uri    (base-url+path db (str "/fhir/ViewDefinition/" vd-id))
        :params params
        :format (ajax/json-request-format)}
       (with-defaults db)))
 
 (defn post-view-definition [db params]
   (-> {:method :post
-       :uri    (base-url+path db "/ViewDefinition/")
+       :uri    (base-url+path db "/fhir/ViewDefinition/")
        :params params
        :format (ajax/json-request-format)}
       (with-defaults db)))
