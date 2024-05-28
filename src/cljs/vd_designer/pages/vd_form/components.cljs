@@ -203,21 +203,21 @@
 
 (defn render-option* [icon type-or-kind label & [matched-count]]
   (r/as-element
-   [:div {:style {:display :flex
-                  :flex-direction :row
-                  :justify-content :space-between
-                  :gap "8px"
-                  :width "100%"}}
-    [:span
-     icon
-     (if matched-count
-       [:<>
-        [:b (subs label 0 matched-count)]
-        (subs label matched-count)]
-       label)]
-    [:div {:style {:font-style :italic
-                   :color "#1677ff"}}
-     (str " " type-or-kind)]]))
+    [:> Row {:align  :middle}
+     [:> Col {:span 2}
+      [:> Row {:justify :start} icon]]
+     [:> Col {:span 11}
+      [:> Row {:justify :start}
+       (if matched-count
+         [:<>
+          [:b (subs label 0 matched-count)]
+          (subs label matched-count)]
+         label)]]
+     [:> Col {:span 11}
+      [:> Row {:justify :end}
+       [:div {:style {:font-style :italic
+                      :color "#1677ff"}}
+        (str " " type-or-kind)]]]]))
 
 (defn get-current-token [option whole-text]
   (when whole-text
@@ -251,7 +251,7 @@
        :else [:> icons/ContainerOutlined])
      (or (:detail option) (name kind))
      (render-text (:label option)
-                  (let [cursor-pos (if (= :constant kind) 
+                  (let [cursor-pos (if (= :constant kind)
                                      (- cursor-relative-pos (special-constant-symbols-length text))
                                      cursor-relative-pos)]
                     (some-> (get-current-token option text)
@@ -357,8 +357,7 @@
                          :onKeyDown (fn [e]
                                       (when (= "Escape" (u/pressed-key e))
                                         (.preventDefault e)))
-                                        
-                         :popupMatchSelectWidth 300
+                         :popupMatchSelectWidth 350
                          :backfill true
                          :onKeyUp  (fn [e]
                                      (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
