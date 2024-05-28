@@ -253,18 +253,16 @@
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete (medley/deep-merge
-                       {:style        {:width "100%"}
-                        :options      rendered-options
-                        :defaultValue value
-                        :onKeyDown #(when (= "Escape" (u/pressed-key %))
-                                      (.preventDefault %))
-                        :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                     (update-autocomplete-fn %))
-                        :onInput  #(update-autocomplete-fn %)
-                        :onClick  update-autocomplete-fn
-                        :onChange #(change-input-value ctx key %)}
-                       opts)
+     [:> AutoComplete {:style        {:width "100%"}
+                       :options      rendered-options
+                       :defaultValue value
+                       :onKeyDown #(when (= "Escape" (u/pressed-key %))
+                                     (.preventDefault %))
+                       :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
+                                    (update-autocomplete-fn %))
+                       :onInput  #(update-autocomplete-fn %)
+                       :onClick  update-autocomplete-fn
+                       :onChange #(change-input-value ctx key %)}
       [:> Input (medley/deep-merge
                  {:style
                   {:font-style       "italic"
@@ -290,7 +288,7 @@
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
 
-    :fhirpath [autocomplete ctx kind value placeholder]
+    :fhirpath [autocomplete ctx kind value {:placeholder placeholder}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
