@@ -37,13 +37,13 @@
 
             (not vd-id)
             (set-view-definition-status)
-            
+
             :always
             (assoc :spec-map {}))
       :fx (cond-> []
             :always
             (conj [:dispatch [::get-supported-resource-types]])
-            
+
             :always
             (conj [:dispatch [::autocomplete-init]])
 
@@ -78,12 +78,12 @@
                  :on-failure [::load-fhir-schemas-error]}}))
 
 (reg-event-db
- ::load-fhir-schemas-success 
+ ::load-fhir-schemas-success
  (fn [db [_ schemas]]
    (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
 
 (reg-event-fx
- ::load-fhir-schemas-error 
+ ::load-fhir-schemas-error
  (fn [_ _]
    {:notification-error "Error on downloading fhir schemas!"}))
 
@@ -153,12 +153,17 @@
            (empty? v)))
     vd))
 
+;; remove when #4390 is resolves
+(defn remove-meta [vd]
+  (dissoc vd :meta))
+
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
-                             strip-empty-collections)
+                             strip-empty-collections
+                             remove-meta)
          empty-fields? (empty-inputs-in-vd? view-definition)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
@@ -293,7 +298,8 @@
   (fn [{:keys [db]} [_]]
     (let [view-definition (-> (:current-vd db)
                               remove-decoration
-                              strip-empty-collections)
+                              strip-empty-collections
+                              remove-meta)
           req (if (:id view-definition)
                 (http.fhir-server/put-view-definition db
                                                       (:id view-definition)
