@@ -1,6 +1,6 @@
 (ns vd-designer.pages.settings.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [List Modal Row App]]
+            [antd :refer [List Modal Row]]
             [clojure.string :as str]
             [vd-designer.components.modal :as modal]
             [medley.core :as medley]
@@ -133,7 +133,7 @@
   (let [request-sent-by @(subscribe [::m/request-sent-by])
         used-server-name @(subscribe [::m/used-server-name])
         connect-error @(subscribe [::m/connect-error])]
-    [:div {:style {:width "60%"}}
+    [:div {:style {:max-width "768px"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
                     :align-items     :center

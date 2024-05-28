@@ -66,21 +66,22 @@
                                  :disabled (nil? resources)
                                  :icon     (r/create-element icons/HddOutlined)})]
               :tabBarExtraContent {:right (r/as-element
-                                           [:> Flex {:gap 9
+                                           [:> Flex {:gap 8
                                                      :style {:margin-right "8px"}}
                                             [:> Tooltip
                                              {:placement       "bottom"
                                               :mouseEnterDelay 0.5
                                               :title           "Ctrl+Enter"}
-                                             [:> Button {:onClick #(dispatch [::c/eval-view-definition-data])
+                                             [:> Button {:class   "mobile-icon-button"
+                                                         :onClick #(dispatch [::c/eval-view-definition-data])
                                                          :icon    (r/create-element icons/PlayCircleOutlined)
-                                                         :loading @(subscribe [::m/eval-loading])
-                                                         :style   {:max-width "80px"}}
+                                                         :loading @(subscribe [::m/eval-loading])}
                                               "Run"]]
-                                            [button/button "Save" {:onClick #(dispatch [::c/save-view-definition])
-                                                                   :icon    (r/create-element icons/SaveOutlined)
-                                                                   :loading @(subscribe [::m/save-loading])
-                                                                   :style   {:max-width "80px"}}]])}}]]]
+                                            [:> Button {:class   "mobile-icon-button"
+                                                        :onClick #(dispatch [::c/save-view-definition])
+                                                        :icon    (r/create-element icons/SaveOutlined)
+                                                        :loading @(subscribe [::m/save-loading])}
+                                             "Save"]])}}]]]
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]

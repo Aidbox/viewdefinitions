@@ -40,7 +40,7 @@
 
 (defn viewdefinition-list-view []
   (let [used-server-name @(subscribe [::settings-model/used-server-name])]
-    [:div {:style {:width "60%"}}
+    [:div {:style {:max-width "768px"}}
      [:> Flex {:align   :center
                :justify :space-between}
       [h1 "View Definitions" {:style {:padding-bottom "8px"}}]
