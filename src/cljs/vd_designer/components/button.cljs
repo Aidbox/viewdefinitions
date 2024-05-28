@@ -48,10 +48,20 @@
                  opts)]])
 
 (defn invisible-icon [icon & {:as opts}]
-  [ghost "" icon (merge-with
-                  into
-                  {:class "invisible-button"}
-                  opts)])
+  [:> ConfigProvider {:theme {:components {:Button {:defaultGhostColor        "#B5B5BC"
+                                                    :defaultGhostBorderColor  "#B5B5BC"
+                                                    :paddingBlock             0
+                                                    :paddingInline            0
+                                                    :defaultHoverColor        "#6d6d78"}}}}
+   [button "" (medley/deep-merge
+                 {:type  :default
+                  :ghost true
+                  :class "invisible-button"
+                  :icon  (r/create-element icon)
+                  :style {:border        :none
+                          :height        "30px"
+                          :border-radius "5px"}}
+                 opts)]])
 
 (defn icon [text icon & {:as opts}]
   [button text (medley/deep-merge
