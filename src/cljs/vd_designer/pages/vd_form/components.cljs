@@ -231,6 +231,13 @@
      (subs label matched-count)]
   label))
 
+(defn- special-constant-symbols-length [text]
+  (cond
+    (str/starts-with? text "%'") 2
+    (str/starts-with? text "%`") 2
+    (str/starts-with? text "%") 1
+    :else 0))
+
 (defn render-option [text cursor option]
   (let [kind (:kind option)
         cursor-relative-pos (- cursor (-> option :textEdit :range :start :character))]
@@ -243,9 +250,12 @@
        :else [:> icons/ContainerOutlined])
      (or (:detail option) (name kind))
      (render-text (:label option)
-                  (some-> (get-current-token option text)
-                          count
-                          (min cursor-relative-pos))))))
+                  (let [cursor-pos (if (= :constant kind) 
+                                     (- cursor-relative-pos (special-constant-symbols-length text))
+                                     cursor-relative-pos)]
+                    (some-> (get-current-token option text)
+                            count
+                            (min cursor-pos)))))))
 
 (defn new-cursor-idx
   "Change cursor index.
@@ -346,11 +356,18 @@
                          :onKeyDown (fn [e]
                                       (when (= "Escape" (u/pressed-key e))
                                         (.preventDefault e)))
+                                        
                          :popupMatchSelectWidth 300
                          :backfill true
                          :onKeyUp  (fn [e]
                                      (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                       (update-autocomplete-fn e)))
+                                       (update-autocomplete-fn e))
+                                     (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                        (.-ctrlKey e)
+                                                        (:on-ctrl-enter opts))]
+                                        (.preventDefault e)
+                                        (.stopPropagation e)
+                                        (f e)))
                          :onInput  #(update-autocomplete-fn %)
                          :onClick  (fn [e] (update-autocomplete-fn e))
                          :onChange (fn [e] (change-input-value ctx key e))
@@ -387,7 +404,8 @@
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
 
-    :fhirpath [autocomplete ctx kind value placeholder]
+    :fhirpath [autocomplete ctx kind value {:placeholder placeholder
+                                            :on-ctrl-enter #(dispatch [::c/eval-view-definition-data])}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")

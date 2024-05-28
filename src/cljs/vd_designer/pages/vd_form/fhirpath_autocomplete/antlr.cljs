@@ -3,31 +3,31 @@
             [vd-designer.interop :as interop]))
 
 (defn get-kind [kind]
-  (get {7 :class,
-        20 :enumMember,
-        1 :text,
-        24 :operator,
-        4 :constructor,
-        15 :snippet,
-        21 :constant,
-        13 :enum,
-        22 :struct,
-        6 :variable,
-        25 :typeParameter,
-        17 :file,
-        3 :function,
-        12 :value,
+  (get {1 :text,
         2 :method,
-        23 :event,
-        19 :folder,
-        11 :unit,
-        9 :module,
+        3 :function,
+        4 :constructor,
         5 :field,
-        14 :keyword,
-        16 :color,
+        6 :variable,
+        7 :class,
+        8 :interface
+        9 :module,
         10 :property,
-        18 :reference,
-        8 :interface}
+        11 :unit,
+        12 :value,
+        13 :enum,
+        14 :keyword,
+        15 :snippet,
+        16 :color,
+        17 :file,
+        18 :reference
+        19 :folder,
+        20 :enumMember,
+        21 :constant,
+        22 :struct,
+        23 :event
+        24 :operator,
+        25 :typeParameter}
        kind))
 
 (defn complete [params]
