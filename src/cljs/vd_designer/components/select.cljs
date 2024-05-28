@@ -11,7 +11,6 @@
    {:showSearch       true
     :variant          :borderless
     :style            {:width "100%"}
-    :allowClear       true
     :filterOption     true
     :optionFilterProp "label"}
    opts))
