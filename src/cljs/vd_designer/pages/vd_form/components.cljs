@@ -206,6 +206,7 @@
    [:div {:style {:display :flex
                   :flex-direction :row
                   :justify-content :space-between
+                  :gap "8px"
                   :width "100%"}}
     [:span
      icon
@@ -245,8 +246,8 @@
      (cond
        (= :field kind) [:> icons/ContainerOutlined]
        (= :method kind) [:> icons/FunctionOutlined]
-       (= :class kind) "T "
-       (= :constant kind) "α "
+       (= :class kind) "T"
+       (= :constant kind) "α"
        :else [:> icons/ContainerOutlined])
      (or (:detail option) (name kind))
      (render-text (:label option)
