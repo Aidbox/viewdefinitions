@@ -97,9 +97,7 @@
     path
     true
     where-settings
-    ;; TODO: crash on adding placeholder
-    ;; "expression"
-    nil
+    "expression"
     :fhirpath]])
 
 (defn foreach-expr-leaf [ctx value-key path]
