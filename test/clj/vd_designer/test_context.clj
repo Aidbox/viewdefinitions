@@ -1,4 +1,4 @@
-(ns vd-designer.test-kit
+(ns vd-designer.test-context
   (:require [clojure.java.shell :refer [sh]]
             [clojure.string :as str]
             [next.jdbc :as jdbc]
@@ -15,7 +15,7 @@
       jdbc/get-datasource
       (doto migrate/migrate!)))
 
-(defn mk-ctx []
+(defn mk []
   {:aidbox.portal/client (portal/client)
    :db                   (mk-db)
    :cfg                  config})

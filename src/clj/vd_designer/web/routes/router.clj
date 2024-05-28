@@ -23,9 +23,9 @@
                         :handler    #'auth/sso-callback}}]]]
 
    {:data {:muuntaja   m/instance
-           :middleware [(app-context-middleware ctx)
-                        muuntaja/format-middleware
+           :middleware [muuntaja/format-middleware
                         query-string-middleware
                         coercion/coerce-exceptions-middleware
                         coercion/coerce-request-middleware
-                        coercion/coerce-response-middleware]}}))
+                        coercion/coerce-response-middleware
+                        (app-context-middleware ctx)]}}))

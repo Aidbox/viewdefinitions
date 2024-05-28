@@ -156,12 +156,10 @@
          (let [{:keys [server-name base-url] :as server-config}
                (js-obj->clj-map raw-item)]
            [:> List.Item
-            {:actions (let [common [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]]
-                        (if authorized?
-                          (conj common
-                                (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                                (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"]))
-                          common))}
+            {:actions (cond-> [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]
+                        authorized?
+                        (conj (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                              (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])))}
             [:> List.Item.Meta
              {:title
               (r/as-element

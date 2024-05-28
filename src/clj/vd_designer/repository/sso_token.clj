@@ -1,4 +1,4 @@
-(ns vd-designer.model.sso-token
+(ns vd-designer.repository.sso-token
   (:require [honey.sql.helpers :refer [from insert-into select values]]
             [vd-designer.db.query :as q]))
 

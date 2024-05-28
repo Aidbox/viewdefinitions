@@ -1,4 +1,4 @@
-(ns vd-designer.model.auth-log
+(ns vd-designer.repository.auth-log
   (:require [honey.sql.helpers :refer [from insert-into select values]]
             [vd-designer.db.query :as q]))
 

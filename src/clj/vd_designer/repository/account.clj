@@ -1,4 +1,4 @@
-(ns vd-designer.model.account
+(ns vd-designer.repository.account
   (:require [honey.sql.helpers :refer [from insert-into limit returning select
                                        values where]]
             [vd-designer.db.query :as q]))

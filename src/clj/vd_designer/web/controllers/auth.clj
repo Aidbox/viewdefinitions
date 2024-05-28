@@ -6,8 +6,8 @@
             [vd-designer.utils.base64 :as base64]))
 
 (defn sso-redirect
-  [{{:keys [route]} :query-params
-    config          :cfg}]
+  [{{{:keys [route]} :query-params} :request
+    config                          :cfg}]
   (let [{:keys [client-id provider-url]} (:sso config)]
     (-> provider-url
         (uri/assoc-query {:response_type "code"
@@ -33,9 +33,9 @@
         http-response/found)))
 
 (defn sso-callback
-  [{{:keys [code state]} :query-params
-    config               :cfg
-    :as                  ctx}]
+  [{{{:keys [code state]} :query-params} :request
+    config                               :cfg
+    :as                                  ctx}]
   (let [sso-result (if (str/blank? code)
                      {:error "Missing authorization code"}
                      (sso-service/authenticate ctx code))]

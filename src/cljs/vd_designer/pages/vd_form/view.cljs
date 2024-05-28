@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Row Space Tooltip]]
+            [antd :refer [Button Flex Row Space Tooltip]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]

@@ -4,5 +4,4 @@
   {:name ::app-context
    :wrap (fn [handler]
            (fn [req]
-             (handler
-              (merge ctx req))))})
+             (handler (assoc ctx :request req))))})

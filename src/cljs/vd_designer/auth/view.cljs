@@ -8,7 +8,7 @@
     [pop-confirm trigger-element
      {:title       "Not authorized"
       :description (r/as-element [:p
-                                  "To perfrom this action you need to Sign In."
+                                  "To perform this action you need to Sign In."
                                   [:br]
                                   "You can do that via Aidbox SSO"])
       :ok-text     "Sign In"

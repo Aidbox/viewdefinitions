@@ -3,10 +3,10 @@
             [ring.adapter.jetty :as jetty]
             [vd-designer.db.migrations :as migrate]
             [vd-designer.web.routes.router :refer [router]]
-            [vd-designer.kit :as kit]))
+            [vd-designer.context :as context]))
 
 (def ctx
-  (kit/mk-ctx))
+  (context/mk))
 
 (def app
   (ring/ring-handler

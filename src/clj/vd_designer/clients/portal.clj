@@ -15,8 +15,8 @@
                          ;; TODO use enum here
                          :grant_type    s/Str}}}])
 
-(defn client []
+(defn client [aidbox-portal-url]
   (martian/bootstrap
-   "http://127.0.0.1.nip.io:8789"
+   aidbox-portal-url
    routes
    {:interceptors martian-http/default-interceptors}))

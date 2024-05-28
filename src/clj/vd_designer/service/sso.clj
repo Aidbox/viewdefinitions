@@ -1,24 +1,24 @@
 (ns vd-designer.service.sso
   (:require [martian.core :as martian]
             [next.jdbc :as jdbc]
-            [vd-designer.model.account :as account]
-            [vd-designer.model.auth-log :as auth-log]
-            [vd-designer.model.sso-token :as sso-token]
+            [vd-designer.repository.account :as account]
+            [vd-designer.repository.auth-log :as auth-log]
+            [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.service.jwt :as jwt]))
 
 (defn- exchange-code
   "Exchanges oauth2 code to access token,
    returns a map with either :error or :result key"
   [portal-client config code]
-  (let [{:keys [client-id client-secret]} (:sso config)
-        req {:client-id     client-id
-             :client-secret client-secret
-             :code          code
-             :grant-type    "authorization_code"}
-        exchange (martian/response-for portal-client :sso-code-exchange req)
-        resp (:body @exchange)]
-    (if (empty? code)
-      {:error "Authorization code is not provided"}
+  (if (empty? code)
+    {:error "Authorization code is not provided"}
+    (let [{:keys [client-id client-secret]} (:sso config)
+          req {:client-id     client-id
+               :client-secret client-secret
+               :code          code
+               :grant-type    "authorization_code"}
+          exchange (martian/response-for portal-client :sso-code-exchange req)
+          resp (:body @exchange)]
       (if (empty? (:error resp))
         {:result resp}
         {:error (:error_description resp)}))))

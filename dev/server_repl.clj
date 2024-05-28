@@ -5,9 +5,9 @@
             [ragtime.jdbc :as jdbc]
             [vd-designer.config]
             [vd-designer.core :as core]
-            [vd-designer.kit :as kit]))
+            [vd-designer.context :as context]))
 
-(def ctx (kit/mk-ctx))
+(def ctx (context/mk))
 
 ;;; Try out Aidbox portal client
 (comment
