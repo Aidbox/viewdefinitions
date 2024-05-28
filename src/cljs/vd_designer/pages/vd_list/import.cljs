@@ -1,6 +1,6 @@
 (ns vd-designer.pages.vd-list.import
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Modal Upload Input]]
+            [antd :refer [Modal Upload]]
             [clojure.string :as str]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.monaco-editor :as monaco]
@@ -30,22 +30,20 @@
         ;; false here to prevent auto-upload via xhr
         false))))
 
-(defn- parse-vd-file [file content]
-  (let [extension (get-file-extension file)]
-    (case extension
-      ".json" (js->clj (.parse js/JSON content) :keywordize-keys true)
-      (".yml" ".yaml") (js->clj (str->yaml content) :keywordize-keys true))))
+(defn parse-vd [^String content]
+  (js->clj (str->yaml content) :keywordize-keys true))
 
 (defn- import-vd [{:keys [file text]}]
   (cond
     file
     (-> (.text file)
-        (.then  #(dispatch [::c/import-success (parse-vd-file file %)]))
+        (.then  #(dispatch [::c/import-success (parse-vd %)]))
         (.catch #(dispatch [::c/on-import-error
                             (str "Cannot import " (.-name file) ". " %)])))
+
     text
     (try
-      (dispatch [::c/import-success (js->clj (str->yaml text) :keywordize-keys true)])
+      (dispatch [::c/import-success (parse-vd text)])
       (catch js/Error e
         (dispatch [::c/on-import-error (str "Cannot import " e)])))))
 
