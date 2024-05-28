@@ -34,8 +34,8 @@ div.ant-tabs {
   border-right: 3px solid #1890FF;
 }
 
-.vd-resource:not(.ant-select-open)>.ant-select-selector {
-  padding: 0 !important;
+.vd-resource>.ant-select-selector {
+  margin-left: -10px;
 }
 
 /* INPUTS */
@@ -69,6 +69,7 @@ button {
   opacity: 1;
 }
 
+
 /* TREE */
 
 .vd-tree .ant-tree-node-content-wrapper {
@@ -101,6 +102,17 @@ button {
   opacity: 1;
 }
 
+.vd-tree .ant-tree-title .cut-text {
+  display: inline-flex;
+  height: 30px;
+  overflow: hidden;
+  color: #B5B5BC;
+  word-break: break-all;
+  align-self: stretch
+}
+
+
+/* TABLE */
 
 .vd-table .ant-table-thead>tr>th {
   overflow-wrap: break-word;
@@ -113,13 +125,4 @@ button {
 .vd-table .ant-table-tbody>tr>td {
   min-width: 48px;
   max-width: 128px;
-}
-
-.vd-tree .ant-tree-title .cut-text {
-  display: inline-flex;
-  height: 30px;
-  overflow: hidden;
-  color: #B5B5BC;
-  word-break: break-all;
-  align-self: stretch
 }
