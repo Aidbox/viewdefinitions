@@ -129,4 +129,4 @@
 (defn init []
   (tree-sitter/init-parser))
 
-5
+6
