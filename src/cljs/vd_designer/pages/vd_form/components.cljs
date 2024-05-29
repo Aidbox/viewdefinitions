@@ -343,9 +343,10 @@
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
-        rendered-options (if (= (:value-path ctx) (:id request))
-                           (->ui-options request options)
-                           [])
+        rendered-options
+        (if (= (:value-path ctx) (:id request))
+          (->ui-options request options)
+          [])
         errors? @(subscribe [::m/empty-inputs?])]
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
