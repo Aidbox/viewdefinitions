@@ -1,10 +1,12 @@
 name: Client test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "**"
     paths:
+      - "docker/ui/**"
       - "src/cljs/**"
       - "test/cljs/**"
       - "resources/client/**"
