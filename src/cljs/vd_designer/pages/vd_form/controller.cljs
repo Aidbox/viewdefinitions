@@ -8,7 +8,6 @@
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]]
-    [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
     [vd-designer.utils.fhir-spec :as utils.fhir-spec]
     [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
     [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
@@ -45,9 +44,6 @@
             :always
             (conj [:dispatch [::get-supported-resource-types]])
 
-            :always
-            (conj [:dispatch [::autocomplete-init]])
-
             imported?
             (conj [:dispatch [::process-import]])
 
@@ -56,12 +52,6 @@
 
             :always
             (conj [:dispatch [::load-fhir-schemas]]))})))
-
-(reg-event-fx
- ::autocomplete-init
- (fn [_ _]
-   (autocomplete/init)
-   {}))
 
 (reg-event-fx
  ::stop
@@ -433,16 +423,6 @@
   ::change-draggable-node
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
-
-(reg-event-db
- ::tree-sitter-load-success
- (fn [db [_ parser-instance]]
-   (assoc db ::m/parser-instance parser-instance)))
-
-(reg-event-fx
- ::tree-sitter-load-error
- (fn [{_db :db} [_ error-msg]]
-   {:notification-error error-msg}))
 
 (defn convert-constants [constant]
   (when-let [type-fhir (get-constant-type constant)] ; valueString
