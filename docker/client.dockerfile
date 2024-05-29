@@ -1,4 +1,4 @@
-FROM clojure:temurin-21-tools-deps-alpine as builder
+FROM clojure:temurin-22-tools-deps-alpine as builder
 
 WORKDIR /app
 COPY ./ /app/
