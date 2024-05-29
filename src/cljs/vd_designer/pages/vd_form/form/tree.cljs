@@ -101,13 +101,18 @@
     :fhirpath]])
 
 (defn foreach-expr-leaf [ctx value-key path]
-  [general-leaf ctx
-   {:icon       icon/expression
-    :name       "expression"
-    :value-key  value-key
-    :value      path
-    :input-type :fhirpath
-    :deletable? false}])
+[:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"}}
+   [icon/expression]
+   [fhir-path-input
+    ctx
+    value-key
+    path
+    false
+    nil
+    "expression"
+    :fhirpath]])
 
 ;; Nodes
 
