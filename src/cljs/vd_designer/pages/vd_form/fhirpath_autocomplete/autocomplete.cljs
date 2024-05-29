@@ -95,7 +95,7 @@
             (fn [[k v]]
               (let [value (subs (:value v) cursor-position)]
                 {:label  (name k)
-                 :value  value  
+                 :value  value
                  :type   (:type v)
                  :cursor (- (:cursor v) cursor-position)}))))})))
 
@@ -129,4 +129,4 @@
 (defn init []
   (tree-sitter/init-parser))
 
-3
+4
