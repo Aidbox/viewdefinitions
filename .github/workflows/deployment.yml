@@ -14,11 +14,11 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  UI_IMAGE_NAME: ${{ github.repository }}-ui
+  UI_IMAGE_NAME: ${{ github.repository }}-client
   K8S_NAMESPACE: viewdefinition
 
 jobs:
-  ui-docker:
+  client-docker:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' }}
 
@@ -49,12 +49,12 @@ jobs:
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
             type=raw,value=latest,enable=${{ github.event_name != 'release' }}
 
-      - name: Build and push ui image
+      - name: Build and push client image
         uses: docker/build-push-action@v5
         with:
           push: true
           context: .
-          file: ./docker/ui.dockerfile
+          file: ./docker/client.dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -66,7 +66,7 @@ jobs:
   dev-deployment:
     name: Deploy to dev
     needs:
-      - ui-docker
+      - client-docker
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'schedule' && github.event_name != 'release' }}
     # environment: dev
@@ -97,7 +97,7 @@ jobs:
   prod-deployment:
     name: Deploy to prod
     needs:
-      - ui-docker
+      - client-docker
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'release' }}
     # environment: prod

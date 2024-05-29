@@ -1,8 +1,8 @@
 name: vd-designer
 
 services:
-  vd-designer-ui:
-    image: ghcr.io/aidbox/viewdefinitions-ui:latest
+  client:
+    image: ghcr.io/aidbox/viewdefinitions-client:latest
     restart: unless-stopped
     pull_policy: always
     ports:
@@ -24,8 +24,8 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     healthcheck:
       test: pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}
-      interval: 10s
-      timeout: 5s
+      interval: 2s
+      timeout: 10s
       retries: 5
     ports:
       - "${POSTGRES_PORT}:5432"

@@ -6,7 +6,7 @@ on:
     branches:
       - "**"
     paths:
-      - "docker/ui/**"
+      - "docker/client/**"
       - "src/cljs/**"
       - "test/cljs/**"
       - "resources/client/**"

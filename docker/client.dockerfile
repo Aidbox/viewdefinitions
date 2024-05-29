@@ -10,5 +10,5 @@ RUN npx shadow-cljs release app
 
 FROM caddy:alpine
 
-COPY ./docker/ui/Caddyfile /etc/caddy/Caddyfile
+COPY ./docker/client/Caddyfile /etc/caddy/Caddyfile
 COPY --from=builder /app/resources/client/public /usr/share/caddy
