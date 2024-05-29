@@ -4,7 +4,7 @@
             [ragtime.repl]
             [ragtime.jdbc :as jdbc]
             [vd-designer.config]
-            [vd-designer.core :as core]
+            [vd-designer.server :as server]
             [vd-designer.context :as context]))
 
 (def ctx (context/mk))
@@ -21,17 +21,15 @@
     #_(martian/request-for portal-client :sso-code-exchange req)
     #_@(martian/response-for portal-client :sso-code-exchange req))
 
-  )
+  :rcf)
 
 ;;; Try out server endpoints
 (comment
-  (core/app {:request-method :get
-             :uri            "/api/health"})
+  (server/app {:request-method :get
+               :uri            "/api/health"})
 
-  (core/app {:request-method :get
-             :uri            "/bad-route"})
-
-  )
+  (server/app {:request-method :get
+               :uri            "/bad-route"}))
 
 ;;; Try out applying migrations
 (comment
@@ -43,4 +41,4 @@
   ;; it's doing 1 rollback at the time
   (ragtime.repl/rollback ragtime-cfg)
 
-  )
+  :rcf)
