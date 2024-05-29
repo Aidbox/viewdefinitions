@@ -4,34 +4,7 @@
             [vd-designer.pages.vd-form.fhir-schema :as fhirschema]
             [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]))
 
-(def fhirpath-fns
-  {:where {:value "where()"
-           :cursor 6
-           :type "collection"}
-   :exists {:value "exists()"
-            :cursor 7
-            :type "boolean"}
-   :empty {:value "empty()"
-           :cursor 7
-           :type "boolean"}
-   :extension {:value "extension(url = )"
-               :cursor 16
-               :type "collection"}
-   :join {:value "join()"
-          :cursor 5
-          :type "string"}
-   :ofType {:value "ofType()"
-            :cursor 7
-            :type "collection"}
-   :first {:value "first()"
-           :cursor 7
-           :type "collection"}
-   :lowBoundary {:value "lowBoundary"
-                 :cursor 11
-                 :type "number"}
-   :highBoundary {:value "highBoundary"
-                  :cursor 12
-                  :type "number"}})
+(def fhirpath-fns {})
 
 (defn fhirpath-function? [n]
   (some
