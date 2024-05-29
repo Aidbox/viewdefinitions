@@ -1,8 +1,7 @@
 (ns vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete
   (:require [clojure.string :as str]
             [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter :as tree-sitter]
-            [vd-designer.pages.vd-form.fhir-schema :as fhirschema]
-            [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]))
+            [vd-designer.pages.vd-form.fhir-schema :as fhirschema]))
 
 (def fhirpath-fns {})
 
