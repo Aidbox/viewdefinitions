@@ -1,0 +1,61 @@
+name: Application tests
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "**"
+    paths:
+      - ".github/workflows/tests.yml"
+      - "docker/**"
+      - "src/**"
+      - "test/**"
+      - "resources/**"
+      - "test-resources/**"
+      - "package.json"
+      - "**.edn"
+      - "**.js"
+
+jobs:
+  build:
+    name: Build and run
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: Start test services
+        run: docker compose --profile tests up -d
+
+      - name: Install clojure
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 1.11.3.1463
+
+      - name: Cache clj deps
+        id: cache-clj-deps
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: clojure-${{ hashFiles('**/deps.edn') }}
+          restore-keys: |
+            clojure-${{ hashFiles('**/deps.edn') }}-
+            clojure-
+
+      - name: Install system and client dependencies
+        run: |
+          sudo apt -y update && sudo apt install -y rlwrap
+          npm ci
+
+      - name: Build and test client
+        run: |
+          clj -M:client:client-build
+          clj -M:client:client-test:client-build-tests
+          node out/node-tests.js
+
+      - name: Build and test server
+        run: clj -X:server:server-test

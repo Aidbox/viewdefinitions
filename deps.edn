@@ -80,6 +80,6 @@
 
   :server-test
   {:extra-paths ["test/clj" "test-resources/server"]
-   :extra-deps
-   {nubank/matcher-combinators {:mvn/version "3.9.1"}
-    lambdaisland/kaocha        {:mvn/version "1.91.1392"}}}}}
+   :exec-fn     kaocha.runner/exec-fn
+   :extra-deps  {nubank/matcher-combinators {:mvn/version "3.9.1"}
+                 lambdaisland/kaocha        {:mvn/version "1.91.1392"}}}}}
