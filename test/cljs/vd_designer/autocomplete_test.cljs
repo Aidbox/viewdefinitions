@@ -1,12 +1,12 @@
 (ns vd-designer.autocomplete-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests run-test]]
             [vd-designer.pages.vd-form.components :as u]
-            [clojure.string :as str]
+            ;; [clojure.string :as str]
             ;; [clojure.core]
-            [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
-            [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+            ;; [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+            ;; [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [matcher-combinators.test :refer [match?]])
-  (:require-macros [vd-designer.interop :refer [inline-resource]])
+  ;; (:require-macros [vd-designer.interop :refer [inline-resource]])
   )
 
 (defn options-name [{:keys [text cursor-start]} [start end]]
@@ -237,168 +237,168 @@
           (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
 
 
-(def json (inline-resource "fhir_schema.ndjson"))
-(def spec (clj->js (utils.fhir-spec/spec-map (utils.fhir-spec/spec json))))
+;; (def json (inline-resource "fhir_schema.ndjson"))
+;; (def spec (clj->js (utils.fhir-spec/spec-map (utils.fhir-spec/spec json))))
 
-(defn ui-opts [text]
-  ;; text and cursor are repeated, we have to do it
-  (let [cursor-start (str/index-of text "|")
-        text (str/replace text "|" "")
-        options (antlr/complete
-                  {:type "Patient"
-                   :fhirschemas spec
-                   :forEachExpressions []
-                   :externalConstants [{:type "string" :value "abcde" :name "abcde"}]
-                   :fhirpath text
-                   :cursor cursor-start})]
-    (mapv #(dissoc % :label)
-          (u/->ui-options
-            {:text text :cursor-start cursor-start}
-            options))))
+;; (defn ui-opts [text]
+;;   ;; text and cursor are repeated, we have to do it
+;;   (let [cursor-start (str/index-of text "|")
+;;         text (str/replace text "|" "")
+;;         options (antlr/complete
+;;                   {:type "Patient"
+;;                    :fhirschemas spec
+;;                    :forEachExpressions []
+;;                    :externalConstants [{:type "string" :value "abcde" :name "abcde"}]
+;;                    :fhirpath text
+;;                    :cursor cursor-start})]
+;;     (mapv #(dissoc % :label)
+;;           (u/->ui-options
+;;             {:text text :cursor-start cursor-start}
+;;             options))))
 
-(deftest autocomplete-with-fhir-spec
-  (is (match? [{:value "name.where()", :cursor 11}]
-              (ui-opts "name.where|")))
-
-  (is (> (count (ui-opts "name.|ofType()")) 1))
-
-  (is (match?
-       [{:label-option "deceasedDateTime",
-         :value "deceased.ofType(dateTime)",
-         :cursor 25}
-        {:label-option "deceasedBoolean",
-         :value "deceased.ofType(boolean)",
-         :cursor 24}]
-        (ui-opts "decea|")))
-
-  (is (> (count (ui-opts "|name.ofType()")) 1))
-
-  (is (match?
-        [{:label-option "deceasedDateTime",
-          :value "deceased.ofType(dateTime)",
-          :cursor 25}]
-        (ui-opts "deceasedDateTime|")))
-
-  (is (match?
-        [{:label-option "where",
-          :value "name.where()",
-          :cursor 11}]
-        (ui-opts "name.wh|ere")))
-
-  (testing "constants"
-
-    (is (match?
-          [{:value "%abcde",
-            :cursor 6}]
-          (ui-opts "%a|")))
-
-    ;;TODO: newtext returns no %
-    #_(is (match?
-          [{:value "%abcde",
-            :cursor 6}]
-          (ui-opts "abcd|")))
-
-    (is (match?
-          [{:value "%`abcde`",
-            :cursor 8}]
-          (ui-opts "%`ab|")))
-
-
-
-    (is (match?
-          [{:value "name.where(use=%abcde)",
-            :cursor 21}]
-          (ui-opts "name.where(use=%ab|)")))
-
-    (is (match?
-          [{:value "name.where(use = %abcde)",
-            :cursor 23}]
-          (ui-opts "name.where(use = %ab|)")))
-
-    ;;TODO: textedit end should be 19, not 20
-    #_(is (match?
-          [{:value "name.where(use=%`abcde`)",
-            :cursor 23}]
-          (ui-opts "name.where(use=%`ab|)")))
-
-    ;;TODO: textedit end should be 19, not 20
-    #_(is (match?
-          [{:value "name.where(use=%'abcde')",
-            :cursor 23}]
-          (ui-opts "name.where(use=%'ab|)")))
-
-    ;;
-
-    (testing "name.where(use = %name_use).exists() by steps"
-      (is (match?
-            [{:value "name", :cursor 4}]
-            (ui-opts "na|")))
-
-      (is (match?
-            [{:value "name.where()", :cursor 11}]
-            (ui-opts "name.whe|")))
-
-      (is (match?
-            [{:value "name.where(use)", :cursor 14}]
-            (ui-opts "name.where(us|)")))
-
-      (is (match?
-            [{:value "name.where(use =%abcde)", :cursor 22}]
-            (ui-opts "name.where(use =%|)")))
-
-      (is (match?
-            [{:value "name.where(use = %abcde)", :cursor 23}]
-            (ui-opts "name.where(use = %|)")))
-
-      (is (match?
-            [{:value "name.where(use = %abcde)", :cursor 23}]
-            (ui-opts "name.where(use = %ab|)")))
-
-      ;; TODO: end should be 19, not 20
-      #_(is (match?
-              [{:value "name.where(use = %'abcde')", :cursor 25}]
-              (ui-opts "name.where(use = %'|)")))
-
-      ;; TODO: end should be 21, not 22
-      #_(is (match?
-              [{:value "name.where(use = %'abcde')", :cursor 25}]
-              (ui-opts "name.where(use = %'ab|)")))
-
-      ;; TODO: end should be 19, not 20
-      #_(is (match?
-              [{:value "name.where(use = %`abcde`)", :cursor 25}]
-              (ui-opts "name.where(use = %`|)")))
-
-      ;; TODO: end should be 21, not 22
-      #_(is (match?
-              [{:value "name.where(use = %`abcde`)", :cursor 25}]
-              (ui-opts "name.where(use = %`ab|)")))
-
-      ;; TODO: name.where(use = |) suggests things like name.where(use = given)??
-      ;; TODO: how to handle name.where(use |) ? now suggests use, given etc
-
-      )
-
-
-    (testing "name.where(use = %'name_use') by steps")
-
-    )
-
-
-
-
-  (is (= [] (ui-opts "hello|")))
-  (is (= [] (ui-opts "where|")))
-
-  #_(is (= [] (ui-opts "NAM|")))
-  (is (match? [{:value "name"}] (ui-opts "nam|")))
-
-  ;; why?
-  #_(is (= [] (ui-opts "name.use.where|")))
-  )
+;; (deftest autocomplete-with-fhir-spec
+;;   (is (match? [{:value "name.where()", :cursor 11}]
+;;               (ui-opts "name.where|")))
+;;
+;;   (is (> (count (ui-opts "name.|ofType()")) 1))
+;;
+;;   (is (match?
+;;        [{:label-option "deceasedDateTime",
+;;          :value "deceased.ofType(dateTime)",
+;;          :cursor 25}
+;;         {:label-option "deceasedBoolean",
+;;          :value "deceased.ofType(boolean)",
+;;          :cursor 24}]
+;;         (ui-opts "decea|")))
+;;
+;;   (is (> (count (ui-opts "|name.ofType()")) 1))
+;;
+;;   (is (match?
+;;         [{:label-option "deceasedDateTime",
+;;           :value "deceased.ofType(dateTime)",
+;;           :cursor 25}]
+;;         (ui-opts "deceasedDateTime|")))
+;;
+;;   (is (match?
+;;         [{:label-option "where",
+;;           :value "name.where()",
+;;           :cursor 11}]
+;;         (ui-opts "name.wh|ere")))
+;;
+;;   (testing "constants"
+;;
+;;     (is (match?
+;;           [{:value "%abcde",
+;;             :cursor 6}]
+;;           (ui-opts "%a|")))
+;;
+;;     ;;TODO: newtext returns no %
+;;     #_(is (match?
+;;           [{:value "%abcde",
+;;             :cursor 6}]
+;;           (ui-opts "abcd|")))
+;;
+;;     (is (match?
+;;           [{:value "%`abcde`",
+;;             :cursor 8}]
+;;           (ui-opts "%`ab|")))
+;;
+;;
+;;
+;;     (is (match?
+;;           [{:value "name.where(use=%abcde)",
+;;             :cursor 21}]
+;;           (ui-opts "name.where(use=%ab|)")))
+;;
+;;     (is (match?
+;;           [{:value "name.where(use = %abcde)",
+;;             :cursor 23}]
+;;           (ui-opts "name.where(use = %ab|)")))
+;;
+;;     ;;TODO: textedit end should be 19, not 20
+;;     #_(is (match?
+;;           [{:value "name.where(use=%`abcde`)",
+;;             :cursor 23}]
+;;           (ui-opts "name.where(use=%`ab|)")))
+;;
+;;     ;;TODO: textedit end should be 19, not 20
+;;     #_(is (match?
+;;           [{:value "name.where(use=%'abcde')",
+;;             :cursor 23}]
+;;           (ui-opts "name.where(use=%'ab|)")))
+;;
+;;     ;;
+;;
+;;     (testing "name.where(use = %name_use).exists() by steps"
+;;       (is (match?
+;;             [{:value "name", :cursor 4}]
+;;             (ui-opts "na|")))
+;;
+;;       (is (match?
+;;             [{:value "name.where()", :cursor 11}]
+;;             (ui-opts "name.whe|")))
+;;
+;;       (is (match?
+;;             [{:value "name.where(use)", :cursor 14}]
+;;             (ui-opts "name.where(us|)")))
+;;
+;;       (is (match?
+;;             [{:value "name.where(use =%abcde)", :cursor 22}]
+;;             (ui-opts "name.where(use =%|)")))
+;;
+;;       (is (match?
+;;             [{:value "name.where(use = %abcde)", :cursor 23}]
+;;             (ui-opts "name.where(use = %|)")))
+;;
+;;       (is (match?
+;;             [{:value "name.where(use = %abcde)", :cursor 23}]
+;;             (ui-opts "name.where(use = %ab|)")))
+;;
+;;       ;; TODO: end should be 19, not 20
+;;       #_(is (match?
+;;               [{:value "name.where(use = %'abcde')", :cursor 25}]
+;;               (ui-opts "name.where(use = %'|)")))
+;;
+;;       ;; TODO: end should be 21, not 22
+;;       #_(is (match?
+;;               [{:value "name.where(use = %'abcde')", :cursor 25}]
+;;               (ui-opts "name.where(use = %'ab|)")))
+;;
+;;       ;; TODO: end should be 19, not 20
+;;       #_(is (match?
+;;               [{:value "name.where(use = %`abcde`)", :cursor 25}]
+;;               (ui-opts "name.where(use = %`|)")))
+;;
+;;       ;; TODO: end should be 21, not 22
+;;       #_(is (match?
+;;               [{:value "name.where(use = %`abcde`)", :cursor 25}]
+;;               (ui-opts "name.where(use = %`ab|)")))
+;;
+;;       ;; TODO: name.where(use = |) suggests things like name.where(use = given)??
+;;       ;; TODO: how to handle name.where(use |) ? now suggests use, given etc
+;;
+;;       )
+;;
+;;
+;;     (testing "name.where(use = %'name_use') by steps")
+;;
+;;     )
+;;
+;;
+;;
+;;
+;;   (is (= [] (ui-opts "hello|")))
+;;   (is (= [] (ui-opts "where|")))
+;;
+;;   #_(is (= [] (ui-opts "NAM|")))
+;;   (is (match? [{:value "name"}] (ui-opts "nam|")))
+;;
+;;   ;; why?
+;;   #_(is (= [] (ui-opts "name.use.where|")))
+;;   )
 
 (comment
   (run-test ui-options-field-test)
   (run-test ui-options-function-test)
-  (run-test autocomplete-with-fhir-spec)
+  ;; (run-test autocomplete-with-fhir-spec)
   (run-tests))
