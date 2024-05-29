@@ -10,13 +10,15 @@
    :output-dir "resources/client/public"
    :asset-path "/"
 
-   :compiler-options {:warnings {:fn-deprecated false}}
+   :compiler-options {:warnings {:fn-deprecated false}
+                      :compiler-options {:output-feature-set :es6}}
    :modules {:app {:init-fn vd-designer.index/init}}
 
    :dev
    {:devtools {:preloads [day8.re-frame-10x.preload.react-18 devtools.preload]
                :after-load vd-designer/render}
     :compiler-options {:optimizations :none
+                       :compiler-options {:output-feature-set :es6}
                        :external-config
                        {:devtools/config
                         {:min-expandable-sequable-count-for-well-known-types 1
@@ -33,4 +35,5 @@
   :test
   {:target    :node-test
    :output-to "out/node-tests.js"
+   :compiler-options {:output-feature-set :es6}
    :autorun   false}}}
