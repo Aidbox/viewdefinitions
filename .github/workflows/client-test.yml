@@ -46,7 +46,7 @@ jobs:
         run: sudo apt -y update && sudo apt install -y rlwrap
 
       - name: Configure git to use another url to fetch npm packages from github
-        run: git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "git@github.com:"
+        run: git config --global url."https://${{ secrets.GITHUB_TOKEN }}@github.com/".insteadOf "ssh://git@github.com/"
           
       - name: "Install deps"
         run: npm ci
