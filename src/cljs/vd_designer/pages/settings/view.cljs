@@ -2,14 +2,16 @@
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [List Modal Row]]
             [clojure.string :as str]
-            [vd-designer.components.modal :as modal]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
             [vd-designer.components.input :as components.input]
             [vd-designer.components.list :as components.list]
+            [vd-designer.components.modal :as modal]
             [vd-designer.components.tabs :as tabs]
+            [vd-designer.auth.model :as auth-model]
+            [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.pages.settings.controller :as c]
             [vd-designer.pages.settings.model :as m]
             [vd-designer.utils.event :refer [target-value]]
@@ -121,26 +123,30 @@
 
 (defn delete-server-modal [server-name]
   (modal/modal-confirm
-   {:title "Delete ViewDefinition"
-    :ok-text   "Delete"
-    :onOk  #(dispatch [::c/delete server-name])
-    :content
-    (r/as-element
-     [:div
-      (string-utils/format "Are you sure you want to delete server %s?" server-name)])}))
+   {:title   "Delete ViewDefinition"
+    :ok-text "Delete"
+    :on-ok   #(dispatch [::c/delete server-name])
+    :content (r/as-element
+              [:div
+               (string-utils/format "Are you sure you want to delete server %s?" server-name)])}))
+
+(defn- add-server-button [authorized?]
+  (if authorized?
+    [button/add "New server" {:on-click #(dispatch [::c/new-server])}]
+    [auth-required [button/add "New server"]]))
 
 (defn server-list []
-  (let [request-sent-by @(subscribe [::m/request-sent-by])
+  (let [request-sent-by  @(subscribe [::m/request-sent-by])
         used-server-name @(subscribe [::m/used-server-name])
-        connect-error @(subscribe [::m/connect-error])]
+        connect-error    @(subscribe [::m/connect-error])
+        authorized?      @(subscribe [::auth-model/authorized?])]
     [:div {:style {:max-width "768px"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
                     :align-items     :center
                     :width           "100%"}}
       [:h1 "Server list"]
-      [button/add "New server"
-       {:on-click (fn [_e] (dispatch [::c/new-server]))}]]
+      [add-server-button authorized?]]
      [modal-view]
      [components.list/data-list
       :dataSource @(subscribe [::m/existing-servers])
@@ -150,13 +156,13 @@
          (let [{:keys [server-name base-url] :as server-config}
                (js-obj->clj-map raw-item)]
            [:> List.Item
-            {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])
-                       (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                       (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])]}
+            {:actions (cond-> [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]
+                        authorized?
+                        (conj (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
+                              (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])))}
             [:> List.Item.Meta
              {:title
               (r/as-element
                [:a {:onClick #(dispatch [::c/start-edit server-config])}
                 server-name])
               :description base-url}]])))]]))
-

@@ -1,17 +1,31 @@
 (ns vd-designer.core
-  (:require
-    [reitit.ring :as ring]
-    [ring.adapter.jetty :as jetty]
-    [vd-designer.web.routes.router :as r]))
+  (:require [reitit.ring :as ring]
+            [ring.adapter.jetty :as jetty]
+            [vd-designer.db.migrations :as migrate]
+            [vd-designer.web.routes.router :refer [router]]
+            [vd-designer.context :as context]))
 
-;; Consider making this a function,
-;; so we don't have to reload this namespace every time
-;; routes are changing
+(def ctx
+  (context/mk))
+
 (def app
   (ring/ring-handler
-    (r/router)
-    (ring/create-default-handler)))
+   (router ctx)
+   (ring/create-default-handler)))
 
-(defn -main [& _]
-  (jetty/run-jetty app {:port 8080})
-  )
+(defonce server
+  (let [port 8080]
+    (print "Applying migrations... ")
+    (migrate/migrate! (:db ctx))
+    (println "Done.")
+    (println "Starting server on port" port)
+    (jetty/run-jetty #'app {:port 8080, :join? false})))
+
+(comment
+  (.stop server)
+  (.start server)
+  (do
+    (.stop server)
+    (.start server))
+
+  :rcf)
