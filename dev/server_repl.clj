@@ -25,11 +25,13 @@
 
 ;;; Try out server endpoints
 (comment
-  (server/app {:request-method :get
-               :uri            "/api/health"})
+  (def app (server/app ctx))
 
-  (server/app {:request-method :get
-               :uri            "/bad-route"}))
+  (app {:request-method :get
+        :uri            "/api/health"})
+
+  (app {:request-method :get
+        :uri            "/bad-route"}))
 
 ;;; Try out applying migrations
 (comment

@@ -1,4 +1,5 @@
 (ns vd-designer.server
+  (:gen-class)
   (:require [reitit.ring :as ring]
             [ring.adapter.jetty :as jetty]
             [vd-designer.context :as context]
@@ -6,23 +7,20 @@
             [vd-designer.utils.log :as log]
             [vd-designer.web.routes.router :refer [router]]))
 
-(def ctx
-  (context/mk))
-
-(def app
+(defn app [ctx]
   (ring/ring-handler
    (router ctx)
    (ring/create-default-handler)))
 
 ;; Reference to application server instance for stopping/restarting
-(defonce instance (atom nil))
+(defonce ^:private instance (atom nil))
 
 (defn start
   "Start the application server and log the time of start."
-  [http-port]
+  [ctx http-port]
   (log/info "Starting server on port" http-port)
   (reset! instance
-          (jetty/run-jetty #'app {:port http-port :join? false})))
+          (jetty/run-jetty (app ctx) {:port http-port :join? false})))
 
 (defn stop
   "Gracefully shutdown the server. Log the time of shutdown"
@@ -34,25 +32,29 @@
 
 (defn restart
   "Convenience function to stop and start the application server"
-  [http-port]
+  [ctx http-port]
   (stop)
-  (start http-port))
+  (start ctx http-port))
 
 (defn -main
   "Select a value for the http port the app-server will listen to and start."
   [& [http-port]]
-  (let [http-port (Integer. (or http-port "8080"))]
+  (log/info "Starting server...")
+  (let [ctx (context/mk)
+        http-port (Integer. (or http-port "8080"))]
     (migrate/migrate! (:db ctx))
-    (start http-port)))
+    (start ctx http-port)))
 
 (comment
+  (def ctx (context/mk))
+
   ;; Start application server - via `-main` or `server/start`
   (-main)
-  (start 8080)
+  (start ctx 8080)
 
   ;; Stop / restart application server
   (stop)
-  (restart 8080)
+  (restart ctx 8080)
 
   ;; Get all environment variables
   ;; use a data inspector to view environment-variables name
