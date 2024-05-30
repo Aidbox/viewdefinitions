@@ -4,7 +4,7 @@
     [clojure.string :as str]
     [clojure.set :as set]
     [medley.core :as medley]
-    [re-frame.core :refer [dispatch reg-event-db reg-event-fx]]
+    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]]
@@ -462,21 +462,26 @@
  (fn [db [_ data]]
    (assoc db ::m/autocomplete-options data)))
 
+(reg-fx 
+  ::call-autocomplete
+ (fn [[args autocomplete-options]]
+   (-> (js/Promise.resolve
+          (antlr/complete args))
+        (.then #(dispatch [::update-autocomplete-options
+                           {:options %
+                            :ref (:ref autocomplete-options)
+                            :request autocomplete-options}]))
+        (.catch #(js/console.error %)))))
+
 (reg-event-fx
   ::update-autocomplete-text
   (fn [{{spec-map   :spec-map
-         current-vd :current-vd :as db} :db}
-       [_ {:keys [text cursor-start _cursor-end ref fhirpath-prefix] :as new-ctx}]]
-    (-> (js/Promise.resolve
-          (antlr/complete {:type (:resource current-vd)
+         current-vd :current-vd} :db}
+       [_ {:keys [text cursor-start _cursor-end fhirpath-prefix] :as new-ctx}]]
+    {::call-autocomplete [{:type (:resource current-vd)
                            :fhirschemas spec-map
                            :forEachExpressions fhirpath-prefix
                            :externalConstants (mapv convert-constants (:constant current-vd))
                            :fhirpath text
-                           :cursor cursor-start}))
-        (.then #(dispatch [::update-autocomplete-options
-                           {:options %
-                            :ref ref
-                            :request (assoc new-ctx :resource-type (:resource current-vd))}]))
-        (.catch #(js/console.error %)))
-    {:db db}))
+                           :cursor cursor-start}
+                          (assoc new-ctx :resource-type (:resource current-vd))]}))
