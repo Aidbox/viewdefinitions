@@ -16,11 +16,10 @@
 (defn add-view-definition []
   [add-dropdown "ViewDefinition"
    {:arrow false
-    :onClick #(rfe/navigate :form-create)
-    :menu {:items   [(dropdown-item-ant "New"    icons/FileAddOutlined)
-                     {:type "divider"}
-                     (dropdown-item-ant "Import" icons/UploadOutlined)]
-           :onClick #(case (.-key %)
-                       "New"    (rfe/navigate :form-create)
-                       "Import" (dispatch [::c/start-import]))}}
+    :menu  {:items   [(dropdown-item-ant "New"    icons/FileAddOutlined)
+                      {:type "divider"}
+                      (dropdown-item-ant "Import" icons/UploadOutlined)]
+            :onClick #(case (.-key %)
+                        "New"    (rfe/navigate :form-create)
+                        "Import" (dispatch [::c/start-import]))}}
    {:size :default}])

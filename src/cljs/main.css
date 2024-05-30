@@ -2,18 +2,36 @@
 @tailwind components;
 @tailwind utilities; */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
 
 :root {
-  --hover-color: #FAFAFA;
+  --hover-color: #fafafa;
 }
 
 html,
 body,
 #app,
-#app>div {
+#app > div {
   height: 100%;
   margin: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .mobile-only {
+    display: block;
+  }
+  .desktop-only {
+    display: none;
+  }
+}
+
+@media screen and (min-width: 768px) {
+  .mobile-only {
+    display: none;
+  }
+  .desktop-only {
+    display: block;
+  }
 }
 
 /* FORM */
@@ -27,15 +45,15 @@ div.ant-tabs {
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
-  scrollbar-color: #F0F0F0 #FFFFFF;
+  scrollbar-color: #f0f0f0 #ffffff;
 }
 
 .ant-menu-item-selected {
-  border-right: 3px solid #1890FF;
+  border-right: 3px solid #1890ff;
 }
 
-.vd-resource:not(.ant-select-open)>.ant-select-selector {
-  padding: 0 !important;
+.vd-resource > .ant-select-selector {
+  margin-left: -10px;
 }
 
 /* INPUTS */
@@ -47,11 +65,11 @@ button {
 
 .default-input:focus,
 .default-input:hover {
-  border-bottom: 1px solid #7972D3 !important;
+  border-bottom: 1px solid #7972d3 !important;
 }
 
 .red-input {
-  border-bottom: 1px solid #FF0000 !important;
+  border-bottom: 1px solid #ff0000 !important;
 }
 
 /* BUTTONS */
@@ -61,12 +79,25 @@ button {
   opacity: 0;
 }
 
-*:hover>.invisible-button,
-*:hover>*>.invisible-button,
-*:hover>*>*>.invisible-button,
+*:hover > .invisible-button,
+*:hover > * > .invisible-button,
+*:hover > * > * > .invisible-button,
 .invisible-button.active {
   visibility: visible;
   opacity: 1;
+}
+
+.mobile-icon-button {
+  max-width: 80px;
+}
+
+@media screen and (max-width: 1000px) {
+  .mobile-icon-button {
+    width: 46px;
+  }
+  .mobile-icon-button > span:not(.ant-btn-icon) {
+    display: none;
+  }
 }
 
 /* TREE */
@@ -101,8 +132,18 @@ button {
   opacity: 1;
 }
 
+.vd-tree .ant-tree-title .cut-text {
+  display: inline-flex;
+  height: 30px;
+  overflow: hidden;
+  color: #b5b5bc;
+  word-break: break-all;
+  align-self: stretch;
+}
 
-.vd-table .ant-table-thead>tr>th {
+/* TABLE */
+
+.vd-table .ant-table-thead > tr > th {
   overflow-wrap: break-word;
   overflow: hidden;
   white-space: nowrap;
@@ -110,16 +151,7 @@ button {
   word-break: keep-all;
 }
 
-.vd-table .ant-table-tbody>tr>td {
+.vd-table .ant-table-tbody > tr > td {
   min-width: 48px;
   max-width: 128px;
-}
-
-.vd-tree .ant-tree-title .cut-text {
-  display: inline-flex;
-  height: 30px;
-  overflow: hidden;
-  color: #B5B5BC;
-  word-break: break-all;
-  align-self: stretch
 }

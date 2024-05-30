@@ -1,7 +1,31 @@
-(ns vd-designer.core)
+(ns vd-designer.core
+  (:require [reitit.ring :as ring]
+            [ring.adapter.jetty :as jetty]
+            [vd-designer.db.migrations :as migrate]
+            [vd-designer.web.routes.router :refer [router]]
+            [vd-designer.context :as context]))
 
-(defn start-app []
-  )
+(def ctx
+  (context/mk))
 
-(defn -main [& _]
-  (start-app))
+(def app
+  (ring/ring-handler
+   (router ctx)
+   (ring/create-default-handler)))
+
+(defonce server
+  (let [port 8080]
+    (print "Applying migrations... ")
+    (migrate/migrate! (:db ctx))
+    (println "Done.")
+    (println "Starting server on port" port)
+    (jetty/run-jetty #'app {:port 8080, :join? false})))
+
+(comment
+  (.stop server)
+  (.start server)
+  (do
+    (.stop server)
+    (.start server))
+
+  :rcf)

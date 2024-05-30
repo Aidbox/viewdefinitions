@@ -1,29 +1,32 @@
+# dev & docs
+*.code-workspace
+*.iml
+.DS_Store
 .git/
 .github/
 .gitignore
-.DS_Store
+.idea/
+.vscode/
+LICENSE
+README.md
+dev/
+
+# clojure
 .calva/
 .clj-kondo/
 .cpcache/
 .lsp/
-.vscode/
-.idea/
 .nrepl-port
 
-*.code-workspace
-*.iml
-.DS_Store
-.cpcache
-.clj-kondo
-.lsp
+# client
 .shadow-cljs
-
+karma.conf.js
 node_modules/
-resources/client/public/cljs-runtime/
-resources/client/public/manifest.edn
+out/
 resources/client/public/app.css
 resources/client/public/app.js
+resources/client/public/cljs-runtime/
+resources/client/public/manifest.edn
+tailwind.config.js
 
-dev/
-LICENSE
-README.md
+# server

@@ -59,7 +59,7 @@
     :value-key     :path
     :value         path
     :settings-form column-settings
-    :input-type :fhirpath
+    :input-type    :fhirpath
     :deletable?    true}])
 
 (defn constant-type->input-type [constant-type]
@@ -87,23 +87,32 @@
       :deletable?    true}]))
 
 (defn where-leaf [ctx {:keys [path]}]
-  [general-leaf ctx
-   {:icon          icon/where
-    :name          "expression"
-    :value-key     :path
-    :value         path
-    :settings-form where-settings
-    :input-type :fhirpath
-    :deletable?    true}])
+  [:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"}}
+   [icon/where]
+   [fhir-path-input
+    ctx
+    :path
+    path
+    true
+    where-settings
+    "expression"
+    :fhirpath]])
 
 (defn foreach-expr-leaf [ctx value-key path]
-  [general-leaf ctx
-   {:icon          icon/expression
-    :name          "expression"
-    :value-key     value-key
-    :value         path
-    :input-type :fhirpath
-    :deletable?    false}])
+[:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"}}
+   [icon/expression]
+   [fhir-path-input
+    ctx
+    value-key
+    path
+    false
+    nil
+    "expression"
+    :fhirpath]])
 
 ;; Nodes
 

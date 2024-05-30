@@ -54,7 +54,7 @@ jobs:
         with:
           push: true
           context: .
-          file: ./Dockerfile
+          file: ./docker/ui.dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -84,13 +84,13 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload compose file with rsync
-        run: rsync -avz ./compose.yml ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/vd_designer
+        run: rsync -avz ./{compose.yml,.env} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/vd_designer
 
       - name: Relaunch docker
         run: >
           ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
           "echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-            docker compose down; docker compose up -d"
+            docker compose down; docker compose --profile dev up -d"
 
   # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- #
 

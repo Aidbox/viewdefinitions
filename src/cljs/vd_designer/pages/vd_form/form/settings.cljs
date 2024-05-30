@@ -1,6 +1,5 @@
 (ns vd-designer.pages.vd-form.form.settings
   (:require [antd :refer [DatePicker Form Input Modal Select Switch Typography]]
-            [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
@@ -92,11 +91,15 @@
                                     :message  "FHIR version is required"}]}
              [:> Input]]])]]]]]))
 
+(defn- vd-subset [vd ctx]
+  (let [real-path (-> ctx :value-path (uuid->idx vd))]
+    (get-in vd real-path)))
+
 (defn where-settings [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
      {:onFinish      #(save-popover % ctx)
-      :initialValues (get-in vd (:value-path ctx))}
+      :initialValues (vd-subset vd ctx)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
@@ -104,7 +107,7 @@
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
      {:onFinish      #(save-popover % ctx)
-      :initialValues (get-in vd (:value-path ctx))}
+      :initialValues (vd-subset vd ctx)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"}
        [:> Input.TextArea {:autoSize true :allowClear true}]]
@@ -125,8 +128,7 @@
 
 (defn constant-settings [ctx]
   (let [vd          @(subscribe [::m/current-vd])
-        real-path    (uuid->idx (:value-path ctx) vd)
-        constant-map (get-in vd real-path)]
+        constant-map (vd-subset vd ctx)]
     [settings-base-form "Constant"
      {:onFinish      #(save-popover % ctx
                                     (fn [path] (dispatch [::c/normalize-constant-value path])))

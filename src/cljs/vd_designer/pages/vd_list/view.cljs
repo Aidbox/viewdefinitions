@@ -7,6 +7,7 @@
             [vd-designer.components.heading :refer [h1]]
             [vd-designer.components.list :refer [vd-data-list]]
             [vd-designer.components.modal :as modal]
+            [vd-designer.auth.model :as auth-model]
             [vd-designer.pages.settings.model :as settings-model]
             [vd-designer.pages.vd-list.components :refer [add-view-definition
                                                           search-input]]
@@ -39,8 +40,9 @@
                 [:div (string-utils/format "Are you sure you want to delete ViewDefinition %s?" vd-name)])})))
 
 (defn viewdefinition-list-view []
-  (let [used-server-name @(subscribe [::settings-model/used-server-name])]
-    [:div {:style {:width "60%"}}
+  (let [used-server-name @(subscribe [::settings-model/used-server-name])
+        authorized? @(subscribe [::auth-model/authorized?])]
+    [:div {:style {:max-width "768px"}}
      [:> Flex {:align   :center
                :justify :space-between}
       [h1 "View Definitions" {:style {:padding-bottom "8px"}}]
@@ -52,8 +54,9 @@
       [search-input]
       [vd-data-list
        #(rfe/navigate :form-edit {:path-params {:id %}})
-       [(fn [id]
-          [:div [:a {:onClick #(delete-view-modal id)} "delete"]])]
+       (when authorized?
+         [(fn [id]
+            [:div [:a {:onClick #(delete-view-modal id)} "delete"]])])
        :loading @(subscribe [::m/view-defs-loading?])
        :dataSource (-> @(subscribe [::m/view-defs])
                        filter-vds

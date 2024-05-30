@@ -246,7 +246,51 @@
   (run-test move-test)
   (run-tests)
 
-  (get-in @re-frame.db/app-db [:current-vd :select])
-
   )
 
+(deftest strip-empty-collections-test
+  (is (match?
+        {:title    'title
+         :resource "Patient"
+         :select   ['col]}
+        (sut/strip-empty-collections
+          {:fhirVersion []
+           :title       'title
+           :extension   []
+           :resource    "Patient"
+           :select      ['col]})))
+
+  (is (match?
+        {:title    'title
+         :resource "Patient"
+         :select   []}
+        (sut/strip-empty-collections
+          {:title       'title
+           :resource    "Patient"
+           :select      []}))))
+
+(deftest merge-and-strip-test
+  (testing "just merging"
+    (is (match?
+          {:a 1, :b 2, :c 3}
+          (sut/merge-and-strip {:a 1, :b 2}
+                               {:c 3}))))
+  (testing "overriding"
+    (is (match?
+          {:a 1, :b 3}
+          (sut/merge-and-strip {:a 1, :b 2}
+                               {:b 3}))))
+  (testing "string erasing"
+    (is (match?
+          {:a 1}
+          (sut/merge-and-strip {:a 1, :b "test"}
+                               {:b ""})))
+    (is (match?
+          {:a 1}
+          (sut/merge-and-strip {:a 1, :b "test"}
+                               {:b nil}))))
+  (testing "stripping empty collection"
+    (is (match?
+          {:a 1}
+          (sut/merge-and-strip {:a 1, :b [1 2], :c {:d 3}}
+                               {:b [], :c {}})))))

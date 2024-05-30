@@ -1,17 +1,18 @@
 (ns vd-designer.index
   (:require ["@ant-design/icons" :as icons]
-            [reitit.frontend.easy :as rfe]
             [day8.re-frame.http-fx]
-            [re-frame.core :as re-frame :refer [reg-event-fx
-                                                subscribe]]
+            [re-frame.core :refer [clear-subscription-cache! dispatch-sync
+                                   inject-cofx reg-event-fx subscribe]]
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
-            [vd-designer.notifications]
+            [reitit.frontend.easy :as rfe]
             [vd-designer.components.layout :refer [layout]]
+            [vd-designer.notifications]
+            [vd-designer.auth.controller :as auth.controller]
+            [vd-designer.pages.settings.view]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.view]
-            [vd-designer.pages.settings.view]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
@@ -26,6 +27,7 @@
                          {:title "New"}]}]
     (m route)))
 
+
 ;;;; Initialization
 
 (def default-servers {"Aidbox Default"
@@ -33,22 +35,24 @@
                       ; we do not want to let people create view definitions because they are
                       ; materialized when created
                       {:server-name "Aidbox Default"
-                       :base-url    "https://viewdefs.aidbox.app/fhir"
+                       :base-url    "https://viewdefs.aidbox.app"
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
 
                       ; read all, delete+create+update ViewDefinitions, eval VD rpc
                       "Aidbox Default 2"
                       {:server-name "Aidbox Default 2"
-                       :base-url    "https://viewdefinitions.edge.aidbox.app/fhir"
+                       :base-url    "https://viewdefinitions.edge.aidbox.app"
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
 
 (reg-event-fx
  ::initialize-db
- (fn [{:keys [db]} _]
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} _]
    (if (seq db)
      {:db db}
      {:db {:view-definitions    []
            :side-menu-collapsed false
+           :authorized?         (boolean authentication-token)
            :cfg/fhir-servers    {:servers          default-servers
                                  :used-server-name (-> default-servers
                                                        first
@@ -68,7 +72,7 @@
              {:key "settings"
               :icon (r/create-element icons/SettingOutlined)
               :size 64}
-             {:key "3" :icon (r/create-element icons/BookOutlined)}]
+             #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
       :breadcrumbs (breadcrumbs current-route)}
      (if route
        (let [view (:view (:data route))]
@@ -83,10 +87,10 @@
 
 (defn init []
   (routes/start-reitit)
-  (re-frame/dispatch-sync [::initialize-db])
+  (dispatch-sync [::initialize-db])
+  (dispatch-sync [::auth.controller/store-authentication (:query-params @routes/match)])
   (rdom-client/render root-element (r/as-element [(fn [] current-page)]) functional-compiler))
 
 (defn ^:dev/after-load re-render []
-  (re-frame/clear-subscription-cache!)
+  (clear-subscription-cache!)
   (init))
-
