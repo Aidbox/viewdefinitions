@@ -145,9 +145,3 @@
        (filterv (fn [[k _]] (str/starts-with? (name k) "value")))
        first
        first))
-
-(defn get-constant-real-type [constant]
-  (->> constant
-       (filterv (fn [[k _]] (str/starts-with? (name k) "value")))
-       first
-       first))

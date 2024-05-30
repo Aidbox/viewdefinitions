@@ -251,9 +251,10 @@
        :else [:> icons/ContainerOutlined])
      (or (:detail option) (name kind))
      (render-text (:label option)
-                  (let [cursor-pos (if (= :constant kind)
-                                     (- cursor-relative-pos (special-constant-symbols-length text))
-                                     cursor-relative-pos)]
+                  (let [cursor-pos
+                        (cond-> cursor-relative-pos
+                          (= :constant kind)
+                          (- (special-constant-symbols-length text)))]
                     (some-> (get-current-token option text)
                             count
                             (min cursor-pos)))))))
@@ -295,7 +296,7 @@
             (new-cursor-idx cursor-start input-value text-to-filter)))))))
 
 
-(defn change-text-and-cursor [input-text _cursor-start option]
+(defn change-text-and-cursor [input-text option]
   (when (:textEdit option)
     (let [text-edit (:textEdit option)
           kind (:kind option)
@@ -332,7 +333,7 @@
        (filterv #(filter-options text cursor-start %))
        (mapv
         (fn [option]
-          (let [{:keys [value cursor]} (change-text-and-cursor text cursor-start option)]
+          (let [{:keys [value cursor]} (change-text-and-cursor text option)]
             (assoc option
                    :label-option (:label option)
                    :label (render-option text cursor-start option)

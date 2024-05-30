@@ -11,12 +11,14 @@
 
 #?(:cljs
    (defn obj->clj
+     "Convert js object to clj, skip functions.
+      Use if js->clj does not work."
      [obj]
      (if (goog.isObject obj)
        (-> (fn [result key]
              (let [v (goog.object/get obj key)]
-               (if (= "function" (goog/typeOf v))
-                 result
-                 (assoc result (keyword key) (obj->clj v)))))
+               (cond-> result
+                 (not= "function" (goog/typeOf v))
+                 (assoc (keyword key) (obj->clj v)))))
            (reduce {} (.getKeys goog/object obj)))
        obj)))
