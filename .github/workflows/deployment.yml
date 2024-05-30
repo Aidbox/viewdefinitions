@@ -129,7 +129,12 @@ jobs:
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Upload compose file with rsync
-        run: rsync -avz ./{compose.yml,.env} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/vd_designer
+        run: |
+          tee .env <<EOF
+          ${{ secrets.DEV_ENV_FILE }}
+          EOF
+          rsync -avz ./{compose.yml,.env} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/vd_designer
+          rm .env
 
       - name: Relaunch docker
         run: >
