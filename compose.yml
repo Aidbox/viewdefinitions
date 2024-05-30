@@ -1,12 +1,37 @@
 name: vd-designer
 
 services:
-  vd-designer-ui:
-    image: ghcr.io/aidbox/viewdefinitions-ui:latest
+  client:
+    container_name: client
+    image: ghcr.io/aidbox/viewdefinitions-client:latest
     restart: unless-stopped
     pull_policy: always
     ports:
       - "8280:80"
+    networks:
+      - vd-network
+    profiles:
+      - dev
+
+  server:
+    container_name: server
+    image: ghcr.io/aidbox/viewdefinitions-server:latest
+    restart: unless-stopped
+    pull_policy: always
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_HOST=postgres-db
+      - POSTGRES_PORT=5432
+    ports:
+      - "${SERVER_PORT}:8080"
+    networks:
+      - vd-network
+    depends_on:
+      database:
+        condition: service_healthy
+    links:
+      - database
     profiles:
       - dev
 
@@ -24,11 +49,13 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
     healthcheck:
       test: pg_isready -d ${POSTGRES_DB} -U ${POSTGRES_USER}
-      interval: 10s
-      timeout: 5s
+      interval: 2s
+      timeout: 10s
       retries: 5
     ports:
       - "${POSTGRES_PORT}:5432"
+    networks:
+      - vd-network
     profiles:
       - dev
       - local
@@ -61,3 +88,6 @@ services:
 volumes:
   vdd-data:
     external: true
+
+networks:
+  vd-network: {}

@@ -1,4 +1,4 @@
-FROM clojure:temurin-21-tools-deps-alpine as builder
+FROM clojure:temurin-22-tools-deps-alpine as builder
 
 WORKDIR /app
 COPY ./ /app/
@@ -10,5 +10,5 @@ RUN npx shadow-cljs release app
 
 FROM caddy:alpine
 
-COPY ./docker/ui/Caddyfile /etc/caddy/Caddyfile
+COPY ./docker/client/Caddyfile /etc/caddy/Caddyfile
 COPY --from=builder /app/resources/client/public /usr/share/caddy
