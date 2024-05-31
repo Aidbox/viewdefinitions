@@ -8,7 +8,7 @@
 (defn- uber-opts [opts]
   (merge opts
          {:main       main
-          :uber-file  (format "out/%s-standalone.jar" lib)
+          :uber-file  (format "out/%s.jar" lib)
           :basis      (b/create-basis {:project "deps.edn"
                                        :aliases [:server]})
           :class-dir  class-dir
@@ -21,7 +21,9 @@
 
   (let [opts (uber-opts opts)]
     (println "Copying files...")
-    (b/copy-dir {:src-dirs   ["resources/server" "src/clj"]
+    (b/copy-dir {:src-dirs   ["resources/server"
+                              "resources/client"
+                              "src/clj"]
                  :target-dir class-dir})
 
     (println "Compiling files...")

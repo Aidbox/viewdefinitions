@@ -1,21 +1,9 @@
 name: vd-designer
 
 services:
-  client:
-    container_name: client
-    image: ghcr.io/aidbox/viewdefinitions-client:latest
-    restart: unless-stopped
-    pull_policy: always
-    ports:
-      - "8280:80"
-    networks:
-      - vd-network
-    profiles:
-      - dev
-
-  server:
-    container_name: server
-    image: ghcr.io/aidbox/viewdefinitions-server:latest
+  app:
+    container_name: app
+    image: ghcr.io/aidbox/vd-designer:latest
     restart: unless-stopped
     pull_policy: always
     env_file:
@@ -24,7 +12,7 @@ services:
       - POSTGRES_HOST=postgres-db
       - POSTGRES_PORT=5432
     ports:
-      - "${SERVER_PORT}:8080"
+      - "80:8080"
     networks:
       - vd-network
     depends_on:

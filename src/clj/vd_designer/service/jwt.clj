@@ -16,14 +16,13 @@
     (keys/jwk (.getPrivate pair) (.getPublic pair))))
 
 (defn- make-claims
-  [{server-url :vd.designer.server/url
-    client-url :vd.designer.client/url
-    :as        config}
+  [{app-url :vd.designer.app/url
+    :as     config}
    account-id]
   (let [issued-at (time/current-ts)]
-    {:iss server-url
+    {:iss app-url
      :sub account-id
-     :aud [server-url client-url]
+     :aud [app-url]
      :exp (+ issued-at (-> config :jwt :expires-in))
      :iat issued-at
      :nbf issued-at}))
@@ -37,11 +36,11 @@
 
 (defn validate
   [{{:keys [jwk sign-opts]} :jwt
-    server-url              :vd.designer.server/url}
+    app-url                 :vd.designer.app/url}
    ^String referer
    ^String jwt]
   (let [pub (jwk/public-key jwk)
-        verify-opts {:iss server-url, :aud referer}]
+        verify-opts {:iss app-url, :aud referer}]
     (try (->> (merge sign-opts verify-opts)
               (jwt/unsign jwt pub)
               :sub

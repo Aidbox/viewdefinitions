@@ -89,15 +89,16 @@
              (assoc ::request-sent-by server-name)
              (update :cfg/fhir-servers dissoc :used-server-name))
      :http-xhrio
+     ;; TODO refactor this to not specify path manually...
      [(http/get-metadata db {:uri (-> base-url uri/uri
-                                      (assoc :path "/metadata")
+                                      (assoc :path "/fhir/metadata")
                                       uri/uri-str)
                              :on-success [::get-metadata-success server-name]
                              :on-failure [::not-connected server-name]})
       (http/get-view-definitions
         db
         {:uri (-> base-url uri/uri
-                  (assoc :path "/ViewDefinition")
+                  (assoc :path "/fhir/ViewDefinition")
                   uri/uri-str)
          :headers (remove
                     (fn [[k v]]

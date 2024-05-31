@@ -2,13 +2,9 @@
   (:require [vd-designer.service.jwt :as jwt]))
 
 (def config
-  {:vd.designer.server/url
-   (or (System/getenv "SERVER_HOST")
+  {:vd.designer.app/url
+   (or (System/getenv "APP_HOST")
        "http://localhost:8080")
-
-   :vd.designer.client/url
-   (or (System/getenv "CLIENT_HOST")
-       "http://localhost:8280")
 
    :aidbox.portal/url
    (or (System/getenv "AIDBOX_PORTAL_URL")
@@ -25,7 +21,7 @@
    :sso
    {:client-id            "vd-designer"
     :client-secret        "changeme"
-    :default-redirect-url (or (System/getenv "CLIENT_HOST")
+    :default-redirect-url (or (System/getenv "APP_HOST")
                               "http://localhost:8280")
     :provider-url         (or (System/getenv "AIDBOX_PORTAL_SSO_URL")
                               "http://127.0.0.1.nip.io:8789/ui/portal")}

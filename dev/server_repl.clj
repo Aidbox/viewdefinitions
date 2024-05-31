@@ -27,6 +27,8 @@
 (comment
   (def app (server/app ctx))
 
+  (server/start ctx 8080)
+
   (app {:request-method :get
         :uri            "/api/health"})
 

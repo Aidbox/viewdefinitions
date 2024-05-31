@@ -2,6 +2,8 @@
   (:gen-class)
   (:require [reitit.ring :as ring]
             [ring.adapter.jetty :as jetty]
+            [ring.middleware.content-type :as content-type]
+            [ring.util.response :as response]
             [vd-designer.context :as context]
             [vd-designer.db.migrations :as migrate]
             [vd-designer.utils.log :as log]
@@ -10,7 +12,13 @@
 (defn app [ctx]
   (ring/ring-handler
    (router ctx)
-   (ring/create-default-handler)))
+   (ring/routes
+    (-> (fn [request]
+          (or (response/resource-response (:uri request) {:root "public"})
+              (-> (response/resource-response "index.html" {:root "public"})
+                  (response/content-type "text/html"))))
+        content-type/wrap-content-type)
+    (ring/create-default-handler))))
 
 ;; Reference to application server instance for stopping/restarting
 (defonce ^:private instance (atom nil))
