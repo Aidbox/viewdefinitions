@@ -49,7 +49,8 @@ jobs:
       - name: Install system and client dependencies
         run: |
           sudo apt -y update && sudo apt install -y rlwrap
-          npm ci
+          npm install -g postcss postcss-cli
+          npm ci --omit=dev
 
       - name: Build and test client
         run: |
