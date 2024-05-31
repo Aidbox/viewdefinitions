@@ -479,7 +479,7 @@
          current-vd :current-vd} :db}
        [_ {:keys [text cursor-start _cursor-end fhirpath-prefix] :as new-ctx}]]
     {::call-autocomplete [{:type (:resource current-vd)
-                           :fhirschemas spec-map
+                           :fhirSchemas spec-map
                            :forEachExpressions fhirpath-prefix
                            :externalConstants (mapv convert-constants (:constant current-vd))
                            :fhirpath text
