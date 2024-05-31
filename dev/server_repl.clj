@@ -1,11 +1,11 @@
 (ns server-repl
   ;; TODO: learn and apply the best practices of REPL namespaces
   (:require [martian.core :as martian]
-            [ragtime.repl]
             [ragtime.jdbc :as jdbc]
+            [ragtime.repl]
             [vd-designer.config]
-            [vd-designer.server :as server]
-            [vd-designer.context :as context]))
+            [vd-designer.context :as context]
+            [vd-designer.server :as server]))
 
 (def ctx (context/mk))
 

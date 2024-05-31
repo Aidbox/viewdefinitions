@@ -1,5 +1,7 @@
 (ns vd-designer.config
-  (:require [vd-designer.service.jwt :as jwt]))
+  (:require [clojure.edn :as edn]
+            [vd-designer.service.jwt :as jwt]
+            [vd-designer.utils.base64 :as base64]))
 
 (def config
   {:vd.designer.app/url
@@ -11,16 +13,19 @@
        "http://127.0.0.1.nip.io:8789")
 
    :jwt
-   {:jwk        (or (System/getenv "VD_AUTH_JWK")
-                    (jwt/generate-jwk))
+   {:jwk        (if-let [jwk (System/getenv "VD_AUTH_JWK")]
+                  (-> jwk (base64/decode) edn/read-string)
+                  (jwt/generate-jwk))
     :expires-in (* 60 #_SECONDS
                    60 #_MINUTES
                    24 #_HOURS)
     :sign-opts  {:alg :rs512}}
 
    :sso
-   {:client-id            "vd-designer"
-    :client-secret        "changeme"
+   {:client-id            (or (System/getenv "AIDBOX_CLIENT_NAME")
+                              "vd-designer")
+    :client-secret        (or (System/getenv "AIDBOX_CLIENT_SECRET")
+                              "changeme")
     :default-redirect-url (or (System/getenv "APP_HOST")
                               "http://localhost:8280")
     :provider-url         (or (System/getenv "AIDBOX_PORTAL_SSO_URL")
