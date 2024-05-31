@@ -54,7 +54,7 @@ jobs:
         with:
           push: true
           context: .
-          file: ./docker/client.dockerfile
+          file: ./docker/app.dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
