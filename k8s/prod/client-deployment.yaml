@@ -14,8 +14,8 @@ spec:
         service: vd-designer
     spec:
       containers:
-        - name: vd-designer-ui
-          image: ghcr.io/aidbox/viewdefinitions-ui:latest
+        - name: vd-designer-client
+          image: ghcr.io/aidbox/viewdefinitions-client:latest
           ports:
             - containerPort: 80
               protocol: TCP
