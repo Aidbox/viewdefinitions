@@ -1,11 +1,11 @@
 (ns vd-designer.pages.settings.controller
   (:require
-   [clojure.string :as str]
-   [lambdaisland.uri :as uri]
-   [re-frame.core :refer [reg-event-db reg-event-fx]]
-   [vd-designer.http.fhir-server :as http]
-   [vd-designer.notifications]
-   [vd-designer.utils.event :as u]))
+    [clojure.string :as str]
+    [lambdaisland.uri :as uri]
+    [re-frame.core :refer [reg-event-db reg-event-fx]]
+    [vd-designer.http.fhir-server :as http]
+    [vd-designer.notifications]
+    [vd-designer.utils.event :as u]))
 
 (reg-event-fx
   ::start
@@ -47,9 +47,9 @@
 (defn add-new-server [db]
   (let [{:keys [server-name] :as new-server} (:fhir-server db)]
 
-    (if (some-> db :cfg/fhir-servers :servers not-empty)
-      (assoc-in db [:cfg/fhir-servers :servers server-name] new-server)
-      (assoc db :cfg/fhir-servers {:servers          {server-name new-server}
+    (if (some-> db :cfg/fhir-servers :sandbox/servers not-empty)
+      (assoc-in db [:cfg/fhir-servers :sandbox/servers server-name] new-server)
+      (assoc db :cfg/fhir-servers {:sandbox/servers  {server-name new-server}
                                    :used-server-name server-name}))))
 
 
@@ -59,11 +59,11 @@
         prev-server (:original-server db)
         used-server-name (-> db :cfg/fhir-servers :used-server-name)]
     (-> db
-      (update-in [:cfg/fhir-servers :servers] dissoc (:server-name prev-server))
-      (assoc-in [:cfg/fhir-servers :servers server-name] edited-server)
-      (cond->
-        (= (:server-name prev-server) used-server-name)
-        (update :cfg/fhir-servers dissoc :used-server-name)))))
+        (update-in [:cfg/fhir-servers :sandbox/servers] dissoc (:server-name prev-server))
+        (assoc-in [:cfg/fhir-servers :sandbox/servers server-name] edited-server)
+        (cond->
+          (= (:server-name prev-server) used-server-name)
+          (update :cfg/fhir-servers dissoc :used-server-name)))))
 
 (defn remove-empty-headers [headers]
   (remove
@@ -90,19 +90,19 @@
              (update :cfg/fhir-servers dissoc :used-server-name))
      :http-xhrio
      ;; TODO refactor this to not specify path manually...
-     [(http/get-metadata db {:uri (-> base-url uri/uri
-                                      (assoc :path "/fhir/metadata")
-                                      uri/uri-str)
+     [(http/get-metadata db {:uri        (-> base-url uri/uri
+                                             (assoc :path "/fhir/metadata")
+                                             uri/uri-str)
                              :on-success [::get-metadata-success server-name]
                              :on-failure [::not-connected server-name]})
       (http/get-view-definitions
         db
-        {:uri (-> base-url uri/uri
-                  (assoc :path "/fhir/ViewDefinition")
-                  uri/uri-str)
-         :headers (remove
-                    (fn [[k v]]
-                      (or (str/blank? (name k)) (str/blank? (name v)))) headers)
+        {:uri        (-> base-url uri/uri
+                         (assoc :path "/fhir/ViewDefinition")
+                         uri/uri-str)
+         :headers    (remove
+                       (fn [[k v]]
+                         (or (str/blank? (name k)) (str/blank? (name v)))) headers)
 
          :on-success [::get-view-definitions-success server-name]
          :on-failure [::not-connected server-name]})]}))
@@ -112,7 +112,7 @@
   ::get-metadata-success
   (fn [{:keys [db]} [_ server-name result]]
     {:db (-> db
-             (assoc-in [:cfg/fhir-servers :servers server-name :fhir-version] (:fhirVersion result)))}))
+             (assoc-in [:cfg/fhir-servers :sandbox/servers server-name :fhir-version] (:fhirVersion result)))}))
 
 (reg-event-fx
   ::get-view-definitions-success
@@ -125,8 +125,8 @@
 (reg-event-fx
   ::not-connected
   (fn [{:keys [db]} [_ server-name result]]
-    {:db (assoc db :cfg/connect-error {:result result
-                                       :server-name server-name})
+    {:db                 (assoc db :cfg/connect-error {:result      result
+                                                       :server-name server-name})
      :notification-error (str "Error on connect: " (u/response->error result))}))
 
 (reg-event-db
@@ -137,8 +137,28 @@
 (reg-event-fx
   ::delete
   (fn [{:keys [db]} [_ server-name]]
-    {:db (-> db
-             (update-in [:cfg/fhir-servers :servers] dissoc server-name)
-             (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
-               (update :cfg/fhir-servers dissoc :used-server-name)))
+    {:db              (-> db
+                          (update-in [:cfg/fhir-servers :sandbox/servers] dissoc server-name)
+                          (cond-> (-> db :cfg/fhir-servers :used-server-name (= server-name))
+                                  (update :cfg/fhir-servers dissoc :used-server-name)))
      :message-success "Deleted"}))
+
+(reg-event-db
+  ::update-user-server-list
+  (fn [db [_ response]]
+    #_(assoc-in db [:cfg/fhir-servers :user/servers] user-server-list)))
+
+(reg-event-fx
+  ::fetch-user-servers
+  (fn [{:keys [db]} _]
+    {
+     ; TODO: добавить флаг о том, что мы начали подгружать список user servers?
+
+     #_:http-xhrio
+     #_[(http/get-metadata db {:uri        (-> base-url uri/uri
+                                             (assoc :path "/metadata")
+                                             uri/uri-str)
+                             :on-success [::update-user-server-list]
+                             #_#_:on-failure [::not-connected server-name]})]
+     }
+    ))

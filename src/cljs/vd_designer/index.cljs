@@ -19,10 +19,10 @@
 
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])
-        m {:vd-list  [{:title "View Definitions"}]
-           :settings [{:title "Settings"}]
-           :form-edit [{:title "View Definitions", :href "/"}
-                       {:title (:name current-vd)}]
+        m {:vd-list     [{:title "View Definitions"}]
+           :settings    [{:title "Settings"}]
+           :form-edit   [{:title "View Definitions", :href "/"}
+                         {:title (:name current-vd)}]
            :form-create [{:title "View Definitions", :href "/"}
                          {:title "New"}]}]
     (m route)))
@@ -45,35 +45,35 @@
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
 
 (reg-event-fx
- ::initialize-db
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} _]
-   (if (seq db)
-     {:db db}
-     {:db {:view-definitions    []
-           :side-menu-collapsed false
-           :authorized?         (boolean authentication-token)
-           :cfg/fhir-servers    {:servers          default-servers
-                                 :used-server-name (-> default-servers
-                                                       first
-                                                       second
-                                                       :server-name)}}})))
+  ::initialize-db
+  [(inject-cofx :get-authentication-token)]
+  (fn [{:keys [db authentication-token]} _]
+    (if (seq db)
+      {:db db}
+      {:db {:view-definitions    []
+            :side-menu-collapsed false
+            :authorized?         (boolean authentication-token)
+            :cfg/fhir-servers    {:sandbox/servers  default-servers
+                                  :used-server-name (-> default-servers
+                                                        first
+                                                        second
+                                                        :server-name)}}})))
 
 (defn current-page []
   (let [route @routes/match
         current-route (-> route :data :name)]
     [layout
-     {:on-menu-click (fn [key]
-                       (rfe/navigate (keyword key)))
+     {:on-menu-click   (fn [key]
+                         (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
-      :menu [{:key "vd-list"
-              :icon (r/create-element icons/DatabaseOutlined)
-              :size 64}
-             {:key "settings"
-              :icon (r/create-element icons/SettingOutlined)
-              :size 64}
-             #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs (breadcrumbs current-route)}
+      :menu            [{:key  "vd-list"
+                         :icon (r/create-element icons/DatabaseOutlined)
+                         :size 64}
+                        {:key  "settings"
+                         :icon (r/create-element icons/SettingOutlined)
+                         :size 64}
+                        #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
+      :breadcrumbs     (breadcrumbs current-route)}
      (if route
        (let [view (:view (:data route))]
          [view @routes/match])

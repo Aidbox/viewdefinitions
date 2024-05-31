@@ -1,6 +1,6 @@
 (ns vd-designer.pages.settings.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [List Modal Row]]
+            [antd :refer [Divider List Modal Row]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
@@ -91,11 +91,12 @@
 (defn modal-view []
   (let [original-server @(subscribe [::m/original-server])
         fhir-server @(subscribe [::m/fhir-server-config])
-        existing-servers @(subscribe [::m/existing-servers])
+        sandbox-servers @(subscribe [::m/sandbox-servers])
+        user-servers @(subscribe [::m/user-servers])
         edit? (:server-name original-server)
         errors-set (cond-> #{}
                      (some-empty-fields? fhir-server) (conj :empty-field)
-                     (name-exists? (:server-name fhir-server) existing-servers original-server) (conj :name-clash))]
+                     (name-exists? (:server-name fhir-server) sandbox-servers original-server) (conj :name-clash))]
     [:> Modal {:open      (boolean original-server)
                :title     (if edit? "Edit server" "Add server")
                :ok-text   (if edit? "Confirm" "Add")
@@ -148,8 +149,12 @@
       [:h1 "Server list"]
       [add-server-button authorized?]]
      [modal-view]
+     ;; TODO: add label saying these servers are yours
+
+     [:> Divider]
+     ; TODO: add label saying these servers are public
      [components.list/data-list
-      :dataSource @(subscribe [::m/existing-servers])
+      :dataSource @(subscribe [::m/sandbox-servers])
       :renderItem
       (fn [raw-item]
         (r/as-element

@@ -13,10 +13,24 @@
                          :client_secret s/Str
                          :code          s/Str
                          ;; TODO use enum here
-                         :grant_type    s/Str}}}])
+                         :grant_type    s/Str}}}
+   {:route-name     :rpc
+    :path-parts     ["/rpc"]
+    :method         :post
+    ;; use middleware for this?
+    :headers-schema {(s/optional-key :Cookie)        s/Str
+                     (s/optional-key :authorization) s/Str}
+    :produces       ["application/transit+json"]
+    :consumes       ["application/transit+json"]
+    :body-schema    {:body {:method s/Symbol}}}])
 
 (defn client [aidbox-portal-url]
   (martian/bootstrap
-   aidbox-portal-url
-   routes
-   {:interceptors martian-http/default-interceptors}))
+    aidbox-portal-url
+    routes
+    {:interceptors martian-http/default-interceptors}))
+
+(defn rpc:init-project [portal-client access-token]
+  (let [req {:method        'portal.portal/init-project
+             :authorization (str "Bearer " access-token)}]
+    (martian/response-for portal-client :rpc req)))
