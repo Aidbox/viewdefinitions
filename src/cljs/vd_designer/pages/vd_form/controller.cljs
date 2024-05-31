@@ -191,8 +191,9 @@
      {:fx [[:dispatch [::reset-vd-error]]
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
-                       (->> (get-select-path decorated-view)
-                            (into m/tree-root-keys))]]]
+                       (-> m/tree-root-keys
+                           (into (get-select-path decorated-view))
+                           (set/difference m/do-not-expand-tree-keys))]]]
       :db (assoc db :current-vd decorated-view :loading false)})))
 
 (defn contains-blank-string? [element]
@@ -538,7 +539,7 @@
  (fn [db [_ data]]
    (assoc db ::m/autocomplete-options data)))
 
-(reg-fx 
+(reg-fx
   ::call-autocomplete
  (fn [[args autocomplete-options]]
    (-> (js/Promise.resolve
