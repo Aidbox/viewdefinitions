@@ -29,7 +29,7 @@
 ;; Leafs
 
 (defn- general-leaf [ctx props]
-  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder input-type]}
+  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder]}
         props]
     [base-input-row ctx
      [:> Flex {:gap   8
@@ -49,19 +49,27 @@
                   :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
                   :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                   :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
-     [fhir-path-input ctx value-key value deletable? settings-form placeholder input-type]]))
+     [fhir-path-input ctx value-key value deletable? settings-form placeholder]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
-  [general-leaf ctx
-   {:icon          icon/column
-    :name-key      :name
-    :name          name
-    :value-key     :path
-    :value         path
-    :placeholder   "path"
-    :settings-form column-settings
-    :input-type    :fhirpath
-    :deletable?    true}])
+  [base-input-row ctx
+   [:> Flex {:gap   8
+             :align :center
+             :style {:width "100%"}}
+    [icon/column]
+    (let [errors? @(subscribe [::m/empty-inputs?])]
+      [input {:defaultValue name
+              :placeholder "name"
+              :value name
+              :classNames {:input
+                           (if (and (str/blank? name) errors?)
+                             "default-input red-input"
+                             "default-input")}
+              :style       {:font-style "normal"}
+              :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
+              :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
+              :onChange    #(change-input-value ctx :name (u/target-value %))}])]
+   [fhir-path-input ctx :path path true column-settings "path"]])
 
 (defn constant-type->input-type [constant-type]
   (case constant-type
@@ -98,8 +106,7 @@
     path
     true
     where-settings
-    "expression"
-    :fhirpath]])
+    "expression"]])
 
 (defn foreach-expr-leaf [ctx value-key path]
 [:> Flex {:gap   8
@@ -112,8 +119,7 @@
     path
     false
     nil
-    "expression"
-    :fhirpath]])
+    "expression"]])
 
 ;; Nodes
 
