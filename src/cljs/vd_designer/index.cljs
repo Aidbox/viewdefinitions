@@ -10,7 +10,6 @@
             [vd-designer.notifications]
             [vd-designer.auth.controller :as auth.controller]
             [vd-designer.pages.settings.view]
-            [vd-designer.pages.vd-form.fhirpath-autocomplete.tree-sitter]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.view]

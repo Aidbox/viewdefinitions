@@ -193,8 +193,6 @@
     (first (keys element))))
 
 (defn- select->node [ctx element]
-  (js/console.debug (str "{select->node}(ctx): " (:value-path ctx)))
-  (js/console.debug (str "{select->node}(element): " element))
   (let [key (determine-key element)]
     ((case key
        :column        (partial flat-node    :column column-leaf)

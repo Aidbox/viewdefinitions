@@ -1,23 +1,23 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
-   [ajax.core :as ajax]
-   [clojure.string :as str]
-   [clojure.set :as set]
-   [medley.core :as medley]
-   [re-frame.core :refer [reg-event-db reg-event-fx reg-fx]]
-   [vd-designer.http.fhir-server :as http.fhir-server]
-   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                  get-select-path]]
-   [vd-designer.pages.vd-form.fhirpath-autocomplete.autocomplete :as autocomplete]
-   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                           remove-decoration
-                                                           uuid->idx]]
-   [vd-designer.pages.vd-form.model :as m]
-   [vd-designer.utils.event :refer [response->error]]
-   [vd-designer.utils.utils :as utils]
-   [vd-designer.utils.string :as utils.string]))
+    [ajax.core :as ajax]
+    [clojure.string :as str]
+    [clojure.set :as set]
+    [medley.core :as medley]
+    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]
+    [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                   get-select-path]]
+    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                            remove-decoration
+                                                            uuid->idx]]
+    [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+    [vd-designer.pages.vd-form.model :as m]
+    [vd-designer.utils.event :refer [response->error]]
+    [vd-designer.utils.utils :as utils]
+    [vd-designer.utils.string :as utils.string]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -44,9 +44,6 @@
             :always
             (conj [:dispatch [::get-supported-resource-types]])
 
-            :always
-            (conj [:dispatch [::autocomplete-init]])
-
             imported?
             (conj [:dispatch [::process-import]])
 
@@ -55,12 +52,6 @@
 
             :always
             (conj [:dispatch [::load-fhir-schemas]]))})))
-
-(reg-event-fx
- ::autocomplete-init
- (fn [_ _]
-   (autocomplete/init)
-   {}))
 
 (reg-event-fx
  ::stop
@@ -80,7 +71,7 @@
 (reg-event-db
  ::load-fhir-schemas-success
  (fn [db [_ schemas]]
-   (assoc db :spec-map (utils.fhir-spec/spec-map schemas))))
+   (assoc db :spec-map (clj->js (utils.fhir-spec/spec-map schemas)))))
 
 (reg-event-fx
  ::load-fhir-schemas-error
@@ -532,48 +523,41 @@
   (fn [db [_ draggable]]
     (assoc db ::m/draggable-node draggable)))
 
+(defn convert-constants [constant]
+  (when-let [type-fhir (get-constant-type constant)] ; valueString
+    (let [type (subs (name type-fhir) 5) ;String
+          type (str (str/lower-case (subs type 0 1)) (subs type 1)) ; string
+          value (type-fhir constant)
+          casted-value (cast-value type-fhir value)]
+      {:name (:name constant)
+       :type type
+       :value casted-value})))
+
 (reg-event-db
- ::tree-sitter-load-success
- (fn [db [_ parser-instance]]
-   (assoc db ::m/parser-instance parser-instance)))
+ ::update-autocomplete-options
+ (fn [db [_ data]]
+   (assoc db ::m/autocomplete-options data)))
 
-(reg-event-fx
- ::tree-sitter-load-error
- (fn [{db :db} [_ error-msg]]
-   {:notification-error error-msg}))
-
-(defn cursor-start [ctx]
-  (+ (:cursor-start ctx) (.-length (:fhirpath-prefix ctx))))
-
-(defn cursor-end [ctx]
-  (+ (:cursor-end ctx) (.-length (:fhirpath-prefix ctx))))
-
-(defn cursor-diff [old-ctx new-ctx]
-  {:startIndex (cursor-start old-ctx)
-   :oldEndIndex (cursor-end old-ctx)
-   :newEndIndex (cursor-end new-ctx)})
-
-(defn autocomplete [parser spec-ctx old-ctx new-ctx]
-  (autocomplete/suggest spec-ctx parser nil new-ctx)
-  #_(if (not= (:id old-ctx) (:id new-ctx))
-    (autocomplete/suggest spec-ctx parser nil new-ctx)
-    (let [new-tree (autocomplete/edit (:tree old-ctx) (cursor-diff old-ctx new-ctx))]
-      (autocomplete/suggest spec-ctx parser new-tree new-ctx))))
+(reg-fx 
+  ::call-autocomplete
+ (fn [[args autocomplete-options]]
+   (-> (js/Promise.resolve
+          (antlr/complete args))
+        (.then #(dispatch [::update-autocomplete-options
+                           {:options %
+                            :ref (:ref autocomplete-options)
+                            :request autocomplete-options}]))
+        (.catch #(js/console.error %)))))
 
 (reg-event-fx
   ::update-autocomplete-text
-  (fn [{{old-ctx    ::m/autocomplete-ctx
-         parser     ::m/parser-instance
-         current-vd :current-vd
-         spec-map   :spec-map
-         :as        db} :db}
-       [_ new-ctx]]
-    (let [new-ctx
-          (assoc new-ctx :resource-type (:resource current-vd))
-
-          {:keys [tree options]}
-          (autocomplete parser {:spec-map spec-map} old-ctx new-ctx)]
-      {:db (-> db
-               (assoc ::m/autocomplete-ctx (assoc new-ctx :tree tree))
-               (assoc ::m/autocomplete-options {:options options
-                                                :request new-ctx}))})))
+  (fn [{{spec-map   :spec-map
+         current-vd :current-vd} :db}
+       [_ {:keys [text cursor-start _cursor-end fhirpath-prefix] :as new-ctx}]]
+    {::call-autocomplete [{:type (:resource current-vd)
+                           :fhirSchemas spec-map
+                           :forEachExpressions fhirpath-prefix
+                           :externalConstants (mapv convert-constants (:constant current-vd))
+                           :fhirpath text
+                           :cursor cursor-start}
+                          (assoc new-ctx :resource-type (:resource current-vd))]}))

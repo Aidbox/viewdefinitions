@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space Typography]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]]
@@ -53,7 +53,6 @@
     :where
     (tag/default "where")))
 
-
 ;;;; Rows
 
 (defn base-node-row [node-key col1 & cols]
@@ -73,7 +72,6 @@
 
    [:> Col {:span 12}
     [:> Row {:justify :end} col2]]])
-
 
 ;;;; Buttons
 
@@ -117,7 +115,6 @@
 
 (defn settings-button [& {:as opts}]
   [button/invisible-icon icons/SettingOutlined opts])
-
 
 ;;;; Inputs
 
@@ -204,78 +201,199 @@
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
-(defn cons-prev-text
-  "Since round trip of input causes input lag,
-   suggested values should already contain text before suggestion was selected"
-  [prev-text cursor-position options]
-  (let [prev-text (or prev-text "")
-        start-text (subs prev-text 0 cursor-position)
-        rest-text (subs prev-text cursor-position)]
-    (mapv (fn [option]
-            (let [suggested-text (:value option)]
-              (-> option
-                  (assoc :value (if (str/starts-with? rest-text suggested-text)
-                                  prev-text
-                                  (if (str/starts-with? suggested-text rest-text)
-                                    (str start-text suggested-text)
-                                    (str start-text suggested-text rest-text))))
-                  (update :cursor + cursor-position))))
-          options)))
+(defn render-option* [icon type-or-kind label & [matched-count]]
+  (r/as-element
+    [:> Row {:align  :middle}
+     [:> Col {:span 2}
+      [:> Row {:justify :start} icon]]
+     [:> Col {:span 11}
+      [:> Row {:justify :start}
+       (if matched-count
+         [:<>
+          [:b (subs label 0 matched-count)]
+          (subs label matched-count)]
+         label)]]
+     [:> Col {:span 11}
+      [:> Row {:justify :end}
+       [:div {:style {:font-style :italic
+                      :color "#1677ff"}}
+        (str " " type-or-kind)]]]]))
 
-(defn render-option [icon options]
-  (mapv (fn [option]
-          (update option :label
-                  (fn [label]
-                    (r/as-element
-                     [:div {:style {:display :flex
-                                    :flex-direction :row
-                                    :justify-content :space-between
-                                    :width "100%"}}
-                      [:span
-                       [:> icon]
-                       (str " " label)]
-                      [:div {:style {:font-style :italic
-                                     :color "#1677ff"}} (str " " (:type option))]]))))
-        options))
+(defn get-current-token [option whole-text]
+  (when whole-text
+    (let [start (-> option :textEdit :range :start :character)
+          end   (-> option :textEdit :range :end :character)]
+      (subs whole-text start end))))
 
-(defn ->ui-options [{:keys [text cursor-start]} {:keys [fields functions]} ]
-  (->> (into (render-option icons/ContainerOutlined fields)
-             (render-option icons/FunctionOutlined functions))
-       (cons-prev-text text cursor-start)))
+(defn render-text [label matched-count]
+  (if matched-count
+   [:<>
+     [:b (subs label 0 matched-count)]
+     (subs label matched-count)]
+  label))
+
+(defn- special-constant-symbols-length [text]
+  (cond
+    (str/starts-with? text "%'") 2
+    (str/starts-with? text "%`") 2
+    (str/starts-with? text "%") 1
+    :else 0))
+
+(defn render-option [text cursor option]
+  (let [kind (:kind option)
+        cursor-relative-pos (- cursor (-> option :textEdit :range :start :character))]
+    (render-option*
+     (cond
+       (= :field kind) [:> icons/ContainerOutlined]
+       (= :method kind) [:> icons/FunctionOutlined]
+       (= :class kind) "T"
+       (= :constant kind) "α"
+       :else [:> icons/ContainerOutlined])
+     (or (:detail option) (name kind))
+     (render-text (:label option)
+                  (let [cursor-pos
+                        (cond-> cursor-relative-pos
+                          (= :constant kind)
+                          (- (special-constant-symbols-length text)))]
+                    (some-> (get-current-token option text)
+                            count
+                            (min cursor-pos)))))))
+
+(defn new-cursor-idx
+  "Change cursor index.
+ name.whe|r, C = 8
+ token = wher
+ C' = 3"
+  [cursor-idx input-text token]
+  (let [new-cursor (- cursor-idx (- (count input-text) (count token)))]
+    (if (>= new-cursor 0) new-cursor cursor-idx)))
+
+(defn constants-possible-strings [constant-label]
+  [(str "%" constant-label)
+   (str "%'" constant-label "'")
+   (str "%`" constant-label "`")])
+
+(defn filter-constant [input-value cursor-start text-to-filter option]
+  (let [constants-possible (constants-possible-strings (:label option))
+        text (subs text-to-filter 0
+                   (new-cursor-idx cursor-start input-value text-to-filter))]
+    (some true?
+          (mapv #(str/starts-with? % text) constants-possible))))
+
+(defn filter-options [input-value cursor-start option]
+  (let [text-to-filter (get-current-token option input-value)
+        filter-by (or (:filterText option) (:label option))]
+    (when (and text-to-filter filter-by)
+      (or
+        (when (= :constant (:kind option))
+          (filter-constant input-value cursor-start text-to-filter option))
+
+        (= cursor-start (-> option :textEdit :range :start :character))
+        (str/starts-with?
+          filter-by
+          (subs
+            text-to-filter 0
+            (new-cursor-idx cursor-start input-value text-to-filter)))))))
+
+
+(defn change-text-and-cursor [input-text option]
+  (when (:textEdit option)
+    (let [text-edit (:textEdit option)
+          kind (:kind option)
+          start-idx (-> text-edit :range :start :character)
+          end-idx (-> text-edit :range :end :character)
+          text-new (:newText text-edit)
+          left  (subs input-text 0 start-idx)
+          right (subs input-text end-idx)
+          $0-index (str/index-of text-new "$0")]
+      (cond
+        (not (= :method kind)) ; name
+        {:value  (str left (str/replace text-new #"\$0" "") right)
+         :cursor (+ start-idx (count text-new))}
+
+        (not (str/includes? text-new "$0")) ;first()
+        {:value  (str left (str/replace text-new #"\$0" "")
+                      (if (and right (str/starts-with? right "()")) (subs right 2) right))
+         :cursor (+ start-idx (count text-new))}
+
+        (not (re-matches #"\(.*\).*" right)) ; where, whe (no parens)
+        {:value  (str left (str/replace text-new #"\$0" "") right)
+         :cursor (+ start-idx $0-index)}
+
+        (re-matches #"\(\).*" right) ; where()
+        {:value  (str left (str/replace text-new #"\(\$0\)" right))
+         :cursor (+ start-idx $0-index)}
+
+        :else ; where(expr), where(expr).abc
+        {:value  (str left (str/replace text-new #"\(\$0\)" right))
+         :cursor (inc (+ start-idx (str/index-of (subs input-text start-idx) ")")))}))))
+
+(defn ->ui-options [{:keys [text cursor-start]} options]
+  (->> options
+       (filterv #(filter-options text cursor-start %))
+       (mapv
+        (fn [option]
+          (let [{:keys [value cursor]} (change-text-and-cursor text option)]
+            (assoc option
+                   :label-option (:label option)
+                   :label (render-option text cursor-start option)
+                   :value value
+                   :cursor cursor))))))
 
 (defn autocomplete [ctx key value & {:as opts}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
-        rendered-options (if (= (:value-path ctx) (:id request))
-                           (->ui-options request options)
-                           [])
+        rendered-options
+        (if (= (:value-path ctx) (:id request))
+          (->ui-options request options)
+          [])
         errors? @(subscribe [::m/empty-inputs?])]
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete {:style        {:width "100%"}
-                       :options      rendered-options
-                       :defaultValue value
-                       :onKeyDown #(when (= "Escape" (u/pressed-key %))
-                                     (.preventDefault %))
-                       :onKeyUp  #(when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key %))
-                                    (update-autocomplete-fn %))
-                       :onInput  #(update-autocomplete-fn %)
-                       :onClick  update-autocomplete-fn
-                       :onChange #(change-input-value ctx key %)}
+     [:> AutoComplete (medley/deep-merge
+                        {:style        {:width "100%"}
+                         :options      rendered-options
+                         :defaultValue value
+                         :onKeyDown (fn [e]
+                                      (when (= "Escape" (u/pressed-key e))
+                                        (.preventDefault e)))
+                         :popupMatchSelectWidth 350
+                         :backfill true
+                         :onKeyUp  (fn [e]
+                                     (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                       (update-autocomplete-fn e))
+                                     (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                        (.-ctrlKey e)
+                                                        (:on-ctrl-enter opts))]
+                                        (.preventDefault e)
+                                        (.stopPropagation e)
+                                        (f e)))
+                         :onInput  #(update-autocomplete-fn %)
+                         :onClick  (fn [e] (update-autocomplete-fn e))
+                         :onChange (fn [e] (change-input-value ctx key e))
+                         :onSelect (fn [_value option]
+                                     (when-let [r @auto-complete-ref]
+                                       (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                         (js/setTimeout (fn [_]
+                                                          (.focus r)
+                                                          (.setSelectionRange r cursor cursor)) 0))))}
+                       opts)
       [:> Input (medley/deep-merge
-                 {:style
-                  {:font-style       "italic"
-                   :border           "none"
-                   :border-bottom    "1px solid transparent"
-                   :border-radius    0
-                   :background-color "transparent"}
-                  :classNames {:input
-                               (if (and (str/blank? value) errors?)
-                                 "default-input red-input"
-                                 "default-input")}
-                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
-                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}
+                  {:style
+                   {:font-style       "italic"
+                    :border           "none"
+                    :border-bottom    "1px solid transparent"
+                    :border-radius    0
+                    :background-color "transparent"}
+                   :classNames {:input
+                                (if (and (str/blank? value) errors?)
+                                  "default-input red-input"
+                                  "default-input")}
+                   :ref (fn [el] (reset! auto-complete-ref el))
+                   :onMouseEnter #(dispatch [::c/change-draggable-node false])
+                   :onMouseLeave #(dispatch [::c/change-draggable-node true])}
                  opts)]]]))
 
 (defn render-input [ctx input-type placeholder kind value]
@@ -287,8 +405,8 @@
               [:> Checkbox
                {:checked  value
                 :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
-
-    :fhirpath [autocomplete ctx kind value {:placeholder placeholder}]
+    :fhirpath [autocomplete ctx kind value {:placeholder placeholder
+                                            :on-ctrl-enter #(dispatch [::c/eval-view-definition-data])}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
@@ -302,7 +420,6 @@
                              "default-input")}
               :onChange     #(change-input-value ctx kind (u/target-value %))}])))
 
-
 (defn fhir-path-input [ctx kind value deletable? settings-form placeholder input-type]
   [:> Space.Compact {:block true
                      :style {:align-items :center
@@ -312,7 +429,6 @@
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
    (when deletable? [delete-button ctx])])
-
 
 ;;;; Settings
 
