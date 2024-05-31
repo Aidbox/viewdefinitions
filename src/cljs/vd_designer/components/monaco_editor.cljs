@@ -1,9 +1,11 @@
 (ns vd-designer.components.monaco-editor
   (:require
-   ["@monaco-editor/react" :default Editor]
+   ["@monaco-editor/react" :default Editor :refer [loader]]
    [goog.string :as gstring]
    [goog.string.format]
    [medley.core :as medley]))
+
+(.config loader (clj->js {:paths {:vs "/monaco/min/vs"}}))
 
 (defn monaco [properties]
   [:> Editor
