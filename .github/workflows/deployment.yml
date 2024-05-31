@@ -5,6 +5,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: ["Application tests"]
     branches: [master]
@@ -14,13 +15,13 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  APP_IMAGE_NAME: vd-designer
+  APP_IMAGE_NAME: ${{ github.repository_owner }}/vd-designer
   K8S_NAMESPACE: viewdefinition
 
 jobs:
   app-docker:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
 
     permissions:
       contents: read
