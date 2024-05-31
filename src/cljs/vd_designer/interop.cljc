@@ -15,10 +15,12 @@
       Use if js->clj does not work."
      [obj]
      (if (goog.isObject obj)
-       (-> (fn [result key]
-             (let [v (goog.object/get obj key)]
-               (cond-> result
-                 (not= "function" (goog/typeOf v))
-                 (assoc (keyword key) (obj->clj v)))))
-           (reduce {} (.getKeys goog/object obj)))
+       (reduce
+         (fn [result key]
+           (let [v (goog.object/get obj key)]
+             (cond-> result
+               (not= "function" (goog/typeOf v))
+               (assoc (keyword key) (obj->clj v)))))
+         {}
+         (goog.object/getKeys obj))
        obj)))
