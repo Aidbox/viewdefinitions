@@ -58,6 +58,7 @@
     :name          name
     :value-key     :path
     :value         path
+    :placeholder   "path"
     :settings-form column-settings
     :input-type    :fhirpath
     :deletable?    true}])
