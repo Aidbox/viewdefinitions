@@ -59,9 +59,11 @@
   (let [text-value (:text @(subscribe [::m/vd-import]))]
     [:div {:style {:height "185px"}}
      [monaco/monaco {:id       "upload-text"
-                     :value text-value
+                     :onMount  (fn [editor _monaco]
+                                 (.focus editor))
+                     :value    text-value
                      :onChange #(dispatch [::c/change-upload-text %])
-                     :options {:readOnly false}}]]))
+                     :options  {:readOnly false}}]]))
 
 (defn import-modal []
   (let [vd-import @(subscribe [::m/vd-import])]
@@ -76,8 +78,8 @@
       {:animated true
        :onChange #(dispatch [::c/remove-import-content])
        :items [(tabs/tab-item {:destroyInactiveTabPane true
-                               :key "file" :label "Import file"
-                               :children [upload-file]})
-               (tabs/tab-item {:destroyInactiveTabPane true
                                :key "text" :label "Import from text"
-                               :children [upload-text]})]}]]))
+                               :children [upload-text]})
+               (tabs/tab-item {:destroyInactiveTabPane true
+                               :key "file" :label "Import file"
+                               :children [upload-file]})]}]]))
