@@ -8,5 +8,7 @@
   (is (= nil (get-constant-type {:a 1})))
   (is (= nil (get-constant-type {}))))
 
+()
+
 (comment
   (t/run-tests 'vd-designer.pages.vd-form.fhir-schema-test))

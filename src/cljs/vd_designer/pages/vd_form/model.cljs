@@ -77,3 +77,8 @@
   ::autocomplete-options
   (fn [db _]
     (::autocomplete-options db)))
+
+(reg-sub
+ ::spec-map
+  (fn [db _]
+    (:spec-map db)))

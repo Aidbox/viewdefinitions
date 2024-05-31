@@ -6,6 +6,15 @@
 
 :root {
   --hover-color: #fafafa;
+  --basic-gray-0: #f7f7f8;
+  --basic-gray-1: #edeef1;
+  --basic-gray-2: #dbdde3;
+  --basic-gray-3: #bfc1c7;
+  --basic-gray-4: #83868e;
+  --basic-gray-5: #616471;
+  --basic-gray-6: #434959;
+  --basic-gray-7: #212636;
+  --basic-gray-8: #010205;
 }
 
 html,
