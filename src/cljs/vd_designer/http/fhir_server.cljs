@@ -3,7 +3,7 @@
             [lambdaisland.uri :as uri]))
 
 (defn active-server [db]
-  (let [{:keys [servers used-server-name]} (:cfg/fhir-servers db)]
+  (let [{:keys [sandbox/servers used-server-name]} (:cfg/fhir-servers db)]
     (servers used-server-name)))
 
 (defn- with-defaults [req db]

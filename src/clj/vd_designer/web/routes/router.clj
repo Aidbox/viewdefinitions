@@ -3,15 +3,20 @@
             [reitit.ring :as ring]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.muuntaja :as muuntaja]
+            [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
+            [vd-designer.web.middleware.auth :as middleware.auth]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
             [vd-designer.web.middleware.query :refer [query-string-middleware]]))
 
 (defn router [ctx]
   (ring/router
    ["/api"
-    ["/health" {:get #'health/check}]
+    ["/aidbox"
+     {:middleware [middleware.auth/authorize]}
+     ["/list-servers" {:get
+                       {:handler #'aidbox/list-servers}}]]
     ["/auth"
      ["/sso" {:get
               {:summary "Redirect to SSO provider"
@@ -20,7 +25,8 @@
                        {:summary    "Callback for SSO auth"
                         :parameters {:query {:code  string?
                                              :state string?}}
-                        :handler    #'auth/sso-callback}}]]]
+                        :handler    #'auth/sso-callback}}]]
+    ["/health" {:get #'health/check}]]
 
    {:data {:muuntaja   m/instance
            :middleware [muuntaja/format-middleware
