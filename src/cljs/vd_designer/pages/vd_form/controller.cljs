@@ -17,7 +17,8 @@
     [vd-designer.pages.vd-form.model :as m]
     [vd-designer.utils.event :refer [response->error]]
     [vd-designer.utils.utils :as utils]
-    [vd-designer.utils.string :as utils.string]))
+    [vd-designer.utils.string :as utils.string]
+    [clojure.walk :as walk]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -213,6 +214,32 @@
 (defn missing-required-fields [vd]
   (set/difference required-fields (set (keys vd))))
 
+(defn strip-empty-select-nodes [vd]
+  (update
+   vd
+   :select
+   (fn [select]
+     (let [blank? #(and (%1 %2) (str/blank? (%1 %2)))]
+       (walk/postwalk
+        (fn [f]
+          (cond
+            (map? f)
+            (if (or (blank? :forEach f)
+                    (blank? :forEachOrNull f)
+                    (blank? :name f)
+                    (blank? :path f))
+              nil
+              f)
+
+            (map-entry? f)
+            f
+
+            (vector? f)
+            (filterv identity f)
+
+            :else f))
+        select)))))
+
 (defn strip-empty-collections [vd]
   (medley/remove-kv
     (fn [k v]
@@ -231,8 +258,8 @@
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
-                             remove-meta)
-         empty-fields? (empty-inputs-in-vd? view-definition)
+                             remove-meta
+                             strip-empty-select-nodes)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
@@ -242,9 +269,6 @@
               fields-str (str/join ", " fields)]
           (utils.string/format
             "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
-
-       empty-fields?
-       {:db         (assoc db ::m/empty-inputs? true)}
 
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
