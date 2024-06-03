@@ -392,18 +392,22 @@
                               remove-decoration
                               strip-empty-collections
                               remove-meta)
+          empty-fields? (empty-inputs-in-vd? view-definition)
           req (if (:id view-definition)
                 (http.fhir-server/put-view-definition db
                                                       (:id view-definition)
                                                       view-definition)
                 (http.fhir-server/post-view-definition db
                                                        view-definition))]
-     {:db (assoc db
-                 ::m/save-view-definition-loading true
-                 ::m/save-loading true)
-      :http-xhrio (assoc req
-                         :on-success [::save-view-definition-success]
-                         :on-failure [::save-view-definition-failure])})))
+      (if empty-fields?
+        {:db (assoc db ::m/empty-inputs? true)}
+        {:db (-> db 
+                 (assoc ::m/save-view-definition-loading true
+                        ::m/save-loading true)
+                 (dissoc ::m/empty-inputs?))
+         :http-xhrio (assoc req
+                            :on-success [::save-view-definition-success]
+                            :on-failure [::save-view-definition-failure])}))))
 
 (reg-event-fx
  ::save-view-definition-success
