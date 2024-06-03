@@ -33,8 +33,13 @@
 
    :db
    {:dbtype   "postgresql"
-    :dbname   (System/getenv "POSTGRES_DB")
-    :host     (System/getenv "POSTGRES_HOST")
-    :port     (System/getenv "POSTGRES_PORT")
-    :user     (System/getenv "POSTGRES_USER")
-    :password (System/getenv "POSTGRES_PASSWORD")}})
+    :dbname   (or (System/getenv "POSTGRES_DB")
+                  "vd-dev")
+    :host     (or (System/getenv "POSTGRES_HOST")
+                  "localhost")
+    :port     (or (System/getenv "POSTGRES_PORT")
+                  5454)
+    :user     (or (System/getenv "POSTGRES_USER")
+                  "vd-dev")
+    :password (or (System/getenv "POSTGRES_PASSWORD")
+                  "vd-dev")}})

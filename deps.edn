@@ -77,13 +77,26 @@
     buddy/buddy-sign                  {:mvn/version "3.5.351"
                                        :why         "JWT signing/verification"
                                        :github      "https://github.com/funcool/buddy-sign"}}
-   :extra-paths ["src/clj" "resources/server"]}
+   :extra-paths ["src/clj" "resources/server" "resources/client"]}
 
   :server-test
   {:extra-paths ["test/clj" "test-resources/server"]
    :exec-fn     kaocha.runner/exec-fn
    :extra-deps  {nubank/matcher-combinators {:mvn/version "3.9.1"}
                  lambdaisland/kaocha        {:mvn/version "1.91.1392"}}}
+
+  :nrepl
+  {:extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "3.6.0"}
+                 cider/cider-nrepl             {:mvn/version "LATEST"}
+                 cider/piggieback              {:mvn/version "0.5.3"}
+                 zprint/zprint                 {:mvn/version "1.2.5"}
+                 hashp/hashp                   {:mvn/version "0.2.2"}}
+
+   :main-opts   ["-m" "nrepl.cmdline"
+                 "-b" "0.0.0.0"
+                 "--middleware"
+                 "[refactor-nrepl.middleware/wrap-refactor,cider.nrepl/cider-middleware]"]}
+
 
   :server-build
   {:extra-deps

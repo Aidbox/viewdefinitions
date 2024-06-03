@@ -19,3 +19,6 @@ client-test: client-build-tests
 
 server-test:
 	clj -M:server:server-test -m kaocha.runner
+
+server-repl:
+	source ./.env && clj -M:server:server-test:nrepl
