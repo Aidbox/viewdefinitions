@@ -13,7 +13,7 @@
     (-> provider-url
         (uri/assoc-query {:response_type "code"
                           :client_id     client-id
-                          :redirect_uri  (str host "/sso-callback")
+                          :redirect_uri  (str host "/api/auth/sso-callback")
                           :state         (base64/encode route)})
         (uri/join "#/signin")
         uri/uri-str
