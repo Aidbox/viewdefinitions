@@ -15,8 +15,8 @@
    ["/api"
     ["/aidbox"
      {:middleware [middleware.auth/authorize]}
-     ["/list-servers" {:get
-                       {:handler #'aidbox/list-servers}}]]
+     ["/servers" {:get
+                  {:handler #'aidbox/list-servers}}]]
     ["/auth"
      ["/sso" {:get
               {:summary "Redirect to SSO provider"

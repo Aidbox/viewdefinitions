@@ -22,7 +22,8 @@
                      (s/optional-key :authorization) s/Str}
     :produces       ["application/transit+json"]
     :consumes       ["application/transit+json"]
-    :body-schema    {:body {:method s/Symbol}}}])
+    :body-schema    {:body {:method s/Symbol
+                            (s/optional-key :params) s/Any}}}])
 
 (defn client [aidbox-portal-url]
   (martian/bootstrap
@@ -33,4 +34,10 @@
 (defn rpc:init-project [portal-client access-token]
   (let [req {:method        'portal.portal/init-project
              :authorization (str "Bearer " access-token)}]
+    (martian/response-for portal-client :rpc req)))
+
+(defn rpc:fetch-licenses [portal-client access-token project-id]
+  (let [req {:method        'portal.portal/fetch-licenses
+             :authorization (str "Bearer " access-token)
+             :params {:project-id project-id}}]
     (martian/response-for portal-client :rpc req)))
