@@ -8,10 +8,12 @@
 (defn sso-redirect
   [{{{:keys [route]} :query-params} :request
     config                          :cfg}]
-  (let [{:keys [client-id provider-url]} (:sso config)]
+  (let [{:keys [client-id provider-url]} (:sso config)
+        host (:vd.designer.app/url config)]
     (-> provider-url
         (uri/assoc-query {:response_type "code"
                           :client_id     client-id
+                          :redirect_uri  (str host "/sso-callback")
                           :state         (base64/encode route)})
         (uri/join "#/signin")
         uri/uri-str
