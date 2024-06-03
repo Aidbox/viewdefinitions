@@ -17,6 +17,9 @@
 (def tree-root-keys
   #{[:name] [:resource] [:constant] [:where] [:select]})
 
+(def do-not-expand-tree-keys
+  #{[:constant] [:where]})
+
 (reg-sub
  ::current-tree-expanded-nodes
  (fn [db _]
