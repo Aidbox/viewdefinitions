@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: vd-designer-db
+  namespace: viewdefinition
+
+spec:
+  type: NodePort
+  ports:
+    - port: 5432
+  selector:
+    service: vd-designer

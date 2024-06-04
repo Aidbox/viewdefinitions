@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: vd-designer
+  namespace: viewdefinition
+
+spec:
+  selector:
+    matchLabels:
+      service: vd-designer
+
+  template:
+    metadata:
+      labels:
+        service: vd-designer
+
+    spec:
+      containers:
+        - name: vd-designer-db
+          image: postgres:16
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          envFrom:
+            - configMapRef:
+                name: vd-designer-database-env
+            - secretRef:
+                name: vd-designer-database-secret
+          ports:
+            - containerPort: 5432
+          resources:
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: vd-designer-data
+          readinessProbe:
+            exec:
+              command:
+                - bash
+                - "-c"
+                - PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -d $POSTGRES_DB -c "select 42"
+            initialDelaySeconds: 10
+            periodSeconds: 3
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+
+        - name: vd-designer-app
+          image: ghcr.io/aidbox/vd-designer:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: vd-designer-app-env
+            - secretRef:
+                name: vd-designer-app-secret
+            - configMapRef:
+                name: vd-designer-database-env
+            - secretRef:
+                name: vd-designer-database-secret
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+      imagePullSecrets:
+        - name: hs-robot-secret
+
+      volumes:
+        - name: vd-designer-data
+          persistentVolumeClaim:
+            claimName: vd-designer-database-volume-claim

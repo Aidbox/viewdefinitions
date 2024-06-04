@@ -128,19 +128,12 @@ jobs:
 
       - name: Apply resources
         run: |-
-          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/service.yaml
+          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/database
+          kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/app
           kubectl apply -n ${{ env.K8S_NAMESPACE }} -f ./k8s/ingress.yaml
 
-          sed -i 's#{VERSION_TAG}#${{ steps.versionTag.outputs.tag }}#g' k8s/prod/kustomization.yaml
-          kubectl kustomize ./k8s/prod | kubectl apply -n ${{ env.K8S_NAMESPACE }} -f -
+          sed -i 's#{VERSION_TAG}#${{ steps.versionTag.outputs.tag }}#g' k8s/kustomization.yaml
+          kubectl kustomize ./k8s | kubectl apply -n ${{ env.K8S_NAMESPACE }} -f -
 
           kubectl rollout status deployment vd-designer -n ${{ env.K8S_NAMESPACE }}
           kubectl get services -n ${{ env.K8S_NAMESPACE }} -o wide
-
-  # -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- #
-
-  on-failure:
-    runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
-    steps:
-      - run: echo 'Tests failed'

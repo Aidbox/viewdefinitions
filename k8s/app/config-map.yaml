@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: vd-designer-app-env
+  namespace: viewdefinition
+
+data:
+  APP_HOST: "https://sqlonfhir.aidbox.app"
+  AIDBOX_PORTAL_URL: "https://aidbox.app"
+  AIDBOX_PORTAL_SSO_URL: "https://aidbox.app/ui/portal"

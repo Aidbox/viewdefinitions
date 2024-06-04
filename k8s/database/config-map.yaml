@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+
+metadata:
+  name: vd-designer-database-env
+  namespace: viewdefinition
+
+data:
+  POSTGRES_HOST: "localhost"
+  POSTGRES_PORT: "5432"
