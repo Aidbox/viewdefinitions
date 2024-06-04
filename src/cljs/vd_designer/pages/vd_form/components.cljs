@@ -112,7 +112,8 @@
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
-   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])
+    :tabindex -1}])
 
 (defn settings-button [& {:as opts}]
   [button/invisible-icon icons/SettingOutlined opts])
@@ -192,7 +193,8 @@
      [:div [settings-button {:onClick   #(toggle-popover ctx button-id)
                              :onKeyDown #(when (= "Escape" (.-key %))
                                            (toggle-popover nil nil))
-                             :id        button-id}]]]))
+                             :id        button-id
+                             :tabindex -1}]]]))
 
 (defn trigger-update-autocomplete-text-event [ctx event]
   (dispatch [::c/update-autocomplete-text
@@ -354,7 +356,7 @@
          (remove (fn [token] (str/ends-with? token ")")))
          last)))
 
-(defn autocomplete [ctx key value placeholder on-ctrl-enter]
+(defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter]}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
@@ -375,15 +377,19 @@
                                       (.preventDefault e)))
                        :popupMatchSelectWidth 350
                        :backfill true
-                       :onKeyUp (fn [e]
-                                  (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                    (update-autocomplete-fn e))
-                                  (when-let [f (and (= "Enter" (u/pressed-key e))
-                                                    (.-ctrlKey e)
-                                                    on-ctrl-enter)]
-                                    (.preventDefault e)
-                                    (.stopPropagation e)
-                                    (f e)))
+                       :onKeyUp  (fn [e]
+                                   (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                     (update-autocomplete-fn e))
+                                   (when (and (= "Enter" (u/pressed-key e))
+                                              (.-shiftKey e))
+                                     (on-shift-enter e))
+                                   (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                     (.-ctrlKey e)
+                                                     on-ctrl-enter)]
+                                     (.preventDefault e)
+                                     (.stopPropagation e)
+                                     (f e)))
+
                        :onBlur (fn []
                                  (when (and (column? ctx)
                                             (= "" (:name children)))
@@ -411,7 +417,7 @@
                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}]]]))
 
-(defn render-input [ctx input-type placeholder value-key value]
+(defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter]}]
   (case input-type
     :number [input-number {:placeholder (or placeholder "path")
                            :value       value
@@ -420,11 +426,18 @@
               [:> Checkbox
                {:checked  value
                 :onChange #(change-input-value ctx value-key (-> % .-target .-checked))}]]
-    :fhirpath [autocomplete ctx value-key value placeholder #(dispatch [::c/eval-view-definition-data])]
+    :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
+                                                             :on-shift-enter on-shift-enter}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
-              :onKeyDown    eval-on-ctrl-enter
+              :onKeyDown (fn [event]
+                           (when (and (= "Enter" (.-key event))
+                                      (or (.-ctrlKey event) (.-metaKey event)))
+                             (eval-on-ctrl-enter event))
+                           (when (and (= "Enter" (.-key event))
+                                      (.-shiftKey event))
+                             (on-shift-enter event)))
               :onMouseEnter #(dispatch [::c/change-draggable-node false])
               :onMouseLeave #(dispatch [::c/change-draggable-node true])
               :defaultValue value
@@ -433,21 +446,21 @@
                                       "default-input")}
               :onChange     #(change-input-value ctx value-key (u/target-value %))}])))
 
-(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder]
+(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx :fhirpath placeholder value-key value]
+   [render-input ctx :fhirpath placeholder value-key value opts]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
    (when deletable? [delete-button ctx])])
 
-(defn text-input [ctx kind value deletable? settings-form placeholder]
+(defn text-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx :text placeholder kind value]
+   [render-input ctx :text placeholder value-key value opts]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
