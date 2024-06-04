@@ -367,39 +367,37 @@
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete {:style                 {:width "100%"}
-                       :options               rendered-options
-                       :defaultValue          value
-                       :onKeyDown             (fn [e]
-                                                (when (= "Escape" (u/pressed-key e))
-                                                  (.preventDefault e)))
+     [:> AutoComplete {:style {:width "100%"}
+                       :options rendered-options
+                       :defaultValue value
+                       :onKeyDown (fn [e]
+                                    (when (= "Escape" (u/pressed-key e))
+                                      (.preventDefault e)))
                        :popupMatchSelectWidth 350
-                       :backfill              true
-                       :onKeyUp               (fn [e]
-                                                (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                                  (update-autocomplete-fn e))
-                                                (when-let [f (and (= "Enter" (u/pressed-key e))
-                                                                  (.-ctrlKey e)
-                                                                  on-ctrl-enter)]
-                                                  (.preventDefault e)
-                                                  (.stopPropagation e)
-                                                  (f e)))
-
-                       :onBlur                (fn []
-                                                (when (and (column? ctx)
-                                                           (= "" (:name children)))
-                                                  (change-input-value ctx :name (fhirpath-alias value)))
-                                                (dispatch [::c/eval-view-definition-data]))
-
-                       :onInput               #(update-autocomplete-fn %)
-                       :onClick               (fn [e] (update-autocomplete-fn e))
-                       :onChange              (fn [e] (change-input-value ctx key e))
-                       :onSelect              (fn [_value option]
-                                                (when-let [r @auto-complete-ref]
-                                                  (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
-                                                    (js/setTimeout (fn [_]
-                                                                     (.focus r)
-                                                                     (.setSelectionRange r cursor cursor)) 0))))}
+                       :backfill true
+                       :onKeyUp (fn [e]
+                                  (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                    (update-autocomplete-fn e))
+                                  (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                    (.-ctrlKey e)
+                                                    on-ctrl-enter)]
+                                    (.preventDefault e)
+                                    (.stopPropagation e)
+                                    (f e)))
+                       :onBlur (fn []
+                                 (when (and (column? ctx)
+                                            (= "" (:name children)))
+                                   (change-input-value ctx :name (fhirpath-alias value)))
+                                 (dispatch [::c/eval-view-definition-data]))
+                       :onInput #(update-autocomplete-fn %)
+                       :onClick  (fn [e] (update-autocomplete-fn e))
+                       :onChange (fn [e] (change-input-value ctx key e))
+                       :onSelect (fn [_value option]
+                                   (when-let [r @auto-complete-ref]
+                                     (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                       (js/setTimeout (fn [_]
+                                                        (.focus r)
+                                                        (.setSelectionRange r cursor cursor)) 0))))}
       [:> Input {:style        {:font-style       "italic"
                                 :border           "none"
                                 :border-bottom    "1px solid transparent"
