@@ -1,5 +1,6 @@
 (ns vd-designer.aidbox
-  (:require [clojure.string :as str]
+  (:require [clojure.set :as set]
+            [clojure.string :as str]
             [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
@@ -34,5 +35,7 @@
                  :body :result)))
          (mapv #(-> %
                     (select-keys [:name :box-url :jwt :product :status])
-                    (update :box-url truncate-box-url)))
+                    (update :box-url truncate-box-url)
+                    (set/rename-keys {:name    :server-name
+                                      :box-url :base-url})))
          (http-response/ok))))

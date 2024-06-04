@@ -6,9 +6,11 @@
 
 (defn truncate-referer [referer]
   (some-> referer
-      (uri/uri)
-      (assoc :path "")
-      (uri/uri-str)))
+          (uri/uri)
+          (assoc :path "")
+          (uri/uri-str)
+          (str/split #"\?")
+          first))
 
 (defn jwt->user [handler ctx]
   (let [[schema jwt] (some-> ctx

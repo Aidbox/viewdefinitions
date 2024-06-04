@@ -92,7 +92,6 @@
   (let [original-server @(subscribe [::m/original-server])
         fhir-server @(subscribe [::m/fhir-server-config])
         sandbox-servers @(subscribe [::m/sandbox-servers])
-        user-servers @(subscribe [::m/user-servers])
         edit? (:server-name original-server)
         errors-set (cond-> #{}
                      (some-empty-fields? fhir-server) (conj :empty-field)
@@ -151,10 +150,12 @@
      [modal-view]
      ;; TODO: add label saying these servers are yours
 
-     [:> Divider]
+     ;[:> Divider]
      ; TODO: add label saying these servers are public
      [components.list/data-list
-      :dataSource @(subscribe [::m/sandbox-servers])
+      :dataSource (concat
+                    @(subscribe [::m/user-servers])
+                    @(subscribe [::m/sandbox-servers]))
       :renderItem
       (fn [raw-item]
         (r/as-element

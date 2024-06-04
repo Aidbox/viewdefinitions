@@ -1,8 +1,10 @@
 (ns vd-designer.pages.settings.controller
   (:require
+    [ajax.core :as ajax]
     [clojure.string :as str]
     [lambdaisland.uri :as uri]
-    [re-frame.core :refer [reg-event-db reg-event-fx]]
+    [medley.core :as medley]
+    [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http]
     [vd-designer.notifications]
     [vd-designer.utils.event :as u]))
@@ -143,22 +145,35 @@
                                   (update :cfg/fhir-servers dissoc :used-server-name)))
      :message-success "Deleted"}))
 
+(defn jwt->auth-header [{:keys [jwt] :as server}]
+  (-> server
+      (assoc :headers {"Authorization" (str "Bearer " jwt)})
+      (dissoc :jwt)))
+
 (reg-event-db
   ::update-user-server-list
-  (fn [db [_ response]]
-    #_(assoc-in db [:cfg/fhir-servers :user/servers] user-server-list)))
+  (fn [db [_ user-server-list]]
+    (->> user-server-list
+         (group-by :server-name)
+         (medley/map-vals (comp jwt->auth-header first))
+         (assoc-in db [:cfg/fhir-servers :user/servers]))))
 
 (reg-event-fx
   ::fetch-user-servers
-  (fn [{:keys [db]} _]
+  [(inject-cofx :get-authentication-token)]
+  (fn [{:keys [authentication-token]} _]
     {
      ; TODO: добавить флаг о том, что мы начали подгружать список user servers?
 
-     #_:http-xhrio
-     #_[(http/get-metadata db {:uri        (-> base-url uri/uri
-                                             (assoc :path "/metadata")
-                                             uri/uri-str)
-                             :on-success [::update-user-server-list]
-                             #_#_:on-failure [::not-connected server-name]})]
+     :http-xhrio
+     {:uri              "/api/aidbox/servers"
+      :timeout          8000
+      :format           (ajax/json-request-format)
+      :response-format  (ajax/json-response-format {:keywords? true})
+      :with-credentials true
+      :method           :get
+      :headers          {:authorization (str "Bearer " authentication-token)}
+      :on-success       [::update-user-server-list]
+      #_#_:on-failure [::not-connected server-name]}
      }
     ))
