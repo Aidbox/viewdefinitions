@@ -445,6 +445,16 @@
                             :content   (r/as-element [settings-form ctx])}])
    (when deletable? [delete-button ctx])])
 
+(defn text-input [ctx kind value deletable? settings-form placeholder]
+  [:> Space.Compact {:block true
+                     :style {:align-items :center
+                             :gap         4}}
+   [render-input ctx :text placeholder kind value]
+   (when settings-form
+     [settings-popover ctx {:placement :right
+                            :content   (r/as-element [settings-form ctx])}])
+   (when deletable? [delete-button ctx])])
+
 ;;;; Settings
 
 (defn settings-base-form [title props items]

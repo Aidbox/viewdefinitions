@@ -13,6 +13,7 @@
                                                  change-input-value
                                                  delete-button fhir-path-input
                                                  name-input resource-input
+                                                 text-input
                                                  tree-tag]]
    [vd-designer.pages.vd-form.controller :as form-controller]
    [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
@@ -49,7 +50,7 @@
                   :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
                   :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                   :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
-     [fhir-path-input ctx value-key value deletable? settings-form placeholder]]))
+     [text-input ctx value-key value deletable? settings-form placeholder]]))
 
 (defn column-leaf [ctx {:keys [name path]}]
   [base-input-row ctx
