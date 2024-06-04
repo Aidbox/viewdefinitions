@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space Typography]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]]
@@ -93,8 +93,9 @@
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
    {:onClick #(add-vd-item ctx (keyword name) true)
-    :style   {:width      "100%"
-              :text-align :left}}])
+    :style   {:width           "100%"
+              :text-align      :left
+              :justify-content :flex-start}}])
 
 (defn add-select-button [ctx]
   (let [requested-key #(keyword (.-key %))]
@@ -203,21 +204,21 @@
 
 (defn render-option* [icon type-or-kind label & [matched-count]]
   (r/as-element
-    [:> Row {:align  :middle}
-     [:> Col {:span 2}
-      [:> Row {:justify :start} icon]]
-     [:> Col {:span 11}
-      [:> Row {:justify :start}
-       (if matched-count
-         [:<>
-          [:b (subs label 0 matched-count)]
-          (subs label matched-count)]
-         label)]]
-     [:> Col {:span 11}
-      [:> Row {:justify :end}
-       [:div {:style {:font-style :italic
-                      :color "#1677ff"}}
-        (str " " type-or-kind)]]]]))
+   [:> Row {:align  :middle}
+    [:> Col {:span 2}
+     [:> Row {:justify :start} icon]]
+    [:> Col {:span 11}
+     [:> Row {:justify :start}
+      (if matched-count
+        [:<>
+         [:b (subs label 0 matched-count)]
+         (subs label matched-count)]
+        label)]]
+    [:> Col {:span 11}
+     [:> Row {:justify :end}
+      [:div {:style {:font-style :italic
+                     :color "#1677ff"}}
+       (str " " type-or-kind)]]]]))
 
 (defn get-current-token [option whole-text]
   (when whole-text
@@ -227,10 +228,10 @@
 
 (defn render-text [label matched-count]
   (if matched-count
-   [:<>
+    [:<>
      [:b (subs label 0 matched-count)]
      (subs label matched-count)]
-  label))
+    label))
 
 (defn- special-constant-symbols-length [text]
   (cond
@@ -285,15 +286,15 @@
         filter-by (or (:filterText option) (:label option))]
     (when (and text-to-filter filter-by)
       (or
-        (when (= :constant (:kind option))
-          (filter-constant input-value cursor-start text-to-filter option))
+       (when (= :constant (:kind option))
+         (filter-constant input-value cursor-start text-to-filter option))
 
-        (= cursor-start (-> option :textEdit :range :start :character))
-        (str/starts-with?
-          filter-by
-          (subs
-            text-to-filter 0
-            (new-cursor-idx cursor-start input-value text-to-filter)))))))
+       (= cursor-start (-> option :textEdit :range :start :character))
+       (str/starts-with?
+        filter-by
+        (subs
+         text-to-filter 0
+         (new-cursor-idx cursor-start input-value text-to-filter)))))))
 
 
 (defn change-text-and-cursor [input-text option]
