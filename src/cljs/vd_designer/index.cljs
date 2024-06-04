@@ -19,12 +19,15 @@
 
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])
-        m {:vd-list  [{:title "View Definitions"}]
-           :settings [{:title "Settings"}]
-           :form-edit [{:title "View Definitions", :href "/"}
-                       {:title (:name current-vd)}]
-           :form-create [{:title "View Definitions", :href "/"}
-                         {:title "New"}]}]
+        home     {:title "SQL on FHIR"      :href "/"}
+        vds      {:title "View Definitions" :href "/vds"}
+        settings {:title "Settings"         :href "/settings"}
+
+        m {:home        [(dissoc home :href)]
+           :vd-list     [home (dissoc vds :href)]
+           :settings    [home (dissoc settings :href)]
+           :form-edit   [home vds {:title (:name current-vd)}]
+           :form-create [home vds {:title "New"}]}]
     (m route)))
 
 
@@ -66,7 +69,10 @@
      {:on-menu-click (fn [key]
                        (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
-      :menu [{:key "vd-list"
+      :menu [{:key  "home"
+              :icon (r/create-element icons/HomeOutlined)
+              :size 64}
+             {:key "vd-list"
               :icon (r/create-element icons/DatabaseOutlined)
               :size 64}
              {:key "settings"
