@@ -6,6 +6,7 @@
             [ring.util.response :as response]
             [vd-designer.context :as context]
             [vd-designer.db.migrations :as migrate]
+            [vd-designer.db.pool :as pool]
             [vd-designer.utils.log :as log]
             [vd-designer.web.routes.router :refer [router]]))
 
@@ -32,16 +33,17 @@
 
 (defn stop
   "Gracefully shutdown the server. Log the time of shutdown"
-  []
+  [ctx]
   (when-not (nil? @instance)
+    (log/info "Application server shutting down...")
+    (pool/close-pool (:db ctx))
     (.stop @instance)
-    (reset! instance nil)
-    (log/info "Application server shutting down...")))
+    (reset! instance nil)))
 
 (defn restart
   "Convenience function to stop and start the application server"
   [ctx http-port]
-  (stop)
+  (stop ctx)
   (start ctx http-port))
 
 (defn -main
@@ -61,7 +63,7 @@
   (start ctx 8080)
 
   ;; Stop / restart application server
-  (stop)
+  (stop ctx)
   (restart ctx 8080)
 
   ;; Get all environment variables

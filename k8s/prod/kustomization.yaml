@@ -1,5 +1,0 @@
-resources:
-- ./client-deployment.yaml
-images:
-- name: ghcr.io/aidbox/viewdefinitions-client
-  newTag: "{VERSION_TAG}"

@@ -1,5 +1,6 @@
 (ns vd-designer.db.pool
-  (:require [next.jdbc.connection :as jdbc.conn])
+  (:require [next.jdbc.connection :as jdbc.conn]
+            [vd-designer.utils.log :as log])
   (:import (com.zaxxer.hikari HikariConfig HikariDataSource)
            (java.util Properties)))
 
@@ -18,10 +19,12 @@
     props))
 
 (defn create-pool [db-config]
+  (log/info "Creating database pool...")
   (-> properties
       ^Properties (doto (.setProperty "dataSource.url" (jdbc.conn/jdbc-url db-config)))
       HikariConfig.
       HikariDataSource.))
 
-;; TODO: do this on server down
-(defn close-pool [^HikariDataSource datasource] (.close datasource))
+(defn close-pool [^HikariDataSource datasource]
+  (log/info "Closing database pool...")
+  (.close datasource))

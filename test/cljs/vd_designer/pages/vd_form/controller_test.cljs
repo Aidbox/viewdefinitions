@@ -294,3 +294,43 @@
           {:a 1}
           (sut/merge-and-strip {:a 1, :b [1 2], :c {:d 3}}
                                {:b [], :c {}})))))
+
+(deftest strip-empty-select-nodes-test
+  (testing "strip empty column"
+    (is (match? 
+         {:select [{:column []}]}
+         (sut/strip-empty-select-nodes {:select [{:column [{:name "" :path "path"}]}]})))
+    (is (match?
+         {:select [{:column []}]}
+         (sut/strip-empty-select-nodes {:select [{:column [{:name "name" :path ""}]}]})))
+    (is (match?
+         {:select [{:column [{:name "name" :path "path"}]}]}
+         (sut/strip-empty-select-nodes {:select [{:column [{:name "name" :path "path"}]}]})))
+    (is (match?
+         {:select [{:column []}]}
+         (sut/strip-empty-select-nodes {:select [{:column [{:name "" :path ""}]}]})))
+    (is (match?
+         {:select [{:column [{:name "name" :path "path"}]}]}
+         (sut/strip-empty-select-nodes {:select [{:column [{:name "name" :path "path"}
+                                                           {:name "" :path ""}]}]}))))
+  (testing "strip empty forEach"
+    (is (match? 
+         {:select []}
+         (sut/strip-empty-select-nodes
+          {:select
+           [{:forEach ""
+             :select  [{:column [{:name "a" :path "$this"}]}]}]})))
+    (is (match?
+         {:select []}
+         (sut/strip-empty-select-nodes 
+          {:select
+           [{:forEach ""
+             :select  [{:column [{:name "a" :path "$this"}]}]}]})))
+    (is (match?
+         {:select
+           [{:forEach "name"
+             :select  [{:column []}]}]}
+         (sut/strip-empty-select-nodes 
+          {:select
+           [{:forEach "name"
+             :select  [{:column [{:name "a" :path ""}]}]}]})))))

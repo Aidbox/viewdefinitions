@@ -1,7 +1,7 @@
 (ns vd-designer.pages.vd-form.components
   (:require
    ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space Typography]]
+   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
    [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch subscribe]]
@@ -93,8 +93,9 @@
 (defn add-element-button [name ctx]
   [button/ghost name icons/PlusOutlined
    {:onClick #(add-vd-item ctx (keyword name) true)
-    :style   {:width      "100%"
-              :text-align :left}}])
+    :style   {:width           "100%"
+              :text-align      :left
+              :justify-content :flex-start}}])
 
 (defn add-select-button [ctx]
   (let [requested-key #(keyword (.-key %))]
@@ -203,21 +204,21 @@
 
 (defn render-option* [icon type-or-kind label & [matched-count]]
   (r/as-element
-    [:> Row {:align  :middle}
-     [:> Col {:span 2}
-      [:> Row {:justify :start} icon]]
-     [:> Col {:span 11}
-      [:> Row {:justify :start}
-       (if matched-count
-         [:<>
-          [:b (subs label 0 matched-count)]
-          (subs label matched-count)]
-         label)]]
-     [:> Col {:span 11}
-      [:> Row {:justify :end}
-       [:div {:style {:font-style :italic
-                      :color "#1677ff"}}
-        (str " " type-or-kind)]]]]))
+   [:> Row {:align  :middle}
+    [:> Col {:span 2}
+     [:> Row {:justify :start} icon]]
+    [:> Col {:span 11}
+     [:> Row {:justify :start}
+      (if matched-count
+        [:<>
+         [:b (subs label 0 matched-count)]
+         (subs label matched-count)]
+        label)]]
+    [:> Col {:span 11}
+     [:> Row {:justify :end}
+      [:div {:style {:font-style :italic
+                     :color "#1677ff"}}
+       (str " " type-or-kind)]]]]))
 
 (defn get-current-token [option whole-text]
   (when whole-text
@@ -227,10 +228,10 @@
 
 (defn render-text [label matched-count]
   (if matched-count
-   [:<>
+    [:<>
      [:b (subs label 0 matched-count)]
      (subs label matched-count)]
-  label))
+    label))
 
 (defn- special-constant-symbols-length [text]
   (cond
@@ -285,15 +286,15 @@
         filter-by (or (:filterText option) (:label option))]
     (when (and text-to-filter filter-by)
       (or
-        (when (= :constant (:kind option))
-          (filter-constant input-value cursor-start text-to-filter option))
+       (when (= :constant (:kind option))
+         (filter-constant input-value cursor-start text-to-filter option))
 
-        (= cursor-start (-> option :textEdit :range :start :character))
-        (str/starts-with?
-          filter-by
-          (subs
-            text-to-filter 0
-            (new-cursor-idx cursor-start input-value text-to-filter)))))))
+       (= cursor-start (-> option :textEdit :range :start :character))
+       (str/starts-with?
+        filter-by
+        (subs
+         text-to-filter 0
+         (new-cursor-idx cursor-start input-value text-to-filter)))))))
 
 
 (defn change-text-and-cursor [input-text option]
@@ -361,86 +362,84 @@
         (if (= (:value-path ctx) (:id request))
           (->ui-options request options)
           [])
-        errors? @(subscribe [::m/empty-inputs?])]
+        errors?  @(subscribe [::m/empty-inputs?])
+        children @(subscribe [::m/children (:value-path ctx)])]
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete {:style        {:width "100%"}
-                       :options      rendered-options
-                       :defaultValue value
-                       :onKeyDown (fn [e]
-                                    (when (= "Escape" (u/pressed-key e))
-                                      (.preventDefault e)))
+     [:> AutoComplete {:style                 {:width "100%"}
+                       :options               rendered-options
+                       :defaultValue          value
+                       :onKeyDown             (fn [e]
+                                                (when (= "Escape" (u/pressed-key e))
+                                                  (.preventDefault e)))
                        :popupMatchSelectWidth 350
-                       :backfill true
-                       :onKeyUp  (fn [e]
-                                   (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                     (update-autocomplete-fn e))
-                                   (when-let [f (and (= "Enter" (u/pressed-key e))
-                                                     (.-ctrlKey e)
-                                                     on-ctrl-enter)]
-                                     (.preventDefault e)
-                                     (.stopPropagation e)
-                                     (f e)))
+                       :backfill              true
+                       :onKeyUp               (fn [e]
+                                                (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                                  (update-autocomplete-fn e))
+                                                (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                                  (.-ctrlKey e)
+                                                                  on-ctrl-enter)]
+                                                  (.preventDefault e)
+                                                  (.stopPropagation e)
+                                                  (f e)))
 
-                       :onBlur (fn []
-                                 (when (and (column? ctx)
-                                            (= "" (:name @(subscribe [::m/children
-                                                                      (:value-path ctx)]))))
-                                   (change-input-value ctx :name (fhirpath-alias value))))
-                       :onInput  #(update-autocomplete-fn %)
-                       :onClick  (fn [e] (update-autocomplete-fn e))
-                       :onChange (fn [e] (change-input-value ctx key e))
-                       :onSelect (fn [_value option]
-                                   (when-let [r @auto-complete-ref]
-                                     (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
-                                       (js/setTimeout (fn [_]
-                                                        (.focus r)
-                                                        (.setSelectionRange r cursor cursor)) 0))))}
-      [:> Input {:style
-                 {:font-style       "italic"
-                  :border           "none"
-                  :border-bottom    "1px solid transparent"
-                  :border-radius    0
-                  :background-color "transparent"}
-                 :placeholder placeholder
-                 :classNames {:input
-                              (if (and (str/blank? value) errors?)
-                                "default-input red-input"
-                                "default-input")}
-                 :ref (fn [el] (reset! auto-complete-ref el))
+                       :onBlur                (fn []
+                                                (when (and (column? ctx)
+                                                           (= "" (:name children)))
+                                                  (change-input-value ctx :name (fhirpath-alias value)))
+                                                (dispatch [::c/eval-view-definition-data]))
+
+                       :onInput               #(update-autocomplete-fn %)
+                       :onClick               (fn [e] (update-autocomplete-fn e))
+                       :onChange              (fn [e] (change-input-value ctx key e))
+                       :onSelect              (fn [_value option]
+                                                (when-let [r @auto-complete-ref]
+                                                  (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                                    (js/setTimeout (fn [_]
+                                                                     (.focus r)
+                                                                     (.setSelectionRange r cursor cursor)) 0))))}
+      [:> Input {:style        {:font-style       "italic"
+                                :border           "none"
+                                :border-bottom    "1px solid transparent"
+                                :border-radius    0
+                                :background-color "transparent"}
+                 :placeholder  placeholder
+                 :classNames   {:input (if (and (str/blank? value) errors?)
+                                         "default-input red-input"
+                                         "default-input")}
+                 :ref          (fn [el] (reset! auto-complete-ref el))
                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}]]]))
 
-;; FIXME: `kind` is not really a kind
-(defn render-input [ctx input-type placeholder kind value]
+(defn render-input [ctx input-type placeholder value-key value]
   (case input-type
     :number [input-number {:placeholder (or placeholder "path")
                            :value       value
-                           :onChange    #(change-input-value ctx kind %)}]
+                           :onChange    #(change-input-value ctx value-key %)}]
     :boolean [:div {:style {:width "100%"}}
               [:> Checkbox
                {:checked  value
-                :onChange #(change-input-value ctx kind (-> % .-target .-checked))}]]
-    :fhirpath [autocomplete ctx kind value placeholder #(dispatch [::c/eval-view-definition-data])]
+                :onChange #(change-input-value ctx value-key (-> % .-target .-checked))}]]
+    :fhirpath [autocomplete ctx value-key value placeholder #(dispatch [::c/eval-view-definition-data])]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
-              :onKeyDown eval-on-ctrl-enter
+              :onKeyDown    eval-on-ctrl-enter
               :onMouseEnter #(dispatch [::c/change-draggable-node false])
               :onMouseLeave #(dispatch [::c/change-draggable-node true])
               :defaultValue value
-              :classNames {:input
-                           (if (and (str/blank? value) errors?)
-                             "default-input red-input"
-                             "default-input")}
-              :onChange     #(change-input-value ctx kind (u/target-value %))}])))
+              :classNames   {:input (if (and (str/blank? value) errors?)
+                                      "default-input red-input"
+                                      "default-input")}
+              :onChange     #(change-input-value ctx value-key (u/target-value %))}])))
 
-(defn fhir-path-input [ctx kind value deletable? settings-form placeholder]
+(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx :fhirpath placeholder kind value]
+   [render-input ctx :fhirpath placeholder value-key value]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
