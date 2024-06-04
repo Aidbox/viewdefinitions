@@ -8,6 +8,7 @@
    [vd-designer.components.input :refer [input]]
    [vd-designer.components.tree :refer [tree-leaf tree-node]]
    [vd-designer.pages.vd-form.components :refer [add-element-button
+                                                 add-vd-item
                                                  add-select-button
                                                  base-input-row base-node-row
                                                  change-input-value
@@ -30,7 +31,7 @@
 ;; Leafs
 
 (defn- general-leaf [ctx props]
-  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder]}
+  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter]}
         props]
     [base-input-row ctx
      [:> Flex {:gap   8
@@ -41,6 +42,10 @@
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
           [input {:defaultValue name
+                  :onKeyDown (fn [event]
+                               (when (and (= "Enter" (.-key event))
+                                          (.-shiftKey event))
+                                 (on-shift-enter event)))
                   :placeholder "name"
                   :classNames {:input
                                (if (and (str/blank? name) errors?)
@@ -50,9 +55,9 @@
                   :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
                   :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
                   :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
-     [text-input ctx value-key value deletable? settings-form placeholder]]))
+     [text-input ctx value-key value deletable? settings-form placeholder props]]))
 
-(defn column-leaf [ctx {:keys [name path]}]
+(defn column-leaf [ctx {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
   [base-input-row ctx
    [:> Flex {:gap   8
              :align :center
@@ -67,10 +72,14 @@
                              "default-input red-input"
                              "default-input")}
               :style       {:font-style "normal"}
+              :onKeyDown (fn [event]
+                           (when (and (= "Enter" (.-key event))
+                                      (.-shiftKey event))
+                             (on-shift-enter event)))
               :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
               :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
               :onChange    #(change-input-value ctx :name (u/target-value %))}])]
-   [fhir-path-input ctx :path path true column-settings "path"]])
+   [fhir-path-input ctx :path path true column-settings "path" opts]])
 
 (defn constant-type->input-type [constant-type]
   (case constant-type
@@ -83,20 +92,22 @@
     :valueBoolean        :boolean
     :text))
 
-(defn constant-leaf [ctx {:keys [name] :as item}]
+(defn constant-leaf [ctx {:keys [name] :as item} & {:as opts}]
   (let [current-type (keyword (get-constant-type item))]
     [general-leaf ctx
-     {:icon          icon/constant
-      :name-key      :name
-      :name          name
-      :value-key     current-type
-      :value         (current-type item)
-      :placeholder   "constant"
-      :settings-form constant-settings
-      :input-type    (constant-type->input-type current-type)
-      :deletable?    true}]))
+     (merge
+      {:icon          icon/constant
+       :name-key      :name
+       :name          name
+       :value-key     current-type
+       :value         (current-type item)
+       :placeholder   "constant"
+       :settings-form constant-settings
+       :input-type    (constant-type->input-type current-type)
+       :deletable?    true}
+      opts)]))
 
-(defn where-leaf [ctx {:keys [path]}]
+(defn where-leaf [ctx {:keys [path]} & {:as opts}]
   [:> Flex {:gap   8
             :align :center
             :style {:width "100%"}}
@@ -107,7 +118,8 @@
     path
     true
     where-settings
-    "expression"]])
+    "expression"
+    opts]])
 
 (defn foreach-expr-leaf [ctx value-key path]
 [:> Flex {:gap   8
@@ -156,14 +168,15 @@
                (render-children node-key))))
 
 (defn- flat-node [kind generate-leaf ctx items]
-  (general-node kind ctx
-                (fn [node-key]
-                  (conj (mapv (fn [item]
-                                (let [ctx (add-value-path ctx (:tree/key item))]
-                                  (tree-leaf (:value-path ctx) (generate-leaf ctx item))))
-                              items)
-                        (tree-leaf (conj node-key :add)
-                                   [add-element-button (name kind) ctx])))))
+  (let [add-new (fn [_] (add-vd-item ctx kind true))]
+    (general-node kind ctx
+                  (fn [node-key]
+                    (conj (mapv (fn [item]
+                                  (let [ctx (add-value-path ctx (:tree/key item))]
+                                    (tree-leaf (:value-path ctx) (generate-leaf ctx item {:on-shift-enter add-new}))))
+                                items)
+                          (tree-leaf (conj node-key :add)
+                                     [add-element-button (name kind) ctx]))))))
 
 (defn- nested-node [kind ctx items]
   (general-node kind ctx
