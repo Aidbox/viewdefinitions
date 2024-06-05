@@ -80,3 +80,8 @@
   ::autocomplete-options
   (fn [db _]
     (::autocomplete-options db)))
+
+(reg-sub
+ ::node-focus
+ (fn [db _]
+   (::node-focus db)))

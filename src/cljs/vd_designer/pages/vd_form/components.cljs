@@ -113,7 +113,7 @@
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
    {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])
-    :tabindex -1}])
+    :tabIndex -1}])
 
 (defn settings-button [& {:as opts}]
   [button/invisible-icon icons/SettingOutlined opts])
@@ -194,7 +194,7 @@
                              :onKeyDown #(when (= "Escape" (.-key %))
                                            (toggle-popover nil nil))
                              :id        button-id
-                             :tabindex -1}]]]))
+                             :tabIndex -1}]]]))
 
 (defn trigger-update-autocomplete-text-event [ctx event]
   (dispatch [::c/update-autocomplete-text
@@ -356,7 +356,7 @@
          (remove (fn [token] (str/ends-with? token ")")))
          last)))
 
-(defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter]}]
+(defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter autoFocus]}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
@@ -372,6 +372,7 @@
      [:> AutoComplete {:style {:width "100%"}
                        :options rendered-options
                        :defaultValue value
+                       :autoFocus autoFocus
                        :onKeyDown (fn [e]
                                     (when (= "Escape" (u/pressed-key e))
                                       (.preventDefault e)))
@@ -389,11 +390,11 @@
                                      (.preventDefault e)
                                      (.stopPropagation e)
                                      (f e)))
-
                        :onBlur (fn []
                                  (when (and (column? ctx)
                                             (= "" (:name children)))
                                    (change-input-value ctx :name (fhirpath-alias value)))
+                                 (dispatch [::c/set-focus-node nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
                        :onClick  (fn [e] (update-autocomplete-fn e))
@@ -417,7 +418,7 @@
                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}]]]))
 
-(defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter]}]
+(defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter autoFocus]}]
   (case input-type
     :number [input-number {:placeholder (or placeholder "path")
                            :value       value
@@ -427,10 +428,13 @@
                {:checked  value
                 :onChange #(change-input-value ctx value-key (-> % .-target .-checked))}]]
     :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
-                                                             :on-shift-enter on-shift-enter}]
+                                                             :on-shift-enter on-shift-enter
+                                                             :autoFocus autoFocus}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
+              :autoFocus autoFocus
+              :onBlur #(dispatch [::c/set-focus-node nil])
               :onKeyDown (fn [event]
                            (when (and (= "Enter" (.-key event))
                                       (or (.-ctrlKey event) (.-metaKey event)))
