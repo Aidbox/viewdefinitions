@@ -16,7 +16,10 @@
     ["/aidbox"
      {:middleware [middleware.auth/authorize]}
      ["/servers" {:get
-                  {:handler #'aidbox/list-servers}}]]
+                  {:handler #'aidbox/list-servers}}]
+     ["/connect" {:post
+                  {:parameters {:body {:box-url string?}}
+                   :handler #'aidbox/connect}}]]
     ["/auth"
      ["/sso" {:get
               {:summary "Redirect to SSO provider"

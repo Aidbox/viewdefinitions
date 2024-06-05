@@ -146,17 +146,16 @@
                                   (update :cfg/fhir-servers dissoc :used-server-name)))
      :message-success "Deleted"}))
 
-(defn jwt->auth-header [{:keys [jwt] :as server}]
-  (-> server
-      (assoc :headers {"Authorization" (str "Bearer " jwt)})
-      (dissoc :jwt)))
+(defn add-auth-header [{:keys [aidbox-auth-token] :as server}]
+  (assoc server
+    :headers {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token)}))
 
 (reg-event-db
   ::update-user-server-list
   (fn [db [_ user-server-list]]
     (->> user-server-list
          (group-by :server-name)
-         (medley/map-vals (comp jwt->auth-header first))
+         (medley/map-vals (comp add-auth-header first))
          (assoc-in db [:cfg/fhir-servers :user/servers]))))
 
 (reg-event-fx
