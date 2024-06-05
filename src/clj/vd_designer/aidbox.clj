@@ -23,12 +23,11 @@
           (str/split #"\?")
           first))
 
-(defn add-aidbox-auth-token [{:keys [box-url] :as server}]
+(defn aidbox-auth-token [box-url]
   (->> box-url
        (uri/uri)
        (uri/query-map)
-       :token
-       (assoc server :aidbox-auth-token)))
+       :token))
 
 ;; TODO: rework portal to have a middleware that takes care of access/refresh tokens
 (defn list-servers [{:keys [aidbox.portal/client user db]}]
@@ -36,27 +35,41 @@
         (:sso_tokens/access_token (sso-token/get-last-by-id db (:accounts/id user)))
         projects (-> @(init-project client access-token)
                      :body
-                     :result)]
+                     :result)
+        licenses (->>  projects
+                      (mapcat
+                        (fn [project]
+                          (-> @(fetch-licenses client access-token (:id project))
+                              :body :result)))
+                      (mapv (fn [license]
+                              (-> license
+                                  (select-keys [:name :box-url #_:product #_:status])
+                                  (assoc :aidbox-auth-token (aidbox-auth-token (:box-url license))
+                                         :account-id (:accounts/id user))
+
+                                  (assoc :aidbox-auth-token (aidbox-auth-token (:box-url license))
+                                         :account-id (:accounts/id user))
+                                  (update :box-url truncate-box-url)
+                                  (set/rename-keys {:name :server-name})))))]
+    ;; TODO: store in DB full data,
+    ;;       send to front only things that are needed
+    ;;TODO: creating duplications!
+    (user-server/create-many db licenses)
     ;; TODO: filter self-hosted, expired, product = "aidbox", status = "active"
-    (->> projects
-         (mapcat
-           (fn [project]
-             (-> @(fetch-licenses client access-token (:id project))
-                 :body :result)))
-         ;; TODO: store in DB full data,
-         ;;       send to front only things that are needed
-         (mapv #(-> %
-                    (select-keys [:name :box-url :product :status])
-                    add-aidbox-auth-token
-                    (update :box-url truncate-box-url)
-                    (set/rename-keys {:name    :server-name
-                                      :box-url :base-url})))
-         (http-response/ok))))
+    (http-response/ok licenses)))
 
 (defn connect [{:keys [user db request]}]
-  (let [box-url (-> request :body :box-url)
-        {aidbox-auth-token :aidbox_auth_token} (user-server/get-by-account-id-and-box-url
-                                                 db (:accounts/id user) box-url)
-        box-response @(http-client/get (str box-url "/fhir/ViewDefinition")
-                                       {:headers {"Cookie" (str "aidbox_auth_token=" aidbox-auth-token)}})]
-    (http-response/ok "TODO")))
+  (let [box-url (-> request :body-params :box-url)
+        {aidbox-auth-token :user_servers/aidbox_auth_token}
+        (user-server/get-by-account-id-and-box-url
+          db (:accounts/id user) box-url)
+        box-response @(http-client/get
+                        (str box-url "/fhir/ViewDefinition")
+                        {:headers
+                         {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
+                          "Accept" "application/json"
+                          "Content-Type" "application/transit+json"}})]
+    (if (= 200 (:status box-response))
+      (http-response/ok (:body box-response))
+      (http-response/bad-request box-response))))
+

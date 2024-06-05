@@ -1,10 +1,11 @@
 (ns vd-designer.pages.vd-list.controller
-  (:require
-   [clojure.string :as str]
-   [re-frame.core :refer [reg-event-db reg-event-fx]]
-   [vd-designer.http.fhir-server :as http.fhir-server]
-   [vd-designer.utils.event :refer [response->error]]
-   [vd-designer.pages.vd-list.model :as m]))
+ (:require
+  [clojure.string :as str]
+  [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
+  [vd-designer.http.fhir-server :as http.fhir-server]
+  [vd-designer.utils.db-utils :as db-utils]
+  [vd-designer.utils.event :refer [response->error]]
+  [vd-designer.pages.vd-list.model :as m]))
 
 (reg-event-fx
  ::start
@@ -13,19 +14,24 @@
 
 (reg-event-fx
  ::get-view-definitions
- (fn [{:keys [db]} [_]]
+  [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} [_]]
    {:db         (assoc db ::m/view-definitions-loading true)
-    :http-xhrio (-> (http.fhir-server/get-view-definitions db)
+    :http-xhrio (-> (if (db-utils/sandbox? db)
+                     (http.fhir-server/get-view-definitions db)
+                     (http.fhir-server/get-view-definitions-user-server authentication-token
+                                                                        (http.fhir-server/active-server db)))
                     (assoc :on-success [::got-view-definitions-success]
                            :on-failure [::get-view-definitions-fail]))}))
 
 (reg-event-fx
  ::got-view-definitions-success
  (fn [{:keys [db]} [_ result]]
-   {:db
-    (assoc db
-           :view-definitions (:entry result)
-           ::m/view-definitions-loading false)}))
+  (js/console.log "result!" result)
+  {:db
+   (assoc db
+          :view-definitions (:entry result)
+          ::m/view-definitions-loading false)}))
 
 (reg-event-fx
  ::get-view-definitions-fail

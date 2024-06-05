@@ -35,13 +35,13 @@
                       ; we do not want to let people create view definitions because they are
                       ; materialized when created
                       {:server-name "Aidbox Default"
-                       :base-url    "https://viewdefs.aidbox.app"
+                       :box-url    "https://viewdefs.aidbox.app"
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
 
                       ; read all, delete+create+update ViewDefinitions, eval VD rpc
                       "Aidbox Default 2"
                       {:server-name "Aidbox Default 2"
-                       :base-url    "https://viewdefinitions.edge.aidbox.app"
+                       :box-url    "https://viewdefinitions.edge.aidbox.app"
                        :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
 
 (reg-event-fx

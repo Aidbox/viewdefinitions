@@ -23,7 +23,7 @@
            :style  {:color     "red"
                     :font-size "10px"}} text])
 
-(defn request-settings-tab [{:keys [server-name base-url fhir-version]} errors-set]
+(defn request-settings-tab [{:keys [server-name box-url fhir-version]} errors-set]
   [:div
    [:div
     [:label "Name"]
@@ -40,9 +40,9 @@
     [:label "URL"]
     [:br]
     [components.input/input {:placeholder "URL"
-                             :value       base-url
+                             :value       box-url
                              :on-change   #(dispatch [::c/update-fhir-server-input
-                                                      [:base-url] (target-value %)])}]]
+                                                      [:box-url] (target-value %)])}]]
    (when fhir-version
      [:div
       [:label (str "FHIR version: " fhir-version)]])])
@@ -77,9 +77,9 @@
                             :children [request-headers-tab fhir-server]
                             :icon     (r/create-element icons/SettingOutlined)})]}])
 
-(defn some-empty-fields? [{:keys [server-name base-url]}]
+(defn some-empty-fields? [{:keys [server-name box-url]}]
   (or (str/blank? server-name)
-      (str/blank? base-url)))
+      (str/blank? box-url)))
 
 (defn name-exists? [server-name existing-servers original-server]
   (and (->> existing-servers
@@ -159,7 +159,7 @@
       :renderItem
       (fn [raw-item]
         (r/as-element
-         (let [{:keys [server-name base-url] :as server-config}
+         (let [{:keys [server-name box-url] :as server-config}
                (js-obj->clj-map raw-item)]
            [:> List.Item
             {:actions (cond-> [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]
@@ -171,4 +171,4 @@
               (r/as-element
                [:a {:onClick #(dispatch [::c/start-edit server-config])}
                 server-name])
-              :description base-url}]])))]]))
+              :description box-url}]])))]]))
