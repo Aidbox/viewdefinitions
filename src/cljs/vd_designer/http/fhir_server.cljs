@@ -54,6 +54,17 @@
        :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
+(defn get-view-definition-user-server [authentication-token {:keys [box-url]} vd-id]
+  {:uri              "/api/aidbox/ViewDefinition"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format
+                       {:keywords? true})
+   :with-credentials true
+   :method           :get
+   :params           {:box-url box-url :vd-id vd-id}
+   :headers          {:authorization (str "Bearer " authentication-token)}})
+
 (defn get-metadata [db & [opts]]
   (-> {:method :get
        :uri    (box-url+path db "/fhir/metadata")}

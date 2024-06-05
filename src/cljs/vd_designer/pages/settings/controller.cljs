@@ -125,7 +125,6 @@
 (reg-event-fx
  ::get-view-definitions-success
  (fn [{:keys [db]} [_ server-name _result]]
-   (println "success!!")
    {:db (-> db
             (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
             (dissoc ::request-sent-by :edit-server :fhir-server :cfg/connect-error))}))

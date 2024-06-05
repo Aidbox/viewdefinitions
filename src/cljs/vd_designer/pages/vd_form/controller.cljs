@@ -3,8 +3,9 @@
     [ajax.core :as ajax]
     [clojure.string :as str]
     [clojure.set :as set]
+    [vd-designer.utils.db-utils :as db-utils]
     [medley.core :as medley]
-    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]
+    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx]]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
                                                    get-select-path]]
@@ -171,9 +172,14 @@
 
 (reg-event-fx
  ::get-view-definition
- (fn [{:keys [db]} [_ vd-id]]
+  [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} [_ vd-id]]
    {:db         (assoc db :loading true)
-    :http-xhrio (-> (http.fhir-server/get-view-definition db vd-id)
+    :http-xhrio (-> (if (db-utils/sandbox? db)
+                      (http.fhir-server/get-view-definition db vd-id)
+                      (http.fhir-server/get-view-definition-user-server
+                        authentication-token
+                        (http.fhir-server/active-server db) vd-id))
                     (assoc :on-success [::choose-vd]
                            :on-failure [::on-vd-error]))}))
 
@@ -401,7 +407,7 @@
                                                        view-definition))]
       (if empty-fields?
         {:db (assoc db ::m/empty-inputs? true)}
-        {:db (-> db 
+        {:db (-> db
                  (assoc ::m/save-view-definition-loading true
                         ::m/save-loading true)
                  (dissoc ::m/empty-inputs?))

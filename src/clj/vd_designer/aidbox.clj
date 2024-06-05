@@ -73,3 +73,20 @@
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
+(defn get-view-definition [{:keys [user db request]}]
+  (let [box-url (-> request :query-params :box-url)
+        vd-id  (-> request :query-params :vd-id)
+        {aidbox-auth-token :user_servers/aidbox_auth_token}
+        (user-server/get-by-account-id-and-box-url
+          db (:accounts/id user) box-url)
+        box-response @(http-client/get
+                        (str box-url "/fhir/ViewDefinition/" vd-id)
+                        {:headers
+                         {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
+                          "Accept" "application/json"
+                          "Content-Type" "application/transit+json"}})]
+
+    (if (= 200 (:status box-response))
+      (http-response/ok (:body box-response))
+      (http-response/bad-request box-response))))
+

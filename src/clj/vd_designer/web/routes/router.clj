@@ -19,7 +19,11 @@
                   {:handler #'aidbox/list-servers}}]
      ["/connect" {:post
                   {:parameters {:body {:box-url string?}}
-                   :handler #'aidbox/connect}}]]
+                   :handler #'aidbox/connect}}]
+     ["/ViewDefinition" {:get
+                         {:parameters {:query {:vd-id  string?
+                                               :box-url string?}}
+                          :handler #'aidbox/get-view-definition}}]]
     ["/auth"
      ["/sso" {:get
               {:summary "Redirect to SSO provider"
