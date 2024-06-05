@@ -366,7 +366,7 @@
               :dispatch [::update-tree-expanded-nodes
                          (into (:current-tree-expanded-nodes db)
                                (mapv mk-expanded-path default-value))]}]]
-           [:dispatch [::set-focus-node (:tree/key value) :name]]]})))
+           [:dispatch [::set-focus-node (:tree/key value)]]]})))
 
 (defn remove-node [node key]
   (cond
