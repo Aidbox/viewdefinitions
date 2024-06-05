@@ -12,7 +12,8 @@
 (reg-event-fx
   ::start
   (fn [{db :db} [_]]
-    {:db db}))
+    {:db db
+     :fx [[:dispatch [::fetch-user-servers]]]}))
 
 (reg-event-db
   ::update-fhir-server-input
@@ -174,6 +175,4 @@
       :method           :get
       :headers          {:authorization (str "Bearer " authentication-token)}
       :on-success       [::update-user-server-list]
-      #_#_:on-failure [::not-connected server-name]}
-     }
-    ))
+      #_#_:on-failure [::not-connected server-name]}}))
