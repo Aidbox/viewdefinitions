@@ -23,8 +23,7 @@
         vds      {:title "View Definitions" :href "/vds"}
         settings {:title "Settings"         :href "/settings"}
 
-        m {:home        [(dissoc home :href)]
-           :vd-list     [home (dissoc vds :href)]
+        m {:vd-list     [home (dissoc vds :href)]
            :settings    [home (dissoc settings :href)]
            :form-edit   [home vds {:title (:name current-vd)}]
            :form-create [home vds {:title "New"}]}]
@@ -56,6 +55,8 @@
      {:db {:view-definitions    []
            :side-menu-collapsed false
            :authorized?         (boolean authentication-token)
+           :onboarding          {:sandbox 0
+                                 :aidbox  0}
            :cfg/fhir-servers    {:servers          default-servers
                                  :used-server-name (-> default-servers
                                                        first
@@ -66,20 +67,19 @@
   (let [route @routes/match
         current-route (-> route :data :name)]
     [layout
-     {:on-menu-click (fn [key]
-                       (rfe/navigate (keyword key)))
+     {:on-menu-click   (fn [key]
+                         (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
-      :menu [{:key  "home"
-              :icon (r/create-element icons/HomeOutlined)
-              :size 64}
-             {:key "vd-list"
-              :icon (r/create-element icons/DatabaseOutlined)
-              :size 64}
-             {:key "settings"
-              :icon (r/create-element icons/SettingOutlined)
-              :size 64}
-             #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs (breadcrumbs current-route)}
+      :with-footer     (when (= "home" (name current-route)) true)
+      :menu            [{:key  "vd-list"
+                         :icon (r/create-element icons/UnorderedListOutlined)
+                         :size 64}
+                        {:key  "settings"
+                         :icon (r/create-element icons/SettingOutlined)
+                         :size 64}
+                        #_{:key  "3"
+                           :icon (r/create-element icons/BookOutlined)}]
+      :breadcrumbs     (breadcrumbs current-route)}
      (if route
        (let [view (:view (:data route))]
          [view @routes/match])

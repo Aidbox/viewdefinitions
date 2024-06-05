@@ -42,7 +42,8 @@
 (defn viewdefinition-list-view []
   (let [used-server-name @(subscribe [::settings-model/used-server-name])
         authorized? @(subscribe [::auth-model/authorized?])]
-    [:div {:style {:max-width "768px"}}
+    [:div {:style {:max-width "768px"
+                   :padding   "0px 24px"}}
      [:> Flex {:align   :center
                :justify :space-between}
       [h1 "View Definitions" {:style {:padding-bottom "8px"}}]

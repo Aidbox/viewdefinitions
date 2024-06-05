@@ -140,7 +140,8 @@
         used-server-name @(subscribe [::m/used-server-name])
         connect-error    @(subscribe [::m/connect-error])
         authorized?      @(subscribe [::auth-model/authorized?])]
-    [:div {:style {:max-width "768px"}}
+    [:div {:style {:max-width "768px"
+                   :padding   "0px 24px"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
                     :align-items     :center

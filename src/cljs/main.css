@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
 
 :root {
   --hover-color: #fafafa;
@@ -42,10 +43,6 @@ div.ant-tabs {
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #f0f0f0 #ffffff;
-}
-
-.ant-menu-item-selected {
-  border-right: 3px solid #1890ff;
 }
 
 .vd-resource > .ant-select-selector {

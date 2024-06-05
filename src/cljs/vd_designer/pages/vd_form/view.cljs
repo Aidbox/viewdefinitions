@@ -24,9 +24,9 @@
   (let [button (fn [overrides]
                  [:> Button
                   (medley/deep-merge
-                    {:class "mobile-icon-button"
-                     :icon  (r/create-element icons/SaveOutlined)}
-                    overrides)
+                   {:class "mobile-icon-button"
+                    :icon  (r/create-element icons/SaveOutlined)}
+                   overrides)
                   "Save"])]
     (if authorized?
       (button {:onClick #(dispatch [::c/save-view-definition])
@@ -46,7 +46,8 @@
                             :display        "flex"
                             :flex-direction "row"
                             :flex-flow      "row"
-                            :overflow       "hidden"}}
+                            :overflow       "hidden"
+                            :padding        "0px 24px"}}
      [:> Panel
       {:minSize 25
        :style   {:display "flex"}}
