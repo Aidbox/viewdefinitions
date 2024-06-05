@@ -32,7 +32,8 @@
 
 (defn- general-leaf [ctx props]
   (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter]}
-        props]
+        props
+        node-focus-id @(subscribe [::m/node-focus])]
     [base-input-row ctx
      [:> Flex {:gap   8
                :align :center
@@ -42,6 +43,8 @@
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
           [input {:defaultValue name
+                  :autoFocus (= node-focus-id (last (:value-path ctx)))
+                  :onBlur #(dispatch [::form-controller/set-focus-node nil])
                   :onKeyDown (fn [event]
                                (when (and (= "Enter" (.-key event))
                                           (.-shiftKey event))
@@ -58,28 +61,33 @@
      [text-input ctx value-key value deletable? settings-form placeholder props]]))
 
 (defn column-leaf [ctx {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
-  [base-input-row ctx
-   [:> Flex {:gap   8
-             :align :center
-             :style {:width "100%"}}
-    [icon/column]
-    (let [errors? @(subscribe [::m/empty-inputs?])]
-      [input {:defaultValue name
-              :placeholder "name"
-              :value name
-              :classNames {:input
-                           (if (and (str/blank? name) errors?)
-                             "default-input red-input"
-                             "default-input")}
-              :style       {:font-style "normal"}
-              :onKeyDown (fn [event]
-                           (when (and (= "Enter" (.-key event))
-                                      (.-shiftKey event))
-                             (on-shift-enter event)))
-              :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
-              :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
-              :onChange    #(change-input-value ctx :name (u/target-value %))}])]
-   [fhir-path-input ctx :path path true column-settings "path" opts]])
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [base-input-row ctx
+     [:> Flex {:gap   8
+               :align :center
+               :style {:width "100%"}}
+      [icon/column]
+      (let [errors? @(subscribe [::m/empty-inputs?])]
+        [input {:defaultValue name
+                :placeholder "name"
+                :value name
+                :autoFocus (= node-focus-id (last (:value-path ctx)))
+                :onBlur #(do 
+                           (dispatch [::form-controller/set-focus-node nil])
+                           (dispatch [::form-controller/eval-view-definition-data]))
+                :classNames {:input
+                             (if (and (str/blank? name) errors?)
+                               "default-input red-input"
+                               "default-input")}
+                :style       {:font-style "normal"}
+                :onKeyDown (fn [event]
+                             (when (and (= "Enter" (.-key event))
+                                        (.-shiftKey event))
+                               (on-shift-enter event)))
+                :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
+                :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
+                :onChange    #(change-input-value ctx :name (u/target-value %))}])]
+     [fhir-path-input ctx :path path true column-settings "path" opts]]))
 
 (defn constant-type->input-type [constant-type]
   (case constant-type
@@ -108,20 +116,21 @@
       opts)]))
 
 (defn where-leaf [ctx {:keys [path]} & {:as opts}]
-  [:> Flex {:gap   8
-            :align :center
-            :style {:width "100%"}}
-   [icon/where]
-   [fhir-path-input
-    ctx
-    :path
-    path
-    true
-    where-settings
-    "expression"
-    opts]])
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [:> Flex {:gap   8
+              :align :center
+              :style {:width "100%"}}
+     [icon/where]
+     [fhir-path-input
+      ctx
+      :path
+      path
+      true
+      where-settings
+      "expression"
+      (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]]))
 
-(defn foreach-expr-leaf [ctx value-key path]
+(defn foreach-expr-leaf [ctx value-key path & {:as opts}]
 [:> Flex {:gap   8
             :align :center
             :style {:width "100%"}}
@@ -132,7 +141,8 @@
     path
     false
     nil
-    "expression"]])
+    "expression"
+    opts]])
 
 ;; Nodes
 
@@ -188,16 +198,18 @@
 
   ;; TODO: try to generalize as other node types
 (defn node-foreach [kind ctx path {:keys [select]}]
-  (general-node kind ctx
-                (fn [_node-key]
-                  (let [ctx (drop-value-path ctx)]
-                    [(tree-leaf (conj (:value-path ctx) :path)
-                                (foreach-expr-leaf ctx kind path))
-                     (nested-node :select
-                                  (-> ctx
-                                      (add-value-path :select)
-                                      (add-fhirpath path))
-                                  select)]))))
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    (general-node kind ctx
+                  (fn [_node-key]
+                    (let [ctx (drop-value-path ctx)]
+                      [(tree-leaf (conj (:value-path ctx) :path)
+                                  (foreach-expr-leaf ctx kind path
+                                                     {:autoFocus (= node-focus-id (last (:value-path ctx)))}))
+                       (nested-node :select
+                                    (-> ctx
+                                        (add-value-path :select)
+                                        (add-fhirpath path))
+                                    select)])))))
 
 (defn determine-key
   "Expects an element of normalized view definition"

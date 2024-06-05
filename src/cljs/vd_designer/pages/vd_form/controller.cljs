@@ -345,6 +345,11 @@
  (fn [db [_ expanded]]
    (assoc db :current-tree-expanded-nodes (set expanded))))
 
+(reg-event-db
+ ::set-focus-node
+ (fn [db [_ node-id]]
+   (assoc db ::m/node-focus node-id)))
+
 (reg-event-fx
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
@@ -360,7 +365,8 @@
             [{:ms       100
               :dispatch [::update-tree-expanded-nodes
                          (into (:current-tree-expanded-nodes db)
-                               (mapv mk-expanded-path default-value))]}]]]})))
+                               (mapv mk-expanded-path default-value))]}]]
+           [:dispatch [::set-focus-node (:tree/key value) :name]]]})))
 
 (defn remove-node [node key]
   (cond
