@@ -476,7 +476,7 @@
          constant-map (get-in db real-path)
          current-type (get-constant-type constant-map)
          new-type (keyword (:type constant-map))
-         new-value (->> (current-type constant-map)
+         new-value (->> (constant-map current-type)
                         (cast-value new-type))]
      (assoc-in db real-path
                (-> constant-map

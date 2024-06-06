@@ -108,7 +108,7 @@
        :name-key      :name
        :name          name
        :value-key     current-type
-       :value         (current-type item)
+       :value         (get item current-type "")
        :placeholder   "constant"
        :settings-form constant-settings
        :input-type    (constant-type->input-type current-type)
