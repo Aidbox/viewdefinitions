@@ -17,10 +17,9 @@
   [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_]]
    {:db         (assoc db ::m/view-definitions-loading true)
-    :http-xhrio (-> (if (db-utils/sandbox? db)
-                     (http.fhir-server/get-view-definitions db)
-                     (http.fhir-server/get-view-definitions-user-server authentication-token
-                                                                        (http.fhir-server/active-server db)))
+    :http-xhrio (-> (http.fhir-server/get-view-definitions
+                     authentication-token
+                     (http.fhir-server/active-server db))
                     (assoc :on-success [::got-view-definitions-success]
                            :on-failure [::get-view-definitions-fail]))}))
 

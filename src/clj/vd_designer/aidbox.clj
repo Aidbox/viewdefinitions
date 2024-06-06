@@ -2,12 +2,15 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [org.httpkit.client :as http-client]
+            [ring.util.http-predicates :as predicates]
+            [martian.core :as martian]
             [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
             [vd-designer.utils.debug :refer [?]]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
-            [vd-designer.repository.user-server :as user-server]))
+            [vd-designer.repository.user-server :as user-server]
+            [jsonista.core :as json]))
 
 (defn init-project [client access-token]
   (portal/rpc:init-project client access-token))
@@ -85,8 +88,46 @@
                          {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
                           "Accept" "application/json"
                           "Content-Type" "application/transit+json"}})]
-
     (if (= 200 (:status box-response))
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
+
+(defn eval-view-definition
+  [{:keys [user db request]}]
+  (let [box-url (-> request :body-params :box-url)
+        view-definition  (-> request :body-params :view-definition)
+        aidbox-client (portal/client box-url)
+        {aidbox-auth-token :user_servers/aidbox_auth_token}
+        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
+        req {:Cookie (str "aidbox-auth-token=" aidbox-auth-token ";")
+             :method 'sof/eval-view
+             :params {:limit 100
+                      :view view-definition}}
+        resp @(martian/response-for aidbox-client :rpc req)]
+
+    (if (= 200 (:status resp))
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
+
+(defn save-view-definition
+  [{:keys [user db request]}]
+  (let [box-url (-> request :body-params :box-url)
+        view-definition (-> request :body-params :vd)
+        vd-id (-> request :body-params :vd-id)
+        {aidbox-auth-token :user_servers/aidbox_auth_token}
+        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
+        request-fn (if vd-id http-client/put http-client/post)
+        url (if vd-id
+              (str box-url "/fhir/ViewDefinition/" vd-id)
+              (str box-url "/fhir/ViewDefinition"))
+        resp @(request-fn
+                url
+                {:headers
+                 {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
+                  "Accept" "application/json"
+                  "Content-Type" "application/json"}
+                 :body (json/write-value-as-string view-definition)})]
+    (if (predicates/success? resp)
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
 

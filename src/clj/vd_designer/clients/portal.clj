@@ -25,9 +25,9 @@
     :body-schema    {:body {:method                  s/Symbol
                             (s/optional-key :params) s/Any}}}])
 
-(defn client [aidbox-portal-url]
+(defn client [url]
   (martian/bootstrap
-    aidbox-portal-url
+    url
     routes
     {:interceptors martian-http/default-interceptors}))
 

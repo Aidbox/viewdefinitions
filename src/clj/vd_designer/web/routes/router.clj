@@ -20,10 +20,19 @@
      ["/connect" {:post
                   {:parameters {:body {:box-url string?}}
                    :handler #'aidbox/connect}}]
-     ["/ViewDefinition" {:get
-                         {:parameters {:query {:vd-id  string?
-                                               :box-url string?}}
-                          :handler #'aidbox/get-view-definition}}]]
+     ["/ViewDefinition"
+      ;; TODO: make prettier
+      ["" {:get
+           {:parameters {:query {:vd-id  string?
+                                 :box-url string?}}
+            :handler #'aidbox/get-view-definition}
+           :post
+           {#_#_:parameters {:body {:box-url string? :vd string?}}
+            :handler #'aidbox/save-view-definition}}]
+      ["/eval"
+       {:post
+        {:parameters {:body {:box-url string? :view-definition string?}}
+         :handler #'aidbox/eval-view-definition}}]]]
     ["/auth"
      ["/sso" {:get
               {:summary "Redirect to SSO provider"

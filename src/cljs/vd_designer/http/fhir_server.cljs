@@ -25,20 +25,7 @@
       (assoc :path path)
       uri/uri-str))
 
-(defn aidbox-rpc [db params]
-  (-> {:method :post
-       :uri    (box-url+path db "/rpc")
-       :params params
-       :format (ajax/json-request-format)}
-      (with-defaults db)))
-
-(defn get-view-definitions [db & [opts]]
-  (-> {:method :get
-       :uri    (box-url+path db "/fhir/ViewDefinition")}
-      (with-defaults db)
-      (merge opts)))
-
-(defn get-view-definitions-user-server [authentication-token {:keys [box-url]}]
+(defn get-view-definitions [authentication-token {:keys [box-url]}]
   {:uri              "/api/aidbox/connect"
    :timeout          8000
    :format           (ajax/json-request-format)
@@ -65,6 +52,17 @@
    :params           {:box-url box-url :vd-id vd-id}
    :headers          {:authorization (str "Bearer " authentication-token)}})
 
+(defn eval-view-definition-user-server [authentication-token {:keys [box-url]} view-definition]
+  {:uri              "/api/aidbox/ViewDefinition/eval"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format
+                       {:keywords? true})
+   :with-credentials true
+   :method           :post
+   :params           {:box-url box-url :view-definition view-definition}
+   :headers          {:authorization (str "Bearer " authentication-token)}})
+
 (defn get-metadata [db & [opts]]
   (-> {:method :get
        :uri    (box-url+path db "/fhir/metadata")}
@@ -77,16 +75,13 @@
        :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))}
       (with-defaults db)))
 
-(defn put-view-definition [db vd-id params]
-  (-> {:method :put
-       :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))
-       :params params
-       :format (ajax/json-request-format)}
-      (with-defaults db)))
-
-(defn post-view-definition [db params]
-  (-> {:method :post
-       :uri    (box-url+path db "/fhir/ViewDefinition/")
-       :params params
-       :format (ajax/json-request-format)}
-      (with-defaults db)))
+(defn post-view-definition [authentication-token {:keys [box-url]} vd]
+  {:uri              "/api/aidbox/ViewDefinition"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format
+                       {:keywords? true})
+   :with-credentials true
+   :method           :post
+   :params           {:box-url box-url :vd vd}
+   :headers          {:authorization (str "Bearer " authentication-token)}})

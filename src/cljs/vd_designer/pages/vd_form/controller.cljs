@@ -1,25 +1,25 @@
 (ns vd-designer.pages.vd-form.controller
   (:require
-    [ajax.core :as ajax]
-    [clojure.string :as str]
-    [clojure.set :as set]
-    [vd-designer.utils.db-utils :as db-utils]
-    [medley.core :as medley]
-    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx]]
-    [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                   get-select-path]]
-    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-    [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-    [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                            remove-decoration
-                                                            uuid->idx]]
-    [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
-    [vd-designer.pages.vd-form.model :as m]
-    [vd-designer.utils.event :refer [response->error]]
-    [vd-designer.utils.utils :as utils]
-    [vd-designer.utils.string :as utils.string]
-    [clojure.walk :as walk]))
+   [ajax.core :as ajax]
+   [clojure.string :as str]
+   [clojure.set :as set]
+   [vd-designer.utils.db-utils :as db-utils]
+   [medley.core :as medley]
+   [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx]]
+   [vd-designer.http.fhir-server :as http.fhir-server]
+   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
+                                                  get-select-path]]
+   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
+   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
+                                                           remove-decoration
+                                                           uuid->idx]]
+   [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.utils.event :refer [response->error]]
+   [vd-designer.utils.utils :as utils]
+   [vd-designer.utils.string :as utils.string]
+   [clojure.walk :as walk]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -89,80 +89,80 @@
                     (assoc :on-failure [::on-vd-error]))}))
 
 (def skip-resources
-#{"DisabledIndex"
-  "SubsSubscription"
-  "AzureContainer"
-  "LoaderFile"
-  "AidboxSubscription"
-  "AidboxQuery"
-  "AuditMessage"
-  "App"
-  "AidboxConfig"
-  "AlphaSDC"
-  "SearchParameter"
-  "Hl7v2Config"
-  "CodeSystem"
-  "GcpServiceAccount"
-  "TerminologyBundleFile"
-  "Concept"
-  "AidboxJobStatus"
-  "Module"
-  "Hl7v2Message"
-  "Operation"
-  "User"
-  "FtrConfig"
-  "BulkExportStatus"
-  "TokenIntrospector"
-  "SDCWorkflowVersion"
-  "Attribute"
-  "AccessPolicy"
-  "AuthConfig"
-  "SDCAddendum"
-  "ConceptMap"
-  "AidboxTask"
-  "SDCDocument"
-  "Role"
-  "Grant"
-  "ui_snippet"
-  "ViewDefinition"
-  "AidboxWorkflow"
-  "SearchQuery"
-  "Mapping"
-  "AidboxTaskLog"
-  "AidboxArchive"
-  "PGSequence"
-  "Lambda"
-  "SDCFormMetadata"
-  "SubsNotification"
-  "AzureAccount"
-  "IndexCreationJob"
-  "SchedulerRuleStatus"
-  "FlatImportStatus"
-  "SeedImport"
-  "ConceptMapRule"
-  "SDCWorkflow"
-  "Entity"
-  "NotificationTemplate"
-  "WebPushSubscription"
-  "Registration"
-  "AwsAccount"
-  "AidboxProfile"
-  "QuestionnaireTheme"
-  "BatchValidationRun"
-  "AidboxMigration"
-  "AidboxJob"
-  "Notification"
-  "IdentityProvider"
-  "ui_history"
-  "Session"
-  "BulkImportStatus"
-  "SDCFormVersion"
-  "Notebook"
-  "Search"
-  "Scope"
-  "DebugSchema"
-  "Client"
-  "BatchValidationError"})
+  #{"DisabledIndex"
+    "SubsSubscription"
+    "AzureContainer"
+    "LoaderFile"
+    "AidboxSubscription"
+    "AidboxQuery"
+    "AuditMessage"
+    "App"
+    "AidboxConfig"
+    "AlphaSDC"
+    "SearchParameter"
+    "Hl7v2Config"
+    "CodeSystem"
+    "GcpServiceAccount"
+    "TerminologyBundleFile"
+    "Concept"
+    "AidboxJobStatus"
+    "Module"
+    "Hl7v2Message"
+    "Operation"
+    "User"
+    "FtrConfig"
+    "BulkExportStatus"
+    "TokenIntrospector"
+    "SDCWorkflowVersion"
+    "Attribute"
+    "AccessPolicy"
+    "AuthConfig"
+    "SDCAddendum"
+    "ConceptMap"
+    "AidboxTask"
+    "SDCDocument"
+    "Role"
+    "Grant"
+    "ui_snippet"
+    "ViewDefinition"
+    "AidboxWorkflow"
+    "SearchQuery"
+    "Mapping"
+    "AidboxTaskLog"
+    "AidboxArchive"
+    "PGSequence"
+    "Lambda"
+    "SDCFormMetadata"
+    "SubsNotification"
+    "AzureAccount"
+    "IndexCreationJob"
+    "SchedulerRuleStatus"
+    "FlatImportStatus"
+    "SeedImport"
+    "ConceptMapRule"
+    "SDCWorkflow"
+    "Entity"
+    "NotificationTemplate"
+    "WebPushSubscription"
+    "Registration"
+    "AwsAccount"
+    "AidboxProfile"
+    "QuestionnaireTheme"
+    "BatchValidationRun"
+    "AidboxMigration"
+    "AidboxJob"
+    "Notification"
+    "IdentityProvider"
+    "ui_history"
+    "Session"
+    "BulkImportStatus"
+    "SDCFormVersion"
+    "Notebook"
+    "Search"
+    "Scope"
+    "DebugSchema"
+    "Client"
+    "BatchValidationError"})
 
 (reg-event-db
  ::get-supported-resource-types-success
@@ -172,14 +172,14 @@
 
 (reg-event-fx
  ::get-view-definition
-  [(inject-cofx :get-authentication-token)]
+ [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_ vd-id]]
    {:db         (assoc db :loading true)
     :http-xhrio (-> (if (db-utils/sandbox? db)
                       (http.fhir-server/get-view-definition db vd-id)
                       (http.fhir-server/get-view-definition-user-server
-                        authentication-token
-                        (http.fhir-server/active-server db) vd-id))
+                       authentication-token
+                       (http.fhir-server/active-server db) vd-id))
                     (assoc :on-success [::choose-vd]
                            :on-failure [::on-vd-error]))}))
 
@@ -204,7 +204,7 @@
       :db (assoc db :current-vd decorated-view :loading false)})))
 
 (defn contains-blank-string? [element]
- (cond
+  (cond
     (string? element) (str/blank? element)
     (map? element) (some (fn [[_ v]] (contains-blank-string? v)) element)
     (vector? element) (some contains-blank-string? element)
@@ -212,8 +212,8 @@
 
 (defn empty-inputs-in-vd? [vd]
   (contains-blank-string?
-    #_"ignore non necessary fields if somehow they ended up to be blank strings"
-    (select-keys vd [:constant :where :select :column :name :resource])))
+   #_"ignore non necessary fields if somehow they ended up to be blank strings"
+   (select-keys vd [:constant :where :select :column :name :resource])))
 
 (def required-fields #{:name :resource :select})
 
@@ -248,11 +248,11 @@
 
 (defn strip-empty-collections [vd]
   (medley/remove-kv
-    (fn [k v]
-      (and (not (= k :select))
-           (coll? v)
-           (empty? v)))
-    vd))
+   (fn [k v]
+     (and (not (= k :select))
+          (coll? v)
+          (empty? v)))
+   vd))
 
 ;; remove when #4390 is resolves
 (defn remove-meta [vd]
@@ -260,7 +260,8 @@
 
 (reg-event-fx
  ::eval-view-definition-data
- (fn [{:keys [db]} _]
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} _]
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
@@ -274,16 +275,18 @@
         (let [fields (mapv name missing-required-fields)
               fields-str (str/join ", " fields)]
           (utils.string/format
-            "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
+           "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
 
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
-        :http-xhrio (-> (http.fhir-server/aidbox-rpc db {:method 'sof/eval-view
-                                                         :params {:limit 100
-                                                                  :view  view-definition}})
-                        (assoc :on-success [::on-eval-view-definition-success]
-                               :on-failure [::on-eval-view-definition-error]))}))))
+        :http-xhrio (->
+                     (http.fhir-server/eval-view-definition-user-server
+                      authentication-token
+                      (http.fhir-server/active-server db)
+                      view-definition)
+                     (assoc :on-success [::on-eval-view-definition-success]
+                            :on-failure [::on-eval-view-definition-error]))}))))
 
 (reg-event-db
  ::reset-vd-error
@@ -383,37 +386,40 @@
   (update-in vd path utils/insert-at 0 element))
 
 (reg-event-fx
-  ::delete-tree-element
-  (fn [{:keys [db]} [_ path]]
-    {:fx [[:dispatch [::update-tree-expanded-nodes
-                      (->> (:current-tree-expanded-nodes db)
-                           (remove #(utils/vector-starts-with % path)))]]]
-     :db (let [real-path (uuid->idx path (:current-vd db))]
-           (update db :current-vd remove-tree-element real-path))}))
+ ::delete-tree-element
+ (fn [{:keys [db]} [_ path]]
+   {:fx [[:dispatch [::update-tree-expanded-nodes
+                     (->> (:current-tree-expanded-nodes db)
+                          (remove #(utils/vector-starts-with % path)))]]]
+    :db (let [real-path (uuid->idx path (:current-vd db))]
+          (update db :current-vd remove-tree-element real-path))}))
 
 (reg-event-fx
-  ::save-view-definition
-  (fn [{:keys [db]} [_]]
-    (let [view-definition (-> (:current-vd db)
-                              remove-decoration
-                              strip-empty-collections
-                              remove-meta)
-          empty-fields? (empty-inputs-in-vd? view-definition)
-          req (if (:id view-definition)
-                (http.fhir-server/put-view-definition db
-                                                      (:id view-definition)
-                                                      view-definition)
-                (http.fhir-server/post-view-definition db
-                                                       view-definition))]
-      (if empty-fields?
-        {:db (assoc db ::m/empty-inputs? true)}
-        {:db (-> db
-                 (assoc ::m/save-view-definition-loading true
-                        ::m/save-loading true)
-                 (dissoc ::m/empty-inputs?))
-         :http-xhrio (assoc req
-                            :on-success [::save-view-definition-success]
-                            :on-failure [::save-view-definition-failure])}))))
+ ::save-view-definition
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} [_]]
+   (let [view-definition (-> (:current-vd db)
+                             remove-decoration
+                             strip-empty-collections
+                             remove-meta)
+         empty-fields? (empty-inputs-in-vd? view-definition)
+         req (cond->
+               (http.fhir-server/post-view-definition
+                 authentication-token
+                 (http.fhir-server/active-server db)
+                 view-definition)
+               (:id view-definition)
+               (assoc-in [:params :vd-id] (:id view-definition)))]
+     (js/console.log "req" req)
+     (if empty-fields?
+       {:db (assoc db ::m/empty-inputs? true)}
+       {:db (-> db
+                (assoc ::m/save-view-definition-loading true
+                       ::m/save-loading true)
+                (dissoc ::m/empty-inputs?))
+        :http-xhrio (assoc req
+                           :on-success [::save-view-definition-success]
+                           :on-failure [::save-view-definition-failure])}))))
 
 (reg-event-fx
  ::save-view-definition-success
@@ -506,8 +512,8 @@
 (defn adjust-indexes-of-path-to [path-from path-to]
   (let [path-from-root (-> path-from pop pop)]
     (if
-      (<= (count path-to)
-          (count path-from-root))
+     (<= (count path-to)
+         (count path-from-root))
       path-to
 
       (let [node-index (-> path-from pop peek)
@@ -538,25 +544,25 @@
 (defn move
   "Assuming, vd is normalized and decorated.
    Paths contain indexes: [:select 0 ...]"
-   ([vd path-from path-to]
-    (move vd path-from path-to 0))
-   ([vd path-from path-to drop-position]
-    (if (number? (peek path-from))
-      (move-leaf vd path-from path-to)
-      (move-node vd path-from path-to drop-position))))
+  ([vd path-from path-to]
+   (move vd path-from path-to 0))
+  ([vd path-from path-to drop-position]
+   (if (number? (peek path-from))
+     (move-leaf vd path-from path-to)
+     (move-node vd path-from path-to drop-position))))
 
 (defn move* [vd path-from path-to drop-position]
   (move vd (uuid->idx path-from vd) (uuid->idx path-to vd) drop-position))
 
 (reg-event-db
-  ::change-tree-elements-order
-  (fn [db [_ from-node to-node drop-position]]
-    (update db :current-vd move* from-node to-node drop-position)))
+ ::change-tree-elements-order
+ (fn [db [_ from-node to-node drop-position]]
+   (update db :current-vd move* from-node to-node drop-position)))
 
 (reg-event-db
-  ::change-draggable-node
-  (fn [db [_ draggable]]
-    (assoc db ::m/draggable-node draggable)))
+ ::change-draggable-node
+ (fn [db [_ draggable]]
+   (assoc db ::m/draggable-node draggable)))
 
 (defn convert-constants [constant]
   (when-let [type-fhir (get-constant-type constant)] ; valueString
@@ -574,25 +580,25 @@
    (assoc db ::m/autocomplete-options data)))
 
 (reg-fx
-  ::call-autocomplete
+ ::call-autocomplete
  (fn [[args autocomplete-options]]
    (-> (js/Promise.resolve
-          (antlr/complete args))
-        (.then #(dispatch [::update-autocomplete-options
-                           {:options %
-                            :ref (:ref autocomplete-options)
-                            :request autocomplete-options}]))
-        (.catch #(js/console.error %)))))
+        (antlr/complete args))
+       (.then #(dispatch [::update-autocomplete-options
+                          {:options %
+                           :ref (:ref autocomplete-options)
+                           :request autocomplete-options}]))
+       (.catch #(js/console.error %)))))
 
 (reg-event-fx
-  ::update-autocomplete-text
-  (fn [{{spec-map   :spec-map
-         current-vd :current-vd} :db}
-       [_ {:keys [text cursor-start _cursor-end fhirpath-prefix] :as new-ctx}]]
-    {::call-autocomplete [{:type (:resource current-vd)
-                           :fhirSchemas spec-map
-                           :forEachExpressions fhirpath-prefix
-                           :externalConstants (mapv convert-constants (:constant current-vd))
-                           :fhirpath text
-                           :cursor cursor-start}
-                          (assoc new-ctx :resource-type (:resource current-vd))]}))
+ ::update-autocomplete-text
+ (fn [{{spec-map   :spec-map
+        current-vd :current-vd} :db}
+      [_ {:keys [text cursor-start _cursor-end fhirpath-prefix] :as new-ctx}]]
+   {::call-autocomplete [{:type (:resource current-vd)
+                          :fhirSchemas spec-map
+                          :forEachExpressions fhirpath-prefix
+                          :externalConstants (mapv convert-constants (:constant current-vd))
+                          :fhirpath text
+                          :cursor cursor-start}
+                         (assoc new-ctx :resource-type (:resource current-vd))]}))
