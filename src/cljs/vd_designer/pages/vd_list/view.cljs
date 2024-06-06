@@ -1,13 +1,12 @@
 (ns vd-designer.pages.vd-list.view
-  (:require [antd :refer [Flex]]
+  (:require [antd :refer [Flex Typography]]
             [clojure.string :as str]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [reitit.frontend.easy :as rfe]
-            [vd-designer.components.heading :refer [h1]]
+            [vd-designer.auth.model :as auth-model]
             [vd-designer.components.list :refer [vd-data-list]]
             [vd-designer.components.modal :as modal]
-            [vd-designer.auth.model :as auth-model]
             [vd-designer.pages.settings.model :as settings-model]
             [vd-designer.pages.vd-list.components :refer [add-view-definition
                                                           search-input]]
@@ -46,11 +45,12 @@
                    :padding   "0px 24px"}}
      [:> Flex {:align   :center
                :justify :space-between}
-      [h1 "View Definitions" {:style {:padding-bottom "8px"}}]
+      [:> Typography.Title {:level 1 :style {:margin-top 0}} "View Definitions"]
       (when used-server-name
         [:<>
          [import-modal]
          [add-view-definition]])]
+
      [:div
       [search-input]
       [vd-data-list

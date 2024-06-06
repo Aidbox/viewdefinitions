@@ -1,23 +1,23 @@
 (ns vd-designer.pages.vd-form.components
-  (:require
-   ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
-   [clojure.string :as str]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]]
-   [reagent.core :as r]
-   [vd-designer.components.button :as button]
-   [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
-   [vd-designer.components.heading :refer [h4]]
-   [vd-designer.components.input :refer [input input-number]]
-   [vd-designer.components.select :as select]
-   [vd-designer.components.tag :as tag]
-   [vd-designer.components.tree :refer [calc-key]]
-   [vd-designer.pages.vd-form.controller :as c]
-   [vd-designer.pages.vd-form.model :as m]
-   [vd-designer.utils.event :as u]
-   [vd-designer.utils.js :refer [find-elements get-element-by-id remove-class
-                                 toggle-class]]))
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input
+                          Popover Row Select Space Typography]]
+            [clojure.string :as str]
+            [medley.core :as medley]
+            [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.dropdown :refer [add-dropdown
+                                                     dropdown-item-img]]
+            [vd-designer.components.input :refer [input input-number]]
+            [vd-designer.components.select :as select]
+            [vd-designer.components.tag :as tag]
+            [vd-designer.components.tree :refer [calc-key]]
+            [vd-designer.pages.vd-form.controller :as c]
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.js :refer [find-elements get-element-by-id
+                                          remove-class toggle-class]]))
 
 ;;;; Tags
 
@@ -481,7 +481,7 @@
               :colon      false
               :labelAlign :left}
              props)
-    [h4 title]
+    [:> Typography.Title {:level 4 :style {:margin-top 0}} title]
     items
     [:div {:style {:textAlign :right}}
      [:> Space
@@ -492,41 +492,3 @@
       [button/button "Save" {:size     "small"
                              :type     "primary"
                              :htmlType "submit"}]]]]])
-
-;; After removing the list element, mapping between names and keys is broken:
-;;
-;;  [...
-;;   {:name 2, :key 2, ...}
-;;   ...] ->
-;;  [...
-;;   {:name 1, :key 2, ...}
-;;   ...]
-;;
-;; In practice, setting key to be equal to name allows to maintain the correct order of list elements.
-;; If for some reason you need the key that the list item originally had, :fieldKey is still available.
-(defn- set-keys-to-names [fields]
-  (mapv (fn [m]
-          (assoc m :key (:name m)))
-        fields))
-
-(defn popover-form-list [name render-list-items]
-  [:> Form.List {:name name}
-   (fn [raw-fields actions]
-     (let [fields (-> raw-fields
-                      (js->clj :keywordize-keys true)
-                      set-keys-to-names)
-           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-       (r/as-element
-        [:div
-         (map (fn [{:keys [key name]}]
-                ^{:key key}
-                [:> Space {:align "baseline"}
-                 [:<>
-                  (render-list-items key)
-                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
-              fields)
-         [:> Form.Item
-          [button/icon "Add" icons/PlusOutlined
-           {:type    "dashed"
-            :block   true
-            :onClick #(add)}]]])))])

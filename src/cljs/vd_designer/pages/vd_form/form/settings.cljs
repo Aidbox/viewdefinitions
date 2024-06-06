@@ -1,11 +1,14 @@
 (ns vd-designer.pages.vd-form.form.settings
-  (:require [antd :refer [DatePicker Form Input Modal Select Switch Typography]]
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [DatePicker Form Input Modal Select Space Switch
+                          Typography]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.select :as select]
-            [vd-designer.pages.vd-form.components :refer [popover-form-list
-                                                          settings-base-form
+            [vd-designer.pages.vd-form.components :refer [settings-base-form
                                                           toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
@@ -13,6 +16,44 @@
             [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]
             [vd-designer.pages.vd-form.model :as m]
             [vd-designer.utils.string :as str.utils]))
+
+;; After removing the list element, mapping between names and keys is broken:
+;;
+;;  [...
+;;   {:name 2, :key 2, ...}
+;;   ...] ->
+;;  [...
+;;   {:name 1, :key 2, ...}
+;;   ...]
+;;
+;; In practice, setting key to be equal to name allows to maintain the correct order of list elements.
+;; If for some reason you need the key that the list item originally had, :fieldKey is still available.
+(defn- set-keys-to-names [fields]
+  (mapv (fn [m]
+          (assoc m :key (:name m)))
+        fields))
+
+(defn popover-form-list [name render-list-items]
+  [:> Form.List {:name name}
+   (fn [raw-fields actions]
+     (let [fields (-> raw-fields
+                      (js->clj :keywordize-keys true)
+                      set-keys-to-names)
+           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+       (r/as-element
+        [:div
+         (map (fn [{:keys [key name]}]
+                ^{:key key}
+                [:> Space {:align "baseline"}
+                 [:<>
+                  (render-list-items key)
+                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
+              fields)
+         [:> Form.Item
+          [button/icon "Add" icons/PlusOutlined
+           {:type    "dashed"
+            :block   true
+            :onClick #(add)}]]])))])
 
 (defn- save-popover [values ctx & extra-actions]
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))
@@ -98,7 +139,7 @@
 (defn where-settings [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
-     {:onFinish      #(save-popover % ctx)
+     {:onFinish     #(save-popover % ctx)
       :initialValues (vd-subset vd ctx)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
@@ -106,7 +147,7 @@
 (defn column-settings [ctx]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
-     {:onFinish      #(save-popover % ctx)
+     {:onFinish     #(save-popover % ctx)
       :initialValues (vd-subset vd ctx)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"}
