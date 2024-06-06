@@ -11,33 +11,14 @@
   [text & {:as opts}]
   [:> Button opts text])
 
-(defn add-button-config [& {:as opts}]
-  (medley/deep-merge
-   {:colorText               "#7972D3"
-    :defaultBorderColor      "#7972D399"
-
-    :defaultHoverColor       "#7972D3"
-    :defaultHoverBorderColor "#7972D399"
-    :defaultHoverBg          "var(--hover-color)"}
-   opts))
-
-
 (defn add [text & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button (add-button-config)}}}
-   [:> Button (medley/deep-merge {} opts)
-    [:> Space (r/create-element icons/PlusOutlined) text]]])
+  [:> Button (medley/deep-merge {} opts)
+   [:> Space (r/create-element icons/PlusOutlined) text]])
 
 (defn ghost [text icon & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM          8
-                                                    :defaultGhostColor        "#B5B5BC"
-                                                    :defaultGhostBorderColor  "#B5B5BC"
-
-                                                    :defaultActiveColor       "#7972D399"
-                                                    :defaultActiveBorderColor "#7972D3"
-
-                                                    :defaultHoverBorderColor  "#B5B5BC"
-                                                    :defaultHoverColor        "#B5B5BC"
-                                                    :textHoverBg              "none"}}}}
+  [:> ConfigProvider {:theme {:components {:Button {:paddingInlineSM         8
+                                                    :defaultGhostColor       "#B5B5BC"
+                                                    :defaultGhostBorderColor "#B5B5BC"}}}}
    [button text (medley/deep-merge
                  {:type  :default
                   :size  :small
@@ -48,20 +29,19 @@
                  opts)]])
 
 (defn invisible-icon [icon & {:as opts}]
-  [:> ConfigProvider {:theme {:components {:Button {:defaultGhostColor        "#B5B5BC"
-                                                    :defaultGhostBorderColor  "#B5B5BC"
-                                                    :paddingBlock             0
-                                                    :paddingInline            0
-                                                    :defaultHoverColor        "#6d6d78"}}}}
+  [:> ConfigProvider {:theme {:components {:Button {:defaultGhostColor       "#B5B5BC"
+                                                    :defaultGhostBorderColor "#B5B5BC"
+                                                    :paddingBlock            0
+                                                    :paddingInline           0}}}}
    [button "" (medley/deep-merge
-                 {:type  :default
-                  :ghost true
-                  :class "invisible-button"
-                  :icon  (r/create-element icon)
-                  :style {:border        :none
-                          :height        "30px"
-                          :border-radius "5px"}}
-                 opts)]])
+               {:type  :default
+                :ghost true
+                :class "invisible-button"
+                :icon  (r/create-element icon)
+                :style {:border        :none
+                        :height        "30px"
+                        :border-radius "5px"}}
+               opts)]])
 
 (defn icon [text icon & {:as opts}]
   [button text (medley/deep-merge

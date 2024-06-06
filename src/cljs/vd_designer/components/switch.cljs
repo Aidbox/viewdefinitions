@@ -12,6 +12,6 @@
                  :gap         "4px"}}
    [code-label "YAML"]
    [:> Switch (-> {:size :small
-                   :style {:background "#1677ff"}}
+                   :style {:background "var(--ant-color-primary)"}}
                   (medley/deep-merge opts))]
    [code-label "JSON"]])
