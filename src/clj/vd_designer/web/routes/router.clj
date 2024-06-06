@@ -32,7 +32,7 @@
             :handler #'aidbox/save-view-definition}}]
       ["/eval"
        {:post
-        {:parameters {:body {:box-url string? :view-definition string?}}
+        {:parameters {:body {:box-url string? :vd string?}}
          :handler #'aidbox/eval-view-definition}}]]]
     ["/auth"
      ["/sso" {:get

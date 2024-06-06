@@ -59,7 +59,7 @@
                        {:keywords? true})
    :with-credentials true
    :method           :post
-   :params           {:box-url box-url :view-definition view-definition}
+   :params           {:box-url box-url :vd view-definition}
    :headers          {:authorization (str "Bearer " authentication-token)}})
 
 (defn get-metadata [db]

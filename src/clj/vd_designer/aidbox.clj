@@ -83,7 +83,7 @@
                          (merge {"Accept"       "application/json"
                                  "Content-Type" "application/transit+json"}
                                 (:headers public-server))})]
-    (if (= 200 (:status box-response))
+    (if (predicates/success? box-response)
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
@@ -99,7 +99,7 @@
                          {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
                           "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
-    (if (= 200 (:status box-response))
+    (if (predicates/success? box-response)
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
@@ -120,7 +120,7 @@
                          {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
                           "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
-    (if (= 200 (:status box-response))
+    (if (predicates/success? box-response)
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
@@ -132,7 +132,7 @@
                          (-> {"Accept"       "application/json"
                               "Content-Type" "application/transit+json"}
                              (merge (:headers public-server)))})]
-    (if (= 200 (:status box-response))
+    (if (predicates/success? box-response)
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
@@ -143,10 +143,9 @@
       (public-server:get-vd ctx public-server)
       (auth-middleware/unauthorized-wo-token #'user-server:get-vd ctx))))
 
-(defn eval-view-definition
-  [{:keys [user db request]}]
+(defn eval-vd-user-server [{:keys [user db request]}]
   (let [box-url (-> request :body-params :box-url)
-        view-definition (-> request :body-params :view-definition)
+        view-definition (-> request :body-params :vd)
         aidbox-client (portal/client box-url)
         {aidbox-auth-token :user_servers/aidbox_auth_token}
         (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
@@ -155,13 +154,32 @@
              :params {:limit 100
                       :view  view-definition}}
         resp @(martian/response-for aidbox-client :rpc req)]
-
-    (if (= 200 (:status resp))
+    (if (predicates/success? resp)
       (http-response/ok (:body resp))
       (http-response/bad-request resp))))
 
-(defn save-view-definition
-  [{:keys [user db request]}]
+(defn eval-vd-public-server
+  [request public-server]
+  (let [box-url (-> request :body-params :box-url)
+        aidbox-client (portal/client box-url)
+        view-definition (-> request :body-params :vd)
+        req {:authorization (-> public-server :headers  (get "Authorization"))
+             :method 'sof/eval-view
+             :params {:limit 100
+                      :view  view-definition}}
+        resp @(martian/response-for aidbox-client :rpc req)]
+    (if (predicates/success? resp)
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
+
+(defn eval-view-definition
+  [{:keys [request cfg] :as ctx}]
+  (when-let [box-url (-> request :body-params :box-url)]
+    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
+      (eval-vd-public-server request public-server)
+      (auth-middleware/unauthorized-wo-token #'eval-vd-user-server ctx))))
+
+(defn save-vd-user-server [{:keys [db request user]}]
   (let [box-url (-> request :body-params :box-url)
         view-definition (-> request :body-params :vd)
         vd-id (-> request :body-params :vd-id)
@@ -181,4 +199,30 @@
     (if (predicates/success? resp)
       (http-response/ok (:body resp))
       (http-response/bad-request resp))))
+
+(defn save-vd-public-server [request public-server]
+  (let [box-url (-> request :body-params :box-url)
+        vd-id (-> request :body-params :vd-id)
+        view-definition (-> request :body-params :vd)
+        request-fn (if vd-id http-client/put http-client/post)
+        url (if vd-id
+              (str box-url "/fhir/ViewDefinition/" vd-id)
+              (str box-url "/fhir/ViewDefinition"))
+        resp @(request-fn
+                url
+                {:headers
+                 (merge {"Accept"       "application/json"
+                         "Content-Type" "application/json"}
+                        (:headers public-server))
+                 :body (json/write-value-as-string view-definition)})]
+    (if (predicates/success? resp)
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
+
+(defn save-view-definition
+  [{:keys [request cfg] :as ctx}]
+  (when-let [box-url (-> request :body-params :box-url)]
+    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
+      (save-vd-public-server request public-server)
+      (auth-middleware/unauthorized-wo-token #'save-vd-user-server ctx))))
 
