@@ -91,15 +91,12 @@
 (defn modal-view []
   (let [original-server @(subscribe [::m/original-server])
         fhir-server @(subscribe [::m/fhir-server-config])
-        sandbox-servers @(subscribe [::m/sandbox-servers])
         edit? (:server-name original-server)
         errors-set (cond-> #{}
-                     (some-empty-fields? fhir-server) (conj :empty-field)
-                     (name-exists? (:server-name fhir-server) sandbox-servers original-server) (conj :name-clash))]
+                     (some-empty-fields? fhir-server) (conj :empty-field))]
     [:> Modal {:open      (boolean original-server)
                :title     (if edit? "Edit server" "Add server")
                :ok-text   (if edit? "Confirm" "Add")
-               :on-ok     #(dispatch [::c/add-server fhir-server])
                :ok-button-props {:disabled (not-empty errors-set)}
                :on-cancel #(dispatch [::c/cancel-edit])}
      [fhir-config-form fhir-server errors-set]]))
@@ -121,16 +118,8 @@
     :else
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
-(defn delete-server-modal [server-name]
-  (modal/modal-confirm
-   {:title   "Delete ViewDefinition"
-    :ok-text "Delete"
-    :on-ok   #(dispatch [::c/delete server-name])
-    :content (r/as-element
-              [:div
-               (string-utils/format "Are you sure you want to delete server %s?" server-name)])}))
-
 (defn- add-server-button [authorized?]
+  ;; TODO: replace with a link to Aidbox
   (if authorized?
     [button/add "New server" {:on-click #(dispatch [::c/new-server])}]
     [auth-required [button/add "New server"]]))
@@ -153,19 +142,14 @@
      ;[:> Divider]
      ; TODO: add label saying these servers are public
      [components.list/data-list
-      :dataSource (concat
-                    @(subscribe [::m/user-servers])
-                    @(subscribe [::m/sandbox-servers]))
+      :dataSource @(subscribe [::m/user-servers])
       :renderItem
       (fn [raw-item]
         (r/as-element
          (let [{:keys [server-name box-url] :as server-config}
                (js-obj->clj-map raw-item)]
            [:> List.Item
-            {:actions (cond-> [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]
-                        authorized?
-                        (conj (r/as-element [:a {:onClick #(dispatch [::c/start-edit server-config])} "edit"])
-                              (r/as-element [:a {:onClick #(delete-server-modal server-name)} "delete"])))}
+            {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
             [:> List.Item.Meta
              {:title
               (r/as-element

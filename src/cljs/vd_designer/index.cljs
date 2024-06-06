@@ -30,8 +30,6 @@
 
 ;;;; Initialization
 
-(def default-servers {})
-
 (reg-event-fx
   ::initialize-db
   [(inject-cofx :get-authentication-token)]
@@ -41,11 +39,7 @@
       {:db {:view-definitions    []
             :side-menu-collapsed false
             :authorized?         (boolean authentication-token)
-            :cfg/fhir-servers    {:sandbox/servers  default-servers
-                                  :used-server-name (-> default-servers
-                                                        first
-                                                        second
-                                                        :server-name)}}})))
+            :cfg/fhir-servers    {:used-server-name nil}}})))
 
 (defn current-page []
   (let [route @routes/match

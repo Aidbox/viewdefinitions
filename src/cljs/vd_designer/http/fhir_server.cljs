@@ -3,11 +3,10 @@
             [lambdaisland.uri :as uri]))
 
 (defn active-server [db]
-  (let [{:keys [sandbox/servers used-server-name]}
-        (:cfg/fhir-servers db)
-        user-servers (:user/servers (:cfg/fhir-servers db))]
-    (or (servers used-server-name)
-        (user-servers used-server-name))))
+  (let [{user-servers :user/servers
+         used-server-name :used-server-name}
+        (:cfg/fhir-servers db)]
+    (user-servers used-server-name)))
 
 (defn- with-defaults [req db]
   (merge {:headers          (-> db active-server :headers)
@@ -63,12 +62,11 @@
    :params           {:box-url box-url :view-definition view-definition}
    :headers          {:authorization (str "Bearer " authentication-token)}})
 
-(defn get-metadata [db & [opts]]
+(defn get-metadata [db]
   (-> {:method :get
        :uri    (box-url+path db "/fhir/metadata")}
       (with-defaults db)
-      (dissoc :headers)
-      (merge opts)))
+      (dissoc :headers)))
 
 (defn delete-view-definition [db vd-id]
   (-> {:method :delete

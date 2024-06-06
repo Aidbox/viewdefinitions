@@ -3,7 +3,6 @@
   [clojure.string :as str]
   [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
   [vd-designer.http.fhir-server :as http.fhir-server]
-  [vd-designer.utils.db-utils :as db-utils]
   [vd-designer.utils.event :refer [response->error]]
   [vd-designer.pages.vd-list.model :as m]))
 

@@ -9,12 +9,6 @@
     (:fhir-server db)))
 
 (reg-sub
-  ::sandbox-servers
-  (fn [db _]
-    (or (-> db :cfg/fhir-servers :sandbox/servers vals)
-        [])))
-
-(reg-sub
   ::user-servers
   (fn [db _]
     (or (-> db :cfg/fhir-servers :user/servers vals)

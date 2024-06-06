@@ -18,8 +18,6 @@
       {:get
        {:handler #'aidbox/list-servers}}]
      ["/connect"
-      ;; TODO: verify
-      {:middleware [middleware.auth/authorize]}
       {:post
        {:parameters {:body {:box-url string?}}
         :handler    #'aidbox/connect}}]

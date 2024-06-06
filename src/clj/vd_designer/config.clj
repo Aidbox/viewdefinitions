@@ -47,8 +47,8 @@
    :public-fhir-servers
    [{:server-name "Aidbox Default"
      :box-url     "https://viewdefs.aidbox.app"
-     :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
+     :headers     {"Authorization" "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
 
     {:server-name "Aidbox Default 2"
      :box-url     "https://viewdefinitions.edge.aidbox.app"
-     :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}]})
+     :headers     {"Authorization" "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}]})

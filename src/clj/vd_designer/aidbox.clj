@@ -71,11 +71,28 @@
          (map #(select-keys % [:box-url :server-name]))
          (http-response/ok))))
 
-(defn connect [{:keys [user db request]}]
+(defn public-fhir-server [public-fhir-servers box-url]
+  (some->> public-fhir-servers
+           (filter #(-> % :box-url (= box-url)))
+           first))
+
+(defn public-server:connect [box-url public-server]
+  (let [box-response @(http-client/get
+                        (str box-url "/fhir/ViewDefinition")
+                        {:headers
+                         (merge {"Accept"       "application/json"
+                                 "Content-Type" "application/transit+json"}
+                                (:headers public-server))})]
+    (if (= 200 (:status box-response))
+      (http-response/ok (:body box-response))
+      (http-response/bad-request box-response))))
+
+(defn user-server:connect [{:keys [db request user]}]
   (let [box-url (-> request :body-params :box-url)
+
         {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url
-          db (:accounts/id user) box-url)
+        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
+
         box-response @(http-client/get
                         (str box-url "/fhir/ViewDefinition")
                         {:headers
@@ -86,10 +103,11 @@
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
-(defn public-fhir-server [public-fhir-servers box-url]
-  (some->> public-fhir-servers
-           (filter #(-> % :box-url (= box-url)))
-           first))
+(defn connect [{:keys [request cfg] :as ctx}]
+  (let [box-url (-> request :body-params :box-url)]
+    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
+      (public-server:connect box-url public-server)
+      (auth-middleware/unauthorized-wo-token #'user-server:connect ctx))))
 
 (defn user-server:get-vd [{:keys [db request user]}]
   (let [{:keys [box-url vd-id]} (-> request :query-params)
