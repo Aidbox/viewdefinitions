@@ -240,6 +240,14 @@
             :else f))
         select)))))
 
+(defn strip-empty-where-nodes [vd]
+  (let [blank? #(and (%1 %2) (str/blank? (%1 %2)))]
+    (update
+     vd
+     :where
+     (fn [where]
+       (remove #(blank? :path %) where)))))
+
 (defn strip-empty-collections [vd]
   (medley/remove-kv
     (fn [k v]
@@ -258,8 +266,9 @@
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
-                             remove-meta
-                             strip-empty-select-nodes)
+                             remove-meta 
+                             strip-empty-select-nodes
+                             strip-empty-where-nodes) 
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
