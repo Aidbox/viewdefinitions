@@ -14,12 +14,15 @@
   (ring/router
    ["/api"
     ["/aidbox"
-     {:middleware [middleware.auth/authorize]}
-     ["/servers" {:get
-                  {:handler #'aidbox/list-servers}}]
-     ["/connect" {:post
-                  {:parameters {:body {:box-url string?}}
-                   :handler #'aidbox/connect}}]
+     ["/servers"
+      {:get
+       {:handler #'aidbox/list-servers}}]
+     ["/connect"
+      ;; TODO: verify
+      {:middleware [middleware.auth/authorize]}
+      {:post
+       {:parameters {:body {:box-url string?}}
+        :handler    #'aidbox/connect}}]
      ["/ViewDefinition"
       ;; TODO: make prettier
       ["" {:get

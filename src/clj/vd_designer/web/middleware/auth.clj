@@ -12,7 +12,7 @@
           (str/split #"\?")
           first))
 
-(defn jwt->user [handler ctx]
+(defn jwt->user [ctx]
   (let [[schema jwt] (some-> ctx
                              (get-in [:request :headers "authorization"])
                              (str/split #" "))
@@ -20,16 +20,19 @@
                         (get-in [:request :headers "referer"])
                         truncate-referer)]
     (if (not= schema "Bearer")
-      (http-response/unauthorized)
+      nil
       (let [jwt-validation-result (jwt/validate (:cfg ctx) referer jwt)]
         (if (:error jwt-validation-result)
-          (http-response/unauthorized)
-          (-> ctx
-              (assoc :user {:accounts/id (:result jwt-validation-result)})
-              (handler)))))))
+          nil
+          {:accounts/id (:result jwt-validation-result)})))))
+
+(defn unauthorized-wo-token [handler ctx]
+  (if-let [user (jwt->user ctx)]
+    (handler (merge ctx {:user user}))
+    (http-response/unauthorized)))
 
 (def authorize
   {:name ::jwt->user
    :wrap (fn [handler]
            (fn [req]
-             (jwt->user handler req)))})
+             (unauthorized-wo-token handler req)))})

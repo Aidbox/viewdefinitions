@@ -3,17 +3,17 @@
             [matcher-combinators.test :refer [match?]]
             [ring.util.http-response :as http-response]
             [vd-designer.service.jwt :as jwt]
-            [vd-designer.web.middleware.auth :refer [jwt->user]]))
+            [vd-designer.web.middleware.auth :refer [unauthorized-wo-token]]))
 
-(deftest jwt->user-test
+(deftest unauthorized-wo-token-test
   (testing "header is missing"
     (is (match?
           (http-response/unauthorized)
-          (jwt->user identity {:request {}}))))
+          (unauthorized-wo-token identity {:request {}}))))
   (testing "wrong authorization schema"
     (is (match?
           (http-response/unauthorized)
-          (jwt->user
+          (unauthorized-wo-token
             identity
             {:request
              {:headers
@@ -28,7 +28,7 @@
           invalid-jwt (jwt/issue invalid-cfg "<account-id>")]
       (is (match?
             (http-response/unauthorized)
-            (jwt->user
+            (unauthorized-wo-token
               identity
               {:cfg valid-cfg
                :request
@@ -41,7 +41,7 @@
           invalid-jwt (jwt/issue cfg "<account-id>")]
       (is (match?
             {:user {:accounts/id "<account-id>"}}
-            (jwt->user
+            (unauthorized-wo-token
               identity
               {:cfg cfg
                :request

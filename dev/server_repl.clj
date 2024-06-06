@@ -40,9 +40,14 @@
 
   (def jwt (vd-designer.service.jwt/issue (:cfg ctx) 1))
 
-  (app {:request-method :get
-        :uri            "/api/aidbox/servers"
-        :headers        {"authorization" (str "Bearer " jwt)}}))
+  (-> (app {:request-method :get
+            :uri            "/api/aidbox/servers"
+            :headers        {"authorization" (str "Bearer " jwt)}})
+      :body
+      slurp
+      jsonista.core/read-value)
+
+  )
 
 ;;; Try out applying migrations
 (comment

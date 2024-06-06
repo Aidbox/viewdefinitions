@@ -95,12 +95,13 @@
               (assoc ::request-sent-by server-name)
               (update :cfg/fhir-servers dissoc :used-server-name))
       :http-xhrio
-      (if (db-utils/sandbox? db server-name)
-        [(http/get-metadata db {:uri        (-> box-url uri/uri
-                                                (assoc :path "/fhir/metadata")
-                                                uri/uri-str)
-                                :on-success [::get-metadata-success server-name]
-                                :on-failure [::not-connected server-name]})
+      [(http/get-metadata db {:uri        (-> box-url uri/uri
+                                              (assoc :path "/fhir/metadata")
+                                              uri/uri-str)
+                              :on-success [::get-metadata-success server-name]
+                              :on-failure [::not-connected server-name]})
+
+       (if (db-utils/sandbox? db server-name)
          (http/get-view-definitions
            db
            {:uri        (-> box-url uri/uri
@@ -111,28 +112,28 @@
                             (or (str/blank? (name k)) (str/blank? (name v)))) headers)
 
             :on-success [::get-view-definitions-success server-name]
-            :on-failure [::not-connected server-name]})]
-        (assoc (http/get-view-definitions-user-server authentication-token server)
-               :on-success [::get-view-definitions-success server-name]
-               :on-failure [::not-connected server-name]))})))
+            :on-failure [::not-connected server-name]})
+         (assoc (http/get-view-definitions authentication-token server)
+           :on-success [::get-view-definitions-success server-name]
+           :on-failure [::not-connected server-name]))]})))
 
 (reg-event-fx
- ::get-metadata-success
- (fn [{:keys [db]} [_ server-name result]]
-   {:db (-> db
-            (assoc-in [:cfg/fhir-servers :sandbox/servers server-name :fhir-version] (:fhirVersion result)))}))
+  ::get-metadata-success
+  (fn [{:keys [db]} [_ server-name result]]
+    {:db (-> db
+             (assoc-in [:cfg/fhir-servers :sandbox/servers server-name :fhir-version] (:fhirVersion result)))}))
 
 (reg-event-fx
- ::get-view-definitions-success
- (fn [{:keys [db]} [_ server-name _result]]
-   {:db (-> db
-            (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
-            (dissoc ::request-sent-by :edit-server :fhir-server :cfg/connect-error))}))
+  ::get-view-definitions-success
+  (fn [{:keys [db]} [_ server-name _result]]
+    {:db (-> db
+             (assoc-in [:cfg/fhir-servers :used-server-name] server-name)
+             (dissoc ::request-sent-by :edit-server :fhir-server :cfg/connect-error))}))
 
 (reg-event-fx
- ::not-connected
- (fn [{:keys [db]} [_ server-name result]]
-   {:db                 (assoc db :cfg/connect-error {:result      result
+  ::not-connected
+  (fn [{:keys [db]} [_ server-name result]]
+    {:db                 (assoc db :cfg/connect-error {:result      result
                                                       :server-name server-name})
     :notification-error (str "Error on connect: " (u/response->error result))}))
 

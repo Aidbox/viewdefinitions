@@ -1,16 +1,17 @@
 (ns vd-designer.aidbox
   (:require [clojure.set :as set]
             [clojure.string :as str]
+            [jsonista.core :as json]
+            [lambdaisland.uri :as uri]
+            [vd-designer.utils.debug :refer [?]]
+            [martian.core :as martian]
             [org.httpkit.client :as http-client]
             [ring.util.http-predicates :as predicates]
-            [martian.core :as martian]
-            [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
-            [vd-designer.utils.debug :refer [?]]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]
-            [jsonista.core :as json]))
+            [vd-designer.web.middleware.auth :as auth-middleware]))
 
 (defn init-project [client access-token]
   (portal/rpc:init-project client access-token))
@@ -33,17 +34,18 @@
        :token))
 
 ;; TODO: rework portal to have a middleware that takes care of access/refresh tokens
-(defn list-servers [{:keys [aidbox.portal/client user db]}]
+(defn list-user-servers [{:keys [aidbox.portal/client db]} user]
   (let [access-token
         (:sso_tokens/access_token (sso-token/get-last-by-id db (:accounts/id user)))
         projects (-> @(init-project client access-token)
                      :body
                      :result)
-        licenses (->>  projects
+        licenses (->> projects
                       (mapcat
                         (fn [project]
                           (-> @(fetch-licenses client access-token (:id project))
                               :body :result)))
+                      (filter :box-url)
                       (mapv (fn [license]
                               (-> license
                                   (select-keys [:name :box-url #_:product #_:status])
@@ -59,7 +61,15 @@
     ;;TODO: creating duplications!
     (user-server/create-many db licenses)
     ;; TODO: filter self-hosted, expired, product = "aidbox", status = "active"
-    (http-response/ok licenses)))
+    licenses))
+
+(defn list-servers [{:keys [cfg] :as ctx}]
+  (let [user (auth-middleware/jwt->user ctx)]
+    (->> (cond->> (cfg :public-fhir-servers)
+                  user
+                  (concat (list-user-servers ctx user)))
+         (map #(select-keys % [:box-url :server-name]))
+         (http-response/ok))))
 
 (defn connect [{:keys [user db request]}]
   (let [box-url (-> request :body-params :box-url)
@@ -69,40 +79,63 @@
         box-response @(http-client/get
                         (str box-url "/fhir/ViewDefinition")
                         {:headers
-                         {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
-                          "Accept" "application/json"
+                         {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
+                          "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
     (if (= 200 (:status box-response))
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
-(defn get-view-definition [{:keys [user db request]}]
-  (let [box-url (-> request :query-params :box-url)
-        vd-id  (-> request :query-params :vd-id)
+(defn public-fhir-server [public-fhir-servers box-url]
+  (some->> public-fhir-servers
+           (filter #(-> % :box-url (= box-url)))
+           first))
+
+(defn user-server:get-vd [{:keys [db request user]}]
+  (let [{:keys [box-url vd-id]} (-> request :query-params)
         {aidbox-auth-token :user_servers/aidbox_auth_token}
         (user-server/get-by-account-id-and-box-url
           db (:accounts/id user) box-url)
         box-response @(http-client/get
                         (str box-url "/fhir/ViewDefinition/" vd-id)
                         {:headers
-                         {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
-                          "Accept" "application/json"
+                         {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
+                          "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
     (if (= 200 (:status box-response))
       (http-response/ok (:body box-response))
       (http-response/bad-request box-response))))
 
+(defn public-server:get-vd [{:keys [request]} public-server]
+  (let [{:keys [box-url vd-id]} (-> request :query-params)
+        box-response @(http-client/get
+                        (str box-url "/fhir/ViewDefinition/" vd-id)
+                        {:headers
+                         (-> {"Accept"       "application/json"
+                              "Content-Type" "application/transit+json"}
+                             (merge (:headers public-server)))})]
+    (if (= 200 (:status box-response))
+      (http-response/ok (:body box-response))
+      (http-response/bad-request box-response))))
+
+(defn get-view-definition [{:keys [request cfg] :as ctx}]
+  (let [public-fhir-servers (cfg :public-fhir-servers)
+        {:keys [box-url]} (-> request :query-params)]
+    (if-let [public-server (public-fhir-server public-fhir-servers box-url)]
+      (public-server:get-vd ctx public-server)
+      (auth-middleware/unauthorized-wo-token #'user-server:get-vd ctx))))
+
 (defn eval-view-definition
   [{:keys [user db request]}]
   (let [box-url (-> request :body-params :box-url)
-        view-definition  (-> request :body-params :view-definition)
+        view-definition (-> request :body-params :view-definition)
         aidbox-client (portal/client box-url)
         {aidbox-auth-token :user_servers/aidbox_auth_token}
         (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
         req {:Cookie (str "aidbox-auth-token=" aidbox-auth-token ";")
              :method 'sof/eval-view
              :params {:limit 100
-                      :view view-definition}}
+                      :view  view-definition}}
         resp @(martian/response-for aidbox-client :rpc req)]
 
     (if (= 200 (:status resp))
@@ -123,8 +156,8 @@
         resp @(request-fn
                 url
                 {:headers
-                 {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token ";")
-                  "Accept" "application/json"
+                 {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
+                  "Accept"       "application/json"
                   "Content-Type" "application/json"}
                  :body (json/write-value-as-string view-definition)})]
     (if (predicates/success? resp)

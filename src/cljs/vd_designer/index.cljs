@@ -30,19 +30,7 @@
 
 ;;;; Initialization
 
-(def default-servers {"Aidbox Default"
-                      ; read all, delete ViewDefinitions, eval VD rpc
-                      ; we do not want to let people create view definitions because they are
-                      ; materialized when created
-                      {:server-name "Aidbox Default"
-                       :box-url    "https://viewdefs.aidbox.app"
-                       :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
-
-                      ; read all, delete+create+update ViewDefinitions, eval VD rpc
-                      "Aidbox Default 2"
-                      {:server-name "Aidbox Default 2"
-                       :box-url    "https://viewdefinitions.edge.aidbox.app"
-                       :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
+(def default-servers {})
 
 (reg-event-fx
   ::initialize-db

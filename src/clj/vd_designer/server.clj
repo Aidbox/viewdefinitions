@@ -57,6 +57,7 @@
 
 (comment
   (def ctx (context/mk))
+  (migrate/migrate! (:db ctx))
 
   ;; Start application server - via `-main` or `server/start`
   (-main)
