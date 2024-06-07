@@ -6,7 +6,6 @@
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
-            [vd-designer.web.middleware.auth :as middleware.auth]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
             [vd-designer.web.middleware.query :refer [query-string-middleware]]))
 
@@ -29,7 +28,10 @@
             :handler #'aidbox/get-view-definition}
            :post
            {#_#_:parameters {:body {:box-url string? :vd string?}}
-            :handler #'aidbox/save-view-definition}}]
+            :handler #'aidbox/save-view-definition}
+           :delete
+           {:parameters {:body {:box-url string? :vd string?}}
+            :handler #'aidbox/delete-view-definition}}]
       ["/eval"
        {:post
         {:parameters {:body {:box-url string? :vd string?}}

@@ -35,6 +35,7 @@
    :params           {:box-url box-url}
    :headers          {:authorization (str "Bearer " authentication-token)}})
 
+;; dead code?
 (defn get-view-definition [db vd-id]
   (-> {:method :get
        :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))}
@@ -68,10 +69,17 @@
       (with-defaults db)
       (dissoc :headers)))
 
-(defn delete-view-definition [db vd-id]
-  (-> {:method :delete
-       :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))}
-      (with-defaults db)))
+(defn delete-view-definition [authentication-token {:keys [box-url]} vd-id]
+  {:uri              "/api/aidbox/ViewDefinition"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format
+                       {:keywords? true})
+   :with-credentials true
+   :method           :delete
+   :params           {:box-url box-url
+                      :vd-id   vd-id}
+   :headers          {:authorization (str "Bearer " authentication-token)}})
 
 (defn post-view-definition [authentication-token {:keys [box-url]} vd]
   {:uri              "/api/aidbox/ViewDefinition"

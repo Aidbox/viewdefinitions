@@ -223,3 +223,39 @@
       (save-vd-public-server request public-server)
       (auth-middleware/unauthorized-wo-token #'save-vd-user-server ctx))))
 
+(defn public-server:delete-vd [request public-server]
+  (let [vd-id (-> request :body-params :vd-id)
+        resp @(http-client/delete
+                (format "%s/fhir/ViewDefinition/%s"
+                        (:box-url public-server) vd-id)
+                {:headers
+                 (merge {"Accept"       "application/json"
+                         "Content-Type" "application/json"}
+                        (:headers public-server))})]
+    (clojure.pprint/pprint resp)
+    (if (predicates/success? resp)
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
+
+(defn user-server:delete-vd [{:keys [db request user]}]
+  (let [{:keys [box-url vd-id]} (:body-params request)
+
+        {aidbox-auth-token :user_servers/aidbox_auth_token}
+        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
+
+        resp @(http-client/delete
+                (str box-url "/fhir/ViewDefinition/" vd-id)
+                {:headers
+                 {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
+                  "Accept"       "application/json"
+                  "Content-Type" "application/json"}})]
+    (if (predicates/success? resp)
+      (http-response/ok (:body resp))
+      (http-response/bad-request resp))))
+
+(defn delete-view-definition
+  [{:keys [request cfg] :as ctx}]
+  (when-let [box-url (-> request :body-params :box-url)]
+    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
+      (public-server:delete-vd request public-server)
+      (auth-middleware/unauthorized-wo-token #'user-server:delete-vd ctx))))

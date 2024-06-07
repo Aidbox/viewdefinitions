@@ -40,8 +40,12 @@
 
 (reg-event-fx
  ::delete-view-definition
- (fn [{:keys [db]} [_ id]]
-   {:http-xhrio (-> (http.fhir-server/delete-view-definition db id)
+  [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} [_ id]]
+   {:http-xhrio (-> (http.fhir-server/delete-view-definition
+                      authentication-token
+                      (http.fhir-server/active-server db)
+                      id)
                     (assoc :on-success [::delete-view-definition-success id]
                            :on-failure [::delete-view-definition-failure]))}))
 
