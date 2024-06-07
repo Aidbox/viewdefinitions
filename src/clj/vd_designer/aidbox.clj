@@ -88,7 +88,9 @@
                                  "Content-Type" "application/transit+json"}
                                 (:headers public-server))})]
     (if (predicates/success? box-response)
-      (http-response/ok (:body box-response))
+      {:status 200
+       :body (:body box-response)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request box-response))))
 
 (defn user-server:connect [{:keys [db request user]}]
@@ -104,7 +106,9 @@
                           "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
     (if (predicates/success? box-response)
-      (http-response/ok (:body box-response))
+      {:status 200
+       :body (:body box-response)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request box-response))))
 
 (defn connect [{:keys [request cfg] :as ctx}]
@@ -125,7 +129,9 @@
                           "Accept"       "application/json"
                           "Content-Type" "application/transit+json"}})]
     (if (predicates/success? box-response)
-      (http-response/ok (:body box-response))
+      {:status 200
+       :body (:body box-response)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request box-response))))
 
 (defn public-server:get-vd [{:keys [request]} public-server]
@@ -137,7 +143,9 @@
                               "Content-Type" "application/transit+json"}
                              (merge (:headers public-server)))})]
     (if (predicates/success? box-response)
-      (http-response/ok (:body box-response))
+      {:status 200
+       :body (:body box-response)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request box-response))))
 
 (defn get-view-definition [{:keys [request cfg] :as ctx}]
@@ -159,7 +167,10 @@
                       :view  view-definition}}
         resp @(martian/response-for aidbox-client :rpc req)]
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 200
+       :body (:body resp)
+       ;; 500 if json header
+       :headers {}}
       (http-response/bad-request resp))))
 
 (defn eval-vd-public-server
@@ -173,7 +184,10 @@
                              :view  view-definition}}
         resp @(martian/response-for aidbox-client :rpc req)]
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 200
+       :body (:body resp)
+       ;; 500 if json header
+       :headers {}}
       (http-response/bad-request resp))))
 
 (defn eval-view-definition
@@ -201,7 +215,9 @@
                   "Content-Type" "application/json"}
                  :body (json/write-value-as-string view-definition)})]
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 200
+       :body (:body resp)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request resp))))
 
 (defn save-vd-public-server [request public-server]
@@ -220,7 +236,9 @@
                         (:headers public-server))
                  :body (json/write-value-as-string view-definition)})]
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 200
+       :body (:body resp)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request resp))))
 
 (defn save-view-definition
@@ -239,9 +257,10 @@
                  (merge {"Accept"       "application/json"
                          "Content-Type" "application/json"}
                         (:headers public-server))})]
-    (clojure.pprint/pprint resp)
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 204
+       :body (:body resp)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request resp))))
 
 (defn user-server:delete-vd [{:keys [db request user]}]
@@ -257,7 +276,9 @@
                   "Accept"       "application/json"
                   "Content-Type" "application/json"}})]
     (if (predicates/success? resp)
-      (http-response/ok (:body resp))
+      {:status 204
+       :body (:body resp)
+       :headers {"Content-Type" "application/json"}}
       (http-response/bad-request resp))))
 
 (defn delete-view-definition
