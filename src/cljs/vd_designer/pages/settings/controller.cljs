@@ -24,11 +24,6 @@
    (update-in db [:fhir-server :headers] (fnil conj []) {:name "", :value ""})))
 
 (reg-event-db
- ::new-server
- (fn [db [_]]
-   (assoc db :original-server {})))
-
-(reg-event-db
  ::start-edit
  (fn [db [_ server-cfg]]
    (assoc db
@@ -71,16 +66,12 @@
  (fn [db [_]]
    (dissoc db :fhir-server :original-server)))
 
-(defn add-auth-header [{:keys [aidbox-auth-token] :as server}]
-  (assoc server
-         :headers {"Cookie" (str "aidbox-auth-token=" aidbox-auth-token)}))
-
 (reg-event-db
  ::update-user-server-list
  (fn [db [_ user-server-list]]
    (->> user-server-list
         (group-by :server-name)
-        (medley/map-vals (comp add-auth-header first))
+        (medley/map-vals first)
         (assoc-in db [:cfg/fhir-servers :user/servers]))))
 
 (reg-event-fx

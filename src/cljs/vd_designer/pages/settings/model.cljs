@@ -11,7 +11,8 @@
 (reg-sub
   ::user-servers
   (fn [db _]
-    (or (-> db :cfg/fhir-servers :user/servers vals)
+    (or (->> db :cfg/fhir-servers :user/servers vals
+             (group-by #(-> % :project :name)))
         [])))
 
 (reg-sub

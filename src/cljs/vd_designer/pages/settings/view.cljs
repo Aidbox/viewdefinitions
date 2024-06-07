@@ -1,22 +1,18 @@
 (ns vd-designer.pages.settings.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [List Modal Row Typography]]
+            [antd :refer [Card Col List Modal Row Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
-            [vd-designer.auth.model :as auth-model]
-            [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.button :as button]
             [vd-designer.components.input :as components.input]
             [vd-designer.components.list :as components.list]
-            [vd-designer.components.modal :as modal]
             [vd-designer.components.tabs :as tabs]
             [vd-designer.pages.settings.controller :as c]
             [vd-designer.pages.settings.model :as m]
             [vd-designer.utils.event :refer [target-value]]
-            [vd-designer.utils.react :refer [js-obj->clj-map]]
-            [vd-designer.utils.string :as string-utils]))
+            [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
 (defn error-label [visible? text]
   [:label {:hidden (not visible?)
@@ -94,11 +90,11 @@
         edit? (:server-name original-server)
         errors-set (cond-> #{}
                      (some-empty-fields? fhir-server) (conj :empty-field))]
-    [:> Modal {:open      (boolean original-server)
-               :title     (if edit? "Edit server" "Add server")
-               :ok-text   (if edit? "Confirm" "Add")
+    [:> Modal {:open            (boolean original-server)
+               :title           (if edit? "Edit server" "Add server")
+               :ok-text         (if edit? "Confirm" "Add")
                :ok-button-props {:disabled (not-empty errors-set)}
-               :on-cancel #(dispatch [::c/cancel-edit])}
+               :on-cancel       #(dispatch [::c/cancel-edit])}
      [fhir-config-form fhir-server errors-set]]))
 
 (defn connect [server-config request-sent-by used-server-name connect-error]
@@ -118,42 +114,46 @@
     :else
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
-(defn- add-server-button [authorized?]
-  ;; TODO: replace with a link to Aidbox
-  (if authorized?
-    [button/add "New server" {:on-click #(dispatch [::c/new-server])}]
-    [auth-required [button/add "New server"]]))
-
 (defn server-list []
-  (let [request-sent-by  @(subscribe [::m/request-sent-by])
+  (let [request-sent-by @(subscribe [::m/request-sent-by])
         used-server-name @(subscribe [::m/used-server-name])
-        connect-error    @(subscribe [::m/connect-error])
-        authorized?      @(subscribe [::auth-model/authorized?])]
+        connect-error @(subscribe [::m/connect-error])
+        fhir-servers @(subscribe [::m/user-servers])]
     [:div {:style {:max-width "768px"
                    :padding   "0px 24px"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
                     :align-items     :center
                     :width           "100%"}}
-      [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]
-      [add-server-button authorized?]]
+      [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
      [modal-view]
-     ;; TODO: add label saying these servers are yours
-
-     ;[:> Divider]
-     ; TODO: add label saying these servers are public
-     [components.list/data-list
-      :dataSource @(subscribe [::m/user-servers])
-      :renderItem
-      (fn [raw-item]
-        (r/as-element
-         (let [{:keys [server-name box-url] :as server-config}
-               (js-obj->clj-map raw-item)]
-           [:> List.Item
-            {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
-            [:> List.Item.Meta
-             {:title
-              (r/as-element
-               [:a {:onClick #(dispatch [::c/start-edit server-config])}
-                server-name])
-              :description box-url}]])))]]))
+     (for [[project-name project-licenses] fhir-servers]
+       [:> Card {:title  (r/as-element
+                           [:div {:style {:display         :flex
+                                          :justify-content :space-between}}
+                            (or project-name "Public servers")
+                            (when-let [new-license-url
+                                       (some-> fhir-servers
+                                               (get project-name)
+                                               first :project
+                                               :new-license-url)]
+                              [button/add "New server" {:href   new-license-url
+                                                        :target "_blank"}])])
+                 :style  {:margin-bottom "24px"}
+                 :styles {:body {:padding-top    0
+                                 :padding-bottom 0}}}
+        [components.list/data-list
+         :dataSource project-licenses
+         :renderItem
+         (fn [raw-item]
+           (r/as-element
+             (let [{:keys [server-name box-url] :as server-config}
+                   (js-obj->clj-map raw-item)]
+               [:> List.Item
+                {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
+                [:> List.Item.Meta
+                 {:title
+                  (r/as-element
+                    [:a {:onClick #(dispatch [::c/start-edit server-config])}
+                     server-name])
+                  :description box-url}]])))]])]))

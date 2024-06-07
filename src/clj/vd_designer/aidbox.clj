@@ -3,7 +3,6 @@
             [clojure.string :as str]
             [jsonista.core :as json]
             [lambdaisland.uri :as uri]
-            [vd-designer.utils.debug :refer [?]]
             [martian.core :as martian]
             [org.httpkit.client :as http-client]
             [ring.util.http-predicates :as predicates]
@@ -28,7 +27,7 @@
        :token))
 
 ;; TODO: rework portal to have a middleware that takes care of access/refresh tokens
-(defn list-user-servers [{:keys [aidbox.portal/client db]} user]
+(defn list-user-servers [{:keys [aidbox.portal/client db cfg]} user]
   (let [access-token
         (:sso_tokens/access_token (sso-token/get-last-by-id db (:accounts/id user)))
         projects (-> @(portal/rpc:init-project client access-token)
@@ -37,8 +36,16 @@
         licenses (->> projects
                       (mapcat
                         (fn [project]
-                          (-> @(portal/rpc:fetch-licenses client access-token (:id project))
-                              :body :result)))
+                          (->> @(portal/rpc:fetch-licenses client access-token (:id project))
+                               :body :result
+                               (map (fn [license]
+                                      (update license
+                                              :project merge
+                                              {:name       (:name project)
+                                               :new-license-url
+                                               (format "%s/ui/portal#/project/%s/license/new"
+                                                       (:aidbox.portal/url cfg)
+                                                       (:id project))}))))))
                       (filter (fn [license]
                                 (and (:box-url license)
                                      (= "aidbox" (:product license))
@@ -47,17 +54,17 @@
                                      (> (:expiration-days license) 0))))
                       (mapv (fn [license]
                               (-> license
-                                  (select-keys [:name :box-url #_:product #_:status])
-                                  (assoc :aidbox-auth-token (aidbox-auth-token (:box-url license))
-                                         :account-id (:accounts/id user))
-
+                                  (select-keys [:name :box-url :project])
                                   (assoc :aidbox-auth-token (aidbox-auth-token (:box-url license))
                                          :account-id (:accounts/id user))
                                   (update :box-url truncate-box-url)
                                   (set/rename-keys {:name :server-name})))))]
     ;; TODO: store in DB full data,
     ;;       send to front only things that are needed
-    (user-server/create-many db licenses)
+    (->> licenses
+         (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
+         (user-server/create-many db))
+
     licenses))
 
 (defn list-servers [{:keys [cfg] :as ctx}]
@@ -65,7 +72,7 @@
     (->> (cond->> (cfg :public-fhir-servers)
                   user
                   (concat (list-user-servers ctx user)))
-         (map #(select-keys % [:box-url :server-name]))
+         (map #(select-keys % [:box-url :server-name :project]))
          (http-response/ok))))
 
 (defn public-fhir-server [public-fhir-servers box-url]
@@ -160,10 +167,10 @@
   (let [box-url (-> request :body-params :box-url)
         aidbox-client (portal/client box-url)
         view-definition (-> request :body-params :vd)
-        req {:authorization (-> public-server :headers  (get "Authorization"))
-             :method 'sof/eval-view
-             :params {:limit 100
-                      :view  view-definition}}
+        req {:authorization (-> public-server :headers (get "Authorization"))
+             :method        'sof/eval-view
+             :params        {:limit 100
+                             :view  view-definition}}
         resp @(martian/response-for aidbox-client :rpc req)]
     (if (predicates/success? resp)
       (http-response/ok (:body resp))
