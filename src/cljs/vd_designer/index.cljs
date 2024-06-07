@@ -50,12 +50,7 @@
            :authorized?         (boolean authentication-token)
            :cfg/fhir-servers    {:used-server-name used-server-name}}
        ;; we cannot do anything without servers
-      :fx [[:dispatch [::settings-controller/fetch-user-servers]]
-           [:dispatch [:dispatch-debounce
-                       {:key :use-sandbox-if-not-selected
-                        :event [::settings-controller/use-sandbox-if-not-selected]
-                        :delay 1000}]]]})))
-
+       :dispatch [::settings-controller/fetch-user-servers]})))
 
 (defn wrap-view-layout [route view]
   (let [breadcrumbs {:breadcrumbs (breadcrumbs route)}]

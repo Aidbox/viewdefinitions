@@ -64,13 +64,14 @@
  (fn [db [_]]
    (dissoc db :fhir-server :original-server)))
 
-(reg-event-db
+(reg-event-fx
  ::update-user-server-list
- (fn [db [_ user-server-list]]
-   (->> user-server-list
-        (group-by :server-name)
-        (medley/map-vals first)
-        (assoc-in db [:cfg/fhir-servers :user/servers]))))
+ (fn [{:keys [db]} [_ user-server-list]]
+   {:db (->> user-server-list
+             (group-by :server-name)
+             (medley/map-vals first)
+             (assoc-in db [:cfg/fhir-servers :user/servers]))
+    :dispatch [::use-sandbox-if-not-selected]}))
 
 (reg-event-fx
  ::fetch-user-servers
@@ -130,10 +131,8 @@
 
 (reg-event-fx
  ::use-sandbox-if-not-selected
- [(inject-cofx :get-authentication-token)
-  (inject-cofx :get-used-server-name)]
  (fn [{:keys [db]} _]
-   (when (unknown-server-selected? db)
-     {:store-used-server-name
-      (-> db :cfg/fhir-servers :user/servers
-          first-sandbox-server)})))
+  (when (unknown-server-selected? db)
+   {:dispatch [::store-used-server-name
+               (-> db :cfg/fhir-servers :user/servers
+                   first-sandbox-server)]})))
