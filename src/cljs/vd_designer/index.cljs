@@ -32,36 +32,18 @@
 
 ;;;; Initialization
 
-(def default-servers {"Aidbox Default"
-                      ; read all, delete ViewDefinitions, eval VD rpc
-                      ; we do not want to let people create view definitions because they are
-                      ; materialized when created
-                      {:server-name "Aidbox Default"
-                       :base-url    "https://viewdefs.aidbox.app"
-                       :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}
-
-                      ; read all, delete+create+update ViewDefinitions, eval VD rpc
-                      "Aidbox Default 2"
-                      {:server-name "Aidbox Default 2"
-                       :base-url    "https://viewdefinitions.edge.aidbox.app"
-                       :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}})
-
 (reg-event-fx
- ::initialize-db
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} _]
-   (if (seq db)
-     {:db db}
-     {:db {:view-definitions    []
-           :side-menu-collapsed false
-           :authorized?         (boolean authentication-token)
-           :onboarding          {:sandbox 0
-                                 :aidbox  0}
-           :cfg/fhir-servers    {:servers          default-servers
-                                 :used-server-name (-> default-servers
-                                                       first
-                                                       second
-                                                       :server-name)}}})))
+  ::initialize-db
+  [(inject-cofx :get-authentication-token)]
+  (fn [{:keys [db authentication-token]} _]
+    (if (seq db)
+      {:db db}
+      {:db {:view-definitions    []
+            :side-menu-collapsed false
+            :onboarding          {:sandbox 0
+                                  :aidbox  0}
+            :authorized?         (boolean authentication-token)
+            :cfg/fhir-servers    {:used-server-name nil}}})))
 
 (defn current-page []
   (let [route @routes/match
