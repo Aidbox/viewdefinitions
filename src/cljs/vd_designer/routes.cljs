@@ -36,7 +36,8 @@
                              :stop       #(dispatch [::vd-form-controller/stop  %])}]}]]
     ["/settings" {:name        :settings
                   :view        settings/server-list
-                  :controllers [{:start #(dispatch [::settings-controller/start])}]}]]))
+                  :controllers [{:start #(dispatch [::settings-controller/start])
+                                 :stop  #(dispatch [::settings-controller/stop])}]}]]))
 
 (defonce match (reagent/atom nil))
 

@@ -5,13 +5,19 @@
     [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx]]
     [vd-designer.http.fhir-server :as http]
     [vd-designer.notifications]
+    [vd-designer.polling :as polling]
     [vd-designer.utils.event :as u]))
 
 (reg-event-fx
  ::start
- (fn [{db :db} [_]]
-   {:db db
-    :fx [[:dispatch [::fetch-user-servers]]]}))
+ (fn [_ [_]]
+   {::polling/set-polling-timer {:event-vec [::fetch-user-servers]
+                                 :interval  5000}}))
+
+(reg-event-fx
+ ::stop
+ (fn [_ [_]]
+   {::polling/clear-polling-timer ::fetch-user-servers}))
 
 (reg-event-db
  ::update-fhir-server-input
@@ -22,17 +28,6 @@
  ::add-fhir-server-header
  (fn [db [_]]
    (update-in db [:fhir-server :headers] (fnil conj []) {:name "", :value ""})))
-
-(reg-event-db
- ::start-edit
- (fn [db [_ server-cfg]]
-   (assoc db
-          :original-server server-cfg
-          :fhir-server (update server-cfg :headers
-                               (fn [m]
-                                 (mapv (fn [[k v]]
-                                         {:name  k
-                                          :value v}) m))))))
 
 (reg-event-fx
  ::connect
