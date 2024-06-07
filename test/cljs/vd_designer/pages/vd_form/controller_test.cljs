@@ -334,3 +334,21 @@
           {:select
            [{:forEach "name"
              :select  [{:column [{:name "a" :path ""}]}]}]})))))
+
+(deftest strip-empty-where-nodes-test
+  (testing "strip empty where"
+    (is (match? 
+         {:where []}
+         (sut/strip-empty-where-nodes {:where []}))))
+  (testing "strip non empty where with empty node"
+    (is (match? 
+         {:where []}
+         (sut/strip-empty-where-nodes {:where [{:path ""}]}))))
+  (testing "strip non empty where with non empty node"
+    (is (match? 
+         {:where [{:path "name"}]}
+         (sut/strip-empty-where-nodes {:where [{:path "name"}]})))
+    (is (match? 
+         {:where [{:path "name"}]}
+         (sut/strip-empty-where-nodes {:where [{:path "name"}
+                                                {:path ""}]})))))

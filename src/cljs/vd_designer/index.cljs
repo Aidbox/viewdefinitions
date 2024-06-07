@@ -19,12 +19,14 @@
 
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])
-        m {:vd-list     [{:title "View Definitions"}]
-           :settings    [{:title "Settings"}]
-           :form-edit   [{:title "View Definitions", :href "/"}
-                         {:title (:name current-vd)}]
-           :form-create [{:title "View Definitions", :href "/"}
-                         {:title "New"}]}]
+        home     {:title "SQL on FHIR"      :href "/"}
+        vds      {:title "View Definitions" :href "/vds"}
+        settings {:title "Settings"         :href "/settings"}
+
+        m {:vd-list     [home (dissoc vds :href)]
+           :settings    [home (dissoc settings :href)]
+           :form-edit   [home vds {:title (:name current-vd)}]
+           :form-create [home vds {:title "New"}]}]
     (m route)))
 
 
@@ -38,6 +40,8 @@
       {:db db}
       {:db {:view-definitions    []
             :side-menu-collapsed false
+            :onboarding          {:sandbox 0
+                                  :aidbox  0}
             :authorized?         (boolean authentication-token)
             :cfg/fhir-servers    {:used-server-name nil}}})))
 
@@ -48,13 +52,15 @@
      {:on-menu-click   (fn [key]
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
+      :with-footer     (when (= "home" (name current-route)) true)
       :menu            [{:key  "vd-list"
-                         :icon (r/create-element icons/DatabaseOutlined)
+                         :icon (r/create-element icons/UnorderedListOutlined)
                          :size 64}
                         {:key  "settings"
                          :icon (r/create-element icons/SettingOutlined)
                          :size 64}
-                        #_{:key "3" :icon (r/create-element icons/BookOutlined)}]
+                        #_{:key  "3"
+                           :icon (r/create-element icons/BookOutlined)}]
       :breadcrumbs     (breadcrumbs current-route)}
      (if route
        (let [view (:view (:data route))]

@@ -1,23 +1,23 @@
 (ns vd-designer.pages.vd-form.components
-  (:require
-   ["@ant-design/icons" :as icons]
-   [antd :refer [AutoComplete Input Checkbox Col ConfigProvider Form Popover Row Select Space]]
-   [clojure.string :as str]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch subscribe]]
-   [reagent.core :as r]
-   [vd-designer.components.button :as button]
-   [vd-designer.components.dropdown :refer [add-dropdown dropdown-item-img]]
-   [vd-designer.components.heading :refer [h4]]
-   [vd-designer.components.input :refer [input input-number]]
-   [vd-designer.components.select :as select]
-   [vd-designer.components.tag :as tag]
-   [vd-designer.components.tree :refer [calc-key]]
-   [vd-designer.pages.vd-form.controller :as c]
-   [vd-designer.pages.vd-form.model :as m]
-   [vd-designer.utils.event :as u]
-   [vd-designer.utils.js :refer [find-elements get-element-by-id remove-class
-                                 toggle-class]]))
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input
+                          Popover Row Select Space Typography]]
+            [clojure.string :as str]
+            [medley.core :as medley]
+            [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.dropdown :refer [add-dropdown
+                                                     dropdown-item-img]]
+            [vd-designer.components.input :refer [input input-number]]
+            [vd-designer.components.select :as select]
+            [vd-designer.components.tag :as tag]
+            [vd-designer.components.tree :refer [calc-key]]
+            [vd-designer.pages.vd-form.controller :as c]
+            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.js :refer [find-elements get-element-by-id
+                                          remove-class toggle-class]]))
 
 ;;;; Tags
 
@@ -112,7 +112,8 @@
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
-   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])}])
+   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])
+    :tabIndex -1}])
 
 (defn settings-button [& {:as opts}]
   [button/invisible-icon icons/SettingOutlined opts])
@@ -192,7 +193,8 @@
      [:div [settings-button {:onClick   #(toggle-popover ctx button-id)
                              :onKeyDown #(when (= "Escape" (.-key %))
                                            (toggle-popover nil nil))
-                             :id        button-id}]]]))
+                             :id        button-id
+                             :tabIndex -1}]]]))
 
 (defn trigger-update-autocomplete-text-event [ctx event]
   (dispatch [::c/update-autocomplete-text
@@ -354,7 +356,7 @@
          (remove (fn [token] (str/ends-with? token ")")))
          last)))
 
-(defn autocomplete [ctx key value placeholder on-ctrl-enter]
+(defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter autoFocus]}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
@@ -367,39 +369,42 @@
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
-     [:> AutoComplete {:style                 {:width "100%"}
-                       :options               rendered-options
-                       :defaultValue          value
-                       :onKeyDown             (fn [e]
-                                                (when (= "Escape" (u/pressed-key e))
-                                                  (.preventDefault e)))
+     [:> AutoComplete {:style {:width "100%"}
+                       :options rendered-options
+                       :defaultValue value
+                       :autoFocus autoFocus
+                       :onKeyDown (fn [e]
+                                    (when (= "Escape" (u/pressed-key e))
+                                      (.preventDefault e)))
                        :popupMatchSelectWidth 350
-                       :backfill              true
-                       :onKeyUp               (fn [e]
-                                                (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
-                                                  (update-autocomplete-fn e))
-                                                (when-let [f (and (= "Enter" (u/pressed-key e))
-                                                                  (.-ctrlKey e)
-                                                                  on-ctrl-enter)]
-                                                  (.preventDefault e)
-                                                  (.stopPropagation e)
-                                                  (f e)))
-
-                       :onBlur                (fn []
-                                                (when (and (column? ctx)
-                                                           (= "" (:name children)))
-                                                  (change-input-value ctx :name (fhirpath-alias value)))
-                                                (dispatch [::c/eval-view-definition-data]))
-
-                       :onInput               #(update-autocomplete-fn %)
-                       :onClick               (fn [e] (update-autocomplete-fn e))
-                       :onChange              (fn [e] (change-input-value ctx key e))
-                       :onSelect              (fn [_value option]
-                                                (when-let [r @auto-complete-ref]
-                                                  (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
-                                                    (js/setTimeout (fn [_]
-                                                                     (.focus r)
-                                                                     (.setSelectionRange r cursor cursor)) 0))))}
+                       :backfill true
+                       :onKeyUp  (fn [e]
+                                   (when (#{"ArrowLeft" "ArrowRight"} (u/pressed-key e))
+                                     (update-autocomplete-fn e))
+                                   (when (and (= "Enter" (u/pressed-key e))
+                                              (.-shiftKey e))
+                                     (on-shift-enter e))
+                                   (when-let [f (and (= "Enter" (u/pressed-key e))
+                                                     (.-ctrlKey e)
+                                                     on-ctrl-enter)]
+                                     (.preventDefault e)
+                                     (.stopPropagation e)
+                                     (f e)))
+                       :onBlur (fn []
+                                 (when (and (column? ctx)
+                                            (= "" (:name children)))
+                                   (change-input-value ctx :name (fhirpath-alias value)))
+                                 (dispatch [::c/set-focus-node nil])
+                                 (dispatch [::c/eval-view-definition-data]))
+                       :onInput #(update-autocomplete-fn %)
+                       :onClick  (fn [e] (update-autocomplete-fn e))
+                       :onChange (fn [e] (change-input-value ctx key e))
+                       :onSelect (fn [_value option]
+                                   (when-let [r @auto-complete-ref]
+                                     (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
+                                       (js/setTimeout (fn [_]
+                                                        (.focus r)
+                                                        (.setSelectionRange r cursor cursor)) 0))))}
       [:> Input {:style        {:font-style       "italic"
                                 :border           "none"
                                 :border-bottom    "1px solid transparent"
@@ -413,7 +418,7 @@
                  :onMouseEnter #(dispatch [::c/change-draggable-node false])
                  :onMouseLeave #(dispatch [::c/change-draggable-node true])}]]]))
 
-(defn render-input [ctx input-type placeholder value-key value]
+(defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter autoFocus]}]
   (case input-type
     :number [input-number {:placeholder (or placeholder "path")
                            :value       value
@@ -422,11 +427,21 @@
               [:> Checkbox
                {:checked  value
                 :onChange #(change-input-value ctx value-key (-> % .-target .-checked))}]]
-    :fhirpath [autocomplete ctx value-key value placeholder #(dispatch [::c/eval-view-definition-data])]
+    :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
+                                                             :on-shift-enter on-shift-enter
+                                                             :autoFocus autoFocus}]
 
     (let [errors? @(subscribe [::m/empty-inputs?])]
       [input {:placeholder  (or placeholder "path")
-              :onKeyDown    eval-on-ctrl-enter
+              :autoFocus autoFocus
+              :onBlur #(dispatch [::c/set-focus-node nil])
+              :onKeyDown (fn [event]
+                           (when (and (= "Enter" (.-key event))
+                                      (or (.-ctrlKey event) (.-metaKey event)))
+                             (eval-on-ctrl-enter event))
+                           (when (and (= "Enter" (.-key event))
+                                      (.-shiftKey event))
+                             (on-shift-enter event)))
               :onMouseEnter #(dispatch [::c/change-draggable-node false])
               :onMouseLeave #(dispatch [::c/change-draggable-node true])
               :defaultValue value
@@ -435,11 +450,21 @@
                                       "default-input")}
               :onChange     #(change-input-value ctx value-key (u/target-value %))}])))
 
-(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder]
+(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx :fhirpath placeholder value-key value]
+   [render-input ctx :fhirpath placeholder value-key value opts]
+   (when settings-form
+     [settings-popover ctx {:placement :right
+                            :content   (r/as-element [settings-form ctx])}])
+   (when deletable? [delete-button ctx])])
+
+(defn text-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
+  [:> Space.Compact {:block true
+                     :style {:align-items :center
+                             :gap         4}}
+   [render-input ctx :text placeholder value-key value opts]
    (when settings-form
      [settings-popover ctx {:placement :right
                             :content   (r/as-element [settings-form ctx])}])
@@ -456,7 +481,7 @@
               :colon      false
               :labelAlign :left}
              props)
-    [h4 title]
+    [:> Typography.Title {:level 4 :style {:margin-top 0}} title]
     items
     [:div {:style {:textAlign :right}}
      [:> Space
@@ -467,41 +492,3 @@
       [button/button "Save" {:size     "small"
                              :type     "primary"
                              :htmlType "submit"}]]]]])
-
-;; After removing the list element, mapping between names and keys is broken:
-;;
-;;  [...
-;;   {:name 2, :key 2, ...}
-;;   ...] ->
-;;  [...
-;;   {:name 1, :key 2, ...}
-;;   ...]
-;;
-;; In practice, setting key to be equal to name allows to maintain the correct order of list elements.
-;; If for some reason you need the key that the list item originally had, :fieldKey is still available.
-(defn- set-keys-to-names [fields]
-  (mapv (fn [m]
-          (assoc m :key (:name m)))
-        fields))
-
-(defn popover-form-list [name render-list-items]
-  [:> Form.List {:name name}
-   (fn [raw-fields actions]
-     (let [fields (-> raw-fields
-                      (js->clj :keywordize-keys true)
-                      set-keys-to-names)
-           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
-       (r/as-element
-        [:div
-         (map (fn [{:keys [key name]}]
-                ^{:key key}
-                [:> Space {:align "baseline"}
-                 [:<>
-                  (render-list-items key)
-                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
-              fields)
-         [:> Form.Item
-          [button/icon "Add" icons/PlusOutlined
-           {:type    "dashed"
-            :block   true
-            :onClick #(add)}]]])))])

@@ -1,17 +1,16 @@
 (ns vd-designer.pages.vd-form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button Flex Row Space Tooltip]]
+            [antd :refer [Button Flex Row Space Tooltip Typography]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
-            [vd-designer.components.alert :refer [alert]]
-            [vd-designer.components.button :as button]
-            [vd-designer.components.heading :refer [h1]]
-            [vd-designer.components.table :refer [table]]
-            [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.auth.model :as auth-model]
             [vd-designer.auth.view :refer [auth-required]]
+            [vd-designer.components.alert :refer [alert]]
+            [vd-designer.components.button :as button]
+            [vd-designer.components.table :refer [table]]
+            [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.pages.vd-form.components :refer [toggle-popover]]
             [vd-designer.pages.vd-form.controller :as c]
             [vd-designer.pages.vd-form.editor :refer [editor]]
@@ -24,9 +23,9 @@
   (let [button (fn [overrides]
                  [:> Button
                   (medley/deep-merge
-                    {:class "mobile-icon-button"
-                     :icon  (r/create-element icons/SaveOutlined)}
-                    overrides)
+                   {:class "mobile-icon-button"
+                    :icon  (r/create-element icons/SaveOutlined)}
+                   overrides)
                   "Save"])]
     (if authorized?
       (button {:onClick #(dispatch [::c/save-view-definition])
@@ -46,7 +45,8 @@
                             :display        "flex"
                             :flex-direction "row"
                             :flex-flow      "row"
-                            :overflow       "hidden"}}
+                            :overflow       "hidden"
+                            :padding        "0px 24px"}}
      [:> Panel
       {:minSize 25
        :style   {:display "flex"}}
@@ -54,13 +54,14 @@
                 :flex     "1 0 0%"
                 :style    {:override  "hidden"
                            :min-width "400px"}}
-       [:> Row {:align "middle"}
-        [:> Space
-         [h1 "ViewDefinition"]
+       [:> Row
+        [:> Space {:align :start}
+         [:> Typography.Title {:level 1 :style {:margin-top 0}} "ViewDefinition"]
          [button/icon ""
           icons/SettingOutlined
           {:onClick #(toggle-popover nil button-id)
-           :style   {:border :none}
+           :style   {:border     :none
+                     :margin-top "8px"}
            :id      button-id}]]
         [form/root-settings {:open (= button-id opened-id)}]]
 
@@ -99,7 +100,7 @@
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
      [:> Panel {:minSize 20}
-      [h1 "Results" :style {:margin-left "20px"}]
+      [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
       [table (:data resources)
        {:class  "vd-table"
         :scroll {:y 1000

@@ -1,17 +1,17 @@
 (ns vd-designer.pages.settings.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Divider List Modal Row]]
+            [antd :refer [List Modal Row Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
+            [vd-designer.auth.model :as auth-model]
+            [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.button :as button]
             [vd-designer.components.input :as components.input]
             [vd-designer.components.list :as components.list]
             [vd-designer.components.modal :as modal]
             [vd-designer.components.tabs :as tabs]
-            [vd-designer.auth.model :as auth-model]
-            [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.pages.settings.controller :as c]
             [vd-designer.pages.settings.model :as m]
             [vd-designer.utils.event :refer [target-value]]
@@ -129,12 +129,13 @@
         used-server-name @(subscribe [::m/used-server-name])
         connect-error    @(subscribe [::m/connect-error])
         authorized?      @(subscribe [::auth-model/authorized?])]
-    [:div {:style {:max-width "768px"}}
+    [:div {:style {:max-width "768px"
+                   :padding   "0px 24px"}}
      [:div {:style {:display         :flex
                     :justify-content :space-between
                     :align-items     :center
                     :width           "100%"}}
-      [:h1 "Server list"]
+      [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]
       [add-server-button authorized?]]
      [modal-view]
      ;; TODO: add label saying these servers are yours

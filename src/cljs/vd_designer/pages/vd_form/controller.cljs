@@ -243,6 +243,14 @@
             :else f))
         select)))))
 
+(defn strip-empty-where-nodes [vd]
+  (let [blank? #(and (%1 %2) (str/blank? (%1 %2)))]
+    (update
+     vd
+     :where
+     (fn [where]
+       (remove #(blank? :path %) where)))))
+
 (defn strip-empty-collections [vd]
   (medley/remove-kv
    (fn [k v]
@@ -262,8 +270,9 @@
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
-                             remove-meta
-                             strip-empty-select-nodes)
+                             remove-meta 
+                             strip-empty-select-nodes
+                             strip-empty-where-nodes) 
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
@@ -351,6 +360,11 @@
  (fn [db [_ expanded]]
    (assoc db :current-tree-expanded-nodes (set expanded))))
 
+(reg-event-db
+ ::set-focus-node
+ (fn [db [_ node-id]]
+   (assoc db ::m/node-focus node-id)))
+
 (reg-event-fx
  ::add-tree-element
  (fn [{:keys [db]} [_ path default-value]]
@@ -366,7 +380,8 @@
             [{:ms       100
               :dispatch [::update-tree-expanded-nodes
                          (into (:current-tree-expanded-nodes db)
-                               (mapv mk-expanded-path default-value))]}]]]})))
+                               (mapv mk-expanded-path default-value))]}]]
+           [:dispatch [::set-focus-node (:tree/key value)]]]})))
 
 (defn remove-node [node key]
   (cond
@@ -470,7 +485,7 @@
          constant-map (get-in db real-path)
          current-type (get-constant-type constant-map)
          new-type (keyword (:type constant-map))
-         new-value (->> (current-type constant-map)
+         new-value (->> (constant-map current-type)
                         (cast-value new-type))]
      (assoc-in db real-path
                (-> constant-map
