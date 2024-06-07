@@ -1,0 +1,22 @@
+{
+  "name": "ViewDefinition Designer",
+  "short_name": "vd_designer",
+  "description": "Visual builder for FHIR ViewDefinitions",
+  "lang": "en-US",
+  "theme_color": "#ea4a35",
+  "background_color": "#fff",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "256x256",
+      "src": "/icons/favicon.png",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "any",
+  "display": "standalone",
+  "dir": "auto",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/"
+}
