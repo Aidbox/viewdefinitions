@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.components
+(ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input
                           Popover Row Select Space Typography]]
@@ -13,8 +13,8 @@
             [vd-designer.components.select :as select]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :refer [calc-key]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.form.controller :as c]
+            [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]
             [vd-designer.utils.js :refer [find-elements get-element-by-id
                                           remove-class toggle-class]]))

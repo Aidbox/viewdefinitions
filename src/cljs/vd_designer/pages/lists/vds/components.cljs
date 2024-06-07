@@ -1,11 +1,11 @@
-(ns vd-designer.pages.vd-list.components
+(ns vd-designer.pages.lists.vds.components
   (:require ["@ant-design/icons" :as icons]
             [re-frame.core :refer [dispatch]]
             [reitit.frontend.easy :as rfe]
             [vd-designer.components.dropdown :refer [add-dropdown
                                                      dropdown-item-ant]]
             [vd-designer.components.input :as input]
-            [vd-designer.pages.vd-list.controller :as c]
+            [vd-designer.pages.lists.vds.controller :as c]
             [vd-designer.utils.event :refer [target-value]]))
 
 (defn search-input []
@@ -22,4 +22,6 @@
             :onClick #(case (.-key %)
                         "New"    (rfe/navigate :form-create)
                         "Import" (dispatch [::c/start-import]))}}
-   {:size :default}])
+   {:size  :default
+    :type  :primary
+    :ghost true}])

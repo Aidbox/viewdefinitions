@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.controller
+(ns vd-designer.pages.form.controller
   (:require
    [ajax.core :as ajax]
    [clojure.string :as str]
@@ -6,15 +6,15 @@
    [medley.core :as medley]
    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx]]
    [vd-designer.http.fhir-server :as http.fhir-server]
-   [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                  get-select-path]]
+   [vd-designer.pages.form.fhir-schema :refer [get-constant-type
+                                               get-select-path]]
    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-   [vd-designer.pages.vd-form.form.normalization :refer [normalize-vd]]
-   [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                           remove-decoration
-                                                           uuid->idx]]
-   [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
-   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
+   [vd-designer.pages.form.form.uuid-decoration :refer [decorate
+                                                        remove-decoration
+                                                        uuid->idx]]
+   [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
+   [vd-designer.pages.form.model :as m]
    [vd-designer.utils.event :refer [response->error]]
    [vd-designer.utils.utils :as utils]
    [vd-designer.utils.string :as utils.string]
@@ -175,8 +175,8 @@
  (fn [{:keys [db authentication-token]} [_ vd-id]]
    {:db         (assoc db :loading true)
     :http-xhrio (-> (http.fhir-server/get-view-definition-user-server
-                      authentication-token
-                      (http.fhir-server/active-server db) vd-id)
+                     authentication-token
+                     (http.fhir-server/active-server db) vd-id)
                     (assoc :on-success [::choose-vd]
                            :on-failure [::on-vd-error]))}))
 
@@ -270,9 +270,9 @@
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
-                             remove-meta 
+                             remove-meta
                              strip-empty-select-nodes
-                             strip-empty-where-nodes) 
+                             strip-empty-where-nodes)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
@@ -416,10 +416,10 @@
                              remove-meta)
          empty-fields? (empty-inputs-in-vd? view-definition)
          req (cond->
-               (http.fhir-server/post-view-definition
-                 authentication-token
-                 (http.fhir-server/active-server db)
-                 view-definition)
+              (http.fhir-server/post-view-definition
+               authentication-token
+               (http.fhir-server/active-server db)
+               view-definition)
                (:id view-definition)
                (assoc-in [:params :vd-id] (:id view-definition)))]
      (js/console.log "req" req)

@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.form.tree
+(ns vd-designer.pages.form.form.tree
   (:require
    [antd :refer [Flex Space]]
    [clojure.set :as set]
@@ -7,25 +7,25 @@
    [vd-designer.components.icon :as icon]
    [vd-designer.components.input :refer [input]]
    [vd-designer.components.tree :refer [tree-leaf tree-node]]
-   [vd-designer.pages.vd-form.components :refer [add-element-button
-                                                 add-vd-item
-                                                 add-select-button
-                                                 base-input-row base-node-row
-                                                 change-input-value
-                                                 delete-button fhir-path-input
-                                                 name-input resource-input
-                                                 text-input
-                                                 tree-tag]]
-   [vd-designer.pages.vd-form.controller :as form-controller]
-   [vd-designer.pages.vd-form.fhir-schema :refer [add-value-path
-                                                  add-fhirpath
-                                                  drop-value-path
-                                                  get-constant-type]]
-   [vd-designer.pages.vd-form.form.settings :refer [column-settings
-                                                    constant-settings
-                                                    where-settings]]
-   [vd-designer.pages.vd-form.form.uuid-decoration :as uuid-decor]
-   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.pages.form.components :refer [add-element-button
+                                              add-vd-item
+                                              add-select-button
+                                              base-input-row base-node-row
+                                              change-input-value
+                                              delete-button fhir-path-input
+                                              name-input resource-input
+                                              text-input
+                                              tree-tag]]
+   [vd-designer.pages.form.controller :as form-controller]
+   [vd-designer.pages.form.fhir-schema :refer [add-value-path
+                                               add-fhirpath
+                                               drop-value-path
+                                               get-constant-type]]
+   [vd-designer.pages.form.form.settings :refer [column-settings
+                                                 constant-settings
+                                                 where-settings]]
+   [vd-designer.pages.form.form.uuid-decoration :as uuid-decor]
+   [vd-designer.pages.form.model :as m]
    [vd-designer.utils.event :as u]))
 
 ;; Leafs
@@ -131,7 +131,7 @@
       (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]]))
 
 (defn foreach-expr-leaf [ctx value-key path & {:as opts}]
-[:> Flex {:gap   8
+  [:> Flex {:gap   8
             :align :center
             :style {:width "100%"}}
    [icon/expression]
@@ -265,11 +265,11 @@
         path-to* (uuid-decor/uuid->idx path-to vd)]
     (or
       ;; element with index 0 is dragged into the head of its own parent
-      (and (-> path-from* peek (= 0))
-           (-> path-from* pop (= path-to*)))
+     (and (-> path-from* peek (= 0))
+          (-> path-from* pop (= path-to*)))
       ;; element is already there
-      (= (peek path-from*)
-         (inc (peek path-to*))))))
+     (= (peek path-from*)
+        (inc (peek path-to*))))))
 
 (defn drop-allowed?
   ([drag-key drop-key]
@@ -277,24 +277,24 @@
 
   ([vd drag-key drop-key drop-position]
    (and
-     (not (pointless-drag? vd drag-key drop-key))
-     (or (and (-> drag-key first (= :where))
-              (-> drop-key first (= :where)))
+    (not (pointless-drag? vd drag-key drop-key))
+    (or (and (-> drag-key first (= :where))
+             (-> drop-key first (= :where)))
 
-         (and (-> drag-key first (= :constant))
-              (-> drop-key first (= :constant)))
+        (and (-> drag-key first (= :constant))
+             (-> drop-key first (= :constant)))
 
          ;; columns in one level
-         (and (-> drag-key pop peek (= :column))
-              (or (-> drop-key peek (= :column))
-                  (-> drop-key pop peek (= :column))))
+        (and (-> drag-key pop peek (= :column))
+             (or (-> drop-key peek (= :column))
+                 (-> drop-key pop peek (= :column))))
 
-         (and
-           (= drop-position 1)
-           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
-           (-> drop-key peek #{:column :forEach :forEachOrNull :unionAll}))
+        (and
+         (= drop-position 1)
+         (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+         (-> drop-key peek #{:column :forEach :forEachOrNull :unionAll}))
 
-         (and
-           (= drop-position 0)
-           (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
-           (-> drop-key peek #{:select :unionAll}))))))
+        (and
+         (= drop-position 0)
+         (-> drag-key peek #{:column :forEach :forEachOrNull :unionAll})
+         (-> drop-key peek #{:select :unionAll}))))))

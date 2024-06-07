@@ -1,7 +1,7 @@
-(ns vd-designer.pages.vd-form.components-test
+(ns vd-designer.pages.form.components-test
   (:require [clojure.test :refer-macros [deftest testing is run-tests]]
             [matcher-combinators.test :refer [match?]]
-            [vd-designer.pages.vd-form.components :as sut]))
+            [vd-designer.pages.form.components :as sut]))
 
 (deftest fhirpath-name-test
   (is (= "multipleBirth" (sut/fhirpath-alias "multipleBirth.ofType(boolean)")))
@@ -11,4 +11,4 @@
 
 
 (comment
-  (run-tests vd-designer.pages.vd-form.components-test))
+  (run-tests vd-designer.pages.form.components-test))

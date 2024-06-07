@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-list.import
+(ns vd-designer.pages.lists.vds.import
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [Modal Upload]]
             [clojure.string :as str]
@@ -6,8 +6,8 @@
             [vd-designer.components.monaco-editor :as monaco]
             [reagent.core :as r]
             [vd-designer.components.tabs :as tabs]
-            [vd-designer.pages.vd-list.controller :as c]
-            [vd-designer.pages.vd-list.model :as m]
+            [vd-designer.pages.lists.vds.controller :as c]
+            [vd-designer.pages.lists.vds.model :as m]
             [vd-designer.utils.yaml :refer [str->yaml]]))
 
 (def supported-extensions

@@ -1,26 +1,22 @@
 (ns vd-designer.pages.home.view
-  (:require ["antd" :refer [Button Col Flex Row Space Steps Typography]]
+  (:require ["@ant-design/icons" :as icons]
+            ["antd" :refer [Button Col Flex Row Space Steps Typography]]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.pages.home.components :refer [banner-card
                                                        feature-action-card
                                                        feature-card]]
             [vd-designer.pages.home.controller :as c]
+            [vd-designer.pages.home.layout :as layout]
             [vd-designer.pages.home.model :as m]))
 
-(def col-sizes
-  {:xxl  16
-   :xl   18
-   :lg   22
-   :md   24})
-
 (defn hero []
-  [:> Row {:style   {:background "#F4F8FB"
-                     :padding    "60px 56px 42px"}}
-   [:> Col col-sizes
-    [:span {:style {:color     "var(--ant-color-primary)"
-                    :font-size "18px"}}
-     "<_ sql-on-fhir"]
+  [:> Row {:style {:background "#F4F8FB"
+                   :padding    "60px 56px 42px"}}
+   [:> Col layout/col-sizes
+    [:span {:style {:color       "var(--ant-color-primary)"
+                    :font-family "'Roboto Mono', monospace"}}
+     ">_ sql-on-fhir"]
     [:> Typography.Title {:level 1} "ViewDefinition Builder"]
     [:> Typography.Paragraph {:style {:max-width      "540px"
                                       :font-size      "18px"
@@ -32,7 +28,7 @@
 
 (defn intro []
   [:> Row
-   [:> Col col-sizes
+   [:> Col layout/col-sizes
     [:> Typography.Title {:level 2} "Intro"]
     [:> Typography.Paragraph
      "This free online builder allows you to create and debug ViewDefinition
@@ -46,7 +42,7 @@
 
 (defn features []
   [:> Row
-   [:> Col col-sizes
+   [:> Col layout/col-sizes
     [:> Typography.Title {:level 2} "Features"]
 
     [:> Space {:direction "vertical" :size "middle"}
@@ -150,13 +146,16 @@
         "Build interoperable, secure, and fast healthcare applications with
          FHIR-native Postgres database, Comprehensive API with Granular Access
          Control, and SDK"]
-       [:> Typography.Link {:href   "https://www.health-samurai.io/aidbox"
-                            :target "_blank"}
-        "Learn more"]])]]])
+
+       [:a {:href "https://www.health-samurai.io/aidbox" :target "_blank"}
+        [:> Flex {:align :center :gap "4px"}
+         [:span {:style {:padding-bottom "2px"}} "Learn more "]
+         [:> icons/RightOutlined]]]])]]])
+
 
 (defn links []
   [:> Row
-   [:> Col col-sizes
+   [:> Col layout/col-sizes
     [:> Typography.Title {:level 2} "Links & Resources"]
     [:> Typography.Paragraph
      "Learn more about HL7 FHIR, SQL-on-FHIR, and FHIRpath. Join the SQL-on-FHIR

@@ -1,6 +1,6 @@
-(ns vd-designer.pages.vd-list.import-test
+(ns vd-designer.pages.lists.vds.import-test
   (:require [cljs.test :refer [deftest is testing run-tests]]
-            [vd-designer.pages.vd-list.import :refer [parse-vd]]))
+            [vd-designer.pages.lists.vds.import :refer [parse-vd]]))
 
 (deftest parse-vd-test
   (testing "parses valid YAML string"
@@ -27,4 +27,4 @@
            (parse-vd "/*\ncomment\n*/\n{\"key1\":\"value1\"}")))))
 
 (comment
-  (run-tests vd-designer.pages.vd-list.import-test))
+  (run-tests vd-designer.pages.lists.vds.import-test))

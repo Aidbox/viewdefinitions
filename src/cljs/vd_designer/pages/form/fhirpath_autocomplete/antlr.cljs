@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.fhirpath-autocomplete.antlr
+(ns vd-designer.pages.form.fhirpath-autocomplete.antlr
   (:require ["fhirpath-autocomplete-ts" :as autocomplete]
             [vd-designer.interop :as interop]))
 

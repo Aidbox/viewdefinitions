@@ -1,9 +1,9 @@
-(ns vd-designer.pages.vd-form.form.uuid-decoration-test
+(ns vd-designer.pages.form.form.uuid-decoration-test
   (:require [cljs.test :refer [deftest run-tests is]]
             [matcher-combinators.test :refer [match?]]
-            [vd-designer.pages.vd-form.form.uuid-decoration :refer [decorate
-                                                                    remove-decoration
-                                                                    uuid->idx]]))
+            [vd-designer.pages.form.form.uuid-decoration :refer [decorate
+                                                                 remove-decoration
+                                                                 uuid->idx]]))
 
 (defn uuid-str? [o]
   (-> o parse-uuid boolean))
@@ -136,4 +136,4 @@
                   raw-vd-with-id))))
 
 (comment
-  (run-tests 'vd-designer.pages.vd-form.form.uuid-decoration-test))
+  (run-tests 'vd-designer.pages.form.form.uuid-decoration-test))

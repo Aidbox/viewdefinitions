@@ -1,10 +1,10 @@
-(ns vd-designer.pages.vd-form.form.tree-test
+(ns vd-designer.pages.form.form.tree-test
   (:require [cljs.test :refer-macros [are deftest is run-test run-tests testing]]
-            [vd-designer.pages.vd-form.form.tree :as tree]))
+            [vd-designer.pages.form.form.tree :as tree]))
 
 (deftest select->node-test
   (are [element node-type]
-    (= node-type (tree/determine-key element))
+       (= node-type (tree/determine-key element))
 
     {:select []}
     :select
@@ -34,8 +34,8 @@
     (is (tree/drop-allowed? [:where 'k1]
                             [:where 'k2]))
     (is (not
-          (tree/drop-allowed? [:where 'k1]
-                              [:constant 'k2]))))
+         (tree/drop-allowed? [:where 'k1]
+                             [:constant 'k2]))))
 
   (testing "constant -> constant only"
     (is (tree/drop-allowed? [:constant 'k1]
@@ -43,8 +43,8 @@
     (is (tree/drop-allowed? [:constant 'k1]
                             [:constant 'k2]))
     (is (not
-          (tree/drop-allowed? [:constant 'some-key]
-                              [:where 'some-other-key]))))
+         (tree/drop-allowed? [:constant 'some-key]
+                             [:where 'some-other-key]))))
 
   (testing "column leaf -> column leaf"
     (is (tree/drop-allowed? [:select 'k1 :column 'k2]
@@ -52,19 +52,19 @@
     (is (tree/drop-allowed? [:select 'k1 :column 'k2]
                             [:select 'k1 :column 'k3]))
     (is (not
-          (tree/drop-allowed? [:select 'k1 :column 'k2]
-                              [:where 'k3]))))
+         (tree/drop-allowed? [:select 'k1 :column 'k2]
+                             [:where 'k3]))))
 
   (testing "column node -> column node"
     (is (not
-          (tree/drop-allowed? [:select 'k1 :column]
-                              [:select 'k2 :column])))
+         (tree/drop-allowed? [:select 'k1 :column]
+                             [:select 'k2 :column])))
     (is (not
-          (tree/drop-allowed? [:select 'k1 :select 'k2 :column]
-                              [:select 'k3 :column])))
+         (tree/drop-allowed? [:select 'k1 :select 'k2 :column]
+                             [:select 'k3 :column])))
     (is (not
-          (tree/drop-allowed? [:select 'k1 :column]
-                              [:select 'k2 :select 'k3 :column]))))
+         (tree/drop-allowed? [:select 'k1 :column]
+                             [:select 'k2 :select 'k3 :column]))))
 
   (testing "column node -> forEach(orNull):select"
     ;; Sadly, dropping into an empty `forEach:select` is impossible by design
@@ -106,23 +106,23 @@
 
 (deftest pointless-drag?-test
   (is (tree/pointless-drag?
-        {:select   [{:column   [{:name 'whatever
-                                 :tree/key 'k2}]
-                     :tree/key 'k1}]
-         :tree/key 'k0}
-        [:select 'k1 :column 'k2]
-        [:select 'k1 :column]))
+       {:select   [{:column   [{:name 'whatever
+                                :tree/key 'k2}]
+                    :tree/key 'k1}]
+        :tree/key 'k0}
+       [:select 'k1 :column 'k2]
+       [:select 'k1 :column]))
 
   (is (tree/pointless-drag?
-        {:select   [{:column   [{:name     'n1
-                                 :tree/key 'k2}
-                                {:name     'n2
-                                 :tree/key 'k3}]
-                     :tree/key 'k1}]
-         :tree/key 'k0}
-        [:select 'k1 :column 'k3]
-        [:select 'k1 :column 'k2])))
+       {:select   [{:column   [{:name     'n1
+                                :tree/key 'k2}
+                               {:name     'n2
+                                :tree/key 'k3}]
+                    :tree/key 'k1}]
+        :tree/key 'k0}
+       [:select 'k1 :column 'k3]
+       [:select 'k1 :column 'k2])))
 
 (comment
-  (run-tests 'vd-designer.pages.vd-form.form.tree-test)
+  (run-tests 'vd-designer.pages.form.form.tree-test)
   (run-test drop-allowed?-test))

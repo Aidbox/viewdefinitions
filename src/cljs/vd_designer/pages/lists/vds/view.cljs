@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-list.view
+(ns vd-designer.pages.lists.vds.view
   (:require [antd :refer [Flex Typography]]
             [clojure.string :as str]
             [re-frame.core :refer [dispatch subscribe]]
@@ -7,12 +7,12 @@
             [vd-designer.auth.model :as auth-model]
             [vd-designer.components.list :refer [vd-data-list]]
             [vd-designer.components.modal :as modal]
-            [vd-designer.pages.settings.model :as settings-model]
-            [vd-designer.pages.vd-list.components :refer [add-view-definition
-                                                          search-input]]
-            [vd-designer.pages.vd-list.controller :as c]
-            [vd-designer.pages.vd-list.import :refer [import-modal]]
-            [vd-designer.pages.vd-list.model :as m]
+            [vd-designer.pages.lists.settings.model :as settings-model]
+            [vd-designer.pages.lists.vds.components :refer [add-view-definition
+                                                            search-input]]
+            [vd-designer.pages.lists.vds.controller :as c]
+            [vd-designer.pages.lists.vds.import :refer [import-modal]]
+            [vd-designer.pages.lists.vds.model :as m]
             [vd-designer.utils.string :as string-utils]))
 
 (defn- grep-vd [vd filter-phrase]
@@ -41,8 +41,7 @@
 (defn viewdefinition-list-view []
   (let [used-server-name @(subscribe [::settings-model/used-server-name])
         authorized? @(subscribe [::auth-model/authorized?])]
-    [:div {:style {:max-width "768px"
-                   :padding   "0px 24px"}}
+    [:<>
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "View Definitions"]
@@ -51,8 +50,9 @@
          [import-modal]
          [add-view-definition]])]
 
-     [:div
-      [search-input]
+     [:<>
+      [:div {:style {:margin "16px 0"}}
+       [search-input]]
       [vd-data-list
        #(rfe/navigate :form-edit {:path-params {:id %}})
        (when authorized?

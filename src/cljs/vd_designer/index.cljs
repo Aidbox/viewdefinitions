@@ -7,22 +7,24 @@
             [reagent.dom.client :as rdom-client]
             [reitit.frontend.easy :as rfe]
             [vd-designer.auth.controller :as auth.controller]
-            [vd-designer.components.layout :refer [builder-theme home-theme
-                                                   layout]]
+            [vd-designer.pages.layout :refer [layout]]
             [vd-designer.notifications]
-            [vd-designer.pages.settings.view]
+            [vd-designer.pages.form.layout :as form]
+            [vd-designer.pages.form.model :as vd-form.model]
+            [vd-designer.pages.form.view]
+            [vd-designer.pages.home.layout :as home]
+            [vd-designer.pages.lists.layout :as lists]
+            [vd-designer.pages.lists.settings.controller :as settings-controller]
+            [vd-designer.pages.lists.settings.view]
+            [vd-designer.pages.lists.vds.view]
             [vd-designer.utils.debounce]
-            [vd-designer.pages.settings.controller :as settings-controller]
-            [vd-designer.pages.vd-form.model :as vd-form.model]
-            [vd-designer.pages.vd-form.view]
-            [vd-designer.pages.vd-list.view]
             [vd-designer.routes :as routes]))
 
 ;;;; Layout
 
 (defn breadcrumbs [route]
   (let [current-vd @(subscribe [::vd-form.model/current-vd])
-        home     {:title "SQL on FHIR"      :href "/"}
+        home     {:title "Home"             :href "/"}
         vds      {:title "View Definitions" :href "/vds"}
         settings {:title "Settings"         :href "/settings"}
 
@@ -36,24 +38,35 @@
 ;;;; Initialization
 
 (reg-event-fx
-  ::initialize-db
-  [(inject-cofx :get-authentication-token)
-   (inject-cofx :get-used-server-name)]
-  (fn [{:keys [db authentication-token used-server-name]} _]
-    (if (seq db)
-      {:db db}
-      {:db {:view-definitions    []
-            :onboarding          {:sandbox 0
-                                  :aidbox  0}
-            :authorized?         (boolean authentication-token)
-            :cfg/fhir-servers    {:used-server-name used-server-name}}
+ ::initialize-db
+ [(inject-cofx :get-authentication-token)
+  (inject-cofx :get-used-server-name)]
+ (fn [{:keys [db authentication-token used-server-name]} _]
+   (if (seq db)
+     {:db db}
+     {:db {:view-definitions    []
+           :onboarding          {:sandbox 0
+                                 :aidbox  0}
+           :authorized?         (boolean authentication-token)
+           :cfg/fhir-servers    {:used-server-name used-server-name}}
        ;; we cannot do anything without servers
-       :fx [[:dispatch [::settings-controller/fetch-user-servers]]
-            [:dispatch [:dispatch-debounce
-                        {:key :use-sandbox-if-not-selected
-                         :event [::settings-controller/use-sandbox-if-not-selected]
-                         :delay 1000}]]]})))
+      :fx [[:dispatch [::settings-controller/fetch-user-servers]]
+           [:dispatch [:dispatch-debounce
+                       {:key :use-sandbox-if-not-selected
+                        :event [::settings-controller/use-sandbox-if-not-selected]
+                        :delay 1000}]]]})))
 
+
+(defn wrap-view-layout [route view]
+  (let [breadcrumbs {:breadcrumbs (breadcrumbs route)}]
+    (case (name route)
+      "home"        (home/layout {} view)
+
+      "form-edit"   (form/layout breadcrumbs view)
+      "form-create" (form/layout breadcrumbs view)
+
+      "vd-list"     (lists/layout breadcrumbs view)
+      "settings"    (lists/layout breadcrumbs view))))
 
 (defn current-page []
   (let [route @routes/match
@@ -62,8 +75,6 @@
      {:on-menu-click   (fn [key]
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
-      :theme           (if (= "home" (name current-route)) home-theme builder-theme)
-      :with-footer     (when (= "home" (name current-route)) true)
       :menu            [{:key  "vd-list"
                          :icon (r/create-element icons/UnorderedListOutlined)
                          :size 64}
@@ -71,11 +82,10 @@
                          :icon (r/create-element icons/SettingOutlined)
                          :size 64}
                         #_{:key  "3"
-                           :icon (r/create-element icons/BookOutlined)}]
-      :breadcrumbs     (breadcrumbs current-route)}
+                           :icon (r/create-element icons/BookOutlined)}]}
      (if route
-       (let [view (:view (:data route))]
-         [view @routes/match])
+       (let [view (-> route :data :view)]
+         (wrap-view-layout current-route [view @routes/match]))
        [:div "Page not found"])]))
 
 (defonce root-element (rdom-client/create-root (.getElementById js/document "app")))
@@ -93,4 +103,3 @@
 (defn ^:dev/after-load re-render []
   (clear-subscription-cache!)
   (init))
-

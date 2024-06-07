@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.form.normalization)
+(ns vd-designer.pages.form.form.normalization)
 
 (defn- normalize-column [acc node]
   (cond

@@ -1,9 +1,9 @@
 (ns vd-designer.autocomplete-test
   (:require [cljs.test :refer-macros [deftest is testing run-tests run-test]]
-            [vd-designer.pages.vd-form.components :as u]
+            [vd-designer.pages.form.components :as u]
             ;; [clojure.string :as str]
             ;; [clojure.core]
-            ;; [vd-designer.pages.vd-form.fhirpath-autocomplete.antlr :as antlr]
+            ;; [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
             ;; [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [matcher-combinators.test :refer [match?]])
   ;; (:require-macros [vd-designer.interop :refer [inline-resource]])
@@ -198,43 +198,43 @@
 
     ;; name.|where(expr) → name.where(expr)|
     (is (match?
-          [{:value "name.where(expr)"
-            :cursor 16}]
-          (options-where {:text "name.where(expr)" :cursor-start 5}
-                         [5 10])))
+         [{:value "name.where(expr)"
+           :cursor 16}]
+         (options-where {:text "name.where(expr)" :cursor-start 5}
+                        [5 10])))
 
     ;; name.whe|re(expr) → name.where(expr)|
     (is (match?
-          [{:value "name.where(expr)"
-            :cursor 16}]
-          (options-where {:text "name.where(expr)" :cursor-start 8}
-                         [5 10])))
+         [{:value "name.where(expr)"
+           :cursor 16}]
+         (options-where {:text "name.where(expr)" :cursor-start 8}
+                        [5 10])))
 
     ;; name.|where(expr).abc => name.where(expr)|.abc
     (is (match?
-          [{:value "name.where(expr).abc"
-            :cursor 16}]
-          (options-where {:text "name.where(expr).abc" :cursor-start 5}
-                         [5 10])))
+         [{:value "name.where(expr).abc"
+           :cursor 16}]
+         (options-where {:text "name.where(expr).abc" :cursor-start 5}
+                        [5 10])))
 
     ;; name.|first().abc => name.first()|.abc
     (is (match?
-          [{:value "name.first().abc"
-            :cursor 12}]
-          (u/->ui-options
-            {:text "name.first().abc" :cursor-start 5}
-            [{:label "first",
-              :kind :method
-              :detail nil
-              :textEdit {:range {:start {:character 5}
-                                 :end   {:character 10}}
-                         :newText "first()"}}])))
+         [{:value "name.first().abc"
+           :cursor 12}]
+         (u/->ui-options
+          {:text "name.first().abc" :cursor-start 5}
+          [{:label "first",
+            :kind :method
+            :detail nil
+            :textEdit {:range {:start {:character 5}
+                               :end   {:character 10}}
+                       :newText "first()"}}])))
 
     ;; 	name.whe|re( → name.where(|)
     ;; TODO: is it ok?
     #_(is (match?
-          [{:value "name.where()" :cursor 11}]
-          (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
+           [{:value "name.where()" :cursor 11}]
+           (options-where {:text "name.where(" :cursor-start 8} [5 10])))))
 
 
 ;; (def json (inline-resource "fhir_schema.ndjson"))

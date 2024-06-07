@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.view
+(ns vd-designer.pages.form.view
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [Button Flex Row Space Tooltip Typography]]
             [medley.core :as medley]
@@ -11,13 +11,13 @@
             [vd-designer.components.button :as button]
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
-            [vd-designer.pages.vd-form.components :refer [toggle-popover]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.editor :refer [editor]]
-            [vd-designer.pages.vd-form.form :refer [form]]
-            [vd-designer.pages.vd-form.form.settings :as form]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.sql :refer [sql]]))
+            [vd-designer.pages.form.components :refer [toggle-popover]]
+            [vd-designer.pages.form.controller :as c]
+            [vd-designer.pages.form.editor :refer [editor]]
+            [vd-designer.pages.form.form :refer [form]]
+            [vd-designer.pages.form.form.settings :as form]
+            [vd-designer.pages.form.model :as m]
+            [vd-designer.pages.form.sql :refer [sql]]))
 
 (defn- save-vd-button [authorized?]
   (let [button (fn [overrides]
@@ -45,8 +45,7 @@
                             :display        "flex"
                             :flex-direction "row"
                             :flex-flow      "row"
-                            :overflow       "hidden"
-                            :padding        "0px 24px"}}
+                            :overflow       "hidden"}}
      [:> Panel
       {:minSize 25
        :style   {:display "flex"}}

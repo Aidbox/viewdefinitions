@@ -1,10 +1,10 @@
-(ns vd-designer.pages.vd-form.sql
+(ns vd-designer.pages.form.sql
   (:require [antd :refer [Flex]]
             [re-frame.core :refer [subscribe]]
             [sql-formatter :as sqlf]
             [vd-designer.components.button :as button]
             [vd-designer.components.monaco-editor :refer [monaco]]
-            [vd-designer.pages.vd-form.model :as m]))
+            [vd-designer.pages.form.model :as m]))
 
 (defn sql []
   (let [sql @(subscribe [::m/sql])

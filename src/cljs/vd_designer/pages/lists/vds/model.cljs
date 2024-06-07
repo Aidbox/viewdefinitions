@@ -1,8 +1,8 @@
-(ns vd-designer.pages.vd-list.model
+(ns vd-designer.pages.lists.vds.model
   (:require
    [medley.core :as medley]
    [re-frame.core :refer [reg-sub]]
-   [vd-designer.pages.vd-list.controller :as-alias c]))
+   [vd-designer.pages.lists.vds.controller :as-alias c]))
 
 (reg-sub
  ::view-defs

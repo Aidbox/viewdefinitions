@@ -1,12 +1,12 @@
-(ns vd-designer.pages.vd-list.controller
+(ns vd-designer.pages.lists.vds.controller
   (:require
-    [clojure.string :as str]
-    [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
-    [vd-designer.utils.debounce]
-    [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.settings.controller :as settings-controller]
-    [vd-designer.utils.event :refer [response->error]]
-    [vd-designer.pages.vd-list.model :as m]))
+   [clojure.string :as str]
+   [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
+   [vd-designer.utils.debounce]
+   [vd-designer.http.fhir-server :as http.fhir-server]
+   [vd-designer.pages.lists.settings.controller :as settings-controller]
+   [vd-designer.utils.event :refer [response->error]]
+   [vd-designer.pages.lists.vds.model :as m]))
 
 (reg-event-fx
  ::start
@@ -22,7 +22,7 @@
 
 (reg-event-fx
  ::get-view-definitions
-  [(inject-cofx :get-authentication-token)]
+ [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_]]
    {:db         (assoc db ::m/view-definitions-loading true)
     :http-xhrio (-> (http.fhir-server/get-view-definitions
@@ -34,10 +34,10 @@
 (reg-event-fx
  ::got-view-definitions-success
  (fn [{:keys [db]} [_ result]]
-  {:db
-   (assoc db
-          :view-definitions (:entry result)
-          ::m/view-definitions-loading false)}))
+   {:db
+    (assoc db
+           :view-definitions (:entry result)
+           ::m/view-definitions-loading false)}))
 
 (reg-event-fx
  ::get-view-definitions-fail
@@ -48,12 +48,12 @@
 
 (reg-event-fx
  ::delete-view-definition
-  [(inject-cofx :get-authentication-token)]
+ [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_ id]]
    {:http-xhrio (-> (http.fhir-server/delete-view-definition
-                      authentication-token
-                      (http.fhir-server/active-server db)
-                      id)
+                     authentication-token
+                     (http.fhir-server/active-server db)
+                     id)
                     (assoc :on-success [::delete-view-definition-success id]
                            :on-failure [::delete-view-definition-failure]))}))
 
@@ -100,7 +100,7 @@
 (reg-event-db
  ::remove-import-content
  (fn [db [_]]
-  (update db :vd-import dissoc :file :text)))
+   (update db :vd-import dissoc :file :text)))
 
 (reg-event-fx
  ::import-success

@@ -1,12 +1,12 @@
-(ns vd-designer.pages.vd-form.editor
+(ns vd-designer.pages.form.editor
   (:require [antd :refer [Flex]]
             [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.button :as button]
             [vd-designer.components.monaco-editor :refer [monaco]]
             [vd-designer.components.switch :as switch]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.model :as m]
-            [vd-designer.pages.vd-form.form.uuid-decoration :refer [remove-decoration]]
+            [vd-designer.pages.form.controller :as c]
+            [vd-designer.pages.form.model :as m]
+            [vd-designer.pages.form.form.uuid-decoration :refer [remove-decoration]]
             [vd-designer.utils.yaml :as yaml]))
 
 (defn format-vd [vd lang]

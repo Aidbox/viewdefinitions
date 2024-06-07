@@ -6,7 +6,7 @@
 ;; TODO: load more action
 (defn data-list
   "List with data.
-    For more details see: https://ant.design/components/table#api"
+    For more details see: https://ant.design/components/list#api"
   [& {:as opts}]
   [:> List (merge-with
             into

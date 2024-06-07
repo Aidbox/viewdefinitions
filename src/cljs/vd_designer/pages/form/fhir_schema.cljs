@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.fhir-schema
+(ns vd-designer.pages.form.fhir-schema
   (:require [clojure.string :as str]))
 
 (def vd-spec

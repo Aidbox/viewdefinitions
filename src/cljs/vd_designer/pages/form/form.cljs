@@ -1,14 +1,14 @@
-(ns vd-designer.pages.vd-form.form
+(ns vd-designer.pages.form.form
   (:require
    [antd :refer [Flex Spin]]
    [clojure.string :as str]
    [re-frame.core :refer [dispatch subscribe]]
    [vd-designer.components.tree :refer [tree] :as tree]
-   [vd-designer.pages.vd-form.controller :as c]
-   [vd-designer.pages.vd-form.fhir-schema :refer [create-render-context]]
-   [vd-designer.pages.vd-form.form.tree :refer [draggable? drop-allowed?
-                                                vd-tree]]
-   [vd-designer.pages.vd-form.model :as m]
+   [vd-designer.pages.form.controller :as c]
+   [vd-designer.pages.form.fhir-schema :refer [create-render-context]]
+   [vd-designer.pages.form.form.tree :refer [draggable? drop-allowed?
+                                             vd-tree]]
+   [vd-designer.pages.form.model :as m]
    [vd-designer.utils.string :as str.utils]))
 
 (defn form []
@@ -30,10 +30,10 @@
              :allow-drop    #(let [{:keys [dragNode dropNode dropPosition]}
                                    (js->clj % :keywordize-keys true)]
                                (drop-allowed?
-                                 vd
-                                 (-> dragNode :key str.utils/parse-path)
-                                 (-> dropNode :key str.utils/parse-path)
-                                 dropPosition))
+                                vd
+                                (-> dragNode :key str.utils/parse-path)
+                                (-> dropNode :key str.utils/parse-path)
+                                dropPosition))
 
              :on-drop       #(let [{:keys [node dragNode dropPosition]}
                                    (js->clj % :keywordize-keys true)

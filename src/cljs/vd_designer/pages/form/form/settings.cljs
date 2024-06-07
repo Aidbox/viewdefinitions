@@ -1,4 +1,4 @@
-(ns vd-designer.pages.vd-form.form.settings
+(ns vd-designer.pages.form.form.settings
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [DatePicker Form Input Modal Select Space Switch
                           Typography]]
@@ -8,13 +8,13 @@
             [vd-designer.components.button :as button]
             [vd-designer.components.collapse :refer [collapse collapse-item]]
             [vd-designer.components.select :as select]
-            [vd-designer.pages.vd-form.components :refer [settings-base-form
-                                                          toggle-popover]]
-            [vd-designer.pages.vd-form.controller :as c]
-            [vd-designer.pages.vd-form.fhir-schema :refer [get-constant-type
-                                                           value-type-list]]
-            [vd-designer.pages.vd-form.form.uuid-decoration :refer [uuid->idx]]
-            [vd-designer.pages.vd-form.model :as m]
+            [vd-designer.pages.form.components :refer [settings-base-form
+                                                       toggle-popover]]
+            [vd-designer.pages.form.controller :as c]
+            [vd-designer.pages.form.fhir-schema :refer [get-constant-type
+                                                        value-type-list]]
+            [vd-designer.pages.form.form.uuid-decoration :refer [uuid->idx]]
+            [vd-designer.pages.form.model :as m]
             [vd-designer.utils.string :as str.utils]))
 
 ;; After removing the list element, mapping between names and keys is broken:
