@@ -1,5 +1,6 @@
 (ns vd-designer.pages.lists.layout
-  (:require [antd :refer [Breadcrumb Col ConfigProvider Flex Layout Row]]))
+  (:require [antd :refer [Col ConfigProvider Flex Layout Row]]
+            [vd-designer.pages.components.breadcrumbs :as crumbs]))
 
 (def col-sizes
   {:xxl  14
@@ -26,7 +27,8 @@
               :gap      16
               :style    {:height "100%"
                          :margin "16px 32px"}}
-     [:> Breadcrumb {:items (:breadcrumbs props)}]
      [:> Layout.Content
       [:> Row
-       [:> Col col-sizes children]]]]]])
+       [:> Col col-sizes
+        [crumbs/crumbs props]
+        children]]]]]])

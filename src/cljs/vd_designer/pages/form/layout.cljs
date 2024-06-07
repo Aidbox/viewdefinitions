@@ -1,5 +1,6 @@
 (ns vd-designer.pages.form.layout
-  (:require [antd :refer [Breadcrumb ConfigProvider Flex Layout]]))
+  (:require [antd :refer [ConfigProvider Flex Layout]]
+            [vd-designer.pages.components.breadcrumbs :as crumbs]))
 
 (def theme
   {:token  {:fontSizeHeading1   28
@@ -20,5 +21,4 @@
               :gap      16
               :style    {:height "100%"
                          :margin "16px 32px"}}
-     [:> Breadcrumb {:items (:breadcrumbs props)}]
-     [:> Layout.Content children]]]])
+     [:> Layout.Content [crumbs/crumbs props] children]]]])
