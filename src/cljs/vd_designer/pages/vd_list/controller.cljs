@@ -1,15 +1,24 @@
 (ns vd-designer.pages.vd-list.controller
- (:require
-  [clojure.string :as str]
-  [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
-  [vd-designer.http.fhir-server :as http.fhir-server]
-  [vd-designer.utils.event :refer [response->error]]
-  [vd-designer.pages.vd-list.model :as m]))
+  (:require
+    [clojure.string :as str]
+    [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
+    [vd-designer.utils.debounce]
+    [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.pages.settings.controller :as settings-controller]
+    [vd-designer.utils.event :refer [response->error]]
+    [vd-designer.pages.vd-list.model :as m]))
 
 (reg-event-fx
  ::start
- (fn [_ [_]]
-   {:dispatch [::get-view-definitions]}))
+ (fn [{db :db} [_]]
+   {:fx (if (-> db :cfg/fhir-servers :user/servers)
+          [[:dispatch [::get-view-definitions]]]
+
+          [[:dispatch [::settings-controller/fetch-user-servers]]
+           [:dispatch [:dispatch-debounce
+                       {:key :get-vds
+                        :event [::get-view-definitions]
+                        :delay 1000}]]])}))
 
 (reg-event-fx
  ::get-view-definitions

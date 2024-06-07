@@ -6,7 +6,7 @@
   (let [{user-servers :user/servers
          used-server-name :used-server-name}
         (:cfg/fhir-servers db)]
-    (user-servers used-server-name)))
+    (when user-servers (user-servers used-server-name))))
 
 (defn- with-defaults [req db]
   (merge {:headers          (-> db active-server :headers)

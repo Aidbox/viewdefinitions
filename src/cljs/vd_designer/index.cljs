@@ -11,6 +11,8 @@
                                                    layout]]
             [vd-designer.notifications]
             [vd-designer.pages.settings.view]
+            [vd-designer.utils.debounce]
+            [vd-designer.pages.settings.controller :as settings-controller]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
             [vd-designer.pages.vd-list.view]
@@ -34,17 +36,24 @@
 ;;;; Initialization
 
 (reg-event-fx
- ::initialize-db
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} _]
-   (if (seq db)
-     {:db db}
-     {:db {:view-definitions    []
-           :side-menu-collapsed false
-           :onboarding          {:sandbox 0
-                                 :aidbox  0}
-           :authorized?         (boolean authentication-token)
-           :cfg/fhir-servers    {:used-server-name nil}}})))
+  ::initialize-db
+  [(inject-cofx :get-authentication-token)
+   (inject-cofx :get-used-server-name)]
+  (fn [{:keys [db authentication-token used-server-name]} _]
+    (if (seq db)
+      {:db db}
+      {:db {:view-definitions    []
+            :onboarding          {:sandbox 0
+                                  :aidbox  0}
+            :authorized?         (boolean authentication-token)
+            :cfg/fhir-servers    {:used-server-name used-server-name}}
+       ;; we cannot do anything without servers
+       :fx [[:dispatch [::settings-controller/fetch-user-servers]]
+            [:dispatch [:dispatch-debounce
+                        {:key :use-sandbox-if-not-selected
+                         :event [::settings-controller/use-sandbox-if-not-selected]
+                         :delay 1000}]]]})))
+
 
 (defn current-page []
   (let [route @routes/match
@@ -84,3 +93,4 @@
 (defn ^:dev/after-load re-render []
   (clear-subscription-cache!)
   (init))
+
