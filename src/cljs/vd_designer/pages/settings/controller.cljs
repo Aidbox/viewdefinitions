@@ -11,7 +11,8 @@
 (reg-event-fx
  ::start
  (fn [_ [_]]
-   {::polling/set-polling-timer {:event-vec [::fetch-user-servers]
+   {:dispatch [::fetch-user-servers]
+    ::polling/set-polling-timer {:event-vec [::fetch-user-servers]
                                  :interval  5000}}))
 
 (reg-event-fx
