@@ -72,7 +72,7 @@
                 :placeholder "name"
                 :value name
                 :autoFocus (= node-focus-id (last (:value-path ctx)))
-                :onBlur #(do 
+                :onBlur #(do
                            (dispatch [::form-controller/set-focus-node nil])
                            (dispatch [::form-controller/eval-view-definition-data]))
                 :classNames {:input
@@ -160,7 +160,8 @@
 
 (defn render-column-names [node-key]
   (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
-        column-closed? (when expanded-nodes (not (expanded-nodes node-key)))
+        ;; somehow this caused page crash
+        column-closed? (when (set? expanded-nodes) (not (expanded-nodes node-key)))
         column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
     [:span.cut-text (str/join ", " column-names)]))
 
