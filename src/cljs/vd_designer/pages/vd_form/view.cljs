@@ -100,7 +100,7 @@
                                     :border-width       "1px"}}]
      [:> Panel {:minSize 20}
       [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
-      [table (:data resources)
+      [table (remove empty? (:data resources))
        {:class  "vd-table"
         :scroll {:y 1000
                  :x true}}]]]))
