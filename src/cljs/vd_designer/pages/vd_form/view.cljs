@@ -60,8 +60,7 @@
          [button/icon ""
           icons/SettingOutlined
           {:onClick #(toggle-popover nil button-id)
-           :style   {:border     :none
-                     :margin-top "8px"}
+           :style   {:border :none}
            :id      button-id}]]
         [form/root-settings {:open (= button-id opened-id)}]]
 

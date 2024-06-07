@@ -91,7 +91,7 @@
        [collapse
         :expandIconPosition :end
         :items [(collapse-item
-                 [:> Typography.Title {:level 5 :style {:margin 0}} "Identifier"]
+                 [:> Typography.Title {:level 4 :style {:margin 0}} "Identifier"]
                  (let [id :identifier]
                    [:<>
                     [:> Form.Item {:label "Use"      :name [id :use]}

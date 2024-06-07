@@ -31,6 +31,17 @@ body,
   }
 }
 
+.home-onboarding-steps {
+  margin-top: 16px;
+}
+
+.home-onboarding-steps
+  > .ant-steps-item
+  > .ant-steps-item-container
+  > .ant-steps-item-content {
+  min-height: auto !important;
+}
+
 /* FORM */
 
 div.ant-tabs {

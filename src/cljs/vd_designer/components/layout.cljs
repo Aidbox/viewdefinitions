@@ -2,6 +2,7 @@
   (:require ["@ant-design/icons" :as icons]
             [antd :refer [Breadcrumb Card ConfigProvider Flex Layout Menu
                           Tooltip Typography]]
+            [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.auth.controller :as auth-controller]
@@ -9,12 +10,31 @@
             [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.button :as button]))
 
-(def theme
-  {:token  {:colorPrimary "#ea4a35"
-            :colorInfo    "#ea4a35"
-            :fontFamily   "Inter"
-            :borderRadius 4}
+(def shared-theme
+  {:token  {:colorPrimary     "#ea4a35"
+            :colorInfo        "#ea4a35"
+            :fontFamily       "Inter"
+            :borderRadius     4}
    :cssVar true})
+
+(def home-theme
+  (medley/deep-merge shared-theme
+                     {:token  {:fontSize         16
+                               :fontSizeHeading2 24
+                               :fontSizeHeading3 18
+                               :fontSizeHeading4 16}
+                      :cssVar true}))
+
+(def builder-theme
+  (medley/deep-merge shared-theme
+                     {:token  {:fontSizeHeading1   28
+                               :lineHeightHeading1 1
+                               :fontSizeHeading2   22
+                               :lineHeightHeading2 1
+                               :fontSizeHeading3   18
+                               :lineHeightHeading3 1
+                               :fontSizeHeading4   16}
+                      :cssVar true}))
 
 (defn- use-desktop []
   [:> Card {:class    "mobile-only"
@@ -38,7 +58,7 @@
        :breadcrumbs .. }
    "
   [props content]
-  [:> ConfigProvider {:theme theme}
+  [:> ConfigProvider {:theme (:theme props)}
    (let [authorized? @(subscribe [::auth-model/authorized?])]
      [:<>
       (use-desktop)

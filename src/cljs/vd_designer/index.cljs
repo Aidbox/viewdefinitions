@@ -6,9 +6,10 @@
             [reagent.core :as r]
             [reagent.dom.client :as rdom-client]
             [reitit.frontend.easy :as rfe]
-            [vd-designer.components.layout :refer [layout]]
-            [vd-designer.notifications]
             [vd-designer.auth.controller :as auth.controller]
+            [vd-designer.components.layout :refer [builder-theme home-theme
+                                                   layout]]
+            [vd-designer.notifications]
             [vd-designer.pages.settings.view]
             [vd-designer.pages.vd-form.model :as vd-form.model]
             [vd-designer.pages.vd-form.view]
@@ -33,17 +34,17 @@
 ;;;; Initialization
 
 (reg-event-fx
-  ::initialize-db
-  [(inject-cofx :get-authentication-token)]
-  (fn [{:keys [db authentication-token]} _]
-    (if (seq db)
-      {:db db}
-      {:db {:view-definitions    []
-            :side-menu-collapsed false
-            :onboarding          {:sandbox 0
-                                  :aidbox  0}
-            :authorized?         (boolean authentication-token)
-            :cfg/fhir-servers    {:used-server-name nil}}})))
+ ::initialize-db
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [db authentication-token]} _]
+   (if (seq db)
+     {:db db}
+     {:db {:view-definitions    []
+           :side-menu-collapsed false
+           :onboarding          {:sandbox 0
+                                 :aidbox  0}
+           :authorized?         (boolean authentication-token)
+           :cfg/fhir-servers    {:used-server-name nil}}})))
 
 (defn current-page []
   (let [route @routes/match
@@ -52,6 +53,7 @@
      {:on-menu-click   (fn [key]
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
+      :theme           (if (= "home" (name current-route)) home-theme builder-theme)
       :with-footer     (when (= "home" (name current-route)) true)
       :menu            [{:key  "vd-list"
                          :icon (r/create-element icons/UnorderedListOutlined)
