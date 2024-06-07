@@ -137,7 +137,7 @@
 
 (defn render-column-names [node-key]
   (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
-        column-closed? (not (expanded-nodes node-key))
+        column-closed? (when expanded-nodes (not (expanded-nodes node-key)))
         column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
     [:span.cut-text (str/join ", " column-names)]))
 

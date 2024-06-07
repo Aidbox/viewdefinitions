@@ -25,7 +25,6 @@
 (reg-event-fx
  ::got-view-definitions-success
  (fn [{:keys [db]} [_ result]]
-  (js/console.log "result!" result)
   {:db
    (assoc db
           :view-definitions (:entry result)
