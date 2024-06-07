@@ -152,8 +152,6 @@
                [:> List.Item
                 {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
                 [:> List.Item.Meta
-                 {:title
-                  (r/as-element
-                    [:a {:onClick #(dispatch [::c/start-edit server-config])}
-                     server-name])
-                  :description box-url}]])))]])]))
+                 {:title       server-name
+                  :description (r/as-element [:a {:href   box-url
+                                                  :target "_blank"} box-url])}]])))]])]))
