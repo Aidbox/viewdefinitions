@@ -13,12 +13,6 @@
             [vd-designer.repository.user-server :as user-server]
             [vd-designer.web.middleware.auth :as auth-middleware]))
 
-(defn init-project [client access-token]
-  (portal/rpc:init-project client access-token))
-
-(defn fetch-licenses [client access-token project-id]
-  (portal/rpc:fetch-licenses client access-token project-id))
-
 (defn truncate-box-url [box-url]
   (some-> box-url
           (uri/uri)
@@ -37,15 +31,20 @@
 (defn list-user-servers [{:keys [aidbox.portal/client db]} user]
   (let [access-token
         (:sso_tokens/access_token (sso-token/get-last-by-id db (:accounts/id user)))
-        projects (-> @(init-project client access-token)
+        projects (-> @(portal/rpc:init-project client access-token)
                      :body
                      :result)
         licenses (->> projects
                       (mapcat
                         (fn [project]
-                          (-> @(fetch-licenses client access-token (:id project))
+                          (-> @(portal/rpc:fetch-licenses client access-token (:id project))
                               :body :result)))
-                      (filter :box-url)
+                      (filter (fn [license]
+                                (and (:box-url license)
+                                     (= "aidbox" (:product license))
+                                     (= "active" (:status license))
+                                     (:expiration-days license)
+                                     (> (:expiration-days license) 0))))
                       (mapv (fn [license]
                               (-> license
                                   (select-keys [:name :box-url #_:product #_:status])
@@ -58,9 +57,7 @@
                                   (set/rename-keys {:name :server-name})))))]
     ;; TODO: store in DB full data,
     ;;       send to front only things that are needed
-    ;;TODO: creating duplications!
     (user-server/create-many db licenses)
-    ;; TODO: filter self-hosted, expired, product = "aidbox", status = "active"
     licenses))
 
 (defn list-servers [{:keys [cfg] :as ctx}]
