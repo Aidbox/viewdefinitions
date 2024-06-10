@@ -18,7 +18,8 @@
             [vd-designer.pages.lists.settings.view]
             [vd-designer.pages.lists.vds.view]
             [vd-designer.utils.debounce]
-            [vd-designer.routes :as routes]))
+            [vd-designer.routes :as routes]
+            ["@sooro-io/react-gtm-module" :as TagManager]))
 
 ;;;; Layout
 
@@ -89,7 +90,11 @@
   "https://github.com/reagent-project/reagent/blob/master/doc/ReagentCompiler.md"
   (reagent.core/create-compiler {:function-components true}))
 
+(def tag-manager-args
+  (clj->js {:gtmId "GTM-PMS5LG2"}))
+
 (defn init []
+  (TagManager/initialize tag-manager-args)
   (routes/start-reitit)
   (dispatch-sync [::initialize-db])
   (dispatch-sync [::auth.controller/store-authentication (:query-params @routes/match)])

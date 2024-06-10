@@ -5,8 +5,9 @@
             [reagent.core :as r]
             [vd-designer.utils.react :refer [create-react-image]]))
 
-(defn dropdown-item-ant [label icon]
-  {:label label
+(defn dropdown-item-ant [id label icon]
+  {:id    id
+   :label label
    :key   label
    :icon  (r/create-element icon)})
 

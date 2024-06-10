@@ -11,6 +11,7 @@
                                   "To perform this action you need to Sign In."
                                   [:br]
                                   "You can do that via Aidbox SSO"])
+      :ok-button-props {:id "vd_signin"}
       :ok-text     "Sign In"
       :cancel-text "Cancel"
       :on-confirm  #(js/window.location.assign sso-link)}]))

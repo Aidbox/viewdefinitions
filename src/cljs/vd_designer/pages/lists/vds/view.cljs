@@ -13,7 +13,8 @@
             [vd-designer.pages.lists.vds.controller :as c]
             [vd-designer.pages.lists.vds.import :refer [import-modal]]
             [vd-designer.pages.lists.vds.model :as m]
-            [vd-designer.utils.string :as string-utils]))
+            [vd-designer.utils.string :as string-utils]
+            ["@sooro-io/react-gtm-module" :as TagManager]))
 
 (defn- grep-vd [vd filter-phrase]
   (or (some-> vd :resource :title (str/includes? filter-phrase))
@@ -54,7 +55,10 @@
       [:div {:style {:margin "16px 0"}}
        [search-input]]
       [vd-data-list
-       #(rfe/navigate :form-edit {:path-params {:id %}})
+       #(do
+          (TagManager/dataLayer
+           (clj->js {:dataLayer {:event "vd_view" :id %}}))
+          (rfe/navigate :form-edit {:path-params {:id %}}))
        (when authorized?
          [(fn [id]
             [:div [:a {:onClick #(delete-view-modal id)} "delete"]])])

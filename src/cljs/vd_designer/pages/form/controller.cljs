@@ -18,7 +18,8 @@
    [vd-designer.utils.event :refer [response->error]]
    [vd-designer.utils.utils :as utils]
    [vd-designer.utils.string :as utils.string]
-   [clojure.walk :as walk]))
+   [clojure.walk :as walk]
+   ["@sooro-io/react-gtm-module" :as TagManager]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -267,6 +268,9 @@
  ::eval-view-definition-data
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} _]
+   (TagManager/dataLayer
+    (clj->js {:dataLayer {:event "vd_run"
+                          :resource-type (get (:current-vd db) :resource "")}}))
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections

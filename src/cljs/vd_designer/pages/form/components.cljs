@@ -17,7 +17,8 @@
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]
             [vd-designer.utils.js :refer [find-elements get-element-by-id
-                                          remove-class toggle-class]]))
+                                          remove-class toggle-class]]
+            ["@sooro-io/react-gtm-module" :as TagManager]))
 
 ;;;; Tags
 
@@ -108,7 +109,11 @@
                                   (dropdown-item-img "forEach"       "/img/form/forEach.svg")
                                   (dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
                                   (dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
-             :on-click #(add-vd-item ctx (requested-key %) false)}}]))
+             :on-click #(do
+                          (TagManager/dataLayer 
+                           (clj->js {:dataLayer {:event "vd_edit"
+                                                 :node-type requested-key}}))
+                          (add-vd-item ctx (requested-key %) false))}}]))
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined

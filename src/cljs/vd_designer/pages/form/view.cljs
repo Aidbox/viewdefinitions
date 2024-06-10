@@ -39,7 +39,8 @@
        (button {:disabled true})]
 
       authorized?
-      (button {:onClick #(dispatch [::c/save-view-definition])
+      (button {:id "vd_save"
+               :onClick #(dispatch [::c/save-view-definition])
                :loading @(subscribe [::m/save-loading])})
       :else
       [auth-required (button {})])))
@@ -100,7 +101,8 @@
                                              {:placement       "bottom"
                                               :mouseEnterDelay 0.5
                                               :title           "Ctrl+Enter"}
-                                             [:> Button {:class   "mobile-icon-button"
+                                             [:> Button {:id      "vd_run"
+                                                         :class   "mobile-icon-button"
                                                          :onClick #(dispatch [::c/eval-view-definition-data])
                                                          :icon    (r/create-element icons/PlayCircleOutlined)
                                                          :loading @(subscribe [::m/eval-loading])}
