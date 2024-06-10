@@ -22,4 +22,4 @@
         "Please sign in to use ViewDefinition Designer with your data"]
        [:> Button {:type "primary" :ghost true
                    :href sso-link}
-        "Sign in"]])))
+        "Sign In"]])))
