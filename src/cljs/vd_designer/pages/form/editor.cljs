@@ -37,8 +37,9 @@
               #_#_:onChange (fn [value & _] (dispatch [::c/set-schema value]))
               #_#_:onValidate (fn [markers] (dispatch [::c/set-monaco-markers (js->clj markers)]))}]
      [:> Flex {:style    {:position :absolute
-                          :top      "16px"
-                          :right    "16px"}
+                          :top      0
+                          :right    "24px"
+                          :z-index  1000}
                :vertical true
                :align    :end
                :gap      8}
