@@ -9,6 +9,11 @@
    (:fhir-server db)))
 
 (reg-sub
+ ::user-servers-raw
+ (fn [db _]
+   (->> db :cfg/fhir-servers :user/servers)))
+
+(reg-sub
  ::user-servers
  (fn [db _]
    (or (->> db :cfg/fhir-servers :user/servers vals
@@ -34,3 +39,21 @@
  ::connect-error
  (fn [db _]
    (:cfg/connect-error db)))
+
+(reg-sub
+ ::current-server
+ :<- [::user-servers-raw]
+ :<- [::used-server-name]
+ (fn [[user-servers used-server-name] _]
+  (get user-servers used-server-name)))
+
+(defn sandbox? [server]
+ ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
+ (println "server " server)
+ (not (:project server)))
+
+(reg-sub
+ ::sandbox?
+ :<- [::current-server]
+ (fn [current-server _]
+  (sandbox? current-server)))

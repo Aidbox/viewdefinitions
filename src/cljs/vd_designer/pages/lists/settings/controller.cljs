@@ -124,10 +124,11 @@
     (not (get servers used-server-name))))
 
 (defn first-sandbox-server [servers]
-  (->> servers
-       (remove (fn [[_ s]] (:project s)))
-       first
-       first))
+ ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
+ (->> servers
+      (remove (fn [[_ s]] (:project s)))
+      first
+      first))
 
 (reg-event-fx
  ::use-sandbox-if-not-selected

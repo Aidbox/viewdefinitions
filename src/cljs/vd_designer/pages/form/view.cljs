@@ -12,6 +12,7 @@
             [vd-designer.components.table :refer [table]]
             [vd-designer.components.tabs :refer [tab-item tabs]]
             [vd-designer.pages.form.components :refer [toggle-popover]]
+            [vd-designer.pages.lists.settings.model :as settings-model]
             [vd-designer.pages.form.controller :as c]
             [vd-designer.pages.form.editor :refer [editor]]
             [vd-designer.pages.form.form :refer [form]]
@@ -20,16 +21,27 @@
             [vd-designer.pages.form.sql :refer [sql]]))
 
 (defn- save-vd-button [authorized?]
-  (let [button (fn [overrides]
+  (let [sandbox? @(subscribe [::settings-model/sandbox?])
+        button (fn [overrides]
                  [:> Button
                   (medley/deep-merge
                    {:class "mobile-icon-button"
                     :icon  (r/create-element icons/SaveOutlined)}
                    overrides)
                   "Save"])]
-    (if authorized?
+    (cond
+      sandbox?
+
+      [:> Tooltip
+       {:placement       "bottom"
+        :mouseEnterDelay 0.5
+        :title           "Can't save in Sandbox"}
+       (button {:disabled true})]
+
+      authorized?
       (button {:onClick #(dispatch [::c/save-view-definition])
                :loading @(subscribe [::m/save-loading])})
+      :else
       [auth-required (button {})])))
 
 (defn viewdefinition-view []
