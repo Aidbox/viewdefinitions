@@ -85,7 +85,7 @@
                    :where         {:path ""}
                    :column        column-leaf-value)
                  (case kind
-                   :column        {:column   [column-leaf-value]}
+                   :column        {:column  [column-leaf-value]}
                    :forEach       {:forEach       "" :select []}
                    :forEachOrNull {:forEachOrNull "" :select []}
                    :unionAll      {:unionAll []}))])))
@@ -112,7 +112,9 @@
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined
-   {:onClick #(dispatch [::c/delete-tree-element (:value-path ctx)])
+   {:onClick (fn []
+               (dispatch [::c/delete-tree-element (:value-path ctx)])
+               (dispatch [::c/eval-view-definition-data]))
     :tabIndex -1}])
 
 (defn settings-button [& {:as opts}]
