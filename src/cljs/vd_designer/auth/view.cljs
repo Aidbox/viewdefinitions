@@ -1,9 +1,10 @@
 (ns vd-designer.auth.view
   (:require [reagent.core :as r]
+            [vd-designer.auth.model :as auth-model]
             [vd-designer.components.pop-confirm :refer [pop-confirm]]))
 
 (defn auth-required [trigger-element]
-  (let [sso-link (str "/api/auth/sso?route=" (.-href js/window.location))]
+  (let [sso-link (auth-model/sso-link)]
     [pop-confirm trigger-element
      {:title       "Not authorized"
       :description (r/as-element [:p

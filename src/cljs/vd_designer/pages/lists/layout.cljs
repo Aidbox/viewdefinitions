@@ -1,5 +1,6 @@
 (ns vd-designer.pages.lists.layout
   (:require [antd :refer [Col ConfigProvider Flex Layout Row]]
+            [vd-designer.pages.components.banner :as banner]
             [vd-designer.pages.components.breadcrumbs :as crumbs]))
 
 (def col-sizes
@@ -23,6 +24,7 @@
    [:> Layout {:style {:marginLeft 72
                        :background "#fff"
                        :height     "100%"}}
+    [banner/sign-in]
     [:> Flex {:vertical true
               :gap      16
               :style    {:height "100%"

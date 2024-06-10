@@ -1,6 +1,6 @@
 (ns vd-designer.pages.layout
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Card ConfigProvider Flex Layout Menu Tooltip]]
+            [antd :refer [Card ConfigProvider Flex Layout Menu Tooltip Row Col Button Typography]]
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.auth.controller :as auth-controller]
