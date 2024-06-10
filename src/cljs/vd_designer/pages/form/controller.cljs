@@ -422,6 +422,9 @@
  ::save-view-definition
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_]]
+   (TagManager/dataLayer
+    (clj->js {:dataLayer {:event "vd_save"
+                          :resource-type (get (:current-vd db) :resource "")}}))
    (let [view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections

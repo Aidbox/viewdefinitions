@@ -69,6 +69,15 @@
         current-route (-> route :data :name)]
     [layout
      {:on-menu-click   (fn [key]
+                         (cond 
+                           (= key :vd-list)
+                           (TagManager/dataLayer
+                            (clj->js {:dataLayer {:event "vd_list"}}))
+                           
+                           (= key :settings)
+                           (TagManager/dataLayer
+                            (clj->js {:dataLayer {:event "vd_servers"}})))
+
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
       :menu            [{:id   "vd_list"

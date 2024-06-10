@@ -6,7 +6,8 @@
                                                      dropdown-item-ant]]
             [vd-designer.components.input :as input]
             [vd-designer.pages.lists.vds.controller :as c]
-            [vd-designer.utils.event :refer [target-value]]))
+            [vd-designer.utils.event :refer [target-value]]
+            ["@sooro-io/react-gtm-module" :as TagManager]))
 
 (defn search-input []
   [input/search {:placeholder "Type view definition name"
@@ -20,8 +21,17 @@
                       {:type "divider"}
                       (dropdown-item-ant "vd_create_import" "Import" icons/UploadOutlined)]
             :onClick #(case (.-key %)
-                        "New"    (rfe/navigate :form-create)
-                        "Import" (dispatch [::c/start-import]))}}
+                        "New"    
+                        (do
+                          (TagManager/dataLayer
+                           (clj->js {:dataLayer {:event "vd_create_new"}}))
+                          (rfe/navigate :form-create))
+
+                        "Import" 
+                        (do
+                          (TagManager/dataLayer
+                           (clj->js {:dataLayer {:event "vd_create_import"}}))
+                          (dispatch [::c/start-import])))}}
    {:size  :default
     :type  :primary
     :ghost true}])
