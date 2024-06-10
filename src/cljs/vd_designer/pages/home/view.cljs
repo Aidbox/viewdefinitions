@@ -8,7 +8,8 @@
                                                        feature-card]]
             [vd-designer.pages.home.controller :as c]
             [vd-designer.pages.home.layout :as layout]
-            [vd-designer.pages.home.model :as m]))
+            [vd-designer.pages.home.model :as m]
+            ["@sooro-io/react-gtm-module" :as TagManager]))
 
 (defn hero []
   [:> Row {:style {:background "#F4F8FB"
@@ -147,7 +148,9 @@
          FHIR-native Postgres database, Comprehensive API with Granular Access
          Control, and SDK"]
 
-       [:a {:id "vd_aidbox_banner" :href "https://www.health-samurai.io/aidbox" :target "_blank"}
+       [:a {:id "vd_aidbox_banner" :href "https://www.health-samurai.io/aidbox" :target "_blank"
+            :onClick #(TagManager/dataLayer
+                       (clj->js {:dataLayer {:event "vd_aidbox_banner"}}))}
         [:> Flex {:align :center :gap "4px"}
          [:span {:style {:padding-bottom "2px"}} "Learn more "]
          [:> icons/RightOutlined]]]])]]])
