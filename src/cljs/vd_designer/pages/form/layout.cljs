@@ -1,6 +1,12 @@
 (ns vd-designer.pages.form.layout
-  (:require [antd :refer [ConfigProvider Flex Layout]]
+  (:require [antd :refer [Col ConfigProvider Flex Layout Row]]
             [vd-designer.pages.components.breadcrumbs :as crumbs]))
+
+(def col-sizes
+  {:xxl  14
+   :xl   16
+   :lg   22
+   :md   24})
 
 (def theme
   {:token  {:fontSizeHeading1   28
@@ -21,4 +27,7 @@
               :gap      16
               :style    {:height "100%"
                          :margin "16px 32px"}}
-     [:> Layout.Content [crumbs/crumbs props] children]]]])
+     [:> Layout.Content
+      [:> Row
+       [:> Col col-sizes [crumbs/crumbs props]]]
+      children]]]])

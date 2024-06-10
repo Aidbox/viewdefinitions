@@ -1,6 +1,5 @@
 (ns vd-designer.pages.form.components-test
-  (:require [clojure.test :refer-macros [deftest testing is run-tests]]
-            [matcher-combinators.test :refer [match?]]
+  (:require [clojure.test :refer-macros [deftest is run-tests]]
             [vd-designer.pages.form.components :as sut]))
 
 (deftest fhirpath-name-test

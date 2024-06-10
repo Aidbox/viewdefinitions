@@ -1,5 +1,5 @@
 (ns vd-designer.utils.utils-test
-  (:require [cljs.test :refer-macros [deftest is testing run-tests]]
+  (:require [cljs.test :refer-macros [deftest is run-tests]]
             [vd-designer.utils.utils :refer [insert-after
                                              insert-at
                                              remove-by-index]]))
