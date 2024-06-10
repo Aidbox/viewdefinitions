@@ -266,7 +266,7 @@
   (dissoc vd :meta))
 
 (defn lower-case-resource-in-sandbox [vd sandbox?]
-  (if (sandbox? (:resource vd))
+  (if (and sandbox? (:resource vd))
     (update vd :resource str/lower-case)
     vd))
 
@@ -277,7 +277,7 @@
    (TagManager/dataLayer
     (clj->js {:dataLayer {:event "vd_run"
                           :resource-type (get (:current-vd db) :resource "")}}))
-   (let [sandbox? @(subscribe [settings-model/sandbox?])
+   (let [sandbox? @(subscribe [::settings-model/sandbox?])
          view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
