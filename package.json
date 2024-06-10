@@ -10,7 +10,7 @@
     "react-resizable-panels": "^2.0.19",
     "sql-formatter": "^15.3.1",
     "xmlhttprequest": "^1.8.0",
-    "yaml": "^2.4.2",
+    "yaml": "^2.4.5",
     "shadow-cljs": "^2.28.8"
   },
   "devDependencies": {
