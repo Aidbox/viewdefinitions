@@ -49,7 +49,6 @@
 
 (defn sandbox? [server]
  ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
- (println "server " server)
  (not (:project server)))
 
 (reg-sub
