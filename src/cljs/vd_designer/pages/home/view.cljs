@@ -147,7 +147,7 @@
          FHIR-native Postgres database, Comprehensive API with Granular Access
          Control, and SDK"]
 
-       [:a {:href "https://www.health-samurai.io/aidbox" :target "_blank"}
+       [:a {:id "vd_aidbox_banner" :href "https://www.health-samurai.io/aidbox" :target "_blank"}
         [:> Flex {:align :center :gap "4px"}
          [:span {:style {:padding-bottom "2px"}} "Learn more "]
          [:> icons/RightOutlined]]]])]]])

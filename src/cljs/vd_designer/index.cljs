@@ -71,10 +71,12 @@
      {:on-menu-click   (fn [key]
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
-      :menu            [{:key  "vd-list"
+      :menu            [{:id   "vd_list"
+                         :key  "vd-list"
                          :icon (r/create-element icons/UnorderedListOutlined)
                          :size 64}
-                        {:key  "settings"
+                        {:id   "vd_servers"
+                         :key  "settings"
                          :icon (r/create-element icons/SettingOutlined)
                          :size 64}
                         #_{:key  "3"

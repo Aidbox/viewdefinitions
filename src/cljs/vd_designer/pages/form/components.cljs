@@ -112,7 +112,7 @@
              :on-click #(do
                           (TagManager/dataLayer 
                            (clj->js {:dataLayer {:event "vd_edit"
-                                                 :node-type requested-key}}))
+                                                 :node-type (name (requested-key %))}}))
                           (add-vd-item ctx (requested-key %) false))}}]))
 
 (defn delete-button [ctx]
