@@ -37,31 +37,33 @@
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
      #_[modal-view]
      (for [[project-name project-licenses] fhir-servers]
-       [:> Card {:title  (r/as-element
-                          [:> Flex {:justify :space-between}
-                           (or project-name "Public servers")
-                           (when-let [new-license-url
-                                      (some-> fhir-servers
-                                              (get project-name)
-                                              first :project
-                                              :new-license-url)]
-                             [button/add "New server" {:href   new-license-url
-                                                       :target "_blank"}])])
-                 :key    project-name
-                 :style  {:margin-bottom "24px"}
-                 :styles {:body {:padding-top    0
-                                 :padding-bottom 0}}}
-        [components.list/data-list
-         {:dataSource project-licenses
-          :renderItem (fn [raw-item]
-                        (r/as-element
-                         (let [{:keys [server-name box-url]
-                                :as   server-config}
-                               (js-obj->clj-map raw-item)]
-                           [:> List.Item
-                            {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
-                            [:> List.Item.Meta
-                             {:title       server-name
-                              :description (r/as-element [:a {:href   box-url
-                                                              :target "_blank"}
-                                                          box-url])}]])))}]])]))
+       (let [project-name (or project-name "Public servers")]
+         ^{:key project-name}
+         [:> Card {:title  (r/as-element
+                            [:> Flex {:justify :space-between}
+                             project-name
+                             (when-let [new-license-url
+                                        (some-> fhir-servers
+                                                (get project-name)
+                                                first :project
+                                                :new-license-url)]
+                               [button/add "New server" {:href   new-license-url
+                                                         :target "_blank"}])])
+                   :key    project-name
+                   :style  {:margin-bottom "24px"}
+                   :styles {:body {:padding-top    0
+                                   :padding-bottom 0}}}
+          [components.list/data-list
+           {:dataSource project-licenses
+            :renderItem (fn [raw-item]
+                          (r/as-element
+                           (let [{:keys [server-name box-url]
+                                  :as   server-config}
+                                 (js-obj->clj-map raw-item)]
+                             [:> List.Item
+                              {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
+                              [:> List.Item.Meta
+                               {:title       server-name
+                                :description (r/as-element [:a {:href   box-url
+                                                                :target "_blank"}
+                                                            box-url])}]])))}]]))]))

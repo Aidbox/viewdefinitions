@@ -1,5 +1,5 @@
 (ns vd-designer.pages.form.layout
-  (:require [antd :refer [Col ConfigProvider Flex Layout Row Typography Button]]
+  (:require [antd :refer [Col ConfigProvider Flex Layout Row]]
             [vd-designer.pages.components.banner :as banner]
             [vd-designer.pages.components.breadcrumbs :as crumbs]))
 
