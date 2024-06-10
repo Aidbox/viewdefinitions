@@ -30,8 +30,14 @@
         ;; false here to prevent auto-upload via xhr
         false))))
 
+(defn try-parse-vd [^String content]
+  (try
+    (str->yaml content)
+    (catch js/Error _
+      (js/JSON.parse content))))
+
 (defn parse-vd [^String content]
-  (js->clj (str->yaml content) :keywordize-keys true))
+  (js->clj (try-parse-vd content) :keywordize-keys true))
 
 (defn- import-vd [{:keys [file text]}]
   (cond
