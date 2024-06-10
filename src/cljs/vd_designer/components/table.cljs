@@ -5,7 +5,8 @@
 (defn derive-columns [data]
   (->> data
        first
-       keys
+       (into (array-map))
+       (mapv first)
        (mapv #(hash-map :title (subs (str %) 1) :dataIndex % :key %))))
 
 (defn one-row-data->ant-row-data [row-data index]
