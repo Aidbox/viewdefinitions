@@ -63,14 +63,13 @@
 
     (testing "user exists"
       (clean-database db)
-      (account/create db {:email "<email>" :uuid (random-uuid)})
+      (account/create db {:email "<email>"})
       (is (match?
            (http-response/found (redirect-uri-matcher "localhost" :authentication))
            (sso-callback (assoc ctx :request {:query-params {:code code}}))))
       (let [all-accounts (account/get-all db)]
         (is (match?
              [{:accounts/id    number?
-               :accounts/uuid  uuid?
                :accounts/email "<email>"}]
              all-accounts))))
 
@@ -81,7 +80,6 @@
             all-accounts (account/get-all db)]
         (is (match?
              [{:accounts/id    number?
-               :accounts/uuid  uuid?
                :accounts/email "<email>"}]
              all-accounts)
             "account created")

@@ -14,8 +14,7 @@
       (if (not= code "<code>")
         (http-response/bad-request {:error             "Invalid authorization code"
                                     :error_description "<error description>"})
-        (http-response/ok {:userinfo      {:id    (str (random-uuid))
-                                           :email "<email>"}
+        (http-response/ok {:userinfo      {:email "<email>"}
                            :access_token  "<access token>"
                            :refresh_token "<refresh token>"
                            :expires_in    3600})))))

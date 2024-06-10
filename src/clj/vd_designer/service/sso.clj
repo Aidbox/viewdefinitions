@@ -28,12 +28,10 @@
   [db exchange-result]
   (if (empty? (:error exchange-result))
     (let [res (-> exchange-result :result)
-          {:keys [email id]} (:userinfo res)]
+          {:keys [email]} (:userinfo res)]
 
       (jdbc/with-transaction [tx db]
-        (let [[{account-id :accounts/id}] (account/get-or-create tx
-                                                                 {:uuid  (parse-uuid id)
-                                                                  :email email})]
+        (let [[{account-id :accounts/id}] (account/get-or-create tx {:email email})]
           (sso-token/create tx (-> res
                                    (select-keys [:access_token :refresh_token :expires_in])
                                    (assoc :account_id account-id)))
