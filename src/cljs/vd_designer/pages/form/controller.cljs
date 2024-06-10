@@ -5,6 +5,7 @@
     [clojure.set :as set]
     [medley.core :as medley]
     [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx subscribe]]
+    [vd-designer.http.backend :as backend]
     [vd-designer.http.fhir-server :as http.fhir-server]
     [vd-designer.pages.form.fhir-schema :refer [get-constant-type
                                                 get-select-path]]
@@ -29,6 +30,11 @@
       (assoc-in db [:current-vd :status] "unknown")
       db)))
 
+(defn ready-server-event-fx [vd-id]
+  (cond-> [[:dispatch [::get-supported-resource-types]]]
+    vd-id (conj [:dispatch [::get-view-definition vd-id]])))
+
+
 (reg-event-fx
  ::start
  (fn [{db :db} [_ parameters]]
@@ -43,18 +49,35 @@
 
             :always
             (assoc :spec-map {}))
-      :fx (cond-> []
-            :always
-            (conj [:dispatch [::get-supported-resource-types]])
+      :fx (cond-> (if (-> db :cfg/fhir-servers :user/servers empty?)
+                    [[:dispatch [::fetch-user-servers vd-id]]]
+                    (ready-server-event-fx vd-id))
 
             imported?
             (conj [:dispatch [::process-import]])
 
-            vd-id
-            (conj [:dispatch [::get-view-definition vd-id]])
-
             :always
             (conj [:dispatch [::load-fhir-schemas]]))})))
+
+(reg-event-fx
+  ::fetch-user-servers
+  [(inject-cofx :get-authentication-token)]
+  (fn [{:keys [authentication-token]} [_ vd-id]]
+    {:http-xhrio (-> (backend/request:list-server authentication-token)
+                     (assoc :on-success [::got-server-list vd-id]
+                            ;; TODO
+                            #_#_:on-failure [::not-connected]))}))
+
+(reg-event-fx
+  ::got-server-list
+  ;; TODO: decide what if expected server is not in the list?
+  (fn [{:keys [db]} [_ vd-id user-server-list]]
+    ;; TODO: remove code duplication
+    {:db (->> user-server-list
+              (group-by :server-name)
+              (medley/map-vals first)
+              (assoc-in db [:cfg/fhir-servers :user/servers]))
+     :fx (ready-server-event-fx vd-id)}))
 
 (reg-event-fx
  ::stop
