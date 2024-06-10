@@ -188,7 +188,7 @@
        :body (:body resp)
        ;; 500 if json header
        :headers {}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn eval-view-definition
   [{:keys [request cfg] :as ctx}]

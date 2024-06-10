@@ -1,25 +1,26 @@
 (ns vd-designer.pages.form.controller
   (:require
-   [ajax.core :as ajax]
-   [clojure.string :as str]
-   [clojure.set :as set]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx]]
-   [vd-designer.http.fhir-server :as http.fhir-server]
-   [vd-designer.pages.form.fhir-schema :refer [get-constant-type
-                                               get-select-path]]
-   [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-   [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
-   [vd-designer.pages.form.form.uuid-decoration :refer [decorate
-                                                        remove-decoration
-                                                        uuid->idx]]
-   [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
-   [vd-designer.pages.form.model :as m]
-   [vd-designer.utils.event :refer [response->error]]
-   [vd-designer.utils.utils :as utils]
-   [vd-designer.utils.string :as utils.string]
-   [clojure.walk :as walk]
-   ["@sooro-io/react-gtm-module" :as TagManager]))
+    [ajax.core :as ajax]
+    [clojure.string :as str]
+    [clojure.set :as set]
+    [medley.core :as medley]
+    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx subscribe]]
+    [vd-designer.http.fhir-server :as http.fhir-server]
+    [vd-designer.pages.form.fhir-schema :refer [get-constant-type
+                                                get-select-path]]
+    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+    [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
+    [vd-designer.pages.form.form.uuid-decoration :refer [decorate
+                                                         remove-decoration
+                                                         uuid->idx]]
+    [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
+    [vd-designer.pages.lists.settings.model :as settings-model]
+    [vd-designer.pages.form.model :as m]
+    [vd-designer.utils.event :refer [response->error]]
+    [vd-designer.utils.utils :as utils]
+    [vd-designer.utils.string :as utils.string]
+    [clojure.walk :as walk]
+    ["@sooro-io/react-gtm-module" :as TagManager]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -264,6 +265,11 @@
 (defn remove-meta [vd]
   (dissoc vd :meta))
 
+(defn lower-case-resource-in-sandbox [vd sandbox?]
+  (if (sandbox? (:resource vd))
+    (update vd :resource str/lower-case)
+    vd))
+
 (reg-event-fx
  ::eval-view-definition-data
  [(inject-cofx :get-authentication-token)]
@@ -271,12 +277,14 @@
    (TagManager/dataLayer
     (clj->js {:dataLayer {:event "vd_run"
                           :resource-type (get (:current-vd db) :resource "")}}))
-   (let [view-definition (-> (:current-vd db)
+   (let [sandbox? @(subscribe [settings-model/sandbox?])
+         view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
                              remove-meta
                              strip-empty-select-nodes
-                             strip-empty-where-nodes)
+                             strip-empty-where-nodes
+                             (lower-case-resource-in-sandbox sandbox?))
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
