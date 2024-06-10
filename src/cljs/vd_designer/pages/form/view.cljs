@@ -35,7 +35,7 @@
       [:> Tooltip
        {:placement       "bottom"
         :mouseEnterDelay 0.5
-        :title           "Can't save in Sandbox"}
+        :title           "Save is not allowed in Sandbox"}
        (button {:disabled true})]
 
       authorized?
