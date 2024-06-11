@@ -52,7 +52,8 @@
         button-id "root-vd-settings"
         current-vd @(subscribe [::m/current-vd])
         authorized? @(subscribe [::auth-model/authorized?])
-        server-url @(subscribe [::settings-model/current-server-url])]
+        server-url @(subscribe [::settings-model/current-server-url])
+        sandbox? @(subscribe [::settings-model/sandbox?])]
     [:> PanelGroup {:direction "horizontal"
                     :style {:gutter         32
                             :flex           1
@@ -124,10 +125,14 @@
                      (r/as-element
                        [:div
                         [:> Typography.Paragraph {:level 1 :type "secondary"}
-                         "No data. See: "
-                         [:> Typography.Link
-                          {:target "_blank"
-                           :href (m/import-synthetic-data-notebook-url server-url)}
-                          "Import synthetic data to Aidbox."]]])}])}
+                         "No data."
+                         (when-not sandbox?
+                           [:<> " See: "
+                            [:> Typography.Link
+                             {:target "_blank"
+                              :href (m/import-synthetic-data-notebook-url server-url)}
+                             "Import synthetic data to Aidbox."]]
+                           )
+                         ]])}])}
         :scroll {:y 1000
                  :x true}}]]]))
