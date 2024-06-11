@@ -92,7 +92,7 @@
       {:status 200
        :body (:body box-response)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request box-response))))
+      (http-response/bad-request (:body box-response)))))
 
 (defn user-server:connect [{:keys [db request user]}]
   (let [box-url (-> request :body-params :box-url)
@@ -110,7 +110,7 @@
       {:status 200
        :body (:body box-response)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request box-response))))
+      (http-response/bad-request (:body box-response)))))
 
 (defn connect [{:keys [request cfg] :as ctx}]
   (let [box-url (-> request :body-params :box-url)]
@@ -133,7 +133,7 @@
       {:status 200
        :body (:body box-response)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request box-response))))
+      (http-response/bad-request (:body box-response)))))
 
 (defn public-server:get-vd [{:keys [request]} public-server]
   (let [{:keys [box-url vd-id]} (-> request :query-params)
@@ -147,7 +147,7 @@
       {:status 200
        :body (:body box-response)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request box-response))))
+      (http-response/bad-request (:body box-response)))))
 
 (defn get-view-definition [{:keys [request cfg] :as ctx}]
   (let [public-fhir-servers (cfg :public-fhir-servers)
@@ -172,7 +172,7 @@
        :body (:body resp)
        ;; 500 if json header
        :headers {}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn eval-vd-public-server
   [request public-server]
@@ -219,7 +219,7 @@
       {:status 200
        :body (:body resp)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn save-vd-public-server [request public-server]
   (let [box-url (-> request :body-params :box-url)
@@ -240,7 +240,7 @@
       {:status 200
        :body (:body resp)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn save-view-definition
   [{:keys [request cfg] :as ctx}]
@@ -262,7 +262,7 @@
       {:status 204
        :body (:body resp)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn user-server:delete-vd [{:keys [db request user]}]
   (let [{:keys [box-url vd-id]} (:body-params request)
@@ -280,7 +280,7 @@
       {:status 204
        :body (:body resp)
        :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request resp))))
+      (http-response/bad-request (:body resp)))))
 
 (defn delete-view-definition
   [{:keys [request cfg] :as ctx}]
