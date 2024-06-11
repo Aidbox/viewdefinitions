@@ -1,12 +1,12 @@
 (ns vd-designer.pages.lists.settings.controller
   (:require
-   [ajax.core :as ajax]
-   [medley.core :as medley]
-   [re-frame.core :refer [inject-cofx reg-event-db reg-event-fx reg-fx reg-cofx]]
-   [vd-designer.http.fhir-server :as http]
-   [vd-designer.notifications]
-   [vd-designer.polling :as polling]
-   [vd-designer.utils.event :as u]))
+    [medley.core :as medley]
+    [re-frame.core :refer [inject-cofx reg-cofx reg-event-db reg-event-fx reg-fx]]
+    [vd-designer.http.backend :as backend]
+    [vd-designer.http.fhir-server :as http]
+    [vd-designer.notifications]
+    [vd-designer.polling :as polling]
+    [vd-designer.utils.event :as u]))
 
 (reg-event-fx
  ::start
@@ -78,16 +78,9 @@
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [authentication-token]} _]
    {; TODO: добавить флаг о том, что мы начали подгружать список user servers?
-    :http-xhrio
-    {:uri              "/api/aidbox/servers"
-     :timeout          8000
-     :format           (ajax/json-request-format)
-     :response-format  (ajax/json-response-format {:keywords? true})
-     :with-credentials true
-     :method           :get
-     :headers          {:authorization (str "Bearer " authentication-token)}
-     :on-success       [::update-user-server-list]
-     :on-failure [::not-connected]}}))
+    :http-xhrio (-> (backend/request:list-server authentication-token)
+                    (assoc :on-success [::update-user-server-list]
+                           :on-failure [::not-connected]))}))
 
 (def used-server-name-kv :used-server-name)
 

@@ -14,7 +14,6 @@
             [vd-designer.pages.form.view]
             [vd-designer.pages.home.layout :as home]
             [vd-designer.pages.lists.layout :as lists]
-            [vd-designer.pages.lists.settings.controller :as settings-controller]
             [vd-designer.pages.lists.settings.view]
             [vd-designer.pages.lists.vds.view]
             [vd-designer.utils.debounce]
@@ -49,9 +48,7 @@
            :onboarding          {:sandbox 0
                                  :aidbox  0}
            :authorized?         (boolean authentication-token)
-           :cfg/fhir-servers    {:used-server-name used-server-name}}
-       ;; we cannot do anything without servers
-       :dispatch [::settings-controller/fetch-user-servers]})))
+           :cfg/fhir-servers    {:used-server-name used-server-name}}})))
 
 (defn wrap-view-layout [route view]
   (let [breadcrumbs {:breadcrumbs (breadcrumbs route)}]
