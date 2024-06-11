@@ -116,4 +116,4 @@
       [table (vec (remove empty? (:data resources)))
        {:class  "vd-table"
         :scroll {:y 1000
-                 :x 1000}}]]]))
+                 :x true}}]]]))
