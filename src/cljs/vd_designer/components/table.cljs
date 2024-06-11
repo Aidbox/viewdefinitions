@@ -28,6 +28,7 @@
     ;; 13px - to fit the height of ViewDefinition form:
     ;; it's height in pixels is 46
     ;; 16 (padding) * 2 + 13 + 1 (border) = 46
+
     [:> ConfigProvider {:theme {:token {:Table {:lineHeight         "13px"
                                                 :headerBorderRadius 0}}}}
      [:> Table (medley/deep-merge

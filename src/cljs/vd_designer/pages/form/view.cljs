@@ -1,6 +1,6 @@
 (ns vd-designer.pages.form.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Button Flex Row Space Tooltip Typography]]
+            [antd :refer [Button Flex Row Space Tooltip Typography Empty]]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
@@ -51,7 +51,8 @@
         opened-id @(subscribe [::m/settings-opened-id])
         button-id "root-vd-settings"
         current-vd @(subscribe [::m/current-vd])
-        authorized? @(subscribe [::auth-model/authorized?])]
+        authorized? @(subscribe [::auth-model/authorized?])
+        server-url @(subscribe [::settings-model/current-server-url])]
     [:> PanelGroup {:direction "horizontal"
                     :style {:gutter         32
                             :flex           1
@@ -115,5 +116,18 @@
       [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
       [table (vec (remove empty? (:data resources)))
        {:class  "vd-table"
+        :pagination {:hideOnSinglePage true}
+        :locale {:emptyText
+                 (r/as-element
+                   [:> Empty
+                    {:description
+                     (r/as-element
+                       [:div
+                        [:> Typography.Paragraph {:level 1 :type "secondary"}
+                         "No data. See: "
+                         [:> Typography.Link
+                          {:target "_blank"
+                           :href (m/import-synthetic-data-notebook-url server-url)}
+                          "Import synthetic data to Aidbox."]]])}])}
         :scroll {:y 1000
                  :x true}}]]]))

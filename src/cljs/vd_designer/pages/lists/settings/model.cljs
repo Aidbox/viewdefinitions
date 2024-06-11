@@ -56,3 +56,9 @@
  :<- [::current-server]
  (fn [current-server _]
   (sandbox? current-server)))
+
+(reg-sub
+ ::current-server-url
+ :<- [::current-server]
+ (fn [current-server _]
+  (:box-url current-server)))

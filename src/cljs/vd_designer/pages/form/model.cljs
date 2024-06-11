@@ -85,3 +85,7 @@
  ::node-focus
  (fn [db _]
    (::node-focus db)))
+
+(defn import-synthetic-data-notebook-url [server-url]
+ (str server-url "/ui/console#/notebooks/explore"
+      "?path=https%3A%2F%2Faidbox.app%2FPublishedNotebook%2F45025aba-49ea-46e0-adce-2db6da282599"))
