@@ -1,11 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 
 metadata:
   name: vd-designer
   namespace: viewdefinition
 
 spec:
+  serviceName: "vd-designer"
+  replicas: 1
   selector:
     matchLabels:
       service: vd-designer
@@ -16,6 +18,7 @@ spec:
         service: vd-designer
 
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
         - name: vd-designer-db
           image: postgres:16
@@ -35,8 +38,8 @@ spec:
               cpu: 500m
               memory: 1Gi
           volumeMounts:
-            - mountPath: /var/lib/postgresql/data
-              name: vd-designer-data
+            - name: vd-designer-data
+              mountPath: /var/lib/postgresql/data
           readinessProbe:
             exec:
               command:
@@ -72,7 +75,11 @@ spec:
       imagePullSecrets:
         - name: hs-robot-secret
 
-      volumes:
-        - name: vd-designer-data
-          persistentVolumeClaim:
-            claimName: vd-designer-database-volume-claim
+  volumeClaimTemplates:
+    - metadata:
+        name: vd-designer-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

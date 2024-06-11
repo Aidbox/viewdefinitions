@@ -9,7 +9,7 @@ spec:
   capacity:
     storage: 5Gi
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/postgresql
