@@ -1,7 +1,8 @@
 (ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
+            ["@sooro-io/react-gtm-module" :as TagManager]
             [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input
-                          Popover Row Select Space Typography]]
+                          Popover Row Select Space Tooltip Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch subscribe]]
@@ -17,8 +18,7 @@
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]
             [vd-designer.utils.js :refer [find-elements get-element-by-id
-                                          remove-class toggle-class]]
-            ["@sooro-io/react-gtm-module" :as TagManager]))
+                                          remove-class toggle-class]]))
 
 ;;;; Tags
 
@@ -110,10 +110,18 @@
                                   (dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
                                   (dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
              :on-click #(do
-                          (TagManager/dataLayer 
+                          (TagManager/dataLayer
                            (clj->js {:dataLayer {:event "vd_edit"
                                                  :node-type (name (requested-key %))}}))
                           (add-vd-item ctx (requested-key %) false))}}]))
+
+(defn convert-foreach [ctx kind]
+  (let [to (if (= kind :forEach) :forEachOrNull :forEach)]
+    [:> Tooltip {:title (str "Convert to " (name to))}
+     [:<> [button/invisible-icon icons/SwapOutlined
+           {:onClick (fn [e]
+                       (.stopPropagation e)
+                       (dispatch [::c/convert-foreach (:value-path ctx) kind to]))}]]]))
 
 (defn delete-button [ctx]
   [button/invisible-icon icons/CloseOutlined

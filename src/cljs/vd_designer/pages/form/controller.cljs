@@ -1,27 +1,27 @@
 (ns vd-designer.pages.form.controller
-  (:require
-    [ajax.core :as ajax]
-    [clojure.string :as str]
-    [clojure.set :as set]
-    [medley.core :as medley]
-    [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx inject-cofx subscribe]]
-    [vd-designer.http.backend :as backend]
-    [vd-designer.http.fhir-server :as http.fhir-server]
-    [vd-designer.pages.form.fhir-schema :refer [get-constant-type
-                                                get-select-path]]
-    [vd-designer.utils.fhir-spec :as utils.fhir-spec]
-    [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
-    [vd-designer.pages.form.form.uuid-decoration :refer [decorate
-                                                         remove-decoration
-                                                         uuid->idx]]
-    [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
-    [vd-designer.pages.lists.settings.model :as settings-model]
-    [vd-designer.pages.form.model :as m]
-    [vd-designer.utils.event :refer [response->error]]
-    [vd-designer.utils.utils :as utils]
-    [vd-designer.utils.string :as utils.string]
-    [clojure.walk :as walk]
-    ["@sooro-io/react-gtm-module" :as TagManager]))
+  (:require ["@sooro-io/react-gtm-module" :as TagManager]
+            [ajax.core :as ajax]
+            [clojure.set :as set :refer [rename-keys]]
+            [clojure.string :as str]
+            [clojure.walk :as walk]
+            [medley.core :as medley]
+            [re-frame.core :refer [dispatch inject-cofx reg-event-db
+                                   reg-event-fx reg-fx subscribe]]
+            [vd-designer.http.backend :as backend]
+            [vd-designer.http.fhir-server :as http.fhir-server]
+            [vd-designer.pages.form.fhir-schema :refer [get-constant-type
+                                                        get-select-path]]
+            [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
+            [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
+            [vd-designer.pages.form.form.uuid-decoration :refer [decorate
+                                                                 remove-decoration
+                                                                 uuid->idx]]
+            [vd-designer.pages.form.model :as m]
+            [vd-designer.pages.lists.settings.model :as settings-model]
+            [vd-designer.utils.event :refer [response->error]]
+            [vd-designer.utils.fhir-spec :as utils.fhir-spec]
+            [vd-designer.utils.string :as utils.string]
+            [vd-designer.utils.utils :as utils]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -60,24 +60,24 @@
             (conj [:dispatch [::load-fhir-schemas]]))})))
 
 (reg-event-fx
-  ::fetch-user-servers
-  [(inject-cofx :get-authentication-token)]
-  (fn [{:keys [authentication-token]} [_ vd-id]]
-    {:http-xhrio (-> (backend/request:list-server authentication-token)
-                     (assoc :on-success [::got-server-list vd-id]
+ ::fetch-user-servers
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [authentication-token]} [_ vd-id]]
+   {:http-xhrio (-> (backend/request:list-server authentication-token)
+                    (assoc :on-success [::got-server-list vd-id]
                             ;; TODO
-                            #_#_:on-failure [::not-connected]))}))
+                           #_#_:on-failure [::not-connected]))}))
 
 (reg-event-fx
-  ::got-server-list
+ ::got-server-list
   ;; TODO: decide what if expected server is not in the list?
-  (fn [{:keys [db]} [_ vd-id user-server-list]]
+ (fn [{:keys [db]} [_ vd-id user-server-list]]
     ;; TODO: remove code duplication
-    {:db (->> user-server-list
-              (group-by :server-name)
-              (medley/map-vals first)
-              (assoc-in db [:cfg/fhir-servers :user/servers]))
-     :fx (ready-server-event-fx vd-id)}))
+   {:db (->> user-server-list
+             (group-by :server-name)
+             (medley/map-vals first)
+             (assoc-in db [:cfg/fhir-servers :user/servers]))
+    :fx (ready-server-event-fx vd-id)}))
 
 (reg-event-fx
  ::stop
@@ -431,6 +431,18 @@
 
 (defn insert-tree-element-as-1st-child [vd path element]
   (update-in vd path utils/insert-at 0 element))
+
+(reg-event-db
+ ::convert-foreach
+ (fn [db [_ path from to]]
+   (let [real-path (uuid->idx path (:current-vd db))]
+     (cond->
+      (update-in db (cons :current-vd (pop real-path)) rename-keys {from to})
+
+       (-> db :current-tree-expanded-nodes (contains? path))
+       (->
+        (update :current-tree-expanded-nodes disj path)
+        (update :current-tree-expanded-nodes conj (-> path pop (conj to))))))))
 
 (reg-event-fx
  ::delete-tree-element

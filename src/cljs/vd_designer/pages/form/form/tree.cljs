@@ -1,32 +1,34 @@
 (ns vd-designer.pages.form.form.tree
-  (:require
-   [antd :refer [Flex Space]]
-   [clojure.set :as set]
-   [clojure.string :as str]
-   [re-frame.core :refer [dispatch subscribe]]
-   [vd-designer.components.icon :as icon]
-   [vd-designer.components.input :refer [input]]
-   [vd-designer.components.tree :refer [tree-leaf tree-node]]
-   [vd-designer.pages.form.components :refer [add-element-button
-                                              add-vd-item
-                                              add-select-button
-                                              base-input-row base-node-row
-                                              change-input-value
-                                              delete-button fhir-path-input
-                                              name-input resource-input
-                                              text-input
-                                              tree-tag]]
-   [vd-designer.pages.form.controller :as form-controller]
-   [vd-designer.pages.form.fhir-schema :refer [add-value-path
-                                               add-fhirpath
-                                               drop-value-path
-                                               get-constant-type]]
-   [vd-designer.pages.form.form.settings :refer [column-settings
-                                                 constant-settings
-                                                 where-settings]]
-   [vd-designer.pages.form.form.uuid-decoration :as uuid-decor]
-   [vd-designer.pages.form.model :as m]
-   [vd-designer.utils.event :as u]))
+  (:require [antd :refer [Flex Space]]
+            [clojure.set :as set]
+            [clojure.string :as str]
+            [re-frame.core :refer [dispatch subscribe]]
+            [vd-designer.components.icon :as icon]
+            [vd-designer.components.input :refer [input]]
+            [vd-designer.components.tree :refer [tree-leaf tree-node]]
+            [vd-designer.pages.form.components :refer [add-element-button
+                                                       add-select-button
+                                                       add-vd-item
+                                                       base-input-row
+                                                       base-node-row
+                                                       change-input-value
+                                                       convert-foreach
+                                                       delete-button
+                                                       fhir-path-input
+                                                       name-input
+                                                       resource-input
+                                                       text-input tree-tag]]
+            [vd-designer.pages.form.controller :as form-controller]
+            [vd-designer.pages.form.fhir-schema :refer [add-fhirpath
+                                                        add-value-path
+                                                        drop-value-path
+                                                        get-constant-type]]
+            [vd-designer.pages.form.form.settings :refer [column-settings
+                                                          constant-settings
+                                                          where-settings]]
+            [vd-designer.pages.form.form.uuid-decoration :as uuid-decor]
+            [vd-designer.pages.form.model :as m]
+            [vd-designer.utils.event :as u]))
 
 ;; Leafs
 
@@ -167,15 +169,20 @@
 
 (defn- general-node [kind ctx render-children]
   (let [node-key (:value-path ctx)
-        tag      (tree-tag kind)
-        column? (= :column kind)]
+        tag      (tree-tag kind)]
     (tree-node node-key
                (cond-> [base-node-row node-key
                         [:> Space {:align :center :style {:height "30px"}}
                          tag
-                         (when column?
+                         (when (= :column kind)
                            [render-column-names node-key])]]
-                 (node-deletable? kind) (conj [delete-button (drop-value-path ctx)]))
+
+                 (or (= :forEach       kind)
+                     (= :forEachOrNull kind))
+                 (conj [convert-foreach ctx kind])
+
+                 (node-deletable? kind)
+                 (conj [delete-button (drop-value-path ctx)]))
                (render-children node-key))))
 
 (defn- flat-node [kind generate-leaf ctx items]
