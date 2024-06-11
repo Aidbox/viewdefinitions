@@ -6,7 +6,7 @@
             [clojure.walk :as walk]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch inject-cofx reg-event-db
-                                   reg-event-fx reg-fx subscribe]]
+                                   reg-event-fx reg-fx]]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.form.fhir-schema :refer [get-constant-type
@@ -300,7 +300,7 @@
    (TagManager/dataLayer
     (clj->js {:dataLayer {:event "vd_run"
                           :resource-type (get (:current-vd db) :resource "")}}))
-   (let [sandbox? @(subscribe [::settings-model/sandbox?])
+   (let [sandbox? (settings-model/in-sandbox? db)
          view-definition (-> (:current-vd db)
                              remove-decoration
                              strip-empty-collections
