@@ -53,7 +53,7 @@
                      "Create, debug, and download ViewDefinitions on the fly.")]
       [:> Col {:span 8}
        (feature-card "Auto-complete"
-                     "Speeds up ViewDefinition creation with FHIRpath suggestions.")]
+                     "Speeds up ViewDefinition creation with FHIRPath suggestions.")]
       [:> Col {:span 8}
        (feature-card "Sandbox"
                      "Instantly see the results of data flattening during the creation of ViewDefinitions.")]]
@@ -161,7 +161,7 @@
    [:> Col layout/col-sizes
     [:> Typography.Title {:level 2} "Links & Resources"]
     [:> Typography.Paragraph
-     "Learn more about HL7 FHIR, SQL-on-FHIR, and FHIRpath. Join the SQL-on-FHIR
+     "Learn more about HL7 FHIR, SQL-on-FHIR, and FHIRPath. Join the SQL-on-FHIR
       Working Group to contribute to the development and adoption of the specification."]
 
     [:ul
