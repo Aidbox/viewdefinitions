@@ -32,11 +32,10 @@
 
 ;; Leafs
 
-(defn- general-leaf [ctx props]
-  (let [{:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter]}
-        props
-        node-focus-id @(subscribe [::m/node-focus])]
-    [base-input-row ctx
+(defn- general-leaf [{value-path :value-path :as ctx}
+                     {:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter] :as props}]
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [base-input-row value-path
      [:> Flex {:gap   8
                :align :center
                :style {:width "100%"}}
@@ -45,8 +44,19 @@
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
           [input {:defaultValue name
-                  :autoFocus (= node-focus-id (last (:value-path ctx)))
-                  :onBlur #(dispatch [::form-controller/set-focus-node nil])
+                  :autoFocus (= node-focus-id (last value-path))
+                  :onBlur (fn [_]
+                            (mapv
+                              (fn [one]
+                                (.setAttribute one "draggable" true))
+                              (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                            (dispatch [::form-controller/set-focus-node nil]))
+                  :onFocus
+                  (fn [_]
+                    (mapv
+                      (fn [one]
+                        (.setAttribute one "draggable" false))
+                      (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
                   :onKeyDown (fn [event]
                                (when (and (= "Enter" (.-key event))
                                           (.-shiftKey event))
@@ -57,14 +67,12 @@
                                  "default-input red-input"
                                  "default-input")}
                   :style       {:font-style "normal"}
-                  :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
-                  :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
-                  :onChange    #(change-input-value ctx name-key (u/target-value %))}]))]
+                  :onChange    #(change-input-value value-path name-key (u/target-value %))}]))]
      [text-input ctx value-key value deletable? settings-form placeholder props]]))
 
-(defn column-leaf [ctx {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
+(defn column-leaf [{value-path :value-path :as ctx} {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
-    [base-input-row ctx
+    [base-input-row value-path
      [:> Flex {:gap   8
                :align :center
                :style {:width "100%"}}
@@ -73,10 +81,21 @@
         [input {:defaultValue name
                 :placeholder "name"
                 :value name
-                :autoFocus (= node-focus-id (last (:value-path ctx)))
+                :autoFocus (= node-focus-id (last value-path))
                 :onBlur #(do
+                           (mapv
+                             (fn [one]
+                               (.setAttribute one "draggable" true))
+                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
                            (dispatch [::form-controller/set-focus-node nil])
                            (dispatch [::form-controller/eval-view-definition-data]))
+                :onFocus
+                (fn [_]
+                  (mapv
+                    (fn [one]
+                      (.setAttribute one "draggable" false))
+                    (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+
                 :classNames {:input
                              (if (and (str/blank? name) errors?)
                                "default-input red-input"
@@ -86,9 +105,7 @@
                              (when (and (= "Enter" (.-key event))
                                         (.-shiftKey event))
                                (on-shift-enter event)))
-                :onMouseEnter #(dispatch [::form-controller/change-draggable-node false])
-                :onMouseLeave #(dispatch [::form-controller/change-draggable-node true])
-                :onChange    #(change-input-value ctx :name (u/target-value %))}])]
+                :onChange    #(change-input-value value-path :name (u/target-value %))}])]
      [fhir-path-input ctx :path path true column-settings "path" opts]]))
 
 (defn constant-type->input-type [constant-type]
@@ -167,55 +184,53 @@
         column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
     [:span.cut-text (str/join ", " column-names)]))
 
-(defn- general-node [kind ctx render-children]
-  (let [node-key (:value-path ctx)
-        tag      (tree-tag kind)]
-    (tree-node node-key
-               (cond-> [base-node-row node-key
-                        [:> Space {:align :center :style {:height "30px"}}
-                         tag
-                         (when (= :column kind)
-                           [render-column-names node-key])]]
+(defn- general-node [kind {value-path :value-path} render-children]
+  (tree-node value-path
+             (cond-> [base-node-row value-path
+                      [:> Space {:align :center :style {:height "30px"}}
+                       [tree-tag kind]
+                       (when (= :column kind)
+                         [render-column-names value-path])]]
 
-                 (or (= :forEach       kind)
-                     (= :forEachOrNull kind))
-                 (conj [convert-foreach ctx kind])
+               (or (= :forEach       kind)
+                   (= :forEachOrNull kind))
+               (conj [convert-foreach value-path kind])
 
-                 (node-deletable? kind)
-                 (conj [delete-button (drop-value-path ctx)]))
-               (render-children node-key))))
+               (node-deletable? kind)
+               (conj [delete-button (pop value-path)]))
+             (render-children value-path)))
 
-(defn- flat-node [kind generate-leaf ctx items]
-  (let [add-new (fn [_] (add-vd-item ctx kind true))]
+(defn- flat-node [kind generate-leaf {value-path :value-path :as ctx} items]
+  (let [add-new (fn [_] (add-vd-item value-path kind true))]
     (general-node kind ctx
                   (fn [node-key]
                     (conj (mapv (fn [item]
                                   (let [ctx (add-value-path ctx (:tree/key item))]
-                                    (tree-leaf (:value-path ctx) (generate-leaf ctx item {:on-shift-enter add-new}))))
+                                    (tree-leaf (:value-path ctx)
+                                               [generate-leaf ctx item {:on-shift-enter add-new}])))
                                 items)
                           (tree-leaf (conj node-key :add)
-                                     [add-element-button (name kind) ctx]))))))
+                                     [add-element-button (name kind) value-path]))))))
 
-(defn- nested-node [kind ctx items]
+(defn- nested-node [kind {value-path :value-path :as ctx} items]
   (general-node kind ctx
                 (fn [node-key]
                   (conj (mapv (fn [item]
                                 (select->node (add-value-path ctx (:tree/key item)) item))
                               items)
-                        (tree-leaf (conj node-key :add) [add-select-button ctx])))))
+                        (tree-leaf (conj node-key :add) [add-select-button value-path])))))
 
-  ;; TODO: try to generalize as other node types
+;; TODO: try to generalize as other node types
 (defn node-foreach [kind ctx path {:keys [select]}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
     (general-node kind ctx
                   (fn [_node-key]
-                    (let [ctx (drop-value-path ctx)]
-                      [(tree-leaf (conj (:value-path ctx) :path)
-                                  (foreach-expr-leaf ctx kind path
-                                                     {:autoFocus (= node-focus-id (last (:value-path ctx)))}))
+                    (let [{value-path :value-path :as ctx} (drop-value-path ctx)]
+                      [(tree-leaf (conj value-path :path)
+                                  [foreach-expr-leaf ctx kind path
+                                                     {:autoFocus (= node-focus-id (last value-path))}])
                        (nested-node :select
-                                    (-> ctx
-                                        (add-value-path :select)
+                                    (-> (add-value-path ctx :select)
                                         (add-fhirpath path))
                                     select)])))))
 
@@ -233,28 +248,27 @@
     (first (keys element))))
 
 (defn- select->node [ctx element]
-  (let [key (determine-key element)]
-    ((case key
-       :column        (partial flat-node    :column column-leaf)
-       :forEach       (partial node-foreach :forEach)
-       :forEachOrNull (partial node-foreach :forEachOrNull)
-       :unionAll      (partial nested-node  :unionAll)
-       :select        (partial nested-node  :select))
-     (add-value-path ctx key)
-     (key element)
-     element)))
+  (let [key (determine-key element)
+        element-part (key element)
+        ctx (add-value-path ctx key)]
+    (case key
+      :column (flat-node :column column-leaf ctx element-part)
 
+      :forEach (node-foreach :forEach ctx element-part element)
 
-(defn vd-tree [ctx vd]
-  [(tree-leaf [:name]     (name-input     ctx vd))
-   (tree-leaf [:resource] (resource-input ctx vd))
+      :forEachOrNull (node-foreach :forEachOrNull ctx element-part element)
 
-   (flat-node   :constant constant-leaf
-                (add-value-path ctx :constant) (:constant vd))
-   (flat-node   :where    where-leaf
-                (add-value-path ctx :where)    (:where    vd))
-   (nested-node :select
-                (add-value-path ctx :select)   (:select   vd))])
+      :unionAll (nested-node :unionAll ctx element-part)
+
+      :select (nested-node :select ctx element-part))))
+
+(defn vd-tree [{value-path :value-path :as ctx} vd]
+  [(tree-leaf [:name]     [name-input value-path])
+   (tree-leaf [:resource] [resource-input value-path])
+
+   (flat-node :constant constant-leaf (add-value-path ctx :constant) (:constant vd))
+   (flat-node :where where-leaf (add-value-path ctx :where) (:where vd))
+   (nested-node :select (add-value-path ctx :select) (:select vd))])
 
 ;; Drag-n-Drop
 

@@ -55,12 +55,11 @@
             :block   true
             :onClick #(add)}]]])))])
 
-(defn- save-popover [values ctx & extra-actions]
-  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))
-        path   (:value-path ctx)]
-    (dispatch-sync [::c/change-input-value-merge path fields])
-    (mapv #(% path) extra-actions)
-    (toggle-popover ctx nil)))
+(defn- save-popover [values value-path & extra-actions]
+  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+    (dispatch-sync [::c/change-input-value-merge value-path fields])
+    (mapv #(% value-path) extra-actions)
+    (toggle-popover value-path nil)))
 
 (defn root-settings [opts]
   (let [vd @(subscribe [::m/current-vd])]
@@ -132,23 +131,22 @@
                                     :message  "FHIR version is required"}]}
              [:> Input]]])]]]]]))
 
-(defn- vd-subset [vd ctx]
-  (let [real-path (-> ctx :value-path (uuid->idx vd))]
-    (get-in vd real-path)))
+(defn- vd-subset [vd value-path]
+  (get-in vd (uuid->idx value-path vd)))
 
-(defn where-settings [ctx]
+(defn where-settings [value-path]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Where"
-     {:onFinish     #(save-popover % ctx)
-      :initialValues (vd-subset vd ctx)}
+     {:onFinish     #(save-popover % value-path)
+      :initialValues (vd-subset vd value-path)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"} [:> Input]]]]))
 
-(defn column-settings [ctx]
+(defn column-settings [value-path]
   (let [vd @(subscribe [::m/current-vd])]
     [settings-base-form "Column"
-     {:onFinish     #(save-popover % ctx)
-      :initialValues (vd-subset vd ctx)}
+     {:onFinish     #(save-popover % value-path)
+      :initialValues (vd-subset vd value-path)}
      [:<>
       [:> Form.Item {:label "Description" :name "description"}
        [:> Input.TextArea {:autoSize true :allowClear true}]]
@@ -167,11 +165,11 @@
                                    :message  "Value is required"}]}
             [:> Input {:placeholder "Value"}]]])]]]]))
 
-(defn constant-settings [ctx]
+(defn constant-settings [value-path]
   (let [vd          @(subscribe [::m/current-vd])
-        constant-map (vd-subset vd ctx)]
+        constant-map (vd-subset vd value-path)]
     [settings-base-form "Constant"
-     {:onFinish      #(save-popover % ctx
+     {:onFinish      #(save-popover % value-path
                                     (fn [path] (dispatch [::c/normalize-constant-value path])))
       :initialValues {:type (get-constant-type constant-map)}}
      [:<>

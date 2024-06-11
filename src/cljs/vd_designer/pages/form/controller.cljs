@@ -472,7 +472,6 @@
                view-definition)
                (:id view-definition)
                (assoc-in [:params :vd-id] (:id view-definition)))]
-     (js/console.log "req" req)
      (if empty-fields?
        {:db (assoc db ::m/empty-inputs? true)}
        {:db (-> db
@@ -620,11 +619,6 @@
  ::change-tree-elements-order
  (fn [db [_ from-node to-node drop-position]]
    (update db :current-vd move* from-node to-node drop-position)))
-
-(reg-event-db
- ::change-draggable-node
- (fn [db [_ draggable]]
-   (assoc db ::m/draggable-node draggable)))
 
 (defn convert-constants [constant]
   (when-let [type-fhir (get-constant-type constant)] ; valueString

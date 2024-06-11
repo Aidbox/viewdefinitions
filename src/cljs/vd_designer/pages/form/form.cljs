@@ -6,15 +6,13 @@
    [vd-designer.components.tree :refer [tree] :as tree]
    [vd-designer.pages.form.controller :as c]
    [vd-designer.pages.form.fhir-schema :refer [create-render-context]]
-   [vd-designer.pages.form.form.tree :refer [draggable? drop-allowed?
-                                             vd-tree]]
+   [vd-designer.pages.form.form.tree :refer [draggable? drop-allowed? vd-tree]]
    [vd-designer.pages.form.model :as m]
    [vd-designer.utils.string :as str.utils]))
 
 (defn form []
   (let [vd @(subscribe [::m/current-vd])
         ctx (create-render-context)
-        drag-enabled? @(subscribe [::m/draggable-node])
         expanded-keys @(subscribe [::m/current-tree-expanded-nodes])]
     (if vd
       [tree {:style         {:padding-right "16px"}
@@ -22,18 +20,19 @@
                                         (->> % js->clj (map str.utils/parse-path))])
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)
-             :draggable (and drag-enabled?
-                             #(-> (.-key %)
-                                  js->clj
-                                  str.utils/parse-path
-                                  draggable?))
+             :draggable     (fn [node]
+                                (-> (.-key node)
+                                    js->clj
+                                    str.utils/parse-path
+                                    draggable?))
              :allow-drop    #(let [{:keys [dragNode dropNode dropPosition]}
                                    (js->clj % :keywordize-keys true)]
+                               ;; this can be speed up
                                (drop-allowed?
-                                vd
-                                (-> dragNode :key str.utils/parse-path)
-                                (-> dropNode :key str.utils/parse-path)
-                                dropPosition))
+                                 vd
+                                 (-> dragNode :key str.utils/parse-path)
+                                 (-> dropNode :key str.utils/parse-path)
+                                 dropPosition))
 
              :on-drop       #(let [{:keys [node dragNode dropPosition]}
                                    (js->clj % :keywordize-keys true)

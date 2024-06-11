@@ -14,6 +14,12 @@
  (fn [db _]
    (:current-vd db)))
 
+(reg-sub
+ ::current-vd-nil?
+ :<- [::current-vd]
+ (fn [current-vd _]
+   (nil? current-vd)))
+
 (def tree-root-keys
   #{[:name] [:resource] [:constant] [:where] [:select]})
 
@@ -61,11 +67,6 @@
    (::settings-opened-id db)))
 
 (reg-sub
- ::draggable-node
- (fn [db _]
-   (::draggable-node db)))
-
-(reg-sub
  ::empty-inputs?
  (fn [db _]
    (::empty-inputs? db)))
@@ -89,3 +90,15 @@
 (defn import-synthetic-data-notebook-url [server-url]
  (str server-url "/ui/console#/notebooks/explore"
       "?path=https%3A%2F%2Faidbox.app%2FPublishedNotebook%2F45025aba-49ea-46e0-adce-2db6da282599"))
+
+(reg-sub
+ ::name-input
+ :<- [::current-vd]
+ (fn [current-vd _]
+  (:name current-vd)))
+
+(reg-sub
+ ::resource-input
+ :<- [::current-vd]
+ (fn [current-vd _]
+  (:resource current-vd)))
