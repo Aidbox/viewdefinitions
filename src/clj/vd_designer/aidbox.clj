@@ -61,9 +61,10 @@
                                   (set/rename-keys {:name :server-name})))))]
     ;; TODO: store in DB full data,
     ;;       send to front only things that are needed
-    (->> licenses
-         (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
-         (user-server/create-many db))
+    (when-not (empty? licenses)
+      (->> licenses
+           (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
+           (user-server/create-many db)))
 
     licenses))
 
