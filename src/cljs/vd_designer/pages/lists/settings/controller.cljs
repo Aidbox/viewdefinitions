@@ -1,7 +1,7 @@
 (ns vd-designer.pages.lists.settings.controller
   (:require
     [medley.core :as medley]
-    [re-frame.core :refer [inject-cofx reg-cofx reg-event-db reg-event-fx reg-fx]]
+    [re-frame.core :refer [inject-cofx reg-cofx reg-event-fx reg-fx]]
     [vd-designer.http.backend :as backend]
     [vd-designer.http.fhir-server :as http]
     [vd-designer.notifications]
@@ -19,16 +19,6 @@
  ::stop
  (fn [_ [_]]
    {::polling/clear-polling-timer ::fetch-user-servers}))
-
-(reg-event-db
- ::update-fhir-server-input
- (fn [db [_ path new-val]]
-   (assoc-in db (into [:fhir-server] path) new-val)))
-
-(reg-event-db
- ::add-fhir-server-header
- (fn [db [_]]
-   (update-in db [:fhir-server :headers] (fnil conj []) {:name "", :value ""})))
 
 (reg-event-fx
  ::connect
@@ -58,11 +48,6 @@
                                {:result      result
                                 :server-name server-name})
     :notification-error (str "Error on connect: " (u/response->error result))}))
-
-(reg-event-db
- ::cancel-edit
- (fn [db [_]]
-   (dissoc db :fhir-server :original-server)))
 
 (reg-event-fx
  ::update-user-server-list

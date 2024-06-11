@@ -35,7 +35,6 @@
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
-     #_[modal-view]
      (for [[project-name project-licenses] fhir-servers]
        (let [project-name (or project-name "Public servers")]
          ^{:key project-name}

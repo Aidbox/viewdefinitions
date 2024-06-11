@@ -3,11 +3,6 @@
    [re-frame.core :refer [reg-sub]]
    [vd-designer.pages.lists.settings.controller :as-alias c]))
 
-(reg-sub
- ::fhir-server-config
- (fn [db _]
-   (:fhir-server db)))
-
 (defn user-servers-raw [db]
   (->> db :cfg/fhir-servers :user/servers))
 
@@ -22,11 +17,6 @@
    (or (->> db :cfg/fhir-servers :user/servers vals
             (group-by #(-> % :project :name)))
        [])))
-
-(reg-sub
- ::original-server
- (fn [db _]
-   (:original-server db)))
 
 (reg-sub
  ::request-sent-by

@@ -35,12 +35,6 @@
    :params           {:box-url box-url}
    :headers          {:authorization (str "Bearer " authentication-token)}})
 
-;; dead code?
-(defn get-view-definition [db vd-id]
-  (-> {:method :get
-       :uri    (box-url+path db (str "/fhir/ViewDefinition/" vd-id))}
-      (with-defaults db)))
-
 (defn get-view-definition-user-server [authentication-token {:keys [box-url]} vd-id]
   {:uri              "/api/aidbox/ViewDefinition"
    :timeout          8000
