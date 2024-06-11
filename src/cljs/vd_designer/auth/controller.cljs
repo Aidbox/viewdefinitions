@@ -1,5 +1,7 @@
 (ns vd-designer.auth.controller
-  (:require [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
+  (:require
+    [vd-designer.pages.lists.settings.controller :as settings-controller]
+    [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
 
 (reg-fx
  :set-authentication
@@ -36,4 +38,5 @@
  (fn [{:keys [db]} [_ _]]
    {:delete-authentication nil
     :db                    (assoc db :authorized? false)
-    :message-success       "Signed out"}))
+    :message-success       "Signed out"
+    :dispatch [::settings-controller/fetch-user-servers]}))
