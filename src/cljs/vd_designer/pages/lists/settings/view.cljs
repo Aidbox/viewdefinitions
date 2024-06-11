@@ -63,7 +63,11 @@
                              [:> List.Item
                               {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
                               [:> List.Item.Meta
-                               {:title       server-name
-                                :description (r/as-element [:a {:href   box-url
-                                                                :target "_blank"}
-                                                            box-url])}]])))}]]))]))
+                               (cond->
+                                 {:title server-name}
+
+                                 (not (m/sandbox? server-config))
+                                 (assoc
+                                   :description (r/as-element [:a {:href   box-url
+                                                                   :target "_blank"}
+                                                               box-url])))]])))}]]))]))
