@@ -1,5 +1,6 @@
 (ns vd-designer.repository.user-server
-  (:require [honey.sql.helpers :refer [from insert-into select values where limit order-by on-conflict do-update-set]]
+  (:require [honey.sql.helpers :refer [do-update-set from insert-into limit
+                                       on-conflict select values where]]
             [vd-designer.db.query :as q]))
 
 ; TODO: upsert, not insert!

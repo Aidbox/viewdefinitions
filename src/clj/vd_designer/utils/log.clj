@@ -1,10 +1,18 @@
 (ns vd-designer.utils.log
   (:require [clojure.string :as str]))
 
-(defn info [msg & msgs]
+(defn- log [severity msg & msgs]
   (println
-   (str (java.util.Date.) " INFO: " msg " " (str/join " " msgs))))
+   (str (java.util.Date.) " " severity ": " msg " " (str/join " " msgs))))
+
+(defn info [msg & msgs]
+  (log "INFO" msg msgs))
+
+(defn warn [msg & msgs]
+  (log "WARN" msg msgs))
+
+(defn error [msg & msgs]
+  (log "ERROR" msg msgs))
 
 (defn debug [msg & msgs]
-  (println
-   (str (java.util.Date.) " DEBUG: " msg " " (str/join " " msgs))))
+  (log "DEBUG" msg msgs))

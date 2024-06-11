@@ -5,7 +5,8 @@
             [ragtime.repl]
             [vd-designer.config]
             [vd-designer.context :as context]
-            [vd-designer.server :as server]))
+            [vd-designer.server :as server]
+            [vd-designer.repository.account :as account]))
 
 (def ctx (context/mk))
 
@@ -45,19 +46,23 @@
             :headers        {"authorization" (str "Bearer " jwt)}})
       :body
       slurp
-      jsonista.core/read-value)
-
-  )
+      jsonista.core/read-value))
 
 ;;; Try out applying migrations
 (comment
   (def ragtime-cfg {:datastore  (jdbc/sql-database
-                                  (:db vd-designer.config/config))
+                                 (:db vd-designer.config/config))
                     :migrations (jdbc/load-resources "migrations")})
 
   ;; it's creating `ragtime_migrations` table
   (ragtime.repl/migrate ragtime-cfg)
   ;; it's doing 1 rollback at the time
   (ragtime.repl/rollback ragtime-cfg)
+
+  :rcf)
+
+;;; Experimetn with DB queries
+(comment
+  (account/create (:db ctx) {:email "<EMAIL>"})
 
   :rcf)
