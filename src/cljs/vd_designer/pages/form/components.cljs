@@ -25,34 +25,34 @@
 (defn tree-tag [kind]
   (case kind
     :select
-    (tag/tag "select"
+    [tag/tag "select"
              :style {:color      "#7972D3"
-                     :background "#7972D31A"})
+                     :background "#7972D31A"}]
 
     :column
-    (tag/tag "column"
+    [tag/tag "column"
              :style {:color      "#009906"
-                     :background "#E5FAE8"})
+                     :background "#E5FAE8"}]
 
     :unionAll
-    (tag/tag "unionall"
+    [tag/tag "unionall"
              :style {:color      "#BA004E"
-                     :background "#FE60901A"})
+                     :background "#FE60901A"}]
 
     :forEach
-    (tag/tag "foreach"
+    [tag/tag "foreach"
              :style {:color      "#B37804"
-                     :background "#F8CE3B1A"})
+                     :background "#F8CE3B1A"}]
     :forEachOrNull
-    (tag/tag "foreach or null"
+    [tag/tag "foreach or null"
              :style {:color      "#B37804"
-                     :background "#F8CE3B1A"})
+                     :background "#F8CE3B1A"}]
 
     :constant
-    (tag/default "constant")
+    [tag/default "constant"]
 
     :where
-    (tag/default "where")))
+    [tag/default "where"]))
 
 ;;;; Rows
 
@@ -64,10 +64,10 @@
                       :on-click #(dispatch [::c/toggle-expand-collapse node-key])}
               [:> Col {:flex :auto} col1]])))
 
-(defn base-input-row [ctx col1 col2]
+(defn base-input-row [value-path col1 col2]
   [:> Row {:align  :middle
            :gutter 16
-           :id     (calc-key (:value-path ctx))}
+           :id     (calc-key value-path)}
    [:> Col {:span 12}
     [:> Row {:justify :start} col1]]
 
@@ -76,10 +76,10 @@
 
 ;;;; Buttons
 
-(defn add-vd-item [ctx kind leaf?]
+(defn add-vd-item [value-path kind leaf?]
   (let [column-leaf-value {:name "" :path ""}]
     (dispatch [::c/add-tree-element
-               (:value-path ctx)
+               value-path
                (if leaf?
                  (case kind
                    :constant      {:name "" :valueString ""}
@@ -91,14 +91,14 @@
                    :forEachOrNull {:forEachOrNull "" :select []}
                    :unionAll      {:unionAll []}))])))
 
-(defn add-element-button [name ctx]
+(defn add-element-button [name value-path]
   [button/ghost name icons/PlusOutlined
-   {:onClick #(add-vd-item ctx (keyword name) true)
+   {:onClick #(add-vd-item value-path (keyword name) true)
     :style   {:width           "100%"
               :text-align      :left
               :justify-content :flex-start}}])
 
-(defn add-select-button [ctx]
+(defn add-select-button [value-path]
   (let [requested-key #(keyword (.-key %))]
     [add-dropdown "select"
      {:style {:width       "55px"
@@ -113,20 +113,20 @@
                           (TagManager/dataLayer
                            (clj->js {:dataLayer {:event "vd_edit"
                                                  :node-type (name (requested-key %))}}))
-                          (add-vd-item ctx (requested-key %) false))}}]))
+                          (add-vd-item value-path (requested-key %) false))}}]))
 
-(defn convert-foreach [ctx kind]
+(defn convert-foreach [value-path kind]
   (let [to (if (= kind :forEach) :forEachOrNull :forEach)]
     [:> Tooltip {:title (str "Convert to " (name to))}
      [:<> [button/invisible-icon icons/SwapOutlined
            {:onClick (fn [e]
                        (.stopPropagation e)
-                       (dispatch [::c/convert-foreach (:value-path ctx) kind to]))}]]]))
+                       (dispatch [::c/convert-foreach value-path kind to]))}]]]))
 
-(defn delete-button [ctx]
+(defn delete-button [value-path]
   [button/invisible-icon icons/CloseOutlined
    {:onClick (fn []
-               (dispatch [::c/delete-tree-element (:value-path ctx)])
+               (dispatch [::c/delete-tree-element value-path])
                (dispatch [::c/eval-view-definition-data]))
     :tabIndex -1}])
 
@@ -135,9 +135,9 @@
 
 ;;;; Inputs
 
-(defn change-input-value [ctx key value]
+(defn change-input-value [value-path key value]
   (dispatch [::c/change-input-value
-             (conj (:value-path ctx) key)
+             (conj value-path key)
              value]))
 
 (defn eval-on-ctrl-enter [event]
@@ -145,15 +145,16 @@
              (or (.-ctrlKey event) (.-metaKey event)))
     (dispatch [::c/eval-view-definition-data])))
 
-(defn name-input [ctx vd-form]
-  (let [errors? @(subscribe [::m/empty-inputs?])]
-    [base-input-row ctx
+(defn name-input [value-path]
+  (let [errors? @(subscribe [::m/empty-inputs?])
+        name @(subscribe [::m/name-input])]
+    [base-input-row value-path
      [tag/default "name"]
-     [input {:value       (:name vd-form)
+     [input {:value       name
              :onKeyDown   eval-on-ctrl-enter
              :placeholder "ViewDefinition"
              :classNames {:input
-                          (if (and (str/blank? (:name vd-form)) errors?)
+                          (if (and (str/blank? name) errors?)
                             "default-input red-input"
                             "default-input")}
              :style       {:font-style "normal"
@@ -161,23 +162,24 @@
                            :max-width "400px"}
              :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]))
 
-(defn resource-input [ctx vd-form]
-  (let [errors? @(subscribe [::m/empty-inputs?])]
-    [base-input-row ctx
+(defn resource-input [value-path]
+  (let [errors? @(subscribe [::m/empty-inputs?])
+        resource-input @(subscribe [::m/resource-input])]
+    [base-input-row value-path
      [tag/default "resource"]
      [:> Select (select/with-default-props
                   {:placeholder "Resource type"
                    :options     @(subscribe [::m/get-all-supported-resources])
-                   :class (if (and (str/blank? (:resource vd-form)) errors?)
+                   :class (if (and (str/blank? resource-input) errors?)
                             "vd-resource red-input"
                             "vd-resource")
                    :style       {:min-width "200px"
                                  :max-width "400px"}
-                   :value       (:resource vd-form)
+                   :value resource-input
                    :onSelect    #(dispatch [::c/change-vd-resource %])})]]))
 
-(defn- toggle-settings-popover-hover [ctx]
-  (let [tree-element-id (calc-key (:value-path ctx))
+(defn- toggle-settings-popover-hover [value-path]
+  (let [tree-element-id (calc-key value-path)
         button-id       (str tree-element-id "-settings-btn")
 
         process-hover   (fn [f elements]
@@ -187,25 +189,25 @@
                                 elements))]
 
     (process-hover remove-class (find-elements ".settings-popover-active.active"))
-    (when ctx
+    (when value-path
       (process-hover toggle-class [(get-element-by-id button-id)
                                    (-> (get-element-by-id tree-element-id)
                                        (.-parentNode)
                                        (.-parentNode))]))))
 
-(defn toggle-popover [ctx button-id]
-  (toggle-settings-popover-hover ctx)
+(defn toggle-popover [value-path button-id]
+  (toggle-settings-popover-hover value-path)
   (dispatch [::c/toggle-settings-opened-id button-id]))
 
-(defn settings-popover [ctx & {:as opts}]
-  (let [tree-element-id (calc-key (:value-path ctx))
+(defn settings-popover [value-path & {:as opts}]
+  (let [tree-element-id (calc-key value-path)
         button-id (str tree-element-id "-settings-btn")
         opened-id @(subscribe [::m/settings-opened-id])]
     [:> Popover (medley/deep-merge
                  {:trigger :click
                   :open    (= button-id opened-id)}
                  opts)
-     [:div [settings-button {:onClick   #(toggle-popover ctx button-id)
+     [:div [settings-button {:onClick   #(toggle-popover value-path button-id)
                              :onKeyDown #(when (= "Escape" (.-key %))
                                            (toggle-popover nil nil))
                              :id        button-id
@@ -373,14 +375,13 @@
 
 (defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter autoFocus]}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        errors?  @(subscribe [::m/empty-inputs?])
+        children @(subscribe [::m/children (:value-path ctx)])
         auto-complete-ref (clojure.core/atom nil)
         update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
-        rendered-options
-        (if (= (:value-path ctx) (:id request))
-          (->ui-options request options)
-          [])
-        errors?  @(subscribe [::m/empty-inputs?])
-        children @(subscribe [::m/children (:value-path ctx)])]
+        rendered-options (if (= (:value-path ctx) (:id request))
+                           (->ui-options request options)
+                           [])]
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
                                                      :hoverBorderColor  "#7972D3"
                                                      :paddingInline     0}}}}
@@ -405,15 +406,15 @@
                                      (.preventDefault e)
                                      (.stopPropagation e)
                                      (f e)))
-                       :onBlur (fn []
+                       :onBlur (fn [e]
                                  (when (and (column? ctx)
                                             (= "" (:name children)))
-                                   (change-input-value ctx :name (fhirpath-alias value)))
+                                   (change-input-value (:value-path ctx) :name (fhirpath-alias value)))
+                                 (change-input-value (:value-path ctx) key (u/target-value e))
                                  (dispatch [::c/set-focus-node nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
                        :onClick  (fn [e] (update-autocomplete-fn e))
-                       :onChange (fn [e] (change-input-value ctx key e))
                        :onSelect (fn [_value option]
                                    (when-let [r @auto-complete-ref]
                                      (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
@@ -426,64 +427,84 @@
                                 :border-radius    0
                                 :background-color "transparent"}
                  :placeholder  placeholder
+                 :onBlur
+                 (fn [_]
+                   (mapv
+                     (fn [one]
+                       (.setAttribute one "draggable" true))
+                     (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+
+                 :onFocus (fn [_]
+                            (mapv
+                              (fn [one]
+                                (.setAttribute one "draggable" false))
+                              (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
                  :classNames   {:input (if (and (str/blank? value) errors?)
                                          "default-input red-input"
                                          "default-input")}
-                 :ref          (fn [el] (reset! auto-complete-ref el))
-                 :onMouseEnter #(dispatch [::c/change-draggable-node false])
-                 :onMouseLeave #(dispatch [::c/change-draggable-node true])}]]]))
+                 :ref          (fn [el] (reset! auto-complete-ref el))}]]]))
+
+(defn string-input [ctx value-key value placeholder autoFocus on-shift-enter]
+  (let [errors? @(subscribe [::m/empty-inputs?])]
+    [input {:placeholder  (or placeholder "path")
+            :autoFocus autoFocus
+            :onBlur (fn [e]
+                      (mapv
+                       (fn [one]
+                         (.setAttribute one "draggable" true))
+                       (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                      (change-input-value (:value-path ctx) value-key (u/target-value e))
+                      (dispatch [::c/set-focus-node nil]))
+            :onKeyDown (fn [event]
+                         (when (and (= "Enter" (.-key event))
+                                    (or (.-ctrlKey event) (.-metaKey event)))
+                           (eval-on-ctrl-enter event))
+                         (when (and (= "Enter" (.-key event))
+                                    (.-shiftKey event))
+                           (on-shift-enter event)))
+            :onFocus (fn [_]
+                       (mapv
+                         (fn [one]
+                           (.setAttribute one "draggable" false))
+                         (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+            :defaultValue value
+            :classNames   {:input (if (and (str/blank? value) errors?)
+                                    "default-input red-input"
+                                    "default-input")}}]))
 
 (defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter autoFocus]}]
   (case input-type
     :number [input-number {:placeholder (or placeholder "path")
                            :value       value
-                           :onChange    #(change-input-value ctx value-key %)}]
+                           :onChange    #(change-input-value (:value-path ctx) value-key %)}]
     :boolean [:div {:style {:width "100%"}}
               [:> Checkbox
                {:checked  value
-                :onChange #(change-input-value ctx value-key (-> % .-target .-checked))}]]
+                :onChange #(change-input-value (:value-path ctx) value-key (-> % .-target .-checked))}]]
     :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
                                                              :on-shift-enter on-shift-enter
                                                              :autoFocus autoFocus}]
+    [string-input ctx value-key value placeholder autoFocus on-shift-enter]))
 
-    (let [errors? @(subscribe [::m/empty-inputs?])]
-      [input {:placeholder  (or placeholder "path")
-              :autoFocus autoFocus
-              :onBlur #(dispatch [::c/set-focus-node nil])
-              :onKeyDown (fn [event]
-                           (when (and (= "Enter" (.-key event))
-                                      (or (.-ctrlKey event) (.-metaKey event)))
-                             (eval-on-ctrl-enter event))
-                           (when (and (= "Enter" (.-key event))
-                                      (.-shiftKey event))
-                             (on-shift-enter event)))
-              :onMouseEnter #(dispatch [::c/change-draggable-node false])
-              :onMouseLeave #(dispatch [::c/change-draggable-node true])
-              :defaultValue value
-              :classNames   {:input (if (and (str/blank? value) errors?)
-                                      "default-input red-input"
-                                      "default-input")}
-              :onChange     #(change-input-value ctx value-key (u/target-value %))}])))
-
-(defn fhir-path-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
+(defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
    [render-input ctx :fhirpath placeholder value-key value opts]
    (when settings-form
-     [settings-popover ctx {:placement :right
-                            :content   (r/as-element [settings-form ctx])}])
-   (when deletable? [delete-button ctx])])
+     [settings-popover value-path {:placement :right
+                                   :content   (r/as-element [settings-form value-path])}])
+   (when deletable? [delete-button value-path])])
 
-(defn text-input [ctx value-key value deletable? settings-form placeholder & {:as opts}]
+(defn text-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
    [render-input ctx :text placeholder value-key value opts]
    (when settings-form
-     [settings-popover ctx {:placement :right
-                            :content   (r/as-element [settings-form ctx])}])
-   (when deletable? [delete-button ctx])])
+     [settings-popover value-path {:placement :right
+                                   :content   (r/as-element [settings-form ctx])}])
+   (when deletable? [delete-button value-path])])
 
 ;;;; Settings
 
