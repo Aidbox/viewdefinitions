@@ -2,7 +2,7 @@
   (:require [antd :refer [Flex Space]]
             [clojure.set :as set]
             [clojure.string :as str]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tree :refer [tree-leaf tree-node]]
@@ -45,11 +45,12 @@
         (let [errors? @(subscribe [::m/empty-inputs?])]
           [input {:defaultValue name
                   :autoFocus (= node-focus-id (last value-path))
-                  :onBlur (fn [_]
+                  :onBlur (fn [e]
                             (mapv
-                              (fn [one]
-                                (.setAttribute one "draggable" true))
-                              (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                             (fn [one]
+                               (.setAttribute one "draggable" true))
+                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                            (change-input-value value-path name-key (u/target-value e))
                             (dispatch [::form-controller/set-focus-node nil]))
                   :onFocus
                   (fn [_]
@@ -66,8 +67,7 @@
                                (if (and (str/blank? name) errors?)
                                  "default-input red-input"
                                  "default-input")}
-                  :style       {:font-style "normal"}
-                  :onChange    #(change-input-value value-path name-key (u/target-value %))}]))]
+                  :style       {:font-style "normal"}}]))]
      [text-input ctx value-key value deletable? settings-form placeholder props]]))
 
 (defn column-leaf [{value-path :value-path :as ctx} {:keys [name path]} & {:keys [on-shift-enter] :as opts}]

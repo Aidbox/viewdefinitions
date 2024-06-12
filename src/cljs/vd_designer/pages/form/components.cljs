@@ -406,15 +406,15 @@
                                      (.preventDefault e)
                                      (.stopPropagation e)
                                      (f e)))
-                       :onBlur (fn []
+                       :onBlur (fn [e]
                                  (when (and (column? ctx)
                                             (= "" (:name children)))
                                    (change-input-value (:value-path ctx) :name (fhirpath-alias value)))
+                                 (change-input-value (:value-path ctx) key (u/target-value e))
                                  (dispatch [::c/set-focus-node nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
                        :onClick  (fn [e] (update-autocomplete-fn e))
-                       :onChange (fn [e] (change-input-value (:value-path ctx) key e))
                        :onSelect (fn [_value option]
                                    (when-let [r @auto-complete-ref]
                                      (when-let [cursor (:cursor (js->clj option :keywordize-keys true))]
@@ -444,16 +444,16 @@
                                          "default-input")}
                  :ref          (fn [el] (reset! auto-complete-ref el))}]]]))
 
-;; TODO: check if it is used
-(defn input-delete-me [ctx value-key value placeholder autoFocus on-shift-enter]
+(defn string-input [ctx value-key value placeholder autoFocus on-shift-enter]
   (let [errors? @(subscribe [::m/empty-inputs?])]
     [input {:placeholder  (or placeholder "path")
             :autoFocus autoFocus
-            :onBlur (fn [_]
+            :onBlur (fn [e]
                       (mapv
-                        (fn [one]
-                          (.setAttribute one "draggable" true))
-                        (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                       (fn [one]
+                         (.setAttribute one "draggable" true))
+                       (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                      (change-input-value (:value-path ctx) value-key (u/target-value e))
                       (dispatch [::c/set-focus-node nil]))
             :onKeyDown (fn [event]
                          (when (and (= "Enter" (.-key event))
@@ -470,8 +470,7 @@
             :defaultValue value
             :classNames   {:input (if (and (str/blank? value) errors?)
                                     "default-input red-input"
-                                    "default-input")}
-            :onChange     #(change-input-value (:value-path ctx) value-key (u/target-value %))}]))
+                                    "default-input")}}]))
 
 (defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter autoFocus]}]
   (case input-type
@@ -485,7 +484,7 @@
     :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
                                                              :on-shift-enter on-shift-enter
                                                              :autoFocus autoFocus}]
-    [input-delete-me ctx value-key value placeholder autoFocus on-shift-enter]))
+    [string-input ctx value-key value placeholder autoFocus on-shift-enter]))
 
 (defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
   [:> Space.Compact {:block true
