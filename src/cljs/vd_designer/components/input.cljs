@@ -4,7 +4,7 @@
    [medley.core :as medley]))
 
 (defn search [& {:as opts}]
-  [:> Input.Search (merge-with into {} opts)])
+  [:> Input.Search (medley/deep-merge {} opts)])
 
 (defn input
   "Input
