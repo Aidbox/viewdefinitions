@@ -1,5 +1,6 @@
 (ns vd-designer.components.list
   (:require [antd :refer [List]]
+            [medley.core :as medley]
             [reagent.core :as r]
             [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
@@ -8,11 +9,10 @@
   "List with data.
     For more details see: https://ant.design/components/list#api"
   [& {:as opts}]
-  [:> List (merge-with
-            into
-            {:itemLayout "horizontal"
-             #_#_:loadMore   (when (and (not (nil? load-more)) (not loading?))
-                               (r/as-element
+  [:> List (medley/deep-merge
+             {:itemLayout "horizontal"
+              #_#_:loadMore (when (and (not (nil? load-more)) (not loading?))
+                              (r/as-element
                                 [:div {:style {:textAlign  "center"
                                                :marginTop  12
                                                :height     32
@@ -21,7 +21,7 @@
                                                         (load-more)
                                                         #_(.dispatchEvent js/window (js/Event. "resize")))}
                                   "loading more"]]))}
-            opts)])
+             opts)])
 
 (defn vd-data-list
   "List with data for view definitions"
