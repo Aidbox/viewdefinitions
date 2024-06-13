@@ -4,10 +4,10 @@
             [ring.adapter.jetty :as jetty]
             [ring.middleware.content-type :as content-type]
             [ring.util.response :as response]
+            [taoensso.telemere :as t]
             [vd-designer.context :as context]
             [vd-designer.db.migrations :as migrate]
             [vd-designer.db.pool :as pool]
-            [vd-designer.utils.log :as log]
             [vd-designer.web.routes.router :refer [router]]))
 
 (defn app [ctx]
@@ -27,7 +27,7 @@
 (defn start
   "Start the application server and log the time of start."
   [ctx http-port]
-  (log/info "Starting server on port" http-port)
+  (t/log! :info (str "Starting server on port " http-port))
   (reset! instance
           (jetty/run-jetty (app ctx) {:port http-port :join? false})))
 
@@ -35,7 +35,7 @@
   "Gracefully shutdown the server. Log the time of shutdown"
   [ctx]
   (when-not (nil? @instance)
-    (log/info "Application server shutting down...")
+    (t/log! :info "Application server shutting down...")
     (pool/close-pool (:db ctx))
     (.stop @instance)
     (reset! instance nil)))
@@ -49,14 +49,14 @@
 (defn -main
   "Select a value for the http port the app-server will listen to and start."
   [& [http-port]]
-  (log/info "Starting server...")
+  (t/log! :info "Starting server...")
   (let [ctx (context/mk)
         http-port (Integer. (or http-port "8080"))]
     (migrate/migrate! (:db ctx))
     (start ctx http-port)))
 
 (comment
-  (def ctx (context/mk))
+  (defonce ctx (context/mk))
   (migrate/migrate! (:db ctx))
 
   ;; Start application server - via `-main` or `server/start`

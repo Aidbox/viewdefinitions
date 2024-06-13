@@ -1,13 +1,15 @@
 (ns server-repl
-  (:require [martian.core :as martian]
+  (:require [clojure.string :as str]
+            [martian.core :as martian]
             [ragtime.jdbc :as jdbc]
             [ragtime.repl]
+            [taoensso.telemere :as t]
             [vd-designer.config]
             [vd-designer.context :as context]
-            [vd-designer.server :as server]
-            [vd-designer.repository.account :as account]))
+            [vd-designer.repository.account :as account]
+            [vd-designer.server :as server]))
 
-(def ctx (context/mk))
+(defonce ctx (context/mk))
 
 ;;; Try out Aidbox portal client
 (comment
@@ -63,5 +65,30 @@
 ;;; Experimetn with DB queries
 (comment
   (account/create (:db ctx) {:email "<EMAIL>"})
+
+  :rcf)
+
+
+;;; Logger
+(comment
+  (t/check-intakes)
+
+  (t/log! :info (str "Starting server on port " 8080))
+  (t/log! {:level :info :data {:port 8080}} "Starting server on port ")
+
+
+  (let [user-arg        "Bob"
+        usd-balance-str "22.4821"]
+
+    (t/log!
+     {:let  [username    (str/upper-case user-arg)
+             usd-balance (parse-double usd-balance-str)]
+
+      :data {:username    username
+             :usd-balance usd-balance}}
+
+     ["User" username "has balance:" (str "$" (Math/round usd-balance))]))
+
+  (t/with-signal (t/log! {:my-key "foo"} "My message"))
 
   :rcf)
