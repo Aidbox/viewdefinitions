@@ -1,5 +1,4 @@
 (ns server-repl
-  ;; TODO: learn and apply the best practices of REPL namespaces
   (:require [martian.core :as martian]
             [ragtime.jdbc :as jdbc]
             [ragtime.repl]

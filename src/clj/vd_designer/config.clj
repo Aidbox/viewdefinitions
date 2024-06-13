@@ -27,7 +27,7 @@
     :client-secret        (or (System/getenv "AIDBOX_CLIENT_SECRET")
                               "changeme")
     :default-redirect-url (or (System/getenv "APP_HOST")
-                              "http://localhost:8280")
+                              "http://localhost:8080")
     :provider-url         (or (System/getenv "AIDBOX_PORTAL_SSO_URL")
                               "http://127.0.0.1.nip.io:8789/ui/portal")}
 
