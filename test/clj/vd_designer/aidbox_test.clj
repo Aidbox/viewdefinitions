@@ -17,6 +17,8 @@
         {:keys [aidbox.portal/client db] :as ctx} (test-context/mk)
         [account-id-map] (account/create db {:email "<email>"})]
 
+    (is (match? [] (sut/list-user-servers ctx account-id-map)))
+
     (doseq [project [{:name "<project-1-name>", :id project-1-id}
                      {:name "<project-2-name>", :id project-2-id}]]
       (fake-portal/add-project client valid-access-token project))
