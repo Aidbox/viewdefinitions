@@ -25,3 +25,8 @@
                                  [:= :account_id account-id]
                                  [:= :box_url box-url]])
                          (limit 1)))))
+
+(defn get-all [db]
+  (q/execute! db
+              (-> (select :*)
+                  (from :user-servers))))
