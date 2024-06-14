@@ -1,12 +1,12 @@
 (ns vd-designer.aidbox
   (:require [clojure.set :as set]
             [clojure.string :as str]
-            [jsonista.core :as json]
             [lambdaisland.uri :as uri]
-            [martian.core :as martian]
-            [org.httpkit.client :as http-client]
             [ring.util.http-predicates :as predicates]
             [ring.util.http-response :as http-response]
+            [vd-designer.aidbox.proxy :as proxy]
+            [vd-designer.aidbox.proxy.private :as proxy-private]
+            [vd-designer.aidbox.proxy.public :as proxy-public]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]
@@ -64,7 +64,6 @@
                       (mapcat #(licenses-for-project ctx access-token %))
                       (filter valid-license?)
                       (mapv #(enrich-license % account-id)))]
-
     (when-not (empty? licenses)
       (->> licenses
            (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
@@ -85,210 +84,41 @@
            (filter #(-> % :box-url (= box-url)))
            first))
 
-(defn public-server:connect [box-url public-server]
-  (let [box-response @(http-client/get
-                        (str box-url "/fhir/ViewDefinition")
-                        {:headers
-                         (merge {"Accept"       "application/json"
-                                 "Content-Type" "application/transit+json"}
-                                (:headers public-server))})]
+(defn perform-proxied-request
+  [proto-fn
+   {:keys [cfg] :as ctx}
+   box-url
+   & [overrides-on-success]]
+  (let [box-response (if-let [public-server (public-fhir-server (:public-fhir-servers cfg) box-url)]
+                       (proto-fn (proxy-public/mk ctx public-server))
+                       (auth-middleware/unauthorized-wo-token
+                         proto-fn
+                         (proxy-private/map->PrivateAidboxServerProxy ctx)))]
     (if (predicates/success? box-response)
-      {:status 200
-       :body (:body box-response)
-       :headers {"Content-Type" "application/json"}}
+      (merge {:status  200
+              :body    (:body box-response)
+              :headers {"Content-Type" "application/json"}}
+             overrides-on-success)
       (http-response/bad-request (:body box-response)))))
 
-(defn user-server:connect [{:keys [db request user]}]
-  (let [box-url (-> request :body-params :box-url)
+(defn connect [{:keys [request] :as ctx}]
+  (perform-proxied-request proxy/connect ctx
+                           (-> request :body-params :box-url)))
 
-        {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
+(defn get-view-definition [{:keys [request] :as ctx}]
+  (perform-proxied-request proxy/get-view-definition ctx
+                           (-> request :query-params :box-url)))
 
-        box-response @(http-client/get
-                        (str box-url "/fhir/ViewDefinition")
-                        {:headers
-                         {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
-                          "Accept"       "application/json"
-                          "Content-Type" "application/transit+json"}})]
-    (if (predicates/success? box-response)
-      {:status 200
-       :body (:body box-response)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body box-response)))))
+(defn eval-view-definition [{:keys [request] :as ctx}]
+  (perform-proxied-request proxy/eval-view-definition ctx
+                           (-> request :body-params :box-url)
+                           {:headers {}}))
 
-(defn connect [{:keys [request cfg] :as ctx}]
-  (let [box-url (-> request :body-params :box-url)]
-    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
-      (public-server:connect box-url public-server)
-      (auth-middleware/unauthorized-wo-token #'user-server:connect ctx))))
+(defn save-view-definition [{:keys [request] :as ctx}]
+  (perform-proxied-request proxy/save-view-definition ctx
+                           (-> request :body-params :box-url)))
 
-(defn user-server:get-vd [{:keys [db request user]}]
-  (let [{:keys [box-url vd-id]} (-> request :query-params)
-        {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url
-          db (:accounts/id user) box-url)
-        box-response @(http-client/get
-                        (str box-url "/fhir/ViewDefinition/" vd-id)
-                        {:headers
-                         {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
-                          "Accept"       "application/json"
-                          "Content-Type" "application/transit+json"}})]
-    (if (predicates/success? box-response)
-      {:status 200
-       :body (:body box-response)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body box-response)))))
-
-(defn public-server:get-vd [{:keys [request]} public-server]
-  (let [{:keys [box-url vd-id]} (-> request :query-params)
-        box-response @(http-client/get
-                        (str box-url "/fhir/ViewDefinition/" vd-id)
-                        {:headers
-                         (-> {"Accept"       "application/json"
-                              "Content-Type" "application/transit+json"}
-                             (merge (:headers public-server)))})]
-    (if (predicates/success? box-response)
-      {:status 200
-       :body (:body box-response)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body box-response)))))
-
-(defn get-view-definition [{:keys [request cfg] :as ctx}]
-  (let [public-fhir-servers (cfg :public-fhir-servers)
-        {:keys [box-url]} (-> request :query-params)]
-    (if-let [public-server (public-fhir-server public-fhir-servers box-url)]
-      (public-server:get-vd ctx public-server)
-      (auth-middleware/unauthorized-wo-token #'user-server:get-vd ctx))))
-
-(defn eval-vd-user-server [{:keys [user db request]}]
-  (let [box-url (-> request :body-params :box-url)
-        view-definition (-> request :body-params :vd)
-        aidbox-client (portal/client box-url)
-        {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
-        req {:Cookie (str "aidbox-auth-token=" aidbox-auth-token ";")
-             :method 'sof/eval-view
-             :params {:limit 100
-                      :view  view-definition}}
-        resp @(martian/response-for aidbox-client :rpc req)]
-    (if (predicates/success? resp)
-      {:status 200
-       :body (:body resp)
-       ;; 500 if json header
-       :headers {}}
-      (http-response/bad-request (:body resp)))))
-
-(defn eval-vd-public-server
-  [request public-server]
-  (let [box-url (-> request :body-params :box-url)
-        aidbox-client (portal/client box-url)
-        view-definition (-> request :body-params :vd)
-        req {:authorization (-> public-server :headers (get "Authorization"))
-             :method        'sof/eval-view
-             :params        {:limit 100
-                             :view  view-definition}}
-        resp @(martian/response-for aidbox-client :rpc req)]
-    (if (predicates/success? resp)
-      {:status 200
-       :body (:body resp)
-       ;; 500 if json header
-       :headers {}}
-      (http-response/bad-request (:body resp)))))
-
-(defn eval-view-definition
-  [{:keys [request cfg] :as ctx}]
-  (when-let [box-url (-> request :body-params :box-url)]
-    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
-      (eval-vd-public-server request public-server)
-      (auth-middleware/unauthorized-wo-token #'eval-vd-user-server ctx))))
-
-(defn save-vd-user-server [{:keys [db request user]}]
-  (let [box-url (-> request :body-params :box-url)
-        view-definition (-> request :body-params :vd)
-        vd-id (-> request :body-params :vd-id)
-        {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
-        request-fn (if vd-id http-client/put http-client/post)
-        url (if vd-id
-              (str box-url "/fhir/ViewDefinition/" vd-id)
-              (str box-url "/fhir/ViewDefinition"))
-        resp @(request-fn
-                url
-                {:headers
-                 {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
-                  "Accept"       "application/json"
-                  "Content-Type" "application/json"}
-                 :body (json/write-value-as-string view-definition)})]
-    (if (predicates/success? resp)
-      {:status 200
-       :body (:body resp)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body resp)))))
-
-(defn save-vd-public-server [request public-server]
-  (let [box-url (-> request :body-params :box-url)
-        vd-id (-> request :body-params :vd-id)
-        view-definition (-> request :body-params :vd)
-        request-fn (if vd-id http-client/put http-client/post)
-        url (if vd-id
-              (str box-url "/fhir/ViewDefinition/" vd-id)
-              (str box-url "/fhir/ViewDefinition"))
-        resp @(request-fn
-                url
-                {:headers
-                 (merge {"Accept"       "application/json"
-                         "Content-Type" "application/json"}
-                        (:headers public-server))
-                 :body (json/write-value-as-string view-definition)})]
-    (if (predicates/success? resp)
-      {:status 200
-       :body (:body resp)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body resp)))))
-
-(defn save-view-definition
-  [{:keys [request cfg] :as ctx}]
-  (when-let [box-url (-> request :body-params :box-url)]
-    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
-      (save-vd-public-server request public-server)
-      (auth-middleware/unauthorized-wo-token #'save-vd-user-server ctx))))
-
-(defn public-server:delete-vd [request public-server]
-  (let [vd-id (-> request :body-params :vd-id)
-        resp @(http-client/delete
-                (format "%s/fhir/ViewDefinition/%s"
-                        (:box-url public-server) vd-id)
-                {:headers
-                 (merge {"Accept"       "application/json"
-                         "Content-Type" "application/json"}
-                        (:headers public-server))})]
-    (if (predicates/success? resp)
-      {:status 204
-       :body (:body resp)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body resp)))))
-
-(defn user-server:delete-vd [{:keys [db request user]}]
-  (let [{:keys [box-url vd-id]} (:body-params request)
-
-        {aidbox-auth-token :user_servers/aidbox_auth_token}
-        (user-server/get-by-account-id-and-box-url db (:accounts/id user) box-url)
-
-        resp @(http-client/delete
-                (str box-url "/fhir/ViewDefinition/" vd-id)
-                {:headers
-                 {"Cookie"       (str "aidbox-auth-token=" aidbox-auth-token ";")
-                  "Accept"       "application/json"
-                  "Content-Type" "application/json"}})]
-    (if (predicates/success? resp)
-      {:status 204
-       :body (:body resp)
-       :headers {"Content-Type" "application/json"}}
-      (http-response/bad-request (:body resp)))))
-
-(defn delete-view-definition
-  [{:keys [request cfg] :as ctx}]
-  (when-let [box-url (-> request :body-params :box-url)]
-    (if-let [public-server (public-fhir-server (cfg :public-fhir-servers) box-url)]
-      (public-server:delete-vd request public-server)
-      (auth-middleware/unauthorized-wo-token #'user-server:delete-vd ctx))))
+(defn delete-view-definition [{:keys [request] :as ctx}]
+  (perform-proxied-request proxy/delete-view-definition ctx
+                           (-> request :body-params :box-url)
+                           {:status 204}))
