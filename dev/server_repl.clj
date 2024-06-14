@@ -4,6 +4,7 @@
             [ragtime.jdbc :as jdbc]
             [ragtime.repl]
             [taoensso.telemere :as t]
+            [vd-designer.clients.portal :as portal]
             [vd-designer.config]
             [vd-designer.context :as context]
             [vd-designer.repository.account :as account]
@@ -11,28 +12,30 @@
 
 (defonce ctx (context/mk))
 
+(defn portal-client []
+  (portal/client (-> ctx :cfg :aidbox.portal/url)))
+
 ;;; Try out Aidbox portal client
 (comment
-  (def portal-client (:aidbox.portal/client ctx))
+  (martian/explore (portal-client) :rpc)
 
-  (martian/explore portal-client :rpc)
   (let [req {:client-id     "vd-designer"
              :client-secret "changeme"
              :code          "<code>"
              :grant-type    "authorization_code"}]
-    #_(martian/request-for portal-client :sso-code-exchange req)
-    #_@(martian/response-for portal-client :sso-code-exchange req))
+    #_(martian/request-for (portal-client) :sso-code-exchange req)
+    @(martian/response-for (portal-client) :sso-code-exchange req))
 
   :rcf)
 
 ;;; Try out server endpoints
 (comment
 
-  (server/restart ctx 8080)
-
   (def app (server/app ctx))
 
   (server/start ctx 8080)
+  (server/restart 8080 ctx)
+  (server/stop ctx)
 
   (app {:request-method :get
         :uri            "/api/health"})
@@ -71,6 +74,8 @@
 
 ;;; Logger
 (comment
+  ;; https://github.com/taoensso/telemere/blob/master/examples.cljc
+
   (t/check-intakes)
 
   (t/log! :info (str "Starting server on port " 8080))

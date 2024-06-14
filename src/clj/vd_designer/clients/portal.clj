@@ -1,7 +1,8 @@
 (ns vd-designer.clients.portal
   (:require [martian.core :as martian]
             [martian.httpkit :as martian-http]
-            [schema.core :as s]))
+            [schema.core :as s]
+            [vd-designer.clients.interceptors :as interceptors]))
 
 (def routes
   [{:route-name  :sso-code-exchange
@@ -27,9 +28,10 @@
 
 (defn client [url]
   (martian/bootstrap
-    url
-    routes
-    {:interceptors martian-http/default-interceptors}))
+   url
+   routes
+   {:interceptors (concat [(interceptors/logging "portal")]
+                          martian-http/default-interceptors)}))
 
 (defn rpc:init-project [portal-client access-token]
   (let [req {:method        'portal.portal/init-project
