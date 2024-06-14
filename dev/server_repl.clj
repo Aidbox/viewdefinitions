@@ -1,5 +1,6 @@
 (ns server-repl
   (:require [clojure.string :as str]
+            [iapetos.export :as export]
             [martian.core :as martian]
             [ragtime.jdbc :as jdbc]
             [ragtime.repl]
@@ -7,6 +8,7 @@
             [vd-designer.clients.portal :as portal]
             [vd-designer.config]
             [vd-designer.context :as context]
+            [vd-designer.monitoring :as monitoring]
             [vd-designer.repository.account :as account]
             [vd-designer.server :as server]))
 
@@ -18,6 +20,8 @@
 ;;; Try out Aidbox portal client
 (comment
   (martian/explore (portal-client) :rpc)
+
+  @(martian/response-for (portal-client) :rpc {:method 'test-method})
 
   (let [req {:client-id     "vd-designer"
              :client-secret "changeme"
@@ -39,6 +43,9 @@
 
   (app {:request-method :get
         :uri            "/api/health"})
+
+  (app {:request-method :get
+        :uri            "/api/test/1"})
 
   (app {:request-method :get
         :uri            "/bad-route"})
@@ -68,6 +75,13 @@
 ;;; Experimetn with DB queries
 (comment
   (account/create (:db ctx) {:email "<EMAIL>"})
+
+  :rcf)
+
+
+;;; Prometheus
+(comment
+  (export/text-format monitoring/registry)
 
   :rcf)
 

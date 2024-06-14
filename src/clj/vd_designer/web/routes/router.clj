@@ -6,47 +6,63 @@
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
+            [vd-designer.web.controllers.metrics :as metrics]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
-            [vd-designer.web.middleware.logging :refer [logging-middleware]]
+            [vd-designer.web.middleware.observability :refer [observability-middleware]]
             [vd-designer.web.middleware.query :refer [query-string-middleware]]))
 
 (defn router [ctx]
   (ring/router
-   ["/api"
-    ["/aidbox"
-     ["/servers"
-      {:get
-       {:handler #'aidbox/list-servers}}]
-     ["/connect"
-      {:post
-       {:parameters {:body {:box-url string?}}
-        :handler    #'aidbox/connect}}]
-     ["/ViewDefinition"
-      ;; TODO: make prettier
-      ["" {:get
-           {:parameters {:query {:vd-id  string?
-                                 :box-url string?}}
-            :handler #'aidbox/get-view-definition}
-           :post
-           {#_#_:parameters {:body {:box-url string? :vd string?}}
-            :handler #'aidbox/save-view-definition}
-           :delete
-           {:parameters {:body {:box-url string? :vd string?}}
-            :handler #'aidbox/delete-view-definition}}]
-      ["/eval"
+   [["/metrics"
+     {:get
+      {:handler #'metrics/expose}}]
+
+    ["/api"
+     ["/aidbox"
+      ["/servers"
+       {:get
+        {:handler #'aidbox/list-servers}}]
+      ["/connect"
        {:post
-        {:parameters {:body {:box-url string? :vd string?}}
-         :handler #'aidbox/eval-view-definition}}]]]
-    ["/auth"
-     ["/sso" {:get
-              {:summary "Redirect to SSO provider"
-               :handler #'auth/sso-redirect}}]
-     ["/sso-callback" {:get
-                       {:summary    "Callback for SSO auth"
-                        :parameters {:query {:code  string?
-                                             :state string?}}
-                        :handler    #'auth/sso-callback}}]]
-    ["/health" {:get #'health/check}]]
+        {:parameters {:body {:box-url string?}}
+         :handler    #'aidbox/connect}}]
+
+      ["/ViewDefinition"
+      ;; TODO: make prettier
+       [""
+        {:get
+         {:parameters {:query {:vd-id   string?
+                               :box-url string?}}
+          :handler    #'aidbox/get-view-definition}
+
+         :post
+         {#_#_:parameters {:body {:box-url string? :vd string?}}
+          :handler #'aidbox/save-view-definition}
+
+         :delete
+         {:parameters {:body {:box-url string?
+                              :vd      string?}}
+          :handler    #'aidbox/delete-view-definition}}]
+       ["/eval"
+        {:post
+         {:parameters {:body {:box-url string?
+                              :vd      string?}}
+          :handler    #'aidbox/eval-view-definition}}]]]
+
+     ["/auth"
+      ["/sso"
+       {:get
+        {:summary "Redirect to SSO provider"
+         :handler #'auth/sso-redirect}}]
+      ["/sso-callback"
+       {:get
+        {:summary    "Callback for SSO auth"
+         :parameters {:query {:code  string?
+                              :state string?}}
+         :handler    #'auth/sso-callback}}]]
+
+     ["/health"
+      {:get #'health/check}]]]
 
    {:data {:muuntaja   m/instance
            :middleware [muuntaja/format-middleware
@@ -55,4 +71,4 @@
                         coercion/coerce-request-middleware
                         coercion/coerce-response-middleware
                         (app-context-middleware ctx)
-                        (logging-middleware)]}}))
+                        (observability-middleware)]}}))

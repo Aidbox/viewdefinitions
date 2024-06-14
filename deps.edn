@@ -78,6 +78,9 @@
     dev.weavejester/ragtime           {:mvn/version "0.9.4"
                                        :why         "Migrations"
                                        :github      "https://github.com/weavejester/ragtime"}
+    clj-commons/iapetos               {:mvn/version "0.1.13"
+                                       :why         "Monitoring"
+                                       :github      "https://github.com/clj-commons/iapetos"}
 
     buddy/buddy-sign                  {:mvn/version "3.5.351"
                                        :why         "JWT signing/verification"

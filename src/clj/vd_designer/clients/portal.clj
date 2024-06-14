@@ -30,7 +30,7 @@
   (martian/bootstrap
    url
    routes
-   {:interceptors (concat [(interceptors/logging "portal")]
+   {:interceptors (concat [(interceptors/observability "portal")]
                           martian-http/default-interceptors)}))
 
 (defn rpc:init-project [portal-client access-token]

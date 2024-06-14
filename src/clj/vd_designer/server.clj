@@ -15,9 +15,9 @@
    (router ctx)
    (ring/routes
     (-> (fn [request]
-          (or (response/resource-response (:uri request) {:root "public"})
+          (or (response/resource-response (:uri request)   {:root "public"})
               (-> (response/resource-response "index.html" {:root "public"})
-                  (response/content-type "text/html"))))
+                  (response/content-type      "text/html"))))
         content-type/wrap-content-type)
     (ring/create-default-handler))))
 
