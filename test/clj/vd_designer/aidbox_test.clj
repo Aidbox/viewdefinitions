@@ -17,72 +17,77 @@
         {:keys [aidbox.portal/client db] :as ctx} (test-context/mk)
         [account-id-map] (account/create db {:email "<email>"})]
 
-    (is (match? [] (sut/list-user-servers ctx account-id-map)))
+    (testing "0 servers"
+      (is (match? [] (sut/list-user-servers ctx account-id-map))))
 
-    (doseq [project [{:name "<project-1-name>", :id project-1-id}
-                     {:name "<project-2-name>", :id project-2-id}]]
-      (fake-portal/add-project client valid-access-token project))
+    (testing "3 licenses among 2 projects"
 
-    (doseq [license-base [{:box-url "https://box-url-1.com"
-                           :name    "<license-1-name>"
-                           :project {:id project-1-id}}
-                          {:box-url "https://box-url-2.com"
-                           :name    "<license-2-name>"
-                           :project {:id project-2-id}}
-                          {:box-url "https://box-url-3.com"
-                           :name    "<license-3-name>"
-                           :project {:id project-2-id}}]]
-      (->> license-base
-           (fake-portal/->valid-license aidbox-auth-token)
-           (fake-portal/add-license client)))
+      (fake-portal/add-access-key client valid-access-token)
 
-    ;; to verify the last one is picked
-    (doseq [token ["<access-token-1>"
-                   "<access-token-2>"
-                   valid-access-token]]
-      (sso-token/create db {:account_id   (:accounts/id account-id-map)
-                            :access_token token}))
+      (doseq [project [{:name "<project-1-name>", :id project-1-id}
+                       {:name "<project-2-name>", :id project-2-id}]]
+        (fake-portal/add-project client valid-access-token project))
 
-    (is (match?
-          (m/in-any-order
-            [{:box-url     "https://box-url-1.com"
-              :server-name "<license-1-name>"
-              :project
-              {:id              project-1-id
-               :name            "<project-1-name>"
-               ;; Aidbox base URL is taken from cfg
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-1-id)}}
+      (doseq [license-base [{:box-url "https://box-url-1.com"
+                             :name    "<license-1-name>"
+                             :project {:id project-1-id}}
+                            {:box-url "https://box-url-2.com"
+                             :name    "<license-2-name>"
+                             :project {:id project-2-id}}
+                            {:box-url "https://box-url-3.com"
+                             :name    "<license-3-name>"
+                             :project {:id project-2-id}}]]
+        (->> license-base
+             (fake-portal/->valid-license aidbox-auth-token)
+             (fake-portal/add-license client)))
 
-             {:box-url     "https://box-url-2.com"
-              :server-name "<license-2-name>"
-              :project
-              {:id              project-2-id
-               :name            "<project-2-name>"
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-2-id)}}
+      ;; to verify the last one is picked
+      (doseq [token ["<access-token-1>"
+                     "<access-token-2>"
+                     valid-access-token]]
+        (sso-token/create db {:account_id   (:accounts/id account-id-map)
+                              :access_token token}))
 
-             {:box-url     "https://box-url-3.com"
-              :server-name "<license-3-name>"
-              :project
-              {:id              project-2-id
-               :name            "<project-2-name>"
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-2-id)}}])
-          (sut/list-user-servers ctx account-id-map)))
+      (is (match?
+            (m/in-any-order
+              [{:box-url     "https://box-url-1.com"
+                :server-name "<license-1-name>"
+                :project
+                {:id              project-1-id
+                 :name            "<project-1-name>"
+                 ;; Aidbox base URL is taken from cfg
+                 :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                          project-1-id)}}
 
-    (is (match?
-          (m/in-any-order
-            [#:user_servers{:account_id        (:accounts/id account-id-map)
-                            :server_name       "<license-1-name>"
-                            :box_url           "https://box-url-1.com"
-                            :aidbox_auth_token aidbox-auth-token}
-             #:user_servers{:account_id        (:accounts/id account-id-map)
-                            :server_name       "<license-2-name>"
-                            :box_url           "https://box-url-2.com"
-                            :aidbox_auth_token aidbox-auth-token}
-             #:user_servers{:account_id        (:accounts/id account-id-map)
-                            :server_name       "<license-3-name>"
-                            :box_url           "https://box-url-3.com"
-                            :aidbox_auth_token aidbox-auth-token}])
-          (user-server/get-all db)))))
+               {:box-url     "https://box-url-2.com"
+                :server-name "<license-2-name>"
+                :project
+                {:id              project-2-id
+                 :name            "<project-2-name>"
+                 :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                          project-2-id)}}
+
+               {:box-url     "https://box-url-3.com"
+                :server-name "<license-3-name>"
+                :project
+                {:id              project-2-id
+                 :name            "<project-2-name>"
+                 :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                          project-2-id)}}])
+            (sut/list-user-servers ctx account-id-map)))
+
+      (is (match?
+            (m/in-any-order
+              [#:user_servers{:account_id        (:accounts/id account-id-map)
+                              :server_name       "<license-1-name>"
+                              :box_url           "https://box-url-1.com"
+                              :aidbox_auth_token aidbox-auth-token}
+               #:user_servers{:account_id        (:accounts/id account-id-map)
+                              :server_name       "<license-2-name>"
+                              :box_url           "https://box-url-2.com"
+                              :aidbox_auth_token aidbox-auth-token}
+               #:user_servers{:account_id        (:accounts/id account-id-map)
+                              :server_name       "<license-3-name>"
+                              :box_url           "https://box-url-3.com"
+                              :aidbox_auth_token aidbox-auth-token}])
+            (user-server/get-all db))))))

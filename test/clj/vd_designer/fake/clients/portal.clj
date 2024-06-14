@@ -3,11 +3,11 @@
             [martian.core :as martian]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
-            [vd-designer.config :refer [config]]))
+            [vd-designer.config :refer [config]]
+            [vd-designer.utils.collection :refer [conj-if-new]]))
 
-(defn conj-if-new [coll x]
-  (cond-> coll
-          (nil? ((set coll) x)) (conj x)))
+(defn add-access-key [client access-key]
+  (swap! (:db client) update-in [:access-keys] conj-if-new access-key))
 
 (defn add-project [client access-key project]
   (swap! (:db client) update-in [:projects access-key] conj-if-new project))
@@ -43,33 +43,37 @@
                            :refresh_token "<refresh token>"
                            :expires_in    3600})))))
 
+(defn- authorized? [db-mock access-key]
+  (let [all-access-keys (:access-keys @db-mock)]
+    (some #{access-key} all-access-keys)))
+
 (defmulti rpc :method)
 
 (defmethod rpc 'portal.portal/init-project [{:keys [authorization]} db-mock]
   (let [[schema access-token] (str/split authorization #" ")
-        projects (get-in @db-mock [:projects access-token])]
-    (cond
-      (not= schema "Bearer")
+        projects (or (get-in @db-mock [:projects access-token])
+                     [])]
+    (if (or (not= schema "Bearer")
+            (not (authorized? db-mock access-token)))
       (http-response/unauthorized)
+      (http-response/ok {:result projects}))))
 
-      projects
-      (http-response/ok {:result projects})
-
-      :else
-      (http-response/unauthorized))))
+(defn project-belongs? [db-mock project-id access-token]
+  (->> (get-in @db-mock [:projects access-token])
+       (map :id)
+       (some #{project-id})))
 
 (defmethod rpc 'portal.portal/fetch-licenses
   [{:keys                [authorization]
     {:keys [project-id]} :params}
    db-mock]
-  (let [[schema _access-token] (str/split authorization #" ")
+  (let [[schema access-token] (str/split authorization #" ")
         licenses (or (get-in @db-mock [:licenses project-id])
                      [])]
-    (cond
-      (not= schema "Bearer")
+    (if (or (not= schema "Bearer")
+            (not (authorized? db-mock access-token))
+            (not (project-belongs? db-mock project-id access-token)))
       (http-response/unauthorized)
-
-      :else
       (http-response/ok {:result licenses}))))
 
 (defn perform-request [db-mock]
