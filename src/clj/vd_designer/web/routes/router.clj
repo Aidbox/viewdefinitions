@@ -7,6 +7,7 @@
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
+            [vd-designer.web.middleware.logging :refer [logging-middleware]]
             [vd-designer.web.middleware.query :refer [query-string-middleware]]))
 
 (defn router [ctx]
@@ -53,4 +54,5 @@
                         coercion/coerce-exceptions-middleware
                         coercion/coerce-request-middleware
                         coercion/coerce-response-middleware
-                        (app-context-middleware ctx)]}}))
+                        (app-context-middleware ctx)
+                        (logging-middleware)]}}))
