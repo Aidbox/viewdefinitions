@@ -5,6 +5,7 @@
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
+            [vd-designer.pages.form.resource-tab.view :as resource-tab]
             [vd-designer.auth.model :as auth-model]
             [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.alert :refer [alert]]
@@ -117,6 +118,7 @@
                                     :border-width       "1px"}}]
      [:> Panel {:minSize 20}
       [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
+      [resource-tab/resource-tab]
       [table (vec (remove empty? (:data resources)))
        {:class  "vd-table"
         :pagination {:hideOnSinglePage true}

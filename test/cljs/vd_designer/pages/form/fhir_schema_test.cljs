@@ -1,5 +1,6 @@
 (ns vd-designer.pages.form.fhir-schema-test
   (:require [cljs.test :as t :refer [is]]
+            [matcher-combinators.test :refer [match?]]
             [vd-designer.pages.form.fhir-schema :refer [get-constant-type]]))
 
 (t/deftest constant-type-test
