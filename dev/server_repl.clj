@@ -39,7 +39,7 @@
 
   (server/start ctx 8080)
   (server/restart 8080 ctx)
-  (server/stop ctx)
+  (server/stop)
 
   (app {:request-method :get
         :uri            "/api/health"})
