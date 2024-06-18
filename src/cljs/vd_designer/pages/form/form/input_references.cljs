@@ -1,20 +1,33 @@
 (ns vd-designer.pages.form.form.input-references
   (:require [clojure.walk :as walk]))
 
-(defn create-foreach-reference [foreach-text]
-  (let [ref (str (random-uuid))]
-    [ref {:value foreach-text
-          :type :fhirpath}]))
+(defn create-foreach-reference 
+  ([] (create-foreach-reference ""))
+  ([foreach-text]
+   (let [ref (str (random-uuid))]
+     [ref {:value foreach-text
+           :type :fhirpath}])))
 
-(defn create-column-reference [name path]
-  (let [name-ref (str (random-uuid))
-        path-ref (str (random-uuid))]
-    {:name
-     [name-ref {:value name
-                :type :string}]
-     :path
-     [path-ref {:value path
-                :type :fhirpath}]}))
+(defn create-column-reference 
+  ([] (create-column-reference "" ""))
+  ([name path]
+   (let [name-ref (str (random-uuid))
+         path-ref (str (random-uuid))]
+     {:name
+      [name-ref {:value name
+                 :type :string}]
+      :path
+      [path-ref {:value path
+                 :type :fhirpath}]})))
+
+(defn create-reference
+  ([] (create-reference :string ""))
+  ([input-type]
+   (create-reference input-type ""))
+  ([input-type value]
+   (let [ref (str (random-uuid))]
+     [ref {:value value
+           :type input-type}])))
 
 (defn replace-inputs-with-references [vd]
   (let [refs (atom {})]

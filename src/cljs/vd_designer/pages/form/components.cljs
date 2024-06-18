@@ -91,9 +91,9 @@
 (defn add-vd-item [value-path kind leaf?]
   (dispatch [::c/add-tree-element value-path kind leaf?]))
 
-(defn add-element-button [name value-path]
-  [button/ghost name icons/PlusOutlined
-   {:onClick #(add-vd-item value-path (keyword name) true)
+(defn add-element-button [value-path node-type]
+  [button/ghost (name node-type) icons/PlusOutlined
+   {:onClick #(dispatch [::c/add-tree-leaf value-path node-type])
     :style   {:width           "100%"
               :text-align      :left
               :justify-content :flex-start}}])
@@ -111,9 +111,9 @@
                                   (dropdown-component/dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
              :on-click #(do
                           (TagManager/dataLayer
-                            (clj->js {:dataLayer {:event "vd_edit"
-                                                  :node-type (name (requested-key %))}}))
-                          (add-vd-item value-path (requested-key %) false))}}]))
+                           (clj->js {:dataLayer {:event "vd_edit"
+                                                 :node-type (name (requested-key %))}}))
+                          (dispatch [::c/add-tree-node value-path (requested-key %)]))}}]))
 
 (defn convert-foreach [value-path kind]
   (let [to (if (= kind :forEach) :forEachOrNull :forEach)]

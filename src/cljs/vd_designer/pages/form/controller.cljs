@@ -19,7 +19,9 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
-            [vd-designer.utils.utils :as utils]))
+            [vd-designer.utils.utils :as utils]
+            [vd-designer.components.input :as input-component]
+            [vd-designer.components.icon :as icon]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -402,39 +404,35 @@
  (fn [db [_ node-id]]
    (assoc db ::m/node-focus node-id)))
 
-(defn get-value
+(defn get-node-default-value 
   "Adds new node into current-vd with inputs uuids,
    creates new tree-inputs with uuids.
    Returns node with tree/key and input keys with uuids
    and vector with new tree-inputs."
-  [kind leaf?]
-  ;; TODO: constants, where
-  (let [[foreach-uuid foreach-node] (input-references/create-foreach-reference "")
-
-        {[path-uuid path-node] :path
-         [name-uuid name-node] :name} (input-references/create-column-reference "" "")
-
-        new-tree-inputs {path-uuid path-node
-                         name-uuid name-node
-                         foreach-uuid foreach-node}
-        default-value
-        (if leaf?
-          (case kind
-            :constant      {:name "" :valueString ""}
-            :where         {:path ""}
-            :column        {:name name-uuid :path path-uuid})
-          (case kind
-            :column        {:column  [{:name name-uuid :path path-uuid}]}
-            :forEach       {:forEach foreach-uuid :select []}
-            :forEachOrNull {:forEachOrNull foreach-uuid :select []}
-            :unionAll      {:unionAll []}))]
-
-    [(decoration/decorate default-value) new-tree-inputs]))
+  [kind]
+  (case kind
+    :column
+    (let [[name-ref name-input] (input-references/create-reference)
+          [path-ref path-input] (input-references/create-reference :fhirpath)]
+      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]}) 
+       {name-ref name-input path-ref path-input}])
+    :forEach
+    (let [[ref input] (input-references/create-reference)]
+      [(decoration/decorate {:forEach ref :select []}) 
+       {ref input}])
+    :forEachOrNull
+    (let [[ref input] (input-references/create-reference)] 
+      [(decoration/decorate {:forEachOrNull ref :select []}) 
+       {ref input}])
+    :unionAll 
+    [(decoration/decorate {:unionAll []})
+     {}]))
 
 (reg-event-fx
- ::add-tree-element
- (fn [{:keys [db]} [_ path kind leaf?]]
-   (let [[node-value new-inputs] (get-value kind leaf?)]
+ ::add-tree-node
+ (fn [{:keys [db]} [_ path kind]]
+   (let [[node-value new-inputs] (get-node-default-value kind)]
+     (println "path" path)
      (println "node value  " node-value)
      (println "new inputs " new-inputs)
      {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
@@ -443,7 +441,7 @@
                 (update-in
                   (into [:current-vd] real-path)
                   (fnil conj []) node-value)
-                (update :m/tree-inputs merge new-inputs)))
+                (update ::m/tree-inputs merge new-inputs)))
       :fx [[:dispatch-later
             [{:ms       100
               :dispatch [::update-tree-expanded-nodes
@@ -453,6 +451,28 @@
                                    (conj path (:tree/key node-value) k))
                                  node-value))]}]]
            [:dispatch [::set-focus-node (:tree/key node-value)]]]})))
+
+(defn get-leaf-default-value [kind]
+  (case kind
+    :constant      [{:name "" :valueString ""} {}]
+    :where         {:path ""}
+    :column
+    (let [[name-ref name-input] (input-references/create-reference)
+          [path-ref path-input] (input-references/create-reference :fhirpath)]
+      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]})
+       {name-ref name-input path-ref path-input}])))
+
+(reg-event-fx
+ ::add-tree-leaf
+ (fn [{:keys [db]} [_ path kind]]
+   (let [[node-value new-inputs] (get-leaf-default-value kind)]
+     {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
+            (-> db
+                (update-in
+                 (into [:current-vd] real-path)
+                 (fnil conj []) node-value)
+                (update ::m/tree-inputs merge new-inputs)))
+      :fx [[:dispatch [::set-focus-node (:tree/key node-value)]]]})))
 
 (defn remove-node [node key]
   (cond
