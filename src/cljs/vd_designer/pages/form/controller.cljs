@@ -404,8 +404,20 @@
 
 (reg-event-fx
  ::add-tree-element
- (fn [{:keys [db]} [_ path default-value]]
-   (let [value (decoration/decorate default-value)
+ (fn [{:keys [db]} [_ path kind leaf?]]
+   (let [column-leaf-value {:name "" :path ""}
+         default-value
+         (if leaf?
+           (case kind
+             :constant      {:name "" :valueString ""}
+             :where         {:path ""}
+             :column        column-leaf-value)
+           (case kind
+             :column        {:column  [column-leaf-value]}
+             :forEach       {:forEach       "" :select []}
+             :forEachOrNull {:forEachOrNull "" :select []}
+             :unionAll      {:unionAll []}))
+         value (decoration/decorate default-value)
          mk-expanded-path (fn [[k _]]
                             (conj path (:tree/key value) k))]
      {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]

@@ -91,19 +91,7 @@
 ;;;; Buttons
 
 (defn add-vd-item [value-path kind leaf?]
-  (let [column-leaf-value {:name "" :path ""}]
-    (dispatch [::c/add-tree-element
-               value-path
-               (if leaf?
-                 (case kind
-                   :constant      {:name "" :valueString ""}
-                   :where         {:path ""}
-                   :column        column-leaf-value)
-                 (case kind
-                   :column        {:column  [column-leaf-value]}
-                   :forEach       {:forEach       "" :select []}
-                   :forEachOrNull {:forEachOrNull "" :select []}
-                   :unionAll      {:unionAll []}))])))
+  (dispatch [::c/add-tree-element value-path kind leaf?]))
 
 (defn add-element-button [name value-path]
   [button/ghost name icons/PlusOutlined
