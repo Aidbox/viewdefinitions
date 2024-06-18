@@ -26,27 +26,27 @@
   (case kind
     :select
     [tag/tag "select"
-             :style {:color      "#7972D3"
-                     :background "#7972D31A"}]
+     :style {:color      "#7972D3"
+             :background "#7972D31A"}]
 
     :column
     [tag/tag "column"
-             :style {:color      "#009906"
-                     :background "#E5FAE8"}]
+     :style {:color      "#009906"
+             :background "#E5FAE8"}]
 
     :unionAll
     [tag/tag "unionall"
-             :style {:color      "#BA004E"
-                     :background "#FE60901A"}]
+     :style {:color      "#BA004E"
+             :background "#FE60901A"}]
 
     :forEach
     [tag/tag "foreach"
-             :style {:color      "#B37804"
-                     :background "#F8CE3B1A"}]
+     :style {:color      "#B37804"
+             :background "#F8CE3B1A"}]
     :forEachOrNull
     [tag/tag "foreach or null"
-             :style {:color      "#B37804"
-                     :background "#F8CE3B1A"}]
+     :style {:color      "#B37804"
+             :background "#F8CE3B1A"}]
 
     :constant
     [tag/default "constant"]
@@ -430,15 +430,15 @@
                  :onBlur
                  (fn [_]
                    (mapv
-                     (fn [one]
-                       (.setAttribute one "draggable" true))
-                     (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                    (fn [one]
+                      (.setAttribute one "draggable" true))
+                    (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
 
                  :onFocus (fn [_]
                             (mapv
-                              (fn [one]
-                                (.setAttribute one "draggable" false))
-                              (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                             (fn [one]
+                               (.setAttribute one "draggable" false))
+                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
                  :classNames   {:input (if (and (str/blank? value) errors?)
                                          "default-input red-input"
                                          "default-input")}
@@ -464,47 +464,37 @@
                            (on-shift-enter event)))
             :onFocus (fn [_]
                        (mapv
-                         (fn [one]
-                           (.setAttribute one "draggable" false))
-                         (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                        (fn [one]
+                          (.setAttribute one "draggable" false))
+                        (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
             :defaultValue value
             :classNames   {:input (if (and (str/blank? value) errors?)
                                     "default-input red-input"
                                     "default-input")}}]))
 
-(defn render-input [ctx input-type placeholder value-key value & {:keys [on-shift-enter autoFocus]}]
-  (case input-type
-    :number [input-number {:placeholder (or placeholder "path")
-                           :value       value
-                           :onChange    #(change-input-value (:value-path ctx) value-key %)}]
-    :boolean [:div {:style {:width "100%"}}
-              [:> Checkbox
-               {:checked  value
-                :onChange #(change-input-value (:value-path ctx) value-key (-> % .-target .-checked))}]]
-    :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter #(dispatch [::c/eval-view-definition-data])
-                                                             :on-shift-enter on-shift-enter
-                                                             :autoFocus autoFocus}]
-    [string-input ctx value-key value placeholder autoFocus on-shift-enter]))
-
-(defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
+(defn render-input
+  [{value-path :value-path :as ctx} input-type placeholder value-key value deletable? settings-form &
+   {:keys [on-shift-enter autoFocus]}]
   [:> Space.Compact {:block true
                      :style {:align-items :center
                              :gap         4}}
-   [render-input ctx :fhirpath placeholder value-key value opts]
+   (case input-type
+     :number [input-number {:placeholder (or placeholder "path")
+                            :value       value
+                            :onChange    #(change-input-value (:value-path ctx) value-key %)}]
+     :boolean [:div {:style {:width "100%"}}
+               [:> Checkbox
+                {:checked  value
+                 :onChange #(change-input-value (:value-path ctx) value-key (-> % .-target .-checked))}]]
+     :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter  #(dispatch [::c/eval-view-definition-data])
+                                                              :on-shift-enter on-shift-enter
+                                                              :autoFocus      autoFocus}]
+     [string-input ctx value-key value placeholder autoFocus on-shift-enter])
    (when settings-form
      [settings-popover value-path {:placement :right
                                    :content   (r/as-element [settings-form value-path])}])
    (when deletable? [delete-button value-path])])
 
-(defn text-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
-  [:> Space.Compact {:block true
-                     :style {:align-items :center
-                             :gap         4}}
-   [render-input ctx :text placeholder value-key value opts]
-   (when settings-form
-     [settings-popover value-path {:placement :right
-                                   :content   (r/as-element [settings-form ctx])}])
-   (when deletable? [delete-button value-path])])
 
 ;;;; Settings
 

@@ -2,7 +2,7 @@
   (:require [antd :refer [Flex Space]]
             [clojure.set :as set]
             [clojure.string :as str]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            [re-frame.core :refer [dispatch subscribe]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tree :refer [tree-leaf tree-node]]
@@ -14,10 +14,8 @@
                                                        change-input-value
                                                        convert-foreach
                                                        delete-button
-                                                       fhir-path-input
-                                                       name-input
-                                                       resource-input
-                                                       text-input tree-tag]]
+                                                       name-input render-input
+                                                       resource-input tree-tag]]
             [vd-designer.pages.form.controller :as form-controller]
             [vd-designer.pages.form.fhir-schema :refer [add-fhirpath
                                                         add-value-path
@@ -33,7 +31,7 @@
 ;; Leafs
 
 (defn- general-leaf [{value-path :value-path :as ctx}
-                     {:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter] :as props}]
+                     {:keys [icon name-key name value-key value input-type deletable? settings-form placeholder on-shift-enter] :as props}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
     [base-input-row value-path
      [:> Flex {:gap   8
@@ -44,31 +42,29 @@
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
           [input {:defaultValue name
-                  :autoFocus (= node-focus-id (last value-path))
-                  :onBlur (fn [e]
-                            (mapv
-                             (fn [one]
-                               (.setAttribute one "draggable" true))
-                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
-                            (change-input-value value-path name-key (u/target-value e))
-                            (dispatch [::form-controller/set-focus-node nil]))
-                  :onFocus
-                  (fn [_]
-                    (mapv
-                      (fn [one]
-                        (.setAttribute one "draggable" false))
-                      (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
-                  :onKeyDown (fn [event]
-                               (when (and (= "Enter" (.-key event))
-                                          (.-shiftKey event))
-                                 (on-shift-enter event)))
-                  :placeholder "name"
-                  :classNames {:input
-                               (if (and (str/blank? name) errors?)
-                                 "default-input red-input"
-                                 "default-input")}
-                  :style       {:font-style "normal"}}]))]
-     [text-input ctx value-key value deletable? settings-form placeholder props]]))
+                  :autoFocus    (= node-focus-id (last value-path))
+                  :onBlur       (fn [e]
+                                  (mapv
+                                   (fn [one]
+                                     (.setAttribute one "draggable" true))
+                                   (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                                  (change-input-value value-path name-key (u/target-value e))
+                                  (dispatch [::form-controller/set-focus-node nil]))
+                  :onFocus      (fn [_]
+                                  (mapv
+                                   (fn [one]
+                                     (.setAttribute one "draggable" false))
+                                   (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                  :onKeyDown    (fn [event]
+                                  (when (and (= "Enter" (.-key event))
+                                             (.-shiftKey event))
+                                    (on-shift-enter event)))
+                  :placeholder  "name"
+                  :classNames   {:input (if (and (str/blank? name) errors?)
+                                          "default-input red-input"
+                                          "default-input")}
+                  :style        {:font-style "normal"}}]))]
+     [render-input ctx input-type placeholder value-key value deletable? settings-form props]]))
 
 (defn column-leaf [{value-path :value-path :as ctx} {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
@@ -84,17 +80,17 @@
                 :autoFocus (= node-focus-id (last value-path))
                 :onBlur #(do
                            (mapv
-                             (fn [one]
-                               (.setAttribute one "draggable" true))
-                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                            (fn [one]
+                              (.setAttribute one "draggable" true))
+                            (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
                            (dispatch [::form-controller/set-focus-node nil])
                            (dispatch [::form-controller/eval-view-definition-data]))
                 :onFocus
                 (fn [_]
                   (mapv
-                    (fn [one]
-                      (.setAttribute one "draggable" false))
-                    (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                   (fn [one]
+                     (.setAttribute one "draggable" false))
+                   (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
 
                 :classNames {:input
                              (if (and (str/blank? name) errors?)
@@ -106,9 +102,9 @@
                                         (.-shiftKey event))
                                (on-shift-enter event)))
                 :onChange    #(change-input-value value-path :name (u/target-value %))}])]
-     [fhir-path-input ctx :path path true column-settings "path" opts]]))
+     [render-input ctx :fhirpath "path" :path path true column-settings opts]]))
 
-(defn constant-type->input-type [constant-type]
+(defn- constant-type->input-type [constant-type]
   (case constant-type
     (:valueDecimal
      :valueInteger
@@ -116,7 +112,7 @@
      :valuePositiveInt
      :valueUnsignedInt) :number
 
-    :valueBoolean        :boolean
+    :valueBoolean       :boolean
     :text))
 
 (defn constant-leaf [ctx {:keys [name] :as item} & {:as opts}]
@@ -135,33 +131,20 @@
       opts)]))
 
 (defn where-leaf [ctx {:keys [path]} & {:as opts}]
-  (let [node-focus-id @(subscribe [::m/node-focus])]
+  (let [node-focus-id @(subscribe [::m/node-focus])
+        input-opts (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]
     [:> Flex {:gap   8
               :align :center
               :style {:width "100%"}}
      [icon/where]
-     [fhir-path-input
-      ctx
-      :path
-      path
-      true
-      where-settings
-      "expression"
-      (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]]))
+     [render-input ctx :fhirpath "expression" :path path true where-settings input-opts]]))
 
 (defn foreach-expr-leaf [ctx value-key path & {:as opts}]
   [:> Flex {:gap   8
             :align :center
             :style {:width "100%"}}
    [icon/expression]
-   [fhir-path-input
-    ctx
-    value-key
-    path
-    false
-    nil
-    "expression"
-    opts]])
+   [render-input ctx :fhirpath "expression" value-key path false nil opts]])
 
 ;; Nodes
 
@@ -228,7 +211,7 @@
                     (let [{value-path :value-path :as ctx} (drop-value-path ctx)]
                       [(tree-leaf (conj value-path :path)
                                   [foreach-expr-leaf ctx kind path
-                                                     {:autoFocus (= node-focus-id (last value-path))}])
+                                   {:autoFocus (= node-focus-id (last value-path))}])
                        (nested-node :select
                                     (-> (add-value-path ctx :select)
                                         (add-fhirpath path))
