@@ -2,12 +2,13 @@
   (:require [ragtime.core :as ragtime]
             [ragtime.jdbc :as jdbc]
             [ragtime.reporter :as reporter]
-            [vd-designer.utils.log :as log]))
+            [taoensso.telemere :as t]))
 
 (defn migrate! [db]
   (let [migrations (jdbc/load-resources "migrations")]
-    (log/info "Applying migrations...")
-    (log/debug "Found folowing migrations:" (mapv :id migrations))
+    (t/log! :info "Applying migrations...")
+    (t/log! {:level :debug :data {:migrations (mapv :id migrations)}}
+            "Found migrations")
     (ragtime/migrate-all (jdbc/sql-database {:datasource db})
                          (ragtime/into-index migrations)
                          migrations

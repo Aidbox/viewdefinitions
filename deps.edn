@@ -19,7 +19,10 @@
   org.slf4j/slf4j-nop    {:mvn/version "2.0.13"
                           :why         "There's an annoying error message on start.
                                             We might want to replace no-op logger with
-                                            something meaningful though."}}
+                                            something meaningful though."}
+  com.taoensso/telemere  {:mvn/version "1.0.0-beta14"
+                          :why         "Logging"
+                          :github      "https://github.com/clojure/tools.logging"}}
 
  :aliases
  {:client
@@ -63,6 +66,7 @@
                                        :why         "Abstraction over HTTP"
                                        :github      "https://github.com/oliyh/martian"}
     com.github.oliyh/martian-httpkit  {:mvn/version "0.1.26"}
+    ;; Database
     org.postgresql/postgresql         {:mvn/version "42.7.3"}
     com.github.seancorfield/next.jdbc {:mvn/version "1.3.925"}
     com.zaxxer/HikariCP               {:mvn/version "5.1.0"
@@ -74,6 +78,10 @@
     dev.weavejester/ragtime           {:mvn/version "0.9.4"
                                        :why         "Migrations"
                                        :github      "https://github.com/weavejester/ragtime"}
+    clj-commons/iapetos               {:mvn/version "0.1.13"
+                                       :why         "Monitoring"
+                                       :github      "https://github.com/clj-commons/iapetos"}
+
     buddy/buddy-sign                  {:mvn/version "3.5.351"
                                        :why         "JWT signing/verification"
                                        :github      "https://github.com/funcool/buddy-sign"}}
@@ -87,7 +95,7 @@
 
   :nrepl
   {:extra-deps  {refactor-nrepl/refactor-nrepl {:mvn/version "3.6.0"}
-                 cider/cider-nrepl             {:mvn/version "LATEST"}
+                 cider/cider-nrepl             {:mvn/version "0.49.0"}
                  cider/piggieback              {:mvn/version "0.5.3"}
                  zprint/zprint                 {:mvn/version "1.2.5"}
                  hashp/hashp                   {:mvn/version "0.2.2"}}
