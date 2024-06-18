@@ -5,32 +5,12 @@
             [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
             [vd-designer.components.icon :as icon]
-            [vd-designer.components.input :refer [input]]
-            [vd-designer.components.tree :refer [tree-leaf tree-node]]
-            [vd-designer.pages.form.components :refer [add-element-button
-                                                       add-select-button
-                                                       add-vd-item
-                                                       base-input-row
-                                                       base-node-row
-                                                       change-input-value
-                                                       convert-foreach
-                                                       column-name-input
-                                                       delete-button
-                                                       fhir-path-input
-                                                       name-input
-                                                       resource-input
-                                                       render-input
-                                                       settings-popover
-                                                       title-node-row
-                                                       text-input tree-tag]]
+            [vd-designer.components.input :as input-component]
+            [vd-designer.components.tree :as tree-component]
+            [vd-designer.pages.form.components :as form-components]
             [vd-designer.pages.form.controller :as form-controller]
-            [vd-designer.pages.form.fhir-schema :refer [add-fhirpath
-                                                        add-value-path
-                                                        drop-value-path
-                                                        get-constant-type]]
-            [vd-designer.pages.form.form.settings :refer [column-settings
-                                                          constant-settings
-                                                          where-settings]]
+            [vd-designer.pages.form.fhir-schema :as fhir-schema]
+            [vd-designer.pages.form.form.settings :as form-settings]
             [vd-designer.pages.form.form.uuid-decoration :as uuid-decor]
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]))
@@ -65,46 +45,46 @@
               :align :center
               :style {:width "100%"}}
      [icon/column]
-     [column-name-input {:input-id name
-                         :autoFocus (= node-focus-id (last value-path))
-                         :placeholder "name"}]
-     [render-input {:input-id path
-                    :name-input-id name
-                    :autoFocus (= node-focus-id (last value-path))
-                    :placeholder "fhirpath"
-                    :fhirpath-prefix (:fhirpath-ctx ctx)}]
-     [settings-popover value-path 
+     [form-components/column-name-input {:input-id name
+                                         :autoFocus (= node-focus-id (last value-path))
+                                         :placeholder "name"}]
+     [form-components/render-input {:input-id path
+                                    :name-input-id name
+                                    :autoFocus (= node-focus-id (last value-path))
+                                    :placeholder "fhirpath"
+                                    :fhirpath-prefix (:fhirpath-ctx ctx)}]
+     [form-components/settings-popover value-path
       {:placement :right
-       :content   (r/as-element [column-settings value-path])}]
-     [delete-button value-path]]))
+       :content   (r/as-element [form-settings/column-settings value-path])}]
+     [form-components/delete-button value-path]]))
 
 (defn render-column-rows [{:keys [value-path] :as ctx} column-rows]
-  (let [add-new (fn [_] (add-vd-item value-path :column true))]
+  (let [add-new (fn [_] (form-components/add-vd-item value-path :column true))]
     (mapv
      (fn [item]
-       (let [ctx (add-value-path ctx (:tree/key item))]
-         (tree-leaf (:value-path ctx)
-                    [column-row ctx item {:on-shift-enter add-new}])))
+       (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
+         (tree-component/tree-leaf (:value-path ctx)
+                                   [column-row ctx item {:on-shift-enter add-new}])))
      column-rows)))
 
 (defmethod render-node :column
   [{:keys [value-path] :as ctx} {column-rows :column}]
-  (tree-node
+  (tree-component/tree-node
    value-path
-   [title-node-row
+   [form-components/title-node-row
     {:id value-path
-     :start [[tree-tag :column]
+     :start [[form-components/tree-tag :column]
              [render-column-names value-path]]
-     :end [[delete-button (pop value-path)]]}]
+     :end [[form-components/delete-button (pop value-path)]]}]
    #_[base-node-row value-path
-    [:> Space {:align :center :style {:height "30px"}}
-     [tree-tag :column]
-     [render-column-names value-path]]
-    [delete-button (pop value-path)]]
+      [:> Space {:align :center :style {:height "30px"}}
+       [tree-tag :column]
+       [render-column-names value-path]]
+      [delete-button (pop value-path)]]
    (conj
     (render-column-rows ctx column-rows)
-    (tree-leaf (conj value-path :add)
-               [add-element-button "column" value-path]))))
+    (tree-component/tree-leaf (conj value-path :add)
+                              [form-components/add-element-button "column" value-path]))))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
   (let [node-focus-id @(subscribe [::m/node-focus])]
@@ -112,59 +92,59 @@
               :align :center
               :style {:width "100%"}}
      [icon/expression]
-     [render-input
+     [form-components/render-input
       {:input-id path
        :placeholder "expression"
        :autoFocus (= node-focus-id (last value-path))}]]))
 
 (defmethod render-node :forEach
   [{:keys [value-path] :as ctx} {path :forEach :as node}]
-  (tree-node value-path
-             [title-node-row 
-              {:id value-path
-               :start-children [[tree-tag :forEach]]
-               :end-children [[convert-foreach value-path :forEach]
-                              [delete-button (pop value-path)]]}]
-             (let [{value-path :value-path :as ctx} (drop-value-path ctx)]
-               [(tree-leaf (conj value-path :path)
-                           [foreach-expr-leaf ctx path])
-                (render-node (-> (add-value-path ctx :select)
-                                 (add-fhirpath path))
-                             (select-keys node [:select]))])))
+  (tree-component/tree-node value-path
+                            [form-components/title-node-row
+                             {:id value-path
+                              :start-children [[form-components/tree-tag :forEach]]
+                              :end-children [[form-components/convert-foreach value-path :forEach]
+                                             [form-components/delete-button (pop value-path)]]}]
+                            (let [{value-path :value-path :as ctx} (fhir-schema/drop-value-path ctx)]
+                              [(tree-component/tree-leaf (conj value-path :path)
+                                                         [foreach-expr-leaf ctx path])
+                               (render-node (-> (fhir-schema/add-value-path ctx :select)
+                                                (fhir-schema/add-fhirpath path))
+                                            (select-keys node [:select]))])))
 
 (defn render-inner-nodes [ctx nodes]
-  (mapv 
+  (mapv
    (fn [node]
-     (render-node (add-value-path ctx (:tree/key node)) node))
+     (render-node (fhir-schema/add-value-path ctx (:tree/key node)) node))
    nodes))
 
 (defn render-add-select-button [{:keys [value-path]}]
-  (tree-leaf (conj value-path :add)
-             [add-select-button value-path]))
+  (tree-component/tree-leaf (conj value-path :add)
+                            [form-components/add-select-button value-path]))
 
 (defmethod render-node :select
   [{:keys [value-path] :as ctx} {inner-nodes :select}]
-  (tree-node value-path
-             [base-node-row value-path
-              [tree-tag :select]]
-             (conj
-              (render-inner-nodes ctx inner-nodes)
-              (render-add-select-button ctx))))
+  (tree-component/tree-node value-path
+                            [form-components/base-node-row value-path
+                             [form-components/tree-tag :select]]
+                            (conj
+                             (render-inner-nodes ctx inner-nodes)
+                             (render-add-select-button ctx))))
 
 (defmethod render-node :unionAll
   [{:keys [value-path] :as ctx} {inner-nodes :select}]
-  (tree-node value-path
-             [base-node-row value-path
-              [tree-tag :unionAll]
-              [delete-button (pop value-path)]]
-             (conj
-              (render-inner-nodes ctx inner-nodes)
-              (render-add-select-button ctx))))
+  (tree-component/tree-node value-path
+                            [form-components/base-node-row value-path
+                             [form-components/tree-tag :unionAll]
+                             [form-components/delete-button (pop value-path)]]
+                            (conj
+                             (render-inner-nodes ctx inner-nodes)
+                             (render-add-select-button ctx))))
 
 (defn- general-leaf [{value-path :value-path :as ctx}
                      {:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter] :as props}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
-    [base-input-row value-path
+    [form-components/base-input-row value-path
      [:> Flex {:gap   8
                :align :center
                :style {:width "100%"}}
@@ -172,33 +152,32 @@
       (if (nil? name-key)
         name
         (let [errors? @(subscribe [::m/empty-inputs?])]
-          [input {:defaultValue name
-                  :autoFocus (= node-focus-id (last value-path))
-                  :onBlur (fn [e]
-                            (mapv
-                             (fn [one]
-                               (.setAttribute one "draggable" true))
-                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
-                            (change-input-value value-path name-key (u/target-value e))
-                            (dispatch [::form-controller/set-focus-node nil]))
-                  :onFocus
-                  (fn [_]
-                    (mapv
-                      (fn [one]
-                        (.setAttribute one "draggable" false))
-                      (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
-                  :onKeyDown (fn [event]
-                               (when (and (= "Enter" (.-key event))
-                                          (.-shiftKey event))
-                                 (on-shift-enter event)))
-                  :placeholder "name"
-                  :classNames {:input
-                               (if (and (str/blank? name) errors?)
-                                 "default-input red-input"
-                                 "default-input")}
-                  :style       {:font-style "normal"}}]))]
-     [text-input ctx value-key value deletable? settings-form placeholder props]]))
-
+          [input-component/input {:defaultValue name
+                                  :autoFocus (= node-focus-id (last value-path))
+                                  :onBlur (fn [e]
+                                            (mapv
+                                             (fn [one]
+                                               (.setAttribute one "draggable" true))
+                                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                                            (form-components/change-input-value value-path name-key (u/target-value e))
+                                            (dispatch [::form-controller/set-focus-node nil]))
+                                  :onFocus
+                                  (fn [_]
+                                    (mapv
+                                     (fn [one]
+                                       (.setAttribute one "draggable" false))
+                                     (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                                  :onKeyDown (fn [event]
+                                               (when (and (= "Enter" (.-key event))
+                                                          (.-shiftKey event))
+                                                 (on-shift-enter event)))
+                                  :placeholder "name"
+                                  :classNames {:input
+                                               (if (and (str/blank? name) errors?)
+                                                 "default-input red-input"
+                                                 "default-input")}
+                                  :style       {:font-style "normal"}}]))]
+     [form-components/text-input ctx value-key value deletable? settings-form placeholder props]]))
 
 (defn constant-type->input-type [constant-type]
   (case constant-type
@@ -212,7 +191,7 @@
     :text))
 
 (defn constant-leaf [ctx {:keys [name] :as item} & {:as opts}]
-  (let [current-type (keyword (get-constant-type item))]
+  (let [current-type (keyword (fhir-schema/get-constant-type item))]
     [general-leaf ctx
      (merge
       {:icon          icon/constant
@@ -221,7 +200,7 @@
        :value-key     current-type
        :value         (get item current-type "")
        :placeholder   "constant"
-       :settings-form constant-settings
+       :settings-form form-settings/constant-settings
        :input-type    (constant-type->input-type current-type)
        :deletable?    true}
       opts)]))
@@ -232,15 +211,14 @@
               :align :center
               :style {:width "100%"}}
      [icon/where]
-     [fhir-path-input
+     [form-components/fhir-path-input
       ctx
       :path
       path
       true
-      where-settings
+      form-settings/where-settings
       "expression"
       (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]]))
-
 
 ;; Nodes
 
@@ -257,40 +235,41 @@
     :where         false))
 
 (defn- general-node [kind {value-path :value-path} render-children]
-  (tree-node value-path
-             (cond-> [base-node-row value-path
-                      [:> Space {:align :center :style {:height "30px"}}
-                       [tree-tag kind]
-                       (when (= :column kind)
-                         [render-column-names value-path])]]
+  (tree-component/tree-node
+   value-path
+   (cond-> [form-components/base-node-row value-path
+            [:> Space {:align :center :style {:height "30px"}}
+             [form-components/tree-tag kind]
+             (when (= :column kind)
+               [render-column-names value-path])]]
 
-               (or (= :forEach       kind)
-                   (= :forEachOrNull kind))
-               (conj [convert-foreach value-path kind])
+     (or (= :forEach       kind)
+         (= :forEachOrNull kind))
+     (conj [form-components/convert-foreach value-path kind])
 
-               (node-deletable? kind)
-               (conj [delete-button (pop value-path)]))
-             (render-children value-path)))
+     (node-deletable? kind)
+     (conj [form-components/delete-button (pop value-path)]))
+   (render-children value-path)))
 
 (defn- flat-node [kind generate-leaf {value-path :value-path :as ctx} items]
-  (let [add-new (fn [_] (add-vd-item value-path kind true))]
+  (let [add-new (fn [_] (form-components/add-vd-item value-path kind true))]
     (general-node kind ctx
                   (fn [node-key]
                     (conj (mapv (fn [item]
-                                  (let [ctx (add-value-path ctx (:tree/key item))]
-                                    (tree-leaf (:value-path ctx)
-                                               [generate-leaf ctx item {:on-shift-enter add-new}])))
+                                  (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
+                                    (tree-component/tree-leaf (:value-path ctx)
+                                                              [generate-leaf ctx item {:on-shift-enter add-new}])))
                                 items)
-                          (tree-leaf (conj node-key :add)
-                                     [add-element-button (name kind) value-path]))))))
+                          (tree-component/tree-leaf (conj node-key :add)
+                                                    [form-components/add-element-button (name kind) value-path]))))))
 
 (defn- nested-node [kind {value-path :value-path :as ctx} items]
   (general-node kind ctx
                 (fn [node-key]
                   (conj (mapv (fn [item]
-                                (select->node (add-value-path ctx (:tree/key item)) item))
+                                (select->node (fhir-schema/add-value-path ctx (:tree/key item)) item))
                               items)
-                        (tree-leaf (conj node-key :add) [add-select-button value-path])))))
+                        (tree-component/tree-leaf (conj node-key :add) [form-components/add-select-button value-path])))))
 
 ;; TODO: try to generalize as other node types
 (defn node-foreach [kind ctx path {:keys [select]}]
@@ -298,19 +277,19 @@
   (let [node-focus-id @(subscribe [::m/node-focus])]
     (general-node kind ctx
                   (fn [_node-key]
-                    (let [{value-path :value-path :as ctx} (drop-value-path ctx)]
-                      [(tree-leaf (conj value-path :path)
-                                  [foreach-expr-leaf ctx kind path
-                                                     {:autoFocus (= node-focus-id (last value-path))}])
+                    (let [{value-path :value-path :as ctx} (fhir-schema/drop-value-path ctx)]
+                      [(tree-component/tree-leaf (conj value-path :path)
+                                                 [foreach-expr-leaf ctx kind path
+                                                  {:autoFocus (= node-focus-id (last value-path))}])
                        (nested-node :select
-                                    (-> (add-value-path ctx :select)
-                                       (add-fhirpath path))
+                                    (-> (fhir-schema/add-value-path ctx :select)
+                                        (fhir-schema/add-fhirpath path))
                                     select)])))))
 
 (defn- select->node [ctx element]
   (let [key (determine-key element)
         element-part (key element)
-        ctx (add-value-path ctx key)]
+        ctx (fhir-schema/add-value-path ctx key)]
     (println 'sele element-part)
     (case key
       :column (flat-node :column column-row ctx element-part)
@@ -325,12 +304,12 @@
 
 (defn vd-tree [{value-path :value-path :as ctx} vd]
   (println 'vd vd)
-  [(tree-leaf [:name]     [name-input value-path])
-   (tree-leaf [:resource] [resource-input value-path])
+  [(tree-component/tree-leaf [:name]     [form-components/name-input value-path])
+   (tree-component/tree-leaf [:resource] [form-components/resource-input value-path])
 
-   (flat-node :constant constant-leaf (add-value-path ctx :constant) (:constant vd))
-   (flat-node :where where-leaf (add-value-path ctx :where) (:where vd))
-   (render-node (add-value-path ctx :select) (select-keys vd [:select]))])
+   (flat-node :constant constant-leaf (fhir-schema/add-value-path ctx :constant) (:constant vd))
+   (flat-node :where where-leaf (fhir-schema/add-value-path ctx :where) (:where vd))
+   (render-node (fhir-schema/add-value-path ctx :select) (select-keys vd [:select]))])
 
 ;; Drag-n-Drop
 

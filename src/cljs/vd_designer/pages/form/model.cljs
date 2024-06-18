@@ -1,8 +1,8 @@
 (ns vd-designer.pages.form.model
   (:require
    [re-frame.core :refer [reg-sub]]
-   [vd-designer.components.select :refer [options-from-vec]]
-   [vd-designer.pages.form.form.uuid-decoration :refer [uuid->idx]]))
+   [vd-designer.components.select :as select-component]
+   [vd-designer.pages.form.form.uuid-decoration :as uuid-decoration]))
 
 (reg-sub
  ::view-definition-data
@@ -34,7 +34,7 @@
 (reg-sub
  ::get-all-supported-resources
  (fn [db [_]]
-   (options-from-vec (get db :resources))))
+   (select-component/options-from-vec (get db :resources))))
 
 (reg-sub
  ::current-vd-error
@@ -75,7 +75,7 @@
  ::children
  (fn [db [_ path]]
    (get-in db (into [:current-vd]
-                    (uuid->idx path (:current-vd db))))))
+                    (uuid-decoration/uuid->idx path (:current-vd db))))))
 
 (reg-sub
  ::autocomplete-options
