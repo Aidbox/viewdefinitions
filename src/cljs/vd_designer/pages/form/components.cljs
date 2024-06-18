@@ -18,8 +18,6 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.js :as js-utils]))
 
-;;;; Tags
-
 (defn set-input-value [input-id value]
   (dispatch-sync [::c/set-input-text input-id value]))
 
@@ -510,25 +508,25 @@
       [string-input
        (assoc-in opts [:handlers :on-ctrl-enter] #(dispatch [::c/eval-view-definition-data]))])))
 
-(defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
-  [:> Space.Compact {:block true
-                     :style {:align-items :center
-                             :gap         4}}
-   [render-input ctx :fhirpath placeholder value-key value opts]
-   (when settings-form
-     [settings-popover value-path {:placement :right
-                                   :content   (r/as-element [settings-form value-path])}])
-   (when deletable? [delete-button value-path])])
-
-(defn text-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
-  [:> Space.Compact {:block true
-                     :style {:align-items :center
-                             :gap         4}}
-   [render-input ctx :text placeholder value-key value opts]
-   (when settings-form
-     [settings-popover value-path {:placement :right
-                                   :content   (r/as-element [settings-form ctx])}])
-   (when deletable? [delete-button value-path])])
+;; (defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
+;;   [:> Space.Compact {:block true
+;;                      :style {:align-items :center
+;;                              :gap         4}}
+;;    [render-input ctx :fhirpath placeholder value-key value opts]
+;;    (when settings-form
+;;      [settings-popover value-path {:placement :right
+;;                                    :content   (r/as-element [settings-form value-path])}])
+;;    (when deletable? [delete-button value-path])])
+;;
+;; (defn text-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
+;;   [:> Space.Compact {:block true
+;;                      :style {:align-items :center
+;;                              :gap         4}}
+;;    [render-input ctx :text placeholder value-key value opts]
+;;    (when settings-form
+;;      [settings-popover value-path {:placement :right
+;;                                    :content   (r/as-element [settings-form ctx])}])
+;;    (when deletable? [delete-button value-path])])
 
 (defn column-name-input
   [& {:keys [input-id

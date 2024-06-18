@@ -1,6 +1,21 @@
 (ns vd-designer.pages.form.form.input-references
   (:require [clojure.walk :as walk]))
 
+(defn create-foreach-reference [foreach-text]
+  (let [ref (str (random-uuid))]
+    [ref {:value foreach-text
+          :type :fhirpath}]))
+
+(defn create-column-reference [name path]
+  (let [name-ref (str (random-uuid))
+        path-ref (str (random-uuid))]
+    {:name
+     [name-ref {:value name
+                :type :string}]
+     :path
+     [path-ref {:value path
+                :type :fhirpath}]}))
+
 (defn replace-inputs-with-references [vd]
   (let [refs (atom {})]
     [(walk/postwalk
@@ -8,17 +23,13 @@
          (if (map? v)
            (cond
              (:forEach v)
-             (let [ref (str (random-uuid))]
-               (swap! refs
-                      #(assoc % ref {:value (or (:forEach v) (:forEachOrNull v))
-                                     :type :fhirpath}))
+             (let [[ref tree-input] (create-foreach-reference (:forEach v))]
+               (swap! refs #(assoc % ref tree-input))
                (assoc v :forEach ref))
 
              (:forEachOrNull v)
-             (let [ref (str (random-uuid))]
-               (swap! refs
-                      #(assoc % ref {:value (:forEachOrNull v)
-                                     :type :fhirpath}))
+             (let [[ref tree-input] (create-foreach-reference (:forEachOrNull v))]
+               (swap! refs #(assoc % ref tree-input))
                (assoc v :forEachOrNull ref))
 
              (:column v)
@@ -26,14 +37,13 @@
                      (fn [columns]
                        (mapv
                         (fn [column]
-                          (let [name-ref (str (random-uuid))
-                                path-ref (str (random-uuid))]
+                          (let [{[name-ref name-tree-input] :name
+                                 [path-ref path-tree-input] :path}
+                                (create-column-reference (:name column) (:path column))]
                             (swap! refs
                                    #(-> %
-                                        (assoc name-ref {:value (:name column)
-                                                         :type :string}) 
-                                        (assoc path-ref {:value (:path column)
-                                                         :type :fhirpath})))
+                                        (assoc name-ref name-tree-input)
+                                        (assoc path-ref path-tree-input)))
                             (-> column
                                 (assoc :name name-ref)
                                 (assoc :path path-ref))))
@@ -43,6 +53,7 @@
        vd)
        @refs]))
 
+;; TODO: use on save
 (defn replace-inputs-with-values [vd refs]
   (let [get-value #(-> refs (get %) :value)]
     (walk/postwalk
