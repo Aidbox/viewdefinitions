@@ -25,7 +25,7 @@
  {:client
   {:extra-deps
    {org.clojure/clojurescript  {:mvn/version "1.11.132"}
-    thheller/shadow-cljs       {:mvn/version "2.28.6"}
+    thheller/shadow-cljs       {:mvn/version "2.28.9"}
     reagent/reagent            {:mvn/version "1.2.0"}
     re-frame/re-frame          {:mvn/version "1.4.3"}
     babashka/process           {:mvn/version "0.5.22"}
