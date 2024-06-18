@@ -2,7 +2,8 @@
   (:require [antd :refer [Flex Space]]
             [clojure.set :as set]
             [clojure.string :as str]
-            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+            [re-frame.core :refer [dispatch subscribe]]
+            [reagent.core :as r]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.input :refer [input]]
             [vd-designer.components.tree :refer [tree-leaf tree-node]]
@@ -13,10 +14,14 @@
                                                        base-node-row
                                                        change-input-value
                                                        convert-foreach
+                                                       column-name-input
                                                        delete-button
                                                        fhir-path-input
                                                        name-input
                                                        resource-input
+                                                       render-input
+                                                       settings-popover
+                                                       title-node-row
                                                        text-input tree-tag]]
             [vd-designer.pages.form.controller :as form-controller]
             [vd-designer.pages.form.fhir-schema :refer [add-fhirpath
@@ -30,7 +35,131 @@
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]))
 
+(defn determine-key
+  "Expects an element of normalized view definition"
+  [element]
+  (cond
+    (->> element keys (some #{:forEach}))
+    :forEach
+
+    (->> element keys (some #{:forEachOrNull}))
+    :forEachOrNull
+
+    :else
+    (first (keys element))))
+
 ;; Leafs
+
+(defmulti render-node (fn [_ node] (determine-key node)))
+
+(defn render-column-names [node-key]
+  (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
+        ;; somehow this caused page crash
+        column-closed? (when (set? expanded-nodes) (not (expanded-nodes node-key)))
+        column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
+    [:span.cut-text (str/join ", " column-names)]))
+
+(defn column-row [{:keys [value-path] :as ctx} {:keys [name path]}]
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [:> Flex {:gap   8
+              :align :center
+              :style {:width "100%"}}
+     [icon/column]
+     [column-name-input {:input-id name
+                         :autoFocus (= node-focus-id (last value-path))
+                         :placeholder "name"}]
+     [render-input {:input-id path
+                    :name-input-id name
+                    :autoFocus (= node-focus-id (last value-path))
+                    :placeholder "fhirpath"
+                    :fhirpath-prefix (:fhirpath-ctx ctx)}]
+     [settings-popover value-path 
+      {:placement :right
+       :content   (r/as-element [column-settings value-path])}]
+     [delete-button value-path]]))
+
+(defn render-column-rows [{:keys [value-path] :as ctx} column-rows]
+  (let [add-new (fn [_] (add-vd-item value-path :column true))]
+    (mapv
+     (fn [item]
+       (let [ctx (add-value-path ctx (:tree/key item))]
+         (tree-leaf (:value-path ctx)
+                    [column-row ctx item {:on-shift-enter add-new}])))
+     column-rows)))
+
+(defmethod render-node :column
+  [{:keys [value-path] :as ctx} {column-rows :column}]
+  (tree-node
+   value-path
+   [title-node-row
+    {:id value-path
+     :start [[tree-tag :column]
+             [render-column-names value-path]]
+     :end [[delete-button (pop value-path)]]}]
+   #_[base-node-row value-path
+    [:> Space {:align :center :style {:height "30px"}}
+     [tree-tag :column]
+     [render-column-names value-path]]
+    [delete-button (pop value-path)]]
+   (conj
+    (render-column-rows ctx column-rows)
+    (tree-leaf (conj value-path :add)
+               [add-element-button "column" value-path]))))
+
+(defn foreach-expr-leaf [{:keys [value-path]} path]
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [:> Flex {:gap   8
+              :align :center
+              :style {:width "100%"}}
+     [icon/expression]
+     [render-input
+      {:input-id path
+       :placeholder "expression"
+       :autoFocus (= node-focus-id (last value-path))}]]))
+
+(defmethod render-node :forEach
+  [{:keys [value-path] :as ctx} {path :forEach :as node}]
+  (tree-node value-path
+             [title-node-row 
+              {:id value-path
+               :start-children [[tree-tag :forEach]]
+               :end-children [[convert-foreach value-path :forEach]
+                              [delete-button (pop value-path)]]}]
+             (let [{value-path :value-path :as ctx} (drop-value-path ctx)]
+               [(tree-leaf (conj value-path :path)
+                           [foreach-expr-leaf ctx path])
+                (render-node (-> (add-value-path ctx :select)
+                                 (add-fhirpath path))
+                             (select-keys node [:select]))])))
+
+(defn render-inner-nodes [ctx nodes]
+  (mapv 
+   (fn [node]
+     (render-node (add-value-path ctx (:tree/key node)) node))
+   nodes))
+
+(defn render-add-select-button [{:keys [value-path]}]
+  (tree-leaf (conj value-path :add)
+             [add-select-button value-path]))
+
+(defmethod render-node :select
+  [{:keys [value-path] :as ctx} {inner-nodes :select}]
+  (tree-node value-path
+             [base-node-row value-path
+              [tree-tag :select]]
+             (conj
+              (render-inner-nodes ctx inner-nodes)
+              (render-add-select-button ctx))))
+
+(defmethod render-node :unionAll
+  [{:keys [value-path] :as ctx} {inner-nodes :select}]
+  (tree-node value-path
+             [base-node-row value-path
+              [tree-tag :unionAll]
+              [delete-button (pop value-path)]]
+             (conj
+              (render-inner-nodes ctx inner-nodes)
+              (render-add-select-button ctx))))
 
 (defn- general-leaf [{value-path :value-path :as ctx}
                      {:keys [icon name-key name value-key value deletable? settings-form placeholder on-shift-enter] :as props}]
@@ -70,43 +199,6 @@
                   :style       {:font-style "normal"}}]))]
      [text-input ctx value-key value deletable? settings-form placeholder props]]))
 
-(defn column-leaf [{value-path :value-path :as ctx} {:keys [name path]} & {:keys [on-shift-enter] :as opts}]
-  (let [node-focus-id @(subscribe [::m/node-focus])]
-    [base-input-row value-path
-     [:> Flex {:gap   8
-               :align :center
-               :style {:width "100%"}}
-      [icon/column]
-      (let [errors? @(subscribe [::m/empty-inputs?])]
-        [input {:defaultValue name
-                :placeholder "name"
-                :value name
-                :autoFocus (= node-focus-id (last value-path))
-                :onBlur #(do
-                           (mapv
-                             (fn [one]
-                               (.setAttribute one "draggable" true))
-                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
-                           (dispatch [::form-controller/set-focus-node nil])
-                           (dispatch [::form-controller/eval-view-definition-data]))
-                :onFocus
-                (fn [_]
-                  (mapv
-                    (fn [one]
-                      (.setAttribute one "draggable" false))
-                    (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
-
-                :classNames {:input
-                             (if (and (str/blank? name) errors?)
-                               "default-input red-input"
-                               "default-input")}
-                :style       {:font-style "normal"}
-                :onKeyDown (fn [event]
-                             (when (and (= "Enter" (.-key event))
-                                        (.-shiftKey event))
-                               (on-shift-enter event)))
-                :onChange    #(change-input-value value-path :name (u/target-value %))}])]
-     [fhir-path-input ctx :path path true column-settings "path" opts]]))
 
 (defn constant-type->input-type [constant-type]
   (case constant-type
@@ -149,19 +241,6 @@
       "expression"
       (assoc opts :autoFocus (= node-focus-id (last (:value-path ctx))))]]))
 
-(defn foreach-expr-leaf [ctx value-key path & {:as opts}]
-  [:> Flex {:gap   8
-            :align :center
-            :style {:width "100%"}}
-   [icon/expression]
-   [fhir-path-input
-    ctx
-    value-key
-    path
-    false
-    nil
-    "expression"
-    opts]])
 
 ;; Nodes
 
@@ -176,13 +255,6 @@
     :forEachOrNull true
     :constant      false
     :where         false))
-
-(defn render-column-names [node-key]
-  (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
-        ;; somehow this caused page crash
-        column-closed? (when (set? expanded-nodes) (not (expanded-nodes node-key)))
-        column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
-    [:span.cut-text (str/join ", " column-names)]))
 
 (defn- general-node [kind {value-path :value-path} render-children]
   (tree-node value-path
@@ -222,6 +294,7 @@
 
 ;; TODO: try to generalize as other node types
 (defn node-foreach [kind ctx path {:keys [select]}]
+  (println 'node-foreach path)
   (let [node-focus-id @(subscribe [::m/node-focus])]
     (general-node kind ctx
                   (fn [_node-key]
@@ -231,28 +304,16 @@
                                                      {:autoFocus (= node-focus-id (last value-path))}])
                        (nested-node :select
                                     (-> (add-value-path ctx :select)
-                                        (add-fhirpath path))
+                                       (add-fhirpath path))
                                     select)])))))
-
-(defn determine-key
-  "Expects an element of normalized view definition"
-  [element]
-  (cond
-    (->> element keys (some #{:forEach}))
-    :forEach
-
-    (->> element keys (some #{:forEachOrNull}))
-    :forEachOrNull
-
-    :else
-    (first (keys element))))
 
 (defn- select->node [ctx element]
   (let [key (determine-key element)
         element-part (key element)
         ctx (add-value-path ctx key)]
+    (println 'sele element-part)
     (case key
-      :column (flat-node :column column-leaf ctx element-part)
+      :column (flat-node :column column-row ctx element-part)
 
       :forEach (node-foreach :forEach ctx element-part element)
 
@@ -263,12 +324,13 @@
       :select (nested-node :select ctx element-part))))
 
 (defn vd-tree [{value-path :value-path :as ctx} vd]
+  (println 'vd vd)
   [(tree-leaf [:name]     [name-input value-path])
    (tree-leaf [:resource] [resource-input value-path])
 
    (flat-node :constant constant-leaf (add-value-path ctx :constant) (:constant vd))
    (flat-node :where where-leaf (add-value-path ctx :where) (:where vd))
-   (nested-node :select (add-value-path ctx :select) (:select vd))])
+   (render-node (add-value-path ctx :select) (select-keys vd [:select]))])
 
 ;; Drag-n-Drop
 

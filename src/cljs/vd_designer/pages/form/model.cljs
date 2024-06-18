@@ -102,3 +102,32 @@
  :<- [::current-vd]
  (fn [current-vd _]
   (:resource current-vd)))
+
+(reg-sub
+ ::tree-inputs
+ :-> ::tree-inputs)
+
+(reg-sub
+ ::input-value
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (println 'inputs inputs input-id)
+   (-> inputs
+       (get input-id)
+       (get :value))))
+
+(reg-sub
+ ::input-error
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (-> inputs
+       (get input-id)
+       (get :error))))
+
+(reg-sub
+ ::input-type
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (-> inputs
+       (get input-id)
+       (get :type))))

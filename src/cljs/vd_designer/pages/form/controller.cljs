@@ -16,6 +16,7 @@
             [vd-designer.pages.form.form.uuid-decoration :refer [decorate
                                                                  remove-decoration
                                                                  uuid->idx]]
+            [vd-designer.pages.form.form.input-references :as input-references]
             [vd-designer.pages.form.model :as m]
             [vd-designer.pages.lists.settings.model :as settings-model]
             [vd-designer.utils.event :refer [response->error]]
@@ -214,16 +215,19 @@
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
-   (let [decorated-view (-> view
-                            (update :select normalize-vd)
-                            (decorate))]
+   (let [[view-definition refs] (-> view
+                                    (update :select normalize-vd)
+                                    (decorate)
+                                    (input-references/replace-inputs-with-references))]
      {:fx [[:dispatch [::reset-vd-error]]
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (-> m/tree-root-keys
-                           (into (get-select-path decorated-view))
+                           (into (get-select-path view-definition))
                            (set/difference m/do-not-expand-tree-keys))]]]
-      :db (assoc db :current-vd decorated-view :loading false)})))
+      :db (-> db
+              (assoc :current-vd view-definition :loading false)
+              (assoc ::m/tree-inputs refs))})))
 
 (defn contains-blank-string? [element]
   (cond
@@ -303,6 +307,7 @@
    (let [sandbox? (settings-model/in-sandbox? db)
          view-definition (-> (:current-vd db)
                              remove-decoration
+                             (input-references/replace-inputs-with-values (::m/tree-inputs db))
                              strip-empty-collections
                              remove-meta
                              strip-empty-select-nodes
@@ -658,3 +663,13 @@
                           :fhirpath text
                           :cursor cursor-start}
                          (assoc new-ctx :resource-type (:resource current-vd))]}))
+
+(reg-event-db
+ ::set-input-text
+ (fn [db [_ input-id value]]
+   (assoc-in db [::m/tree-inputs input-id :value] value)))
+
+(reg-event-db
+ ::update-input-text
+ (fn [db [_ input-id f]]
+   (update-in db [::m/tree-inputs input-id :value] f)))
