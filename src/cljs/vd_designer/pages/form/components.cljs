@@ -186,13 +186,13 @@
                                   (mapv #(f element %)
                                         ["settings-popover-active" "active"]))
                                 elements))]
-
     (process-hover js-utils/remove-class (js-utils/find-elements ".settings-popover-active.active"))
     (when value-path
       (process-hover js-utils/toggle-class [(js-utils/get-element-by-id button-id)
-                                   (-> (js-utils/get-element-by-id tree-element-id)
-                                       (.-parentNode)
-                                       (.-parentNode))]))))
+                                            ;; TODO: it worked long time ago.
+                                            #_(-> (js-utils/get-element-by-id tree-element-id)
+                                                (.-parentNode)
+                                                (.-parentNode))]))))
 
 (defn toggle-popover [value-path button-id]
   (toggle-settings-popover-hover value-path)

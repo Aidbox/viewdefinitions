@@ -166,9 +166,9 @@
   (tree-component/tree-node
    value-path
    [form-components/title-node-row
-    {:id value-path
+    {:id    value-path
      :start [[form-components/tree-tag :where]]
-     :end []}]
+     :end   []}]
    (conj
     (mapv
       (fn [item]
