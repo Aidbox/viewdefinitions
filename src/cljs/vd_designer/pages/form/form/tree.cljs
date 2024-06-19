@@ -95,6 +95,20 @@
        :content   (r/as-element [form-settings/constant-settings value-path])}]
      [form-components/delete-button value-path]]))
 
+(defn where-row [{:keys [value-path]} {:keys [path]}]
+  (let [node-focus-id @(subscribe [::m/node-focus])]
+    [:> Flex {:gap   8
+              :align :center
+              :style {:width "100%"}}
+     [icon/where]
+     [form-components/render-input {:input-id path
+                                    :autoFocus (= node-focus-id (last value-path))
+                                    :placeholder "path"}]
+     [form-components/settings-popover value-path
+      {:placement :right
+       :content   (r/as-element [form-settings/where-settings value-path])}]
+     [form-components/delete-button value-path]]))
+
 (defn render-column-rows [{:keys [value-path] :as ctx} column-rows]
   (let [add-new (fn [_] (form-components/add-vd-item value-path :column true))]
     (mapv
@@ -141,6 +155,27 @@
      [form-components/add-element-button
       value-path
       :constant]))))
+
+(defmethod render-node :where
+  [{:keys [value-path] :as ctx} {where-rows :where}]
+  (tree-component/tree-node
+   value-path
+   [form-components/title-node-row
+    {:id value-path
+     :start [[form-components/tree-tag :where]]
+     :end []}]
+   (conj
+    (mapv
+      (fn [item]
+        (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
+          (tree-component/tree-leaf (:value-path ctx)
+                                    [where-row ctx item])))
+      where-rows)
+    (tree-component/tree-leaf
+     (conj value-path :add)
+     [form-components/add-element-button
+      value-path
+      :where]))))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
   (let [node-focus-id @(subscribe [::m/node-focus])]
@@ -206,7 +241,9 @@
 
    (render-node (fhir-schema/add-value-path ctx :constant)
                 (update (select-keys vd [:constant]) :constant (fnil identity [])))
-   ;; (render-node (fhir-schema/add-value-path ctx :where) (select-keys vd [:where]))
+
+   (render-node (fhir-schema/add-value-path ctx :where)
+                (update (select-keys vd [:where]) :where (fnil identity [])))
    (render-node (fhir-schema/add-value-path ctx :select) (select-keys vd [:select]))])
 
 ;; Drag-n-Drop

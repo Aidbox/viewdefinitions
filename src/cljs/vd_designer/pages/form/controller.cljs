@@ -455,8 +455,10 @@
           [value-ref value-input] (input-references/create-reference)]
       [(decoration/decorate {:name name-ref :valueString value-ref})
        {name-ref name-input value-ref value-input}])
-    ;; TODO:
-    :where         {:path ""}
+    :where
+    (let [[path-ref path-input] (input-references/create-where-reference)]
+      [(decoration/decorate {:path path-ref})
+       {path-ref path-input}])
     :column
     (let [[name-ref name-input] (input-references/create-reference)
           [path-ref path-input] (input-references/create-reference :fhirpath)]

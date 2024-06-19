@@ -33,6 +33,13 @@
       [value-ref {:value value
                   :type :string}]})))
 
+(defn create-where-reference
+  ([] (create-where-reference ""))
+  ([path]
+   (let [path-ref (str (random-uuid))]
+     [path-ref {:value path
+                :type :fhirpath}])))
+
 (defn create-reference
   ([] (create-reference :string ""))
   ([input-type]
@@ -74,6 +81,7 @@
                                 (assoc :name name-ref)
                                 (assoc :path path-ref))))
                         columns)))
+
              (:constant v)
              (update v :constant
                      (fn [constants]
@@ -92,6 +100,19 @@
                                 (assoc :name name-ref)
                                 (assoc constant-type value-ref))))
                         constants)))
+
+             (:where v)
+             (update v :where
+                     (fn [where-items]
+                       (mapv
+                        (fn [where-item]
+                          (let [[path-ref path-tree-input]
+                                (create-where-reference (:path where-item))]
+                            (swap! refs
+                                   #(assoc % path-ref path-tree-input))
+                            (-> where-item
+                                (assoc :path path-ref))))
+                        where-items)))
 
              :else v)
            v))
