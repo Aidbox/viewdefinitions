@@ -452,7 +452,8 @@
   [& {:keys [input-id
              placeholder
              autoFocus]
-      {:keys [on-shift-enter]} :handlers}]
+      {:keys [on-shift-enter
+              on-ctrl-enter]} :handlers}]
   (let [value @(subscribe [::m/input-value input-id])
         error? @(subscribe [::m/input-error input-id])]
     [input-component/input {:placeholder  (or placeholder "path")
@@ -468,7 +469,7 @@
                             :onKeyDown (fn [event]
                                          (when (and (= "Enter" (.-key event))
                                                     (or (.-ctrlKey event) (.-metaKey event)))
-                                           (eval-on-ctrl-enter event))
+                                           (on-ctrl-enter event))
                                          (when (and (= "Enter" (.-key event))
                                                     (.-shiftKey event))
                                            (on-shift-enter event)))

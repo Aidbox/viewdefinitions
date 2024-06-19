@@ -79,7 +79,7 @@
     :valueBoolean       :boolean
     :text))
 
-(defn constant-row [{:keys [value-path]} {:keys [name] :as item}]
+(defn constant-row [{:keys [value-path]} {:keys [name] :as item} {:keys [on-shift-enter]}]
   (let [node-focus-id @(subscribe [::m/node-focus])
         constant-type (fhir-schema/get-constant-type item)]
     [:> Flex {:gap   8
@@ -89,15 +89,17 @@
      [icon/constant]
      [form-components/string-input {:input-id name
                                     :autoFocus (= node-focus-id (last value-path))
+                                    :handlers {:on-shift-enter on-shift-enter}
                                     :placeholder "name"}]
      [form-components/render-input {:input-id  (get item constant-type)
-                                    :placeholder "constant"}]
+                                    :placeholder "constant"
+                                    :handlers {:on-shift-enter on-shift-enter}}]
      [form-components/settings-popover value-path
       {:placement :right
        :content   (r/as-element [form-settings/constant-settings value-path])}]
      [form-components/delete-button value-path]]))
 
-(defn where-row [{:keys [value-path]} {:keys [path]}]
+(defn where-row [{:keys [value-path]} {:keys [path]} {:keys [on-shift-enter]}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
     [:> Flex {:gap   8
               :align :center
@@ -106,7 +108,8 @@
      [icon/where]
      [form-components/render-input {:input-id path
                                     :autoFocus (= node-focus-id (last value-path))
-                                    :placeholder "expression"}]
+                                    :placeholder "expression"
+                                    :handlers {:on-shift-enter on-shift-enter}}]
      [form-components/settings-popover value-path
       {:placement :right
        :content   (r/as-element [form-settings/where-settings value-path])}]
@@ -139,6 +142,17 @@
       (conj value-path :column)
       :column]))))
 
+(defn render-constant-rows [{:keys [value-path] :as ctx} constant-rows]
+  (mapv
+    (fn [item]
+      (let [ctx* (fhir-schema/add-value-path ctx (:tree/key item))]
+        (tree-component/tree-leaf
+          (:value-path ctx*)
+          [constant-row ctx* item
+           {:on-shift-enter
+            #(form-components/add-vd-leaf value-path :constant)}])))
+    constant-rows))
+
 (defmethod render-node :constant
   [{:keys [value-path] :as ctx} {constant-rows :constant}]
   (tree-component/tree-node
@@ -147,17 +161,22 @@
     {:id value-path
      :start [[form-components/tree-tag :constant]]}]
    (conj
-    (mapv
-      (fn [item]
-        (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
-          (tree-component/tree-leaf (:value-path ctx)
-                                    [constant-row ctx item])))
-      constant-rows)
-    (tree-component/tree-leaf
-     (conj value-path :add)
-     [form-components/add-element-button
-      value-path
-      :constant]))))
+     (render-constant-rows ctx constant-rows)
+     (tree-component/tree-leaf
+       (conj value-path :add)
+       [form-components/add-element-button
+        value-path
+        :constant]))))
+
+(defn render-where-rows [{:keys [value-path] :as ctx} where-rows]
+  (mapv
+    (fn [item]
+      (let [ctx* (fhir-schema/add-value-path ctx (:tree/key item))]
+        (tree-component/tree-leaf
+          (:value-path ctx*)
+          [where-row ctx* item {:on-shift-enter
+                               #(form-components/add-vd-leaf value-path :where)}])))
+    where-rows))
 
 (defmethod render-node :where
   [{:keys [value-path] :as ctx} {where-rows :where}]
@@ -168,17 +187,12 @@
      :start [[form-components/tree-tag :where]]
      :end   []}]
    (conj
-    (mapv
-      (fn [item]
-        (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
-          (tree-component/tree-leaf (:value-path ctx)
-                                    [where-row ctx item])))
-      where-rows)
-    (tree-component/tree-leaf
-     (conj value-path :add)
-     [form-components/add-element-button
-      value-path
-      :where]))))
+     (render-where-rows ctx where-rows)
+     (tree-component/tree-leaf
+       (conj value-path :add)
+       [form-components/add-element-button
+        value-path
+        :where]))))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
   (let [node-focus-id @(subscribe [::m/node-focus])]
