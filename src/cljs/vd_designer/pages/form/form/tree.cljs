@@ -19,11 +19,9 @@
   "Expects an element of normalized view definition"
   [element]
   (cond
-    (->> element keys (some #{:forEach}))
+    (or (->> element keys (some #{:forEach}))
+        (->> element keys (some #{:forEachOrNull})))
     :forEach
-
-    (->> element keys (some #{:forEachOrNull}))
-    :forEachOrNull
 
     :else
     (first (keys element))))
@@ -194,21 +192,24 @@
        :autoFocus (= node-focus-id (last value-path))}]]))
 
 (defmethod render-node :forEach
-  [{:keys [value-path] :as ctx} {path :forEach :as node}]
-  (tree-component/tree-node value-path
-                            [form-components/title-node-row
-                             {:id value-path
-                              :start [[form-components/tree-tag :forEach]]
-                              :end [[form-components/convert-foreach value-path :forEach]
-                                    [form-components/delete-button value-path]]}]
-                            (let [{value-path :value-path :as ctx} (fhir-schema/drop-value-path ctx)]
-                              [(tree-component/tree-leaf (conj value-path :path)
-                                                         [foreach-expr-leaf ctx path])
-                               (render-node (-> ctx
-                                                (fhir-schema/add-value-path (:tree/key node))
-                                                (fhir-schema/add-value-path :select)
-                                                (fhir-schema/add-fhirpath path))
-                                            (select-keys node [:select]))])))
+  [{:keys [value-path] :as ctx} node]
+  (let [[foreach-type path] (or (find node :forEach)
+                                (find node :forEachOrNull))]
+    (tree-component/tree-node
+      value-path
+      [form-components/title-node-row
+       {:id value-path
+        :start [[form-components/tree-tag foreach-type]]
+        :end [[form-components/convert-foreach value-path foreach-type]
+              [form-components/delete-button value-path]]}]
+      (let [{value-path :value-path :as ctx} (fhir-schema/drop-value-path ctx)]
+        [(tree-component/tree-leaf (conj value-path :path)
+                                   [foreach-expr-leaf ctx path])
+         (render-node (-> ctx
+                          (fhir-schema/add-value-path (:tree/key node))
+                          (fhir-schema/add-value-path :select)
+                          (fhir-schema/add-fhirpath path))
+                      (select-keys node [:select]))]))))
 
 (defn render-inner-nodes [ctx nodes]
   (mapv
