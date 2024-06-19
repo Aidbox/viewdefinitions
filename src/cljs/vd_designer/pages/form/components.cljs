@@ -407,10 +407,12 @@
                                      (.stopPropagation e)
                                      (f e)))
                        :onBlur (fn [e]
+                                 (set-input-value input-id (u/target-value e))
                                  (update-input-value
                                   name-input-id
-                                  (fn [v] (if (str/blank? v) (fhirpath-alias value) v)))
-                                 (set-input-value input-id (u/target-value e))
+                                  (fn [v] (if (str/blank? v)
+                                            (fhirpath-alias (u/target-value e))
+                                            v)))
                                  (dispatch [::c/set-focus-node nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
