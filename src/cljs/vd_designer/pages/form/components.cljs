@@ -67,7 +67,8 @@
          (mapv (fn [c] [:> Col {:flex :auto} c]) start))
    (into [:> Row {:align :middle
                   :wrap false
-                  :gutter 8}]
+                  :gutter 8
+                  :style {:margin-right 4}}]
          (mapv (fn [c] [:> Col {:flex :auto} c]) end))])
 
 (defn base-node-row [node-key col1 & cols]
@@ -90,8 +91,8 @@
 
 ;;;; Buttons
 
-(defn add-vd-item [value-path kind leaf?]
-  (dispatch [::c/add-tree-leaf value-path kind leaf?]))
+(defn add-vd-leaf [value-path kind]
+  (dispatch [::c/add-tree-leaf value-path kind]))
 
 (defn add-element-button [value-path node-type]
   [button/ghost (name node-type) icons/PlusOutlined
@@ -128,6 +129,7 @@
 (defn delete-button [value-path]
   [button/invisible-icon icons/CloseOutlined
    {:onClick (fn []
+               (println 'delete value-path)
                (dispatch [::c/delete-tree-element value-path])
                (dispatch [::c/eval-view-definition-data]))
     :tabIndex -1}])
@@ -536,7 +538,7 @@
                                            "default-input red-input"
                                            "default-input")}
                             :style       {:font-style "normal"}
-                            :onKeyDown (fn [event]
+                            :onKeyUp (fn [event]
                                          (when (and (= "Enter" (.-key event))
                                                     (.-shiftKey event))
                                            (on-shift-enter event)))

@@ -133,12 +133,14 @@
            (assoc v :forEachOrNull (get-value (:forEachOrNull v)))
 
            (:column v)
-           (mapv
-            (fn [column]
-              (-> column
-                  (assoc :name (get-value (:name column)))
-                  (assoc :path (get-value (:path column)))))
-            (:column v))
+           (update v :column
+                   (fn [columns]
+                     (mapv
+                      (fn [column]
+                        (-> column
+                            (assoc :name (get-value (:name column)))
+                            (assoc :path (get-value (:path column)))))
+                      columns)))
 
            :else v)
          v))

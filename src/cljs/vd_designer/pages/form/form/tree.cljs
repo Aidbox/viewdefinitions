@@ -47,20 +47,23 @@
         column-names (when column-closed? (get-column-names (conj node-path :column)))]
     [:span.cut-text (str/join ", " column-names)]))
 
-(defn column-row [{:keys [value-path] :as ctx} {:keys [name path]}]
+(defn column-row [{:keys [value-path] :as ctx} {:keys [name path]} & {:keys [on-shift-enter]}]
   (let [node-focus-id @(subscribe [::m/node-focus])]
     [:> Flex {:gap   8
               :align :center
-              :style {:width "100%"}}
+              :style {:width "100%"
+                      :padding-right 16}}
      [icon/column]
      [form-components/column-name-input {:input-id name
                                          :autoFocus (= node-focus-id (last value-path))
-                                         :placeholder "name"}]
+                                         :placeholder "name"
+                                         :handlers {:on-shift-enter on-shift-enter}}]
      [form-components/render-input {:input-id path
                                     :name-input-id name
                                     :autoFocus (= node-focus-id (last value-path))
                                     :placeholder "path"
-                                    :fhirpath-prefix (:fhirpath-ctx ctx)}]
+                                    :fhirpath-prefix (:fhirpath-ctx ctx)
+                                    :handlers {:on-shift-enter on-shift-enter}}]
      [form-components/settings-popover value-path
       {:placement :right
        :content   (r/as-element [form-settings/column-settings value-path])}]
@@ -83,7 +86,8 @@
         constant-type (fhir-schema/get-constant-type item)]
     [:> Flex {:gap   8
               :align :center
-              :style {:width "100%"}}
+              :style {:width "100%"
+                      :padding-right 16}}
      [icon/constant]
      [form-components/string-input {:input-id name
                                     :autoFocus (= node-focus-id (last value-path))
@@ -99,7 +103,8 @@
   (let [node-focus-id @(subscribe [::m/node-focus])]
     [:> Flex {:gap   8
               :align :center
-              :style {:width "100%"}}
+              :style {:width "100%"
+                      :padding-right 10}}
      [icon/where]
      [form-components/render-input {:input-id path
                                     :autoFocus (= node-focus-id (last value-path))
@@ -109,8 +114,9 @@
        :content   (r/as-element [form-settings/where-settings value-path])}]
      [form-components/delete-button value-path]]))
 
-(defn render-column-rows [{:keys [value-path] :as ctx} column-rows]
-  (let [add-new (fn [_] (form-components/add-vd-item value-path :column true))]
+(defn render-column-rows [ctx column-rows]
+  (let [ctx (fhir-schema/add-value-path ctx :column)
+        add-new (fn [_] (form-components/add-vd-leaf (:value-path ctx) :column))]
     (mapv
      (fn [item]
        (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
@@ -126,7 +132,7 @@
     {:id value-path
      :start [[form-components/tree-tag :column]
              [render-column-names value-path]]
-     :end [[form-components/delete-button (pop value-path)]]}]
+     :end [[form-components/delete-button value-path]]}]
    (conj
     (render-column-rows ctx column-rows)
     (tree-component/tree-leaf
@@ -141,8 +147,7 @@
    value-path
    [form-components/title-node-row
     {:id value-path
-     :start [[form-components/tree-tag :constant]]
-     :end [[form-components/delete-button (pop value-path)]]}]
+     :start [[form-components/tree-tag :constant]]}]
    (conj
     (mapv
       (fn [item]
@@ -195,7 +200,7 @@
                              {:id value-path
                               :start [[form-components/tree-tag :forEach]]
                               :end [[form-components/convert-foreach value-path :forEach]
-                                    [form-components/delete-button (pop value-path)]]}]
+                                    [form-components/delete-button value-path]]}]
                             (let [{value-path :value-path :as ctx} (fhir-schema/drop-value-path ctx)]
                               [(tree-component/tree-leaf (conj value-path :path)
                                                          [foreach-expr-leaf ctx path])
@@ -230,7 +235,7 @@
     (tree-component/tree-node value-path
                               [form-components/base-node-row value-path
                                [form-components/tree-tag :unionAll]
-                               [form-components/delete-button (pop value-path)]]
+                               [form-components/delete-button value-path]]
                               (conj
                                (render-inner-nodes ctx inner-nodes)
                                (render-add-select-button ctx)))))
