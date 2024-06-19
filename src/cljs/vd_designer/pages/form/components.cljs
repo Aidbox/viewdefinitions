@@ -91,7 +91,7 @@
 ;;;; Buttons
 
 (defn add-vd-item [value-path kind leaf?]
-  (dispatch [::c/add-tree-element value-path kind leaf?]))
+  (dispatch [::c/add-tree-leaf value-path kind leaf?]))
 
 (defn add-element-button [value-path node-type]
   [button/ghost (name node-type) icons/PlusOutlined
@@ -136,11 +136,6 @@
   [button/invisible-icon icons/SettingOutlined opts])
 
 ;;;; Inputs
-
-(defn change-input-value [value-path key value]
-  (dispatch [::c/change-input-value
-             (conj value-path key)
-             value]))
 
 (defn eval-on-ctrl-enter [event]
   (when (and (= "Enter" (.-key event))
@@ -509,26 +504,6 @@
                  (assoc-in opts [:handlers :on-ctrl-enter] #(dispatch [::c/eval-view-definition-data]))]
       [string-input
        (assoc-in opts [:handlers :on-ctrl-enter] #(dispatch [::c/eval-view-definition-data]))])))
-
-;; (defn fhir-path-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
-;;   [:> Space.Compact {:block true
-;;                      :style {:align-items :center
-;;                              :gap         4}}
-;;    [render-input ctx :fhirpath placeholder value-key value opts]
-;;    (when settings-form
-;;      [settings-popover value-path {:placement :right
-;;                                    :content   (r/as-element [settings-form value-path])}])
-;;    (when deletable? [delete-button value-path])])
-;;
-;; (defn text-input [{value-path :value-path :as ctx} value-key value deletable? settings-form placeholder & {:as opts}]
-;;   [:> Space.Compact {:block true
-;;                      :style {:align-items :center
-;;                              :gap         4}}
-;;    [render-input ctx :text placeholder value-key value opts]
-;;    (when settings-form
-;;      [settings-popover value-path {:placement :right
-;;                                    :content   (r/as-element [settings-form ctx])}])
-;;    (when deletable? [delete-button value-path])])
 
 (defn column-name-input
   [& {:keys [input-id

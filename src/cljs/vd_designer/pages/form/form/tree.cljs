@@ -88,8 +88,8 @@
     (render-column-rows ctx column-rows)
     (tree-component/tree-leaf
      (conj value-path :add)
-     [form-components/add-element-button 
-      (conj value-path :column) 
+     [form-components/add-element-button
+      (conj value-path :column)
       :column]))))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
@@ -151,7 +151,6 @@
                                (render-add-select-button ctx)))))
 
 (defn vd-tree [{value-path :value-path :as ctx} vd]
-  (println 'vd vd)
   [(tree-component/tree-leaf [:name]     [form-components/name-input value-path])
    (tree-component/tree-leaf [:resource] [form-components/resource-input value-path])
 

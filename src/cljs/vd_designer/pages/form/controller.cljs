@@ -404,7 +404,7 @@
  (fn [db [_ node-id]]
    (assoc db ::m/node-focus node-id)))
 
-(defn get-node-default-value 
+(defn get-node-default-value
   "Adds new node into current-vd with inputs uuids,
    creates new tree-inputs with uuids.
    Returns node with tree/key and input keys with uuids
@@ -414,17 +414,17 @@
     :column
     (let [[name-ref name-input] (input-references/create-reference)
           [path-ref path-input] (input-references/create-reference :fhirpath)]
-      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]}) 
+      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]})
        {name-ref name-input path-ref path-input}])
     :forEach
     (let [[ref input] (input-references/create-reference)]
-      [(decoration/decorate {:forEach ref :select []}) 
+      [(decoration/decorate {:forEach ref :select []})
        {ref input}])
     :forEachOrNull
-    (let [[ref input] (input-references/create-reference)] 
-      [(decoration/decorate {:forEachOrNull ref :select []}) 
+    (let [[ref input] (input-references/create-reference)]
+      [(decoration/decorate {:forEachOrNull ref :select []})
        {ref input}])
-    :unionAll 
+    :unionAll
     [(decoration/decorate {:unionAll []})
      {}]))
 
@@ -433,7 +433,6 @@
  (fn [{:keys [db]} [_ path kind]]
    (let [[node-value new-inputs] (get-node-default-value kind)]
      {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
-            (println "real path " real-path)
             (-> db
                 (update-in
                   (into [:current-vd] real-path)
@@ -451,12 +450,13 @@
 
 (defn get-leaf-default-value [kind]
   (case kind
+    ;; TODO:
     :constant      [{:name "" :valueString ""} {}]
     :where         {:path ""}
     :column
     (let [[name-ref name-input] (input-references/create-reference)
           [path-ref path-input] (input-references/create-reference :fhirpath)]
-      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]})
+      [(decoration/decorate {:name name-ref :path path-ref})
        {name-ref name-input path-ref path-input}])))
 
 (reg-event-fx
