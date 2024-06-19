@@ -1,14 +1,15 @@
 (ns vd-designer.pages.form.form.input-references
-  (:require [clojure.walk :as walk]))
+  (:require [clojure.walk :as walk]
+            [vd-designer.pages.form.fhir-schema :as fhir-schema]))
 
-(defn create-foreach-reference 
+(defn create-foreach-reference
   ([] (create-foreach-reference ""))
   ([foreach-text]
    (let [ref (str (random-uuid))]
      [ref {:value foreach-text
            :type :fhirpath}])))
 
-(defn create-column-reference 
+(defn create-column-reference
   ([] (create-column-reference "" ""))
   ([name path]
    (let [name-ref (str (random-uuid))
@@ -19,6 +20,18 @@
       :path
       [path-ref {:value path
                  :type :fhirpath}]})))
+
+(defn create-constant-reference
+  ([] (create-constant-reference "" ""))
+  ([name value]
+   (let [name-ref (str (random-uuid))
+         value-ref (str (random-uuid))]
+     {:name
+      [name-ref {:value name
+                 :type :string}]
+      :value
+      [value-ref {:value value
+                  :type :string}]})))
 
 (defn create-reference
   ([] (create-reference :string ""))
@@ -61,6 +74,25 @@
                                 (assoc :name name-ref)
                                 (assoc :path path-ref))))
                         columns)))
+             (:constant v)
+             (update v :constant
+                     (fn [constants]
+                       (mapv
+                        (fn [constant]
+                          (let [constant-type (fhir-schema/get-constant-type constant)
+                                {[name-ref name-tree-input] :name
+                                 [value-ref value-tree-input] :value}
+                                (create-constant-reference (:name constant)
+                                                           (get constant constant-type ""))]
+                            (swap! refs
+                                   #(-> %
+                                        (assoc name-ref name-tree-input)
+                                        (assoc value-ref value-tree-input)))
+                            (-> constant
+                                (assoc :name name-ref)
+                                (assoc constant-type value-ref))))
+                        constants)))
+
              :else v)
            v))
        vd)

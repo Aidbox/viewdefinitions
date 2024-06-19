@@ -66,6 +66,35 @@
        :content   (r/as-element [form-settings/column-settings value-path])}]
      [form-components/delete-button value-path]]))
 
+;; TODO: use this
+(defn- constant-type->input-type [constant-type]
+  (case constant-type
+    (:valueDecimal
+     :valueInteger
+     :valueInteger64
+     :valuePositiveInt
+     :valueUnsignedInt) :number
+
+    :valueBoolean       :boolean
+    :text))
+
+(defn constant-row [{:keys [value-path]} {:keys [name] :as item}]
+  (let [node-focus-id @(subscribe [::m/node-focus])
+        constant-type (fhir-schema/get-constant-type item)]
+    [:> Flex {:gap   8
+              :align :center
+              :style {:width "100%"}}
+     [icon/constant]
+     [form-components/string-input {:input-id name
+                                    :autoFocus (= node-focus-id (last value-path))
+                                    :placeholder "name"}]
+     [form-components/render-input {:input-id  (get item constant-type)
+                                    :placeholder "constant"}]
+     [form-components/settings-popover value-path
+      {:placement :right
+       :content   (r/as-element [form-settings/constant-settings value-path])}]
+     [form-components/delete-button value-path]]))
+
 (defn render-column-rows [{:keys [value-path] :as ctx} column-rows]
   (let [add-new (fn [_] (form-components/add-vd-item value-path :column true))]
     (mapv
@@ -91,6 +120,27 @@
      [form-components/add-element-button
       (conj value-path :column)
       :column]))))
+
+(defmethod render-node :constant
+  [{:keys [value-path] :as ctx} {constant-rows :constant}]
+  (tree-component/tree-node
+   value-path
+   [form-components/title-node-row
+    {:id value-path
+     :start [[form-components/tree-tag :constant]]
+     :end [[form-components/delete-button (pop value-path)]]}]
+   (conj
+    (mapv
+      (fn [item]
+        (let [ctx (fhir-schema/add-value-path ctx (:tree/key item))]
+          (tree-component/tree-leaf (:value-path ctx)
+                                    [constant-row ctx item])))
+      constant-rows)
+    (tree-component/tree-leaf
+     (conj value-path :add)
+     [form-components/add-element-button
+      value-path
+      :constant]))))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
   (let [node-focus-id @(subscribe [::m/node-focus])]
@@ -154,8 +204,9 @@
   [(tree-component/tree-leaf [:name]     [form-components/name-input value-path])
    (tree-component/tree-leaf [:resource] [form-components/resource-input value-path])
 
-   ;; (flat-node :constant constant-leaf (fhir-schema/add-value-path ctx :constant) (:constant vd))
-   ;; (flat-node :where where-leaf (fhir-schema/add-value-path ctx :where) (:where vd))
+   (render-node (fhir-schema/add-value-path ctx :constant)
+                (update (select-keys vd [:constant]) :constant (fnil identity [])))
+   ;; (render-node (fhir-schema/add-value-path ctx :where) (select-keys vd [:where]))
    (render-node (fhir-schema/add-value-path ctx :select) (select-keys vd [:select]))])
 
 ;; Drag-n-Drop

@@ -450,8 +450,12 @@
 
 (defn get-leaf-default-value [kind]
   (case kind
+    :constant
+    (let [[name-ref name-input] (input-references/create-reference)
+          [value-ref value-input] (input-references/create-reference)]
+      [(decoration/decorate {:name name-ref :valueString value-ref})
+       {name-ref name-input value-ref value-input}])
     ;; TODO:
-    :constant      [{:name "" :valueString ""} {}]
     :where         {:path ""}
     :column
     (let [[name-ref name-input] (input-references/create-reference)
