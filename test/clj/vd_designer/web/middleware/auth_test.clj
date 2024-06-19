@@ -33,7 +33,7 @@
           invalid-jwt (jwt/issue invalid-cfg "<account-id>")]
       (is (match?
            (http-response/unauthorized
-            {:error "Authentication seems manipulated, please re-authenticae"})
+            {:error "Authentication seems manipulated, please re-authenticate"})
            (apply-middleware authentication-required-middleware
                              identity
                              {:cfg valid-cfg

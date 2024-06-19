@@ -45,4 +45,4 @@
               (jwt/unsign jwt pub)
               :sub
               (assoc {} :result))
-         (catch ExceptionInfo _ {:error "Authentication seems manipulated, please re-authenticae"}))))
+         (catch ExceptionInfo _ {:error "Authentication seems manipulated, please re-authenticate"}))))
