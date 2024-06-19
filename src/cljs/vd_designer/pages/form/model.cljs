@@ -111,7 +111,6 @@
  ::input-value
  :<- [::tree-inputs]
  (fn [inputs [_ input-id]]
-   (println 'inputs inputs input-id)
    (-> inputs
        (get input-id)
        (get :value))))

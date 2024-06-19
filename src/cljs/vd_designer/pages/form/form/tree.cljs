@@ -32,11 +32,19 @@
 
 (defmulti render-node (fn [_ node] (determine-key node)))
 
-(defn render-column-names [node-key]
+(defn get-column-names [node-path]
+  (let [columns @(subscribe [::m/children node-path])
+        tree-inputs @(subscribe [::m/tree-inputs])
+        column-refs (mapv :name columns)]
+    (->> column-refs
+         (mapv #(get tree-inputs %))
+         (mapv :value))))
+
+(defn render-column-names [node-path]
   (let [expanded-nodes @(subscribe [::m/current-tree-expanded-nodes])
         ;; somehow this caused page crash
-        column-closed? (when (set? expanded-nodes) (not (expanded-nodes node-key)))
-        column-names (when column-closed? (mapv :name @(subscribe [::m/children node-key])))]
+        column-closed? (when (set? expanded-nodes) (not (expanded-nodes node-path)))
+        column-names (when column-closed? (get-column-names (conj node-path :column)))]
     [:span.cut-text (str/join ", " column-names)]))
 
 (defn column-row [{:keys [value-path] :as ctx} {:keys [name path]}]

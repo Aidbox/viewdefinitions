@@ -62,11 +62,13 @@
   [:> Flex {:justify :space-between
             :on-click #(dispatch [::c/toggle-expand-collapse id])}
    (into [:> Row {:align :middle
-                  :wrap false}]
-         (mapv (fn [c] [:> Col {:flex "30px"} c]) start))
+                  :wrap false
+                  :gutter 8}]
+         (mapv (fn [c] [:> Col {:flex :auto} c]) start))
    (into [:> Row {:align :middle
-                  :wrap false}]
-         (mapv (fn [c] [:> Col {:flex "30px"} c]) end))])
+                  :wrap false
+                  :gutter 8}]
+         (mapv (fn [c] [:> Col {:flex :auto} c]) end))])
 
 (defn base-node-row [node-key col1 & cols]
   (->> cols

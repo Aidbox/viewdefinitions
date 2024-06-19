@@ -432,9 +432,6 @@
  ::add-tree-node
  (fn [{:keys [db]} [_ path kind]]
    (let [[node-value new-inputs] (get-node-default-value kind)]
-     (println "path" path)
-     (println "node value  " node-value)
-     (println "new inputs " new-inputs)
      {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
             (println "real path " real-path)
             (-> db
