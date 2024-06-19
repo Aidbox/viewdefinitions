@@ -10,6 +10,7 @@
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]
+            [vd-designer.utils.http :refer [apply-middleware]]
             [vd-designer.web.middleware.auth :as auth-middleware]))
 
 (defn truncate-box-url [box-url]
@@ -56,7 +57,7 @@
 ;; TODO: rework portal to have a middleware that takes care of access/refresh tokens
 (defn list-user-servers
   [{:keys [aidbox.portal/client db] :as ctx}
-   {account-id :accounts/id}]
+   account-id]
   (let [access-token (:sso_tokens/access_token (sso-token/get-last-by-id db account-id))
         projects (-> @(portal/rpc:init-project client access-token)
                      :body :result)
@@ -71,13 +72,12 @@
 
     licenses))
 
-(defn list-servers [{:keys [cfg] :as ctx}]
-  (let [user (auth-middleware/jwt->user ctx)]
-    (->> (cond->> (cfg :public-fhir-servers)
-                  user
-                  (concat (list-user-servers ctx user)))
-         (map #(select-keys % [:box-url :server-name :project]))
-         (http-response/ok))))
+(defn list-servers [{:keys [cfg user] :as ctx}]
+  (->> (cond->> (cfg :public-fhir-servers)
+         user
+         (concat (list-user-servers ctx user)))
+       (map #(select-keys % [:box-url :server-name :project]))
+       (http-response/ok)))
 
 (defn public-fhir-server [public-fhir-servers box-url]
   (some->> public-fhir-servers
@@ -89,17 +89,17 @@
    {:keys [cfg] :as ctx}
    box-url
    & [overrides-on-success]]
-  (let [box-response (if-let [public-server (public-fhir-server (:public-fhir-servers cfg) box-url)]
+  (let [public-server (public-fhir-server (:public-fhir-servers cfg) box-url)
+        box-response (if public-server
                        (proto-fn (proxy-public/mk ctx public-server))
-                       (auth-middleware/unauthorized-wo-token
-                         proto-fn
-                         (proxy-private/map->PrivateAidboxServerProxy ctx)))]
+                       ;; TODO this should be done at other place...
+                       (apply-middleware auth-middleware/authentication-required-middleware
+                                         proto-fn
+                                         (proxy-private/map->PrivateAidboxServerProxy ctx)))
+        response-body (:body box-response)]
     (if (predicates/success? box-response)
-      (merge {:status  200
-              :body    (:body box-response)
-              :headers {"Content-Type" "application/json"}}
-             overrides-on-success)
-      (http-response/bad-request (:body box-response)))))
+      (merge (http-response/ok response-body) overrides-on-success)
+      (http-response/bad-request response-body))))
 
 (defn connect [{:keys [request] :as ctx}]
   (perform-proxied-request proxy/connect ctx

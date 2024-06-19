@@ -12,7 +12,7 @@
             [vd-designer.repository.account :as account]
             [vd-designer.server :as server]))
 
-(defonce ctx (context/mk))
+(def ctx (context/mk))
 
 (defn portal-client []
   (portal/client (-> ctx :cfg :aidbox.portal/url)))
@@ -34,12 +34,11 @@
 
 ;;; Try out server endpoints
 (comment
+  (server/start ctx 8080)
+  (server/restart ctx 8080)
+  (server/stop)
 
   (def app (server/app ctx))
-
-  (server/start ctx 8080)
-  (server/restart 8080 ctx)
-  (server/stop)
 
   (app {:request-method :get
         :uri            "/api/health"})
