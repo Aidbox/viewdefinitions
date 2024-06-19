@@ -108,7 +108,7 @@
      [icon/where]
      [form-components/render-input {:input-id path
                                     :autoFocus (= node-focus-id (last value-path))
-                                    :placeholder "path"}]
+                                    :placeholder "expression"}]
      [form-components/settings-popover value-path
       {:placement :right
        :content   (r/as-element [form-settings/where-settings value-path])}]
