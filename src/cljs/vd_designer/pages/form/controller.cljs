@@ -441,11 +441,14 @@
       :fx [[:dispatch-later
             [{:ms       100
               :dispatch [::update-tree-expanded-nodes
-                         (into (:current-tree-expanded-nodes db)
-                               (mapv
-                                 (fn [[k _]]
-                                   (conj path (:tree/key node-value) k))
-                                 node-value))]}]]
+                         (into
+                           (:current-tree-expanded-nodes db)
+                           (conj
+                             (mapv
+                               (fn [[k _]]
+                                 (conj path (:tree/key node-value) k))
+                               node-value)
+                             (conj path (:tree/key node-value))))]}]]
            [:dispatch [::set-focus-node (:tree/key node-value)]]]})))
 
 (defn get-leaf-default-value [kind]
