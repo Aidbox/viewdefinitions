@@ -7,6 +7,7 @@
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.controllers.metrics :as metrics]
+            [vd-designer.web.middleware.aidbox-proxy :refer [aidbox-proxy-middleware]]
             [vd-designer.web.middleware.auth :refer [authentication-optional-middleware
                                                      authentication-required-middleware]]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
@@ -27,9 +28,10 @@
       ["/connect"
        {:post
         {:parameters {:body {:box-url string?}}
-         :handler    #'aidbox/connect}}]
+         :handler    #'aidbox/connect
+         :middleware [(aidbox-proxy-middleware)]}}]
 
-      ["/ViewDefinition"
+      ["/ViewDefinition" {:middleware [(aidbox-proxy-middleware)]}
       ;; TODO: make prettier
        [""
         {:get
@@ -38,8 +40,8 @@
           :handler    #'aidbox/get-view-definition}
 
          :post
-         {#_#_:parameters {:body {:box-url string? :vd string?}}
-          :handler #'aidbox/save-view-definition
+         {:parameters {:body {:box-url string? :vd string?}}
+          :handler    #'aidbox/save-view-definition
           :middleware [(authentication-required-middleware)]}
 
          :delete

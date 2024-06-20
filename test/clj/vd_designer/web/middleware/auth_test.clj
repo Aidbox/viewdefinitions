@@ -6,7 +6,7 @@
             [vd-designer.utils.http :refer [apply-middleware]]
             [vd-designer.web.middleware.auth :refer [authentication-required-middleware]]))
 
-(deftest unauthorized-wo-token-test
+(deftest authentication-required-middleware-test
   (testing "header is missing"
     (is (match?
          (http-response/unauthorized {:error nil})

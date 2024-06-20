@@ -2,41 +2,42 @@
   (:require [jsonista.core :as json]
             [martian.core :as martian]
             [org.httpkit.client :as http-client]
+            [vd-designer.aidbox.proxy]
             [vd-designer.clients.portal :as portal])
   (:import (vd_designer.aidbox.proxy AidboxProxyServer)))
 
-(defrecord PublicAidboxServerProxy [cfg db request user public-server]
+(defrecord PublicAidboxServerProxy [cfg db request user fhir-server-headers]
 
   AidboxProxyServer
 
   (connect [_this-ctx]
-    (let [box-url (-> request :body-params :box-url)]
-      @(http-client/get
-         (str box-url "/fhir/ViewDefinition")
-         {:headers (merge {"Accept"       "application/json"
-                           "Content-Type" "application/transit+json"}
-                          (:headers public-server))})))
+    @(http-client/get
+       (-> request :body-params :box-url (str "/fhir/ViewDefinition"))
+       {:headers
+        (merge {"Accept"       "application/json"
+                "Content-Type" "application/transit+json"}
+               fhir-server-headers)}))
 
   (get-view-definition [_this-ctx]
     (let [{:keys [box-url vd-id]} (:query-params request)]
       @(http-client/get
          (str box-url "/fhir/ViewDefinition/" vd-id)
          {:headers
-          (-> {"Accept"       "application/json"
-               "Content-Type" "application/transit+json"}
-              (merge (:headers public-server)))})))
+          (merge {"Accept"       "application/json"
+                  "Content-Type" "application/transit+json"}
+                 fhir-server-headers)})))
 
   (eval-view-definition [_this-ctx]
     (let [{:keys [box-url vd]} (:body-params request)
           aidbox-client (portal/client box-url)
-          req {:authorization (-> public-server :headers (get "Authorization"))
+          req {:authorization (get fhir-server-headers "Authorization")
                :method        'sof/eval-view
                :params        {:limit 100
                                :view  vd}}]
       @(martian/response-for aidbox-client :rpc req)))
 
   (save-view-definition [_this-ctx]
-    (let [{:keys [box-url view-definition vd-id]} (:body-params request)
+    (let [{:keys [box-url vd vd-id]} (:body-params request)
           request-fn (if vd-id
                        #(http-client/put (str box-url "/fhir/ViewDefinition/" vd-id) %)
                        #(http-client/post (str box-url "/fhir/ViewDefinition") %))]
@@ -44,8 +45,8 @@
          {:headers
           (merge {"Accept"       "application/json"
                   "Content-Type" "application/json"}
-                 (:headers public-server))
-          :body (json/write-value-as-string view-definition)})))
+                 fhir-server-headers)
+          :body (json/write-value-as-string vd)})))
 
   (delete-view-definition [_this-ctx]
     (let [{:keys [box-url vd-id]} (:body-params request)]
@@ -54,8 +55,9 @@
          {:headers
           (merge {"Accept"       "application/json"
                   "Content-Type" "application/json"}
-                 (:headers public-server))}))))
+                 fhir-server-headers)}))))
 
 (defn mk [ctx public-server]
-  (map->PublicAidboxServerProxy (assoc ctx
-                                  :public-server public-server)))
+  (-> ctx
+      (assoc :fhir-server-headers (:headers public-server))
+      (map->PublicAidboxServerProxy)))

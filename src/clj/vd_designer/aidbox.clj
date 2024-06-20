@@ -5,13 +5,9 @@
             [ring.util.http-predicates :as predicates]
             [ring.util.http-response :as http-response]
             [vd-designer.aidbox.proxy :as proxy]
-            [vd-designer.aidbox.proxy.private :as proxy-private]
-            [vd-designer.aidbox.proxy.public :as proxy-public]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
-            [vd-designer.repository.user-server :as user-server]
-            [vd-designer.utils.http :refer [apply-middleware]]
-            [vd-designer.web.middleware.auth :as auth-middleware]))
+            [vd-designer.repository.user-server :as user-server]))
 
 (defn truncate-box-url [box-url]
   (some-> box-url
@@ -79,46 +75,27 @@
        (map #(select-keys % [:box-url :server-name :project]))
        (http-response/ok)))
 
-(defn public-fhir-server [public-fhir-servers box-url]
-  (some->> public-fhir-servers
-           (filter #(-> % :box-url (= box-url)))
-           first))
-
 (defn perform-proxied-request
-  [proto-fn
-   {:keys [cfg] :as ctx}
-   box-url
-   & [overrides-on-success]]
-  (let [public-server (public-fhir-server (:public-fhir-servers cfg) box-url)
-        box-response (if public-server
-                       (proto-fn (proxy-public/mk ctx public-server))
-                       ;; TODO this should be done at other place...
-                       (apply-middleware auth-middleware/authentication-required-middleware
-                                         proto-fn
-                                         (proxy-private/map->PrivateAidboxServerProxy ctx)))
+  [proto-fn ctx & [overrides-on-success]]
+  (let [box-response (proto-fn ctx)
         response-body (:body box-response)]
     (if (predicates/success? box-response)
       (merge (http-response/ok response-body) overrides-on-success)
       (http-response/bad-request response-body))))
 
-(defn connect [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/connect ctx
-                           (-> request :body-params :box-url)))
+(defn connect [ctx]
+  (perform-proxied-request proxy/connect ctx))
 
-(defn get-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/get-view-definition ctx
-                           (-> request :query-params :box-url)))
+(defn get-view-definition [ctx]
+  (perform-proxied-request proxy/get-view-definition ctx))
 
-(defn eval-view-definition [{:keys [request] :as ctx}]
+(defn eval-view-definition [ctx]
   (perform-proxied-request proxy/eval-view-definition ctx
-                           (-> request :body-params :box-url)
                            {:headers {}}))
 
-(defn save-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/save-view-definition ctx
-                           (-> request :body-params :box-url)))
+(defn save-view-definition [ctx]
+  (perform-proxied-request proxy/save-view-definition ctx))
 
-(defn delete-view-definition [{:keys [request] :as ctx}]
+(defn delete-view-definition [ctx]
   (perform-proxied-request proxy/delete-view-definition ctx
-                           (-> request :body-params :box-url)
                            {:status 204}))
