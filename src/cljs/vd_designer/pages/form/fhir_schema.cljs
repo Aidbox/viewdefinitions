@@ -40,14 +40,14 @@
        (mapv #(map (fn [[k _]] [:select (:tree/key %) k]) (dissoc % :tree/key)))
        (apply concat)))
 
-(declare collect-all-node-paths)
+(declare collect-all-node-paths*)
 
 (defn concat-paths [path v]
-  (->> (collect-all-node-paths v)
+  (->> (collect-all-node-paths* v)
        (remove empty?)
        (mapv #(into [path] %))))
 
-(defn collect-all-node-paths [vd]
+(defn collect-all-node-paths* [vd]
   (cond (map? vd)
         (mapcat
          (fn [[k v]]
@@ -55,7 +55,7 @@
              (or (= k :forEach)
                  (= k :forEachOrNull))
              (concat-paths :select (:select vd))
-             
+
              (= k :column)
              [[:column]]
 
@@ -67,15 +67,18 @@
 
              :else []))
          vd)
-        
+
         (vector? vd)
-        (mapcat 
+        (mapcat
          (fn [item]
            (let [k (:tree/key item)]
              (into
               [[k]]
               (concat-paths k item))))
          vd)))
+
+(defn collect-all-node-paths [vd]
+  (into #{} (collect-all-node-paths* vd)))
 
 (defn get-constant-type [constant]
   (->> constant
