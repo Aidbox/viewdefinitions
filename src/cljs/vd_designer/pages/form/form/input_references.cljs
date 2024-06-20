@@ -54,19 +54,25 @@
     [(walk/postwalk
        (fn [v]
          (if (map? v)
-           (cond
+           (cond-> v
              (:forEach v)
-             (let [[ref tree-input] (create-foreach-reference (:forEach v))]
-               (swap! refs #(assoc % ref tree-input))
-               (assoc v :forEach ref))
+             (update
+              :forEach
+              (fn [value]
+                (let [[ref tree-input] (create-foreach-reference value)]
+                  (swap! refs #(assoc % ref tree-input))
+                  ref)))
 
              (:forEachOrNull v)
-             (let [[ref tree-input] (create-foreach-reference (:forEachOrNull v))]
-               (swap! refs #(assoc % ref tree-input))
-               (assoc v :forEachOrNull ref))
+             (update
+              :forEachOrNull
+              (fn [value]
+                (let [[ref tree-input] (create-foreach-reference value)]
+                  (swap! refs #(assoc % ref tree-input))
+                  ref)))
 
              (:column v)
-             (update v :column
+             (update :column
                      (fn [columns]
                        (mapv
                         (fn [column]
@@ -83,7 +89,7 @@
                         columns)))
 
              (:constant v)
-             (update v :constant
+             (update :constant
                      (fn [constants]
                        (mapv
                         (fn [constant]
@@ -102,7 +108,7 @@
                         constants)))
 
              (:where v)
-             (update v :where
+             (update :where
                      (fn [where-items]
                        (mapv
                         (fn [where-item]
@@ -112,9 +118,7 @@
                                    #(assoc % path-ref path-tree-input))
                             (-> where-item
                                 (assoc :path path-ref))))
-                        where-items)))
-
-             :else v)
+                        where-items))))
            v))
        vd)
        @refs]))
@@ -125,15 +129,15 @@
     (walk/postwalk
      (fn [v]
        (if (map? v)
-         (cond
+         (cond-> v
            (:forEach v)
-           (assoc v :forEach (get-value (:forEach v)))
+           (assoc :forEach (get-value (:forEach v)))
 
            (:forEachOrNull v)
-           (assoc v :forEachOrNull (get-value (:forEachOrNull v)))
+           (assoc :forEachOrNull (get-value (:forEachOrNull v)))
 
            (:column v)
-           (update v :column
+           (update :column
                    (fn [columns]
                      (mapv
                       (fn [column]
@@ -142,6 +146,24 @@
                             (assoc :path (get-value (:path column)))))
                       columns)))
 
-           :else v)
+           (:constant v)
+           (update :constant
+                   (fn [constants]
+                     (mapv
+                      (fn [constant]
+                        (let [constant-type (keyword (fhir-schema/get-constant-type constant))]
+                          (-> constant
+                              (assoc :name (get-value (:name constant)))
+                              (assoc constant-type
+                                     (get-value (get constant constant-type))))))
+                      constants)))
+
+           (:where v)
+           (update :where
+                   (fn [where-items]
+                     (mapv
+                      (fn [where-item]
+                        (assoc where-item :path (get-value (:path where-item))))
+                      where-items))))
          v))
      vd)))

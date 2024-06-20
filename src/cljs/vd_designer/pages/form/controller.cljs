@@ -222,7 +222,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (-> m/tree-root-keys
-                           (into (fhir-schema/get-select-path view-definition))
+                           (into (fhir-schema/collect-all-node-paths view-definition))
                            (set/difference m/do-not-expand-tree-keys))]]]
       :db (-> db
               (assoc :current-vd view-definition :loading false)
