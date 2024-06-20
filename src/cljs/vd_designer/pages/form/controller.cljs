@@ -519,8 +519,10 @@
    (TagManager/dataLayer
     (clj->js {:dataLayer {:event "vd_save"
                           :resource-type (get (:current-vd db) :resource "")}}))
-   (let [view-definition (-> (:current-vd db)
+   (let [refs (::m/tree-inputs db)
+         view-definition (-> (:current-vd db)
                              decoration/remove-decoration
+                             (input-references/replace-inputs-with-values refs)
                              strip-empty-collections
                              remove-meta)
          empty-fields? (empty-inputs-in-vd? view-definition)
