@@ -1,6 +1,7 @@
 (ns vd-designer.http.fhir-server
   (:require [ajax.core :as ajax]
-            [lambdaisland.uri :as uri]))
+            [lambdaisland.uri :as uri]
+            [vd-designer.http.backend :refer [authorization-header]]))
 
 (defn active-server [db]
   (let [{user-servers :user/servers
@@ -29,33 +30,33 @@
    :timeout          8000
    :format           (ajax/json-request-format)
    :response-format  (ajax/json-response-format
-                       {:keywords? true})
+                      {:keywords? true})
    :with-credentials true
    :method           :post
    :params           {:box-url box-url}
-   :headers          {:authorization (str "Bearer " authentication-token)}})
+   :headers          (authorization-header authentication-token)})
 
 (defn get-view-definition-user-server [authentication-token {:keys [box-url]} vd-id]
   {:uri              "/api/aidbox/ViewDefinition"
    :timeout          8000
    :format           (ajax/json-request-format)
    :response-format  (ajax/json-response-format
-                       {:keywords? true})
+                      {:keywords? true})
    :with-credentials true
    :method           :get
    :params           {:box-url box-url :vd-id vd-id}
-   :headers          {:authorization (str "Bearer " authentication-token)}})
+   :headers          (authorization-header authentication-token)})
 
 (defn eval-view-definition-user-server [authentication-token {:keys [box-url]} view-definition]
   {:uri              "/api/aidbox/ViewDefinition/eval"
    :timeout          8000
    :format           (ajax/json-request-format)
    :response-format  (ajax/json-response-format
-                       {:keywords? true})
+                      {:keywords? true})
    :with-credentials true
    :method           :post
    :params           {:box-url box-url :vd view-definition}
-   :headers          {:authorization (str "Bearer " authentication-token)}})
+   :headers          (authorization-header authentication-token)})
 
 (defn get-metadata [db]
   (-> {:method :get
@@ -68,20 +69,20 @@
    :timeout          8000
    :format           (ajax/json-request-format)
    :response-format  (ajax/json-response-format
-                       {:keywords? true})
+                      {:keywords? true})
    :with-credentials true
    :method           :delete
    :params           {:box-url box-url
                       :vd-id   vd-id}
-   :headers          {:authorization (str "Bearer " authentication-token)}})
+   :headers          (authorization-header authentication-token)})
 
 (defn post-view-definition [authentication-token {:keys [box-url]} vd]
   {:uri              "/api/aidbox/ViewDefinition"
    :timeout          8000
    :format           (ajax/json-request-format)
    :response-format  (ajax/json-response-format
-                       {:keywords? true})
+                      {:keywords? true})
    :with-credentials true
    :method           :post
    :params           {:box-url box-url :vd vd}
-   :headers          {:authorization (str "Bearer " authentication-token)}})
+   :headers          (authorization-header authentication-token)})

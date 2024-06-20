@@ -1,6 +1,9 @@
 (ns vd-designer.web.middleware.context)
 
-(defn app-context-middleware [ctx]
+(defn app-context-middleware
+  "Puts original request into provdided context by :request keyword and
+   returns that context"
+  [ctx]
   {:name ::app-context
    :wrap (fn [handler]
            (fn [req]

@@ -4,7 +4,7 @@
             [ring.util.http-response :as http-response]
             [vd-designer.service.jwt :as jwt]))
 
-(defn truncate-referer [referer]
+(defn- truncate-referer [referer]
   (some-> referer
           (uri/uri)
           (assoc :path "")
@@ -12,27 +12,32 @@
           (str/split #"\?")
           first))
 
-(defn jwt->user [ctx]
-  (let [[schema jwt] (some-> ctx
-                             (get-in [:request :headers "authorization"])
+(defn- jwt->user [{:keys [cfg request]}]
+  (let [[schema jwt] (some-> request
+                             (get-in [:headers "authorization"])
                              (str/split #" "))
-        referer (some-> ctx
-                        (get-in [:request :headers "referer"])
-                        truncate-referer)]
+        referer      (some-> request
+                             (get-in [:headers "referer"])
+                             truncate-referer)]
     (if (not= schema "Bearer")
-      nil
-      (let [jwt-validation-result (jwt/validate (:cfg ctx) referer jwt)]
-        (if (:error jwt-validation-result)
-          nil
-          {:accounts/id (:result jwt-validation-result)})))))
+      {:result nil}
+      (jwt/validate cfg referer jwt))))
 
-(defn unauthorized-wo-token [handler ctx]
-  (if-let [user (jwt->user ctx)]
-    (handler (merge ctx {:user user}))
-    (http-response/unauthorized)))
 
-(def authorize
-  {:name ::jwt->user
+(defn authentication-required-middleware []
+  {:name ::authentication
    :wrap (fn [handler]
-           (fn [req]
-             (unauthorized-wo-token handler req)))})
+           (fn [ctx]
+             (let [{:keys [result error]} (jwt->user ctx)]
+               (if (or error (nil? result))
+                 (http-response/unauthorized {:error error})
+                 (handler (assoc ctx :user result))))))})
+
+(defn authentication-optional-middleware []
+  {:name ::authentication
+   :wrap (fn [handler]
+           (fn [ctx]
+             (let [{:keys [result error]} (jwt->user ctx)]
+               (if-not (empty? error)
+                 (http-response/unauthorized {:error error})
+                 (handler (assoc ctx :user result))))))})

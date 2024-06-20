@@ -8,7 +8,7 @@
 
 (defn aidbox-auth-token-cookie [{:keys [db request user]}]
   (->> request :body-params :box-url
-       (user-server/get-by-account-id-and-box-url db (:accounts/id user))
+       (user-server/get-by-account-id-and-box-url db user)
        :aidbox_auth_token
        (format "aidbox-auth-token=%s;")))
 
@@ -18,20 +18,20 @@
 
   (connect [this-ctx]
     @(http-client/get
-       (-> request :body-params :box-url (str "/fhir/ViewDefinition"))
-       {:headers
-        {"Cookie"       (aidbox-auth-token-cookie this-ctx)
-         "Accept"       "application/json"
-         "Content-Type" "application/transit+json"}}))
+      (-> request :body-params :box-url (str "/fhir/ViewDefinition"))
+      {:headers
+       {"Cookie"       (aidbox-auth-token-cookie this-ctx)
+        "Accept"       "application/json"
+        "Content-Type" "application/transit+json"}}))
 
   (get-view-definition [this-ctx]
     (let [{:keys [box-url vd-id]} (-> request :query-params)]
       @(http-client/get
-         (str box-url "/fhir/ViewDefinition/" vd-id)
-         {:headers
-          {"Cookie"       (aidbox-auth-token-cookie this-ctx)
-           "Accept"       "application/json"
-           "Content-Type" "application/transit+json"}})))
+        (str box-url "/fhir/ViewDefinition/" vd-id)
+        {:headers
+         {"Cookie"       (aidbox-auth-token-cookie this-ctx)
+          "Accept"       "application/json"
+          "Content-Type" "application/transit+json"}})))
 
   (eval-view-definition [this-ctx]
     (let [{:keys [box-url view-definition]} (:body-params request)
@@ -47,17 +47,17 @@
                        #(http-client/put (str box-url "/fhir/ViewDefinition/" vd-id) %)
                        #(http-client/post (str box-url "/fhir/ViewDefinition") %))]
       @(request-fn
-         {:headers
-          {"Cookie"       (aidbox-auth-token-cookie this-ctx)
-           "Accept"       "application/json"
-           "Content-Type" "application/json"}
-          :body (json/write-value-as-string view-definition)})))
+        {:headers
+         {"Cookie"       (aidbox-auth-token-cookie this-ctx)
+          "Accept"       "application/json"
+          "Content-Type" "application/json"}
+         :body (json/write-value-as-string view-definition)})))
 
   (delete-view-definition [this-ctx]
     (let [{:keys [box-url vd-id]} (:body-params request)]
       @(http-client/delete
-         (str box-url "/fhir/ViewDefinition/" vd-id)
-         {:headers
-          {"Cookie"       (aidbox-auth-token-cookie this-ctx)
-           "Accept"       "application/json"
-           "Content-Type" "application/json"}}))))
+        (str box-url "/fhir/ViewDefinition/" vd-id)
+        {:headers
+         {"Cookie"       (aidbox-auth-token-cookie this-ctx)
+          "Accept"       "application/json"
+          "Content-Type" "application/json"}}))))
