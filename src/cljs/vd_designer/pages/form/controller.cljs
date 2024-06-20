@@ -498,13 +498,7 @@
  ::convert-foreach
  (fn [db [_ path from to]]
    (let [real-path (into [:current-vd] (decoration/uuid->idx path (:current-vd db)))]
-     (cond->
-      (update-in db real-path rename-keys {from to})
-
-       (-> db :current-tree-expanded-nodes (contains? path))
-       (->
-        (update :current-tree-expanded-nodes disj path)
-        (update :current-tree-expanded-nodes conj (-> path pop (conj to))))))))
+     (update-in db real-path rename-keys {from to}))))
 
 (reg-event-fx
  ::delete-tree-element

@@ -18,6 +18,8 @@
 
 (defmulti render-node (fn [_ node] (determine-key node)))
 
+(defmethod render-node :default [_ _] [])
+
 (defn render-inner-nodes [ctx nodes]
   (mapv
    (fn [node]

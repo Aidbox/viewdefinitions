@@ -24,7 +24,8 @@
    (nodes/render-node (fhir-schema/add-value-path ctx :where)
                 (update (select-keys vd [:where]) :where (fnil identity [])))
 
-   (nodes/render-node (fhir-schema/add-value-path ctx :select) (select-keys vd [:select]))])
+   (nodes/render-node (fhir-schema/add-value-path ctx :select)
+                      (update (select-keys vd [:select]) :select (fnil identity [])))])
 
 ;; Drag-n-Drop
 
