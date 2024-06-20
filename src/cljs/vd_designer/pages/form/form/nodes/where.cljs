@@ -12,20 +12,18 @@
 
 
 (defn where-row [{:keys [value-path]} {:keys [path]} {:keys [on-shift-enter]}]
-  (let [node-focus-id @(subscribe [::m/node-focus])]
-    [:> Flex {:gap   8
-              :align :center
-              :style {:width "100%"
-                      :padding-right 10}}
-     [icon/where]
-     [form-components/render-input {:input-id path
-                                    :autoFocus (= node-focus-id (last value-path))
-                                    :placeholder "expression"
-                                    :handlers {:on-shift-enter on-shift-enter}}]
-     [form-components/settings-popover value-path
-      {:placement :right
-       :content   (r/as-element [form-settings/where-settings value-path])}]
-     [form-components/delete-button value-path]]))
+  [:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"
+                    :padding-right 10}}
+   [icon/where]
+   [form-components/render-input {:input-id path
+                                  :placeholder "expression"
+                                  :handlers {:on-shift-enter on-shift-enter}}]
+   [form-components/settings-popover value-path
+    {:placement :right
+     :content   (r/as-element [form-settings/where-settings value-path])}]
+   [form-components/delete-button value-path]])
 
 (defn render-where-rows [{:keys [value-path] :as ctx} where-rows]
   (mapv

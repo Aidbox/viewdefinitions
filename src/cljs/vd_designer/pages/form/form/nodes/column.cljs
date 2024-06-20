@@ -27,26 +27,23 @@
     [:span.cut-text (str/join ", " column-names)]))
 
 (defn column-row [{:keys [value-path] :as ctx} {:keys [name path]} & {:keys [on-shift-enter]}]
-  (let [node-focus-id @(subscribe [::m/node-focus])]
-    [:> Flex {:gap   8
-              :align :center
-              :style {:width "100%"
-                      :padding-right 16}}
-     [icon/column]
-     [form-components/column-name-input {:input-id name
-                                         :autoFocus (= node-focus-id (last value-path))
-                                         :placeholder "name"
-                                         :handlers {:on-shift-enter on-shift-enter}}]
-     [form-components/render-input {:input-id path
-                                    :name-input-id name
-                                    :autoFocus (= node-focus-id (last value-path))
-                                    :placeholder "path"
-                                    :fhirpath-prefix (:fhirpath-ctx ctx)
-                                    :handlers {:on-shift-enter on-shift-enter}}]
-     [form-components/settings-popover value-path
-      {:placement :right
-       :content   (r/as-element [form-settings/column-settings value-path])}]
-     [form-components/delete-button value-path]]))
+  [:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"
+                    :padding-right 16}}
+   [icon/column]
+   [form-components/column-name-input {:input-id name
+                                       :placeholder "name"
+                                       :handlers {:on-shift-enter on-shift-enter}}]
+   [form-components/render-input {:input-id path
+                                  :name-input-id name
+                                  :placeholder "path"
+                                  :fhirpath-prefix (:fhirpath-ctx ctx)
+                                  :handlers {:on-shift-enter on-shift-enter}}]
+   [form-components/settings-popover value-path
+    {:placement :right
+     :content   (r/as-element [form-settings/column-settings value-path])}]
+   [form-components/delete-button value-path]])
 
 (defn render-column-rows [ctx column-rows]
   (let [ctx (fhir-schema/add-value-path ctx :column)

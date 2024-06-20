@@ -83,9 +83,9 @@
    (::autocomplete-options db)))
 
 (reg-sub
- ::node-focus
+ ::input-focus
  (fn [db _]
-   (::node-focus db)))
+   (::input-focus db)))
 
 (defn import-synthetic-data-notebook-url [server-url]
  (str server-url "/ui/console#/notebooks/explore"

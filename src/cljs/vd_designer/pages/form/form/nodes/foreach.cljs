@@ -9,15 +9,13 @@
             [vd-designer.pages.form.form.nodes.nodes :as nodes]))
 
 (defn foreach-expr-leaf [{:keys [value-path]} path]
-  (let [node-focus-id @(subscribe [::m/node-focus])]
-    [:> Flex {:gap   8
-              :align :center
-              :style {:width "100%"}}
-     [icon/expression]
-     [form-components/render-input
-      {:input-id path
-       :placeholder "expression"
-       :autoFocus (= node-focus-id (last value-path))}]]))
+  [:> Flex {:gap   8
+            :align :center
+            :style {:width "100%"}}
+   [icon/expression]
+   [form-components/render-input
+    {:input-id path
+     :placeholder "expression"}]])
 
 (defmethod nodes/render-node :forEach
   [{:keys [value-path] :as ctx} node]

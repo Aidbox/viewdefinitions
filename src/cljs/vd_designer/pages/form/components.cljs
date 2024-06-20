@@ -129,7 +129,6 @@
 (defn delete-button [value-path]
   [button/invisible-icon icons/CloseOutlined
    {:onClick (fn []
-               (println 'delete value-path)
                (dispatch [::c/delete-tree-element value-path])
                (dispatch [::c/eval-view-definition-data]))
     :tabIndex -1}])
@@ -415,7 +414,7 @@
                                   (fn [v] (if (str/blank? v)
                                             (fhirpath-alias (u/target-value e))
                                             v)))
-                                 (dispatch [::c/set-focus-node nil])
+                                 (dispatch [::c/set-input-focus nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
                        :onClick  (fn [e] (update-autocomplete-fn e))
@@ -465,7 +464,7 @@
                                           (.setAttribute one "draggable" true))
                                         (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
                                       (set-input-value input-id (u/target-value e))
-                                      (dispatch [::c/set-focus-node nil]))
+                                      (dispatch [::c/set-input-focus nil]))
                             :onKeyDown (fn [event]
                                          (when (and (= "Enter" (.-key event))
                                                     (or (.-ctrlKey event) (.-metaKey event)))
@@ -501,7 +500,9 @@
 
 (defn render-input
   [& {:keys [input-id] :as opts}]
-  (let [input-type @(subscribe [::m/input-type input-id])]
+  (let [input-type @(subscribe [::m/input-type input-id])
+        input-focus @(subscribe [::m/input-focus])
+        opts (assoc opts :autoFocus (= input-id input-focus))]
     (case input-type
       :number [input-number* opts]
       :boolean [checkbox opts]
@@ -525,7 +526,7 @@
                                          (fn [one]
                                            (.setAttribute one "draggable" true))
                                          (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
-                                       (dispatch [::c/set-focus-node nil])
+                                       (dispatch [::c/set-input-focus nil])
                                        (dispatch [::c/eval-view-definition-data]))
                             :onFocus
                             (fn [_]
