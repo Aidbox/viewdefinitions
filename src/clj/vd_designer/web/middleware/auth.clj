@@ -2,7 +2,8 @@
   (:require [clojure.string :as str]
             [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
-            [vd-designer.service.jwt :as jwt]))
+            [vd-designer.service.jwt :as jwt]
+            [vd-designer.utils.http :refer [get-header]]))
 
 (defn- truncate-referer [referer]
   (some-> referer
@@ -14,30 +15,24 @@
 
 (defn- jwt->user [{:keys [cfg request]}]
   (let [[schema jwt] (some-> request
-                             (get-in [:headers "authorization"])
+                             (get-header :Authorization)
                              (str/split #" "))
         referer      (some-> request
-                             (get-in [:headers "referer"])
+                             (get-header :Referer)
                              truncate-referer)]
     (if (not= schema "Bearer")
       {:result nil}
       (jwt/validate cfg referer jwt))))
 
 
-(defn authentication-required-middleware []
+(defn authentication-middleware [required?]
   {:name ::authentication
    :wrap (fn [handler]
            (fn [ctx]
-             (let [{:keys [result error]} (jwt->user ctx)]
-               (if (or error (nil? result))
-                 (http-response/unauthorized {:error error})
-                 (handler (assoc ctx :user result))))))})
-
-(defn authentication-optional-middleware []
-  {:name ::authentication
-   :wrap (fn [handler]
-           (fn [ctx]
-             (let [{:keys [result error]} (jwt->user ctx)]
-               (if-not (empty? error)
+             (let [{:keys [result error]} (jwt->user ctx)
+                   condition (if required?
+                               (or error (nil? result))
+                               (not (nil? error)))]
+               (if condition
                  (http-response/unauthorized {:error error})
                  (handler (assoc ctx :user result))))))})

@@ -2,9 +2,8 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [lambdaisland.uri :as uri]
-            [ring.util.http-predicates :as predicates]
+            [martian.core :as martian]
             [ring.util.http-response :as http-response]
-            [vd-designer.aidbox.proxy :as proxy]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]))
@@ -75,27 +74,43 @@
        (map #(select-keys % [:box-url :server-name :project]))
        (http-response/ok)))
 
-(defn perform-proxied-request
-  [proto-fn ctx & [overrides-on-success]]
-  (let [box-response (proto-fn ctx)
-        response-body (:body box-response)]
-    (if (predicates/success? box-response)
-      (merge (http-response/ok response-body) overrides-on-success)
-      (http-response/bad-request response-body))))
+(defn connect
+  [{:keys [box-url fhir-server-headers]}]
+  @(martian/response-for (portal/client box-url)
+                         :connect
+                         fhir-server-headers))
 
-(defn connect [ctx]
-  (perform-proxied-request proxy/connect ctx))
+(defn get-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd-id]} (:query-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :get-view-definition
+                           (merge {:vd-id vd-id}
+                                  fhir-server-headers))))
 
-(defn get-view-definition [ctx]
-  (perform-proxied-request proxy/get-view-definition ctx))
+(defn eval-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :rpc
+                           (merge {:method 'sof/eval-view
+                                   :params {:limit 100
+                                            :view  vd}}
+                                  fhir-server-headers))))
 
-(defn eval-view-definition [ctx]
-  (perform-proxied-request proxy/eval-view-definition ctx
-                           {:headers {}}))
+(defn save-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd vd-id]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           (if vd-id :update-view-definition :create-view-definition)
+                           (merge {:body  vd
+                                   :vd-id vd-id}
+                                  fhir-server-headers))))
 
-(defn save-view-definition [ctx]
-  (perform-proxied-request proxy/save-view-definition ctx))
-
-(defn delete-view-definition [ctx]
-  (perform-proxied-request proxy/delete-view-definition ctx
-                           {:status 204}))
+(defn delete-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd-id]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :delete-view-definition
+                           (merge {:vd-id vd-id}
+                                  fhir-server-headers))))

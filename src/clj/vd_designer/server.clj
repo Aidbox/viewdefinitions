@@ -56,7 +56,7 @@
     (start ctx http-port)))
 
 (comment
-  (defonce ctx (context/mk))
+  (def ctx (context/mk))
   (migrate/migrate! (:db ctx))
 
   ;; Start application server - via `-main` or `server/start`
