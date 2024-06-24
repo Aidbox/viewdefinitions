@@ -80,7 +80,8 @@
 (defn list-servers [{:keys [cfg user] :as ctx}]
   (let [public-servers (:public-fhir-servers cfg)]
     (if user
-      (let [user-servers-result (list-user-servers ctx user)]
+      ;; FIXME review this
+      (let [user-servers-result (list-user-servers ctx (:id user))]
         (if (= user-servers-result :unauthorized)
           (http-response/unauthorized {:error "Session expired"})
           (-> user-servers-result

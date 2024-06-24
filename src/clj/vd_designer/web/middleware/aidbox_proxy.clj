@@ -32,7 +32,7 @@
                  (exec-with-headers (:headers public-server))
 
                  ;; Verify that user has access to the server
-                 (if-let [user-server (user-server/get-by-account-id-and-box-url db user box-url)]
+                 (if-let [user-server (user-server/get-by-account-id-and-box-url db (:id user) box-url)]
                    (exec-with-headers {:Cookie (->> user-server
                                                     :user_servers/aidbox_auth_token
                                                     (format "aidbox-auth-token=%s;"))})

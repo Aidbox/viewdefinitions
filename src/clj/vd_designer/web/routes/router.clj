@@ -55,6 +55,11 @@
           :handler    #'aidbox/eval-view-definition}}]]]
 
      ["/auth"
+      ["/check"
+       {:get
+        {:summary    "Check if user is authenticated"
+         :handler    #'auth/check
+         :middleware [(authentication-middleware true)]}}]
       ["/sso"
        {:get
         {:summary "Redirect to SSO provider"

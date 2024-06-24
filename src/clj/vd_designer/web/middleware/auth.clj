@@ -2,6 +2,7 @@
   (:require [clojure.string :as str]
             [lambdaisland.uri :as uri]
             [ring.util.http-response :as http-response]
+            [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.service.jwt :as jwt]
             [vd-designer.utils.http :refer [get-header]]))
 
@@ -28,11 +29,15 @@
 (defn authentication-middleware [required?]
   {:name ::authentication
    :wrap (fn [handler]
-           (fn [ctx]
+           (fn [{:keys [db] :as ctx}]
              (let [{:keys [result error]} (jwt->user ctx)
                    condition (if required?
                                (or error (nil? result))
                                (not (nil? error)))]
                (if condition
                  (http-response/unauthorized {:error error})
-                 (handler (assoc ctx :user result))))))})
+                 (if-let [sso-token (sso-token/get-last-by-id db result)]
+                   (handler (-> ctx
+                                (assoc :user/id result)
+                                (assoc :user/sso-token (:sso_tokens/access_token sso-token))))
+                   (http-response/unauthorized {:error "Aidbox session expired"}))))))})

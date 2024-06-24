@@ -17,9 +17,10 @@
         aidbox-auth-token "<aidbox-auth-token>"
 
         {:keys [aidbox.portal/client cfg db] :as ctx} (test-context/mk)
-        [account-id-map] (account/create db {:email "<email>"})
+        [{account-id :accounts/id}] (account/create db {:email "<email>"})
 
-        ctx-with-user (assoc ctx :user (:accounts/id account-id-map))
+        ctx-with-user (assoc ctx :user {:id        account-id
+                                        :sso-token aidbox-auth-token})
         public-servers (sut/filter-server-keys (:public-fhir-servers cfg))]
 
     (testing "public servers only"
@@ -51,7 +52,7 @@
       (doseq [token [{:token "<access-token-1>"}
                      {:token "<access-token-2>"}
                      valid-access-token]]
-        (sso-token/create db {:account_id   (:accounts/id account-id-map)
+        (sso-token/create db {:account_id   account-id
                               :access_token (:token token)}))
 
       (is (match?
@@ -87,15 +88,15 @@
 
       (is (match?
            (m/in-any-order
-            [#:user_servers{:account_id        (:accounts/id account-id-map)
+            [#:user_servers{:account_id        account-id
                             :server_name       "<license-1-name>"
                             :box_url           "https://box-url-1.com"
                             :aidbox_auth_token aidbox-auth-token}
-             #:user_servers{:account_id        (:accounts/id account-id-map)
+             #:user_servers{:account_id        account-id
                             :server_name       "<license-2-name>"
                             :box_url           "https://box-url-2.com"
                             :aidbox_auth_token aidbox-auth-token}
-             #:user_servers{:account_id        (:accounts/id account-id-map)
+             #:user_servers{:account_id        account-id
                             :server_name       "<license-3-name>"
                             :box_url           "https://box-url-3.com"
                             :aidbox_auth_token aidbox-auth-token}])
@@ -105,7 +106,7 @@
       (let [token {:token    "<expired-token>"
                    :expired? true}]
         (fake-portal/add-access-key client token)
-        (sso-token/create db {:account_id   (:accounts/id account-id-map)
+        (sso-token/create db {:account_id   account-id
                               :access_token (:token token)})
         (is (match?
              (http-response/unauthorized {:error "Session expired"})
