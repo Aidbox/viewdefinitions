@@ -46,6 +46,27 @@
       :else
       [auth-required (button {})])))
 
+(defn render-table [resources sandbox? server-url]
+  [table (vec (remove empty? (:data resources)))
+   {:class  "vd-table"
+    :pagination {:hideOnSinglePage true}
+    :locale {:emptyText
+             (r/as-element
+               [:> Empty
+                {:description
+                 (r/as-element
+                   [:div
+                    [:> Typography.Paragraph {:level 1 :type "secondary"}
+                     "No data."
+                     (when-not sandbox?
+                       [:<> " See: "
+                        [:> Typography.Link
+                         {:target "_blank"
+                          :href (m/import-synthetic-data-notebook-url server-url)}
+                         "Import synthetic data to Aidbox."]])]])}])}
+    :scroll {:y 1000
+             :x true}}])
+
 
 (def button-id "root-vd-settings")
 
@@ -116,25 +137,21 @@
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
-     [:> Panel {:minSize 55}
-      [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
-      [resource-tab/resource-tab]
-      [table (vec (remove empty? (:data resources)))
-       {:class  "vd-table"
-        :pagination {:hideOnSinglePage true}
-        :locale {:emptyText
-                 (r/as-element
-                   [:> Empty
-                    {:description
-                     (r/as-element
-                       [:div
-                        [:> Typography.Paragraph {:level 1 :type "secondary"}
-                         "No data."
-                         (when-not sandbox?
-                           [:<> " See: "
-                            [:> Typography.Link
-                             {:target "_blank"
-                              :href (m/import-synthetic-data-notebook-url server-url)}
-                             "Import synthetic data to Aidbox."]])]])}])}
-        :scroll {:y 1000
-                 :x true}}]]]))
+     [:> Panel {:minSize 55
+                :display "flex"}
+      [:> Flex
+       {:vertical true
+        :flex     "1 0 0%"
+        :style    {:override  "hidden"
+                   :margin-left "20px"
+                   :min-width "400px"}}
+       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
+       [tabs {:animated true
+              :items [(tab-item {:key      "table"
+                                 :label    "Table"
+                                 :children [render-table resources sandbox? server-url]
+                                 :icon     (r/create-element icons/EditOutlined)})
+                      (tab-item {:key      "resource"
+                                 :label    "Resource"
+                                 :children [resource-tab/resource-tab]
+                                 :icon     (r/create-element icons/CodeOutlined)})]}]]]]))

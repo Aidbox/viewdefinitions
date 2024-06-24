@@ -5,16 +5,14 @@
             [clojure.string :as str]
             [reagent.core :as r]
             [vd-designer.components.tree :refer [tree]]
+            [vd-designer.pages.form.model :as form-model]
             [vd-designer.pages.form.resource-tab.model :as m]))
 
-(defn good-keys [schema]
-  (dissoc schema :fqn :xpath :xpathUsage :experimental :version :package-meta
-          :comparator
-          :extension
-          :copyright :immutable :contact :derivation :kind :type))
-
-(defn resource? [schema]
-  (= "resource" (:kind schema)))
+(defn create-key [parent-key element-name]
+  (when element-name
+    (if parent-key
+      (str parent-key "-" (str/lower-case element-name))
+      (str/lower-case element-name))))
 
 (def icon-datatype-blob
   (str "data:image/gif;base64,"
@@ -75,80 +73,6 @@
 (defn shorten-valueset-name [value-set-name]
   (last (str/split value-set-name #"/")))
 
-(defn render-element* [element fhir-schema & [lvl]]
-  (let [lvl (or lvl 0)]
-    (r/as-element
-      [:span
-       [:span
-        {:style {:min-width (str (- 200 (* 32 lvl)) "px")
-                 :max-width (str (- 200 (* 32 lvl)) "px")
-                 :display "inline-block"}}
-         [:> Space
-          (cond
-            (:choices element)
-            [:img {:width "14" :height "14" :src icon-choice-blob}]
-
-            (= "Reference" (:type element))
-            [:img {:width "14" :height "14" :src icon-reference-blob}]
-
-            (and (:type element) (subs (:type element) 0 1))
-            [:img {:width "14" :height "14" :src icon-primitive-blob}]
-
-            :else (println "!! " element))
-          (:option-name element)]]
-
-       [:span {:style {:padding-left 32
-                       :min-width "32px"
-                       :max-width "32px"
-                       :display "inline-block"}}
-        (when (:mustSupport element)
-          [:span "S"])
-
-        (when (:summary element)
-          [:span "Σ"])]
-
-       [:span {:style {:padding-left 32
-                       :min-width "32px"
-                       :max-width "32px"
-                       :display "inline-block"}}
-        (str (or (when (contains? (into #{} (:required fhir-schema)) (:option-name element))
-                   "1")
-                 "0")
-             ".."
-             (or (when (:array element) "*") "1"))]
-
-       [:span {:style {:padding-left 32
-                       :min-width "150px"
-                       :max-width "150px"
-                       :display "inline-block"}}
-        (when (:type element) [:a (:type element)])]
-       [:span {:style {:padding-left 32
-                       :display "inline-block"
-                       :min-width "170px"}}
-        (when (:binding element)
-          [:span
-           "Binding: " [:a (shorten-valueset-name (:valueSet (:binding element)))]
-           " (" (:strength (:binding element)) ")"])]])))
-
-(defn create-key [parent-key element-name]
-  (when element-name
-    (if parent-key
-      (str parent-key "-" (str/lower-case element-name))
-      (str/lower-case element-name))))
-
-(defn render-element [element fhir-schema]
-  (cond->
-   (assoc
-    element
-    :title
-    (render-element* element fhir-schema))
-    (:choices element)
-    (assoc :children (mapv
-                      (fn [c]
-                        {:title (render-element* c fhir-schema 1)
-                         :key (create-key (:key element) (:option-name c))})
-                      (:choices element)))))
-
 (defn option-name [element-name element]
   (cond
     element-name
@@ -193,22 +117,111 @@
          (remove #(or (:choices %) (:choiceOf %)))
          (concat (mapv #(add-choices % slaves) masters)))))
 
+(defn add-keys [option-name elements]
+  (mapv
+   (fn [element]
+     (assoc element :key (create-key option-name (:option-name element))))
+   elements))
+
 (defn pre-process-fhir-schema [fhir-schema]
   (->> fhir-schema
        flat-elements
        group-choice-of
-       (sort-by :option-name)))
+       (sort-by :option-name)
+       (add-keys (:option-name fhir-schema))))
+
+(defn render-element* [element fhir-schema & [lvl]]
+  (let [lvl (or lvl 0)]
+    (r/as-element
+     [:span
+      [:span
+       {:style {:min-width (str (- 300 (* 32 lvl)) "px")
+                :max-width (str (- 300 (* 32 lvl)) "px")
+                :display "inline-block"}}
+       [:> Space
+        (cond
+          (:choices element)
+          [:img {:width "14" :height "14" :src icon-choice-blob}]
+
+          (= "Reference" (:type element))
+          [:img {:width "14" :height "14" :src icon-reference-blob}]
+
+          (and (:type element) (subs (:type element) 0 1))
+          [:img {:width "14" :height "14" :src icon-primitive-blob}]
+
+          :else (println "!! " element))
+        (:option-name element)]]
+
+      [:span {:style {:padding-left 32
+                      :min-width "32px"
+                      :max-width "32px"
+                      :display "inline-block"}}
+       (when (:mustSupport element)
+         [:span "S"])
+
+       (when (:summary element)
+         [:span "Σ"])]
+
+      [:span {:style {:padding-left 32
+                      :min-width "32px"
+                      :max-width "32px"
+                      :display "inline-block"}}
+       (str (or (when (contains? (into #{} (:required fhir-schema)) (:option-name element))
+                  "1")
+                (:min element)
+                "0")
+            ".."
+            (or (when (:array element) "*")
+                (:max element)
+                "1"))]
+
+      [:span {:style {:padding-left 32
+                      :min-width "150px"
+                      :max-width "150px"
+                      :display "inline-block"}}
+       (when (:type element) [:a (:type element)])]
+      [:span {:style {:padding-left 32
+                      :display "inline-block"
+                      :min-width "170px"}}
+       (when (:binding element)
+         [:span
+          "Binding: " [:a (shorten-valueset-name (:valueSet (:binding element)))]
+          " (" (:strength (:binding element)) ")"])]])))
+
+(defn render-element [element fhir-schema & [lvl]]
+  (let [lvl (or lvl 0)
+        element (cond-> element
+                  (not (:key element))
+                  (assoc :key (create-key (or (:key fhir-schema)
+                                              (:option-name fhir-schema)
+                                              (:type fhir-schema)) (:option-name element))))]
+    (cond->
+     (assoc element :title (render-element* element fhir-schema lvl))
+
+      (:choices element)
+      (assoc :children (mapv
+                        (fn [c]
+                          {:title (render-element* c fhir-schema (inc lvl))
+                           :key (create-key (:key element) (:option-name c))})
+                        (:choices element)))
+
+      (:elements element) ;; backboneelement
+      (assoc :children
+             (mapv
+              (fn [c]
+                (render-element c (pre-process-fhir-schema element) (inc lvl)))
+              (pre-process-fhir-schema element))))))
 
 (defn fhir-schema->options [resource-type fhir-schema]
-  (let [k (create-key nil resource-type)]
+  (let [rt-key (create-key nil resource-type)]
     [(render-resource
       {:option-name (option-name resource-type fhir-schema)
-       :key (create-key nil resource-type)
+       :key rt-key
        :children
        (mapv
         (fn [element]
           (-> element
-              (assoc :key (create-key k (:option-name element)))
+              (assoc :key (create-key rt-key (:option-name element)))
               (render-element fhir-schema)))
         (pre-process-fhir-schema fhir-schema))})]))
 
@@ -217,7 +230,9 @@
 
 (defn resource-tab []
   (let [spec @(subscribe [::m/spec-map])
-        pat (when spec (get (js->clj spec :keywordize-keys true) :Observation))]
+        resource-input @(subscribe [::form-model/resource-input])
+        pat (when spec (get (js->clj spec :keywordize-keys true)
+                            (keyword resource-input)))]
     (when pat
       [tree {:style         {:padding-right "16px"}
              :defaultExpandAll true
