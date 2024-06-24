@@ -28,27 +28,27 @@
   (case kind
     :select
     [tag/tag "select"
-             :style {:color      "#7972D3"
-                     :background "#7972D31A"}]
+     :style {:color      "#7972D3"
+             :background "#7972D31A"}]
 
     :column
     [tag/tag "column"
-             :style {:color      "#009906"
-                     :background "#E5FAE8"}]
+     :style {:color      "#009906"
+             :background "#E5FAE8"}]
 
     :unionAll
     [tag/tag "unionall"
-             :style {:color      "#BA004E"
-                     :background "#FE60901A"}]
+     :style {:color      "#BA004E"
+             :background "#FE60901A"}]
 
     :forEach
     [tag/tag "foreach"
-             :style {:color      "#B37804"
-                     :background "#F8CE3B1A"}]
+     :style {:color      "#B37804"
+             :background "#F8CE3B1A"}]
     :forEachOrNull
     [tag/tag "foreach or null"
-             :style {:color      "#B37804"
-                     :background "#F8CE3B1A"}]
+     :style {:color      "#B37804"
+             :background "#F8CE3B1A"}]
 
     :constant
     [tag/default "constant"]
@@ -433,9 +433,9 @@
                  :onBlur
                  (fn [_]
                    (mapv
-                     (fn [one]
-                       (.setAttribute one "draggable" true))
-                     (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                    (fn [one]
+                      (.setAttribute one "draggable" true))
+                    (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
 
                  :onFocus (fn [_]
                             (mapv

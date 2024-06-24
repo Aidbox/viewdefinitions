@@ -1,8 +1,10 @@
 (ns vd-designer.db.pool
   (:require [next.jdbc.connection :as jdbc.conn]
-            [vd-designer.utils.log :as log])
+            [taoensso.telemere :as t])
   (:import (com.zaxxer.hikari HikariConfig HikariDataSource)
            (java.util Properties)))
+
+(defonce ^:private pool (atom nil))
 
 (def properties
   (let [props (Properties.)]
@@ -18,13 +20,18 @@
       (.setProperty props k v))
     props))
 
+(defn close-pool []
+  (let [^HikariDataSource datasource @pool]
+    (reset! pool nil)
+    (when-not (nil? datasource)
+      (t/log! :info "Closing database pool...")
+      (.close datasource))))
+
 (defn create-pool [db-config]
-  (log/info "Creating database pool...")
+  (close-pool)
+  (t/log! :info "Creating database pool...")
   (-> properties
       ^Properties (doto (.setProperty "dataSource.url" (jdbc.conn/jdbc-url db-config)))
       HikariConfig.
-      HikariDataSource.))
-
-(defn close-pool [^HikariDataSource datasource]
-  (log/info "Closing database pool...")
-  (.close datasource))
+      HikariDataSource.
+      (->> (reset! pool))))

@@ -1,12 +1,11 @@
 (ns vd-designer.pages.lists.settings.controller
-  (:require
-    [medley.core :as medley]
-    [re-frame.core :refer [inject-cofx reg-cofx reg-event-fx reg-fx]]
-    [vd-designer.http.backend :as backend]
-    [vd-designer.http.fhir-server :as http]
-    [vd-designer.notifications]
-    [vd-designer.polling :as polling]
-    [vd-designer.utils.event :as u]))
+  (:require [medley.core :as medley]
+            [re-frame.core :refer [inject-cofx reg-cofx reg-event-fx reg-fx]]
+            [vd-designer.http.backend :as backend]
+            [vd-designer.http.fhir-server :as http]
+            [vd-designer.notifications]
+            [vd-designer.polling :as polling]
+            [vd-designer.utils.event :as u]))
 
 (reg-event-fx
  ::start
@@ -65,7 +64,7 @@
    {; TODO: добавить флаг о том, что мы начали подгружать список user servers?
     :http-xhrio (-> (backend/request:list-server authentication-token)
                     (assoc :on-success [::update-user-server-list]
-                           :on-failure [::not-connected]))}))
+                           :on-failure [::not-connected nil]))}))
 
 (def used-server-name-kv :used-server-name)
 
@@ -103,15 +102,15 @@
 
 (defn first-sandbox-server [servers]
  ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
- (->> servers
-      (remove (fn [[_ s]] (:project s)))
-      first
-      first))
+  (->> servers
+       (remove (fn [[_ s]] (:project s)))
+       first
+       first))
 
 (reg-event-fx
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
-  (when (unknown-server-selected? db)
-   {:dispatch [::store-used-server-name
-               (-> db :cfg/fhir-servers :user/servers
-                   first-sandbox-server)]})))
+   (when (unknown-server-selected? db)
+     {:dispatch [::store-used-server-name
+                 (-> db :cfg/fhir-servers :user/servers
+                     first-sandbox-server)]})))

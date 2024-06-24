@@ -18,4 +18,4 @@
 (defn mk []
   {:aidbox.portal/client (portal/client)
    :db                   (mk-db)
-   :cfg                  config})
+   :cfg                  (update config :log-level :report)})
