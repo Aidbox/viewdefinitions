@@ -1,10 +1,11 @@
 (ns vd-designer.pages.form.form.tree-test
   (:require [cljs.test :refer-macros [are deftest is run-test run-tests testing]]
+            [vd-designer.pages.form.form.nodes.nodes :as nodes]
             [vd-designer.pages.form.form.tree :as tree]))
 
 (deftest select->node-test
   (are [element node-type]
-       (= node-type (tree/determine-key element))
+       (= node-type (nodes/determine-key element))
 
     {:select []}
     :select
@@ -21,7 +22,7 @@
 
     {:select        []
      :forEachOrNull "name"}
-    :forEachOrNull
+    :forEach
 
     {:forEach "name"
      :select  []}

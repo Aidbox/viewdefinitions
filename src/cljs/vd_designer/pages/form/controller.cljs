@@ -9,19 +9,19 @@
                                    reg-event-fx reg-fx]]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http.fhir-server]
-            [vd-designer.pages.form.fhir-schema :refer [get-constant-type
-                                                        get-select-path]]
+            [vd-designer.pages.form.fhir-schema :as fhir-schema]
             [vd-designer.pages.form.fhirpath-autocomplete.antlr :as antlr]
-            [vd-designer.pages.form.form.normalization :refer [normalize-vd]]
-            [vd-designer.pages.form.form.uuid-decoration :refer [decorate
-                                                                 remove-decoration
-                                                                 uuid->idx]]
+            [vd-designer.pages.form.form.normalization :as normalization]
+            [vd-designer.pages.form.form.uuid-decoration :as decoration]
+            [vd-designer.pages.form.form.input-references :as input-references]
             [vd-designer.pages.form.model :as m]
             [vd-designer.pages.lists.settings.model :as settings-model]
-            [vd-designer.utils.event :refer [response->error]]
+            [vd-designer.utils.event :as u]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
-            [vd-designer.utils.utils :as utils]))
+            [vd-designer.utils.utils :as utils]
+            [vd-designer.components.input :as input-component]
+            [vd-designer.components.icon :as icon]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -33,7 +33,6 @@
 (defn ready-server-event-fx [vd-id]
   (cond-> [[:dispatch [::get-supported-resource-types]]]
     vd-id (conj [:dispatch [::get-view-definition vd-id]])))
-
 
 (reg-event-fx
  ::start
@@ -211,19 +210,62 @@
    {:db       (assoc db :loading true)
     :dispatch [::choose-vd (:current-vd db)]}))
 
+(declare collect-all-node-paths*)
+
+(defn concat-paths [path v]
+  (->> (collect-all-node-paths* v)
+       (remove empty?)
+       (mapv #(into [path] %))))
+
+(defn collect-all-node-paths* [vd]
+  (cond (map? vd)
+        (mapcat
+         (fn [[k v]]
+           (cond
+             (or (= k :forEach)
+                 (= k :forEachOrNull))
+             (concat-paths :select (:select vd))
+
+             (= k :column)
+             [[:column]]
+
+             (or (= k :select)
+                 (= k :unionAll))
+             (into
+              [[k]]
+              (concat-paths k v))
+
+             :else []))
+         vd)
+
+        (vector? vd)
+        (mapcat
+         (fn [item]
+           (let [k (:tree/key item)]
+             (into
+              [[k]]
+              (concat-paths k item))))
+         vd)))
+
+(defn collect-all-node-paths [vd]
+  (into #{} (collect-all-node-paths* vd)))
+
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
-   (let [decorated-view (-> view
-                            (update :select normalize-vd)
-                            (decorate))]
+   (let [[view-definition refs] (-> view
+                                    (update :select normalization/normalize-vd)
+                                    (decoration/decorate)
+                                    (input-references/replace-inputs-with-references))]
      {:fx [[:dispatch [::reset-vd-error]]
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (-> m/tree-root-keys
-                           (into (get-select-path decorated-view))
+                           (into (collect-all-node-paths view-definition))
                            (set/difference m/do-not-expand-tree-keys))]]]
-      :db (assoc db :current-vd decorated-view :loading false)})))
+      :db (-> db
+              (assoc :current-vd view-definition :loading false)
+              (assoc ::m/tree-inputs refs))})))
 
 (defn contains-blank-string? [element]
   (cond
@@ -302,7 +344,8 @@
                           :resource-type (get (:current-vd db) :resource "")}}))
    (let [sandbox? (settings-model/in-sandbox? db)
          view-definition (-> (:current-vd db)
-                             remove-decoration
+                             decoration/remove-decoration
+                             (input-references/replace-inputs-with-values (::m/tree-inputs db))
                              strip-empty-collections
                              remove-meta
                              strip-empty-select-nodes
@@ -337,7 +380,7 @@
 (reg-event-db
  ::on-vd-error
  (fn [db [_ result]]
-   (assoc db ::m/current-vd-error (response->error result))))
+   (assoc db ::m/current-vd-error (u/response->error result))))
 
 (reg-event-db
  ::on-eval-view-definition-success
@@ -350,12 +393,12 @@
  ::on-eval-view-definition-error
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/eval-loading false)
-    :notification-error (str "Error on run: " (response->error result))}))
+    :notification-error (str "Error on run: " (u/response->error result))}))
 
 (reg-event-db
  ::change-input-value
  (fn [db [_ path value]]
-   (let [real-path (uuid->idx path (:current-vd db))]
+   (let [real-path (decoration/uuid->idx path (:current-vd db))]
      (assoc-in db (into [:current-vd] real-path) value))))
 
 (def empty-coll?
@@ -368,7 +411,7 @@
 (reg-event-db
  ::change-input-value-merge
  (fn [db [_ path value]]
-   (let [real-path (uuid->idx path (:current-vd db))]
+   (let [real-path (decoration/uuid->idx path (:current-vd db))]
      (update-in db
                 (into [:current-vd] real-path)
                 merge-and-strip value))))
@@ -396,27 +439,92 @@
    (assoc db :current-tree-expanded-nodes (set expanded))))
 
 (reg-event-db
- ::set-focus-node
+ ::set-input-focus
  (fn [db [_ node-id]]
-   (assoc db ::m/node-focus node-id)))
+   (assoc db ::m/input-focus node-id)))
+
+(defn get-node-default-value
+  "Adds new node into current-vd with inputs uuids,
+   creates new tree-inputs with uuids.
+   Returns node with tree/key and input keys with uuids
+   and vector with new tree-inputs."
+  [kind]
+  (case kind
+    :column
+    (let [[name-ref name-input] (input-references/create-reference)
+          [path-ref path-input] (input-references/create-reference :fhirpath)]
+      [(decoration/decorate {:column  [{:name name-ref :path path-ref}]})
+       {name-ref name-input path-ref path-input}
+       path-ref])
+    :forEach
+    (let [[ref input] (input-references/create-reference)]
+      [(decoration/decorate {:forEach ref :select []})
+       {ref input}
+       ref])
+    :forEachOrNull
+    (let [[ref input] (input-references/create-reference)]
+      [(decoration/decorate {:forEachOrNull ref :select []})
+       {ref input}
+       ref])
+    :unionAll
+    [(decoration/decorate {:unionAll []})
+     {}
+     nil]))
 
 (reg-event-fx
- ::add-tree-element
- (fn [{:keys [db]} [_ path default-value]]
-   (let [value (decorate default-value)
-         mk-expanded-path (fn [[k _]]
-                            (conj path (:tree/key value) k))]
-     {:db (let [real-path (uuid->idx path (:current-vd db))]
-            (update-in db
-                       (into [:current-vd] real-path)
-                       (fnil conj [])
-                       value))
+ ::add-tree-node
+ (fn [{:keys [db]} [_ path kind]]
+   (let [[node-value new-inputs autofocus-ref] (get-node-default-value kind)]
+     {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
+            (-> db
+                (update-in
+                 (into [:current-vd] real-path)
+                 (fnil conj []) node-value)
+                (update ::m/tree-inputs merge new-inputs)))
       :fx [[:dispatch-later
             [{:ms       100
               :dispatch [::update-tree-expanded-nodes
-                         (into (:current-tree-expanded-nodes db)
-                               (mapv mk-expanded-path default-value))]}]]
-           [:dispatch [::set-focus-node (:tree/key value)]]]})))
+                         (into
+                          (:current-tree-expanded-nodes db)
+                          (conj
+                           (mapv
+                            (fn [[k _]]
+                              (conj path (:tree/key node-value) k))
+                            node-value)
+                           (conj path (:tree/key node-value))))]}]]
+           [:dispatch [::set-input-focus autofocus-ref]]]})))
+
+(defn get-leaf-default-value [kind]
+  (case kind
+    :constant
+    (let [[name-ref name-input] (input-references/create-reference)
+          [value-ref value-input] (input-references/create-reference)]
+      [(decoration/decorate {:name name-ref :valueString value-ref})
+       {name-ref name-input value-ref value-input}
+       name-ref])
+    :where
+    (let [[path-ref path-input] (input-references/create-where-reference)]
+      [(decoration/decorate {:path path-ref})
+       {path-ref path-input}
+       path-ref])
+    :column
+    (let [[name-ref name-input] (input-references/create-reference)
+          [path-ref path-input] (input-references/create-reference :fhirpath)]
+      [(decoration/decorate {:name name-ref :path path-ref})
+       {name-ref name-input path-ref path-input}
+       path-ref])))
+
+(reg-event-fx
+ ::add-tree-leaf
+ (fn [{:keys [db]} [_ path kind]]
+   (let [[node-value new-inputs focus-ref] (get-leaf-default-value kind)]
+     {:db (let [real-path (decoration/uuid->idx path (:current-vd db))]
+            (-> db
+                (update-in
+                 (into [:current-vd] real-path)
+                 (fnil conj []) node-value)
+                (update ::m/tree-inputs merge new-inputs)))
+      :fx [[:dispatch [::set-input-focus focus-ref]]]})))
 
 (defn remove-node [node key]
   (cond
@@ -435,14 +543,8 @@
 (reg-event-db
  ::convert-foreach
  (fn [db [_ path from to]]
-   (let [real-path (uuid->idx path (:current-vd db))]
-     (cond->
-      (update-in db (cons :current-vd (pop real-path)) rename-keys {from to})
-
-       (-> db :current-tree-expanded-nodes (contains? path))
-       (->
-        (update :current-tree-expanded-nodes disj path)
-        (update :current-tree-expanded-nodes conj (-> path pop (conj to))))))))
+   (let [real-path (into [:current-vd] (decoration/uuid->idx path (:current-vd db)))]
+     (update-in db real-path rename-keys {from to}))))
 
 (reg-event-fx
  ::delete-tree-element
@@ -450,7 +552,7 @@
    {:fx [[:dispatch [::update-tree-expanded-nodes
                      (->> (:current-tree-expanded-nodes db)
                           (remove #(utils/vector-starts-with % path)))]]]
-    :db (let [real-path (uuid->idx path (:current-vd db))]
+    :db (let [real-path (decoration/uuid->idx path (:current-vd db))]
           (update db :current-vd remove-tree-element real-path))}))
 
 (reg-event-fx
@@ -460,8 +562,10 @@
    (TagManager/dataLayer
     (clj->js {:dataLayer {:event "vd_save"
                           :resource-type (get (:current-vd db) :resource "")}}))
-   (let [view-definition (-> (:current-vd db)
-                             remove-decoration
+   (let [refs (::m/tree-inputs db)
+         view-definition (-> (:current-vd db)
+                             decoration/remove-decoration
+                             (input-references/replace-inputs-with-values refs)
                              strip-empty-collections
                              remove-meta)
          empty-fields? (empty-inputs-in-vd? view-definition)
@@ -494,7 +598,7 @@
  ::save-view-definition-failure
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/save-loading false)
-    :notification-error (str "Error on save: " (response->error result))}))
+    :notification-error (str "Error on save: " (u/response->error result))}))
 
 (reg-event-db
  ::change-language
@@ -526,21 +630,39 @@
 
     (str v)))
 
+(defn- constant-type->input-type [constant-type]
+  (case constant-type
+    (:valueDecimal
+     :valueInteger
+     :valueInteger64
+     :valuePositiveInt
+     :valueUnsignedInt) :number
+
+    :valueBoolean       :boolean
+    :text))
+
 (reg-event-db
  ::normalize-constant-value
  (fn [db [_ path]]
    (let [real-path    (-> (into [:current-vd] path)
-                          (uuid->idx db))
+                          (decoration/uuid->idx db))
          constant-map (get-in db real-path)
-         current-type (get-constant-type constant-map)
+         current-type (fhir-schema/get-constant-type constant-map)
          new-type (keyword (:type constant-map))
-         new-value (->> (constant-map current-type)
-                        (cast-value new-type))]
-     (assoc-in db real-path
-               (-> constant-map
-                   (dissoc current-type)
-                   (assoc new-type new-value)
-                   (dissoc :type))))))
+         current-ref (get constant-map current-type)
+         current-value (-> db ::m/tree-inputs (get current-ref) :value)
+         new-value (cast-value new-type current-value)
+         input-type (constant-type->input-type new-type)]
+     (-> db
+         (assoc-in real-path
+                   (-> constant-map
+                       (dissoc current-type)
+                       (assoc new-type current-ref)
+                       (dissoc :type)))
+         (assoc-in [::m/tree-inputs current-ref :type]
+                   input-type)
+         (assoc-in [::m/tree-inputs current-ref :value]
+                   new-value)))))
 
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
@@ -613,7 +735,7 @@
      (move-node vd path-from path-to drop-position))))
 
 (defn move* [vd path-from path-to drop-position]
-  (move vd (uuid->idx path-from vd) (uuid->idx path-to vd) drop-position))
+  (move vd (decoration/uuid->idx path-from vd) (decoration/uuid->idx path-to vd) drop-position))
 
 (reg-event-db
  ::change-tree-elements-order
@@ -621,7 +743,7 @@
    (update db :current-vd move* from-node to-node drop-position)))
 
 (defn convert-constants [constant]
-  (when-let [type-fhir (get-constant-type constant)] ; valueString
+  (when-let [type-fhir (fhir-schema/get-constant-type constant)] ; valueString
     (let [type (subs (name type-fhir) 5) ;String
           type (str (str/lower-case (subs type 0 1)) (subs type 1)) ; string
           value (type-fhir constant)
@@ -658,3 +780,13 @@
                           :fhirpath text
                           :cursor cursor-start}
                          (assoc new-ctx :resource-type (:resource current-vd))]}))
+
+(reg-event-db
+ ::set-input-text
+ (fn [db [_ input-id value]]
+   (assoc-in db [::m/tree-inputs input-id :value] value)))
+
+(reg-event-db
+ ::update-input-text
+ (fn [db [_ input-id f]]
+   (update-in db [::m/tree-inputs input-id :value] f)))

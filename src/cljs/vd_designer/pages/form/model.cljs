@@ -1,8 +1,8 @@
 (ns vd-designer.pages.form.model
   (:require
    [re-frame.core :refer [reg-sub]]
-   [vd-designer.components.select :refer [options-from-vec]]
-   [vd-designer.pages.form.form.uuid-decoration :refer [uuid->idx]]))
+   [vd-designer.components.select :as select-component]
+   [vd-designer.pages.form.form.uuid-decoration :as uuid-decoration]))
 
 (reg-sub
  ::view-definition-data
@@ -34,7 +34,7 @@
 (reg-sub
  ::get-all-supported-resources
  (fn [db [_]]
-   (options-from-vec (get db :resources))))
+   (select-component/options-from-vec (get db :resources))))
 
 (reg-sub
  ::current-vd-error
@@ -75,7 +75,7 @@
  ::children
  (fn [db [_ path]]
    (get-in db (into [:current-vd]
-                    (uuid->idx path (:current-vd db))))))
+                    (uuid-decoration/uuid->idx path (:current-vd db))))))
 
 (reg-sub
  ::autocomplete-options
@@ -83,9 +83,9 @@
    (::autocomplete-options db)))
 
 (reg-sub
- ::node-focus
+ ::input-focus
  (fn [db _]
-   (::node-focus db)))
+   (::input-focus db)))
 
 (defn import-synthetic-data-notebook-url [server-url]
  (str server-url "/ui/console#/notebooks/explore"
@@ -102,3 +102,31 @@
  :<- [::current-vd]
  (fn [current-vd _]
   (:resource current-vd)))
+
+(reg-sub
+ ::tree-inputs
+ :-> ::tree-inputs)
+
+(reg-sub
+ ::input-value
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (-> inputs
+       (get input-id)
+       (get :value))))
+
+(reg-sub
+ ::input-error
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (-> inputs
+       (get input-id)
+       (get :error))))
+
+(reg-sub
+ ::input-type
+ :<- [::tree-inputs]
+ (fn [inputs [_ input-id]]
+   (-> inputs
+       (get input-id)
+       (get :type))))

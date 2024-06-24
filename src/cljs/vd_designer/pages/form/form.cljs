@@ -21,18 +21,18 @@
              :expanded-keys (map tree/calc-key expanded-keys)
              :tree-data     (vd-tree ctx vd)
              :draggable     (fn [node]
-                                (-> (.-key node)
-                                    js->clj
-                                    str.utils/parse-path
-                                    draggable?))
+                              (-> (.-key node)
+                                  js->clj
+                                  str.utils/parse-path
+                                  draggable?))
              :allow-drop    #(let [{:keys [dragNode dropNode dropPosition]}
                                    (js->clj % :keywordize-keys true)]
                                ;; this can be speed up
                                (drop-allowed?
-                                 vd
-                                 (-> dragNode :key str.utils/parse-path)
-                                 (-> dropNode :key str.utils/parse-path)
-                                 dropPosition))
+                                vd
+                                (-> dragNode :key str.utils/parse-path)
+                                (-> dropNode :key str.utils/parse-path)
+                                dropPosition))
 
              :on-drop       #(let [{:keys [node dragNode dropPosition]}
                                    (js->clj % :keywordize-keys true)
