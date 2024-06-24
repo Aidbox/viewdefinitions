@@ -2,9 +2,9 @@
   (:require [buddy.core.keys :as keys]
             [buddy.sign.jwk :as jwk]
             [buddy.sign.jwt :as jwt]
+            [taoensso.telemere :as t]
             [vd-designer.utils.time :as time])
-  (:import [clojure.lang ExceptionInfo]
-           (java.security KeyPairGenerator SecureRandom)))
+  (:import (java.security KeyPairGenerator SecureRandom)))
 
 (defn- generate-keypair []
   (let [kg (KeyPairGenerator/getInstance "RSA")]
@@ -41,8 +41,14 @@
    ^String jwt]
   (let [pub (jwk/public-key jwk)
         verify-opts {:iss app-url, :aud referer}]
-    (try (->> (merge sign-opts verify-opts)
-              (jwt/unsign jwt pub)
-              :sub
-              (assoc {} :result))
-         (catch ExceptionInfo _ {:error "Authentication seems manipulated, please re-authenticate"}))))
+    (t/catch->error!
+      {:catch-sym e
+       :msg       ["JWT decoding failed:" e]
+       :catch-val (if (and (-> (ex-data e) :type  (= :validation))
+                           (-> (ex-data e) :cause (= :signature)))
+                    {:error "Authentication seems manipulated, please re-authenticate"}
+                    {:error "Authentication failed"})}
+      (->> (merge sign-opts verify-opts)
+           (jwt/unsign jwt pub)
+           :sub
+           (assoc {} :result)))))
