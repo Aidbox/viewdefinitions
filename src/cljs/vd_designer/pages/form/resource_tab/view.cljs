@@ -1,6 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Row Col]]
+            [antd :refer [Row Col Space Flex]]
             [re-frame.core :refer [dispatch subscribe]]
             [clojure.string :as str]
             [reagent.core :as r]
@@ -65,76 +65,6 @@
        "RklEQVQ4y2P8//8/AyWAhYFCMAgMuHjx4n+KXaCv+I0szW8WpCG8kFO1lGFKW/SIjAUYgxz/MzAw"
        "MDC+nqhDUTQyjuYFBgCNmhP4OvTRgwAAAABJRU5ErkJggg=="))
 
-#_(defn get-lvl [element])
-
-#_(defn render-tree [resource-schema]
-    [:<>
-     [:style "tr:nth-child(even) {background-color: var(--basic-gray-0);}"]
-     [:table
-      {:style  {:width "900px"
-                :font-family "Inter" :font-size "12px" :font-weght "400"}}
-      [:tr
-       [:th "Name"]
-       [:th "Flags"]
-       [:th "Card."]
-       [:th "Type"]]
-      [:tr [:img {:width "14" :height "14" :src icon-datatype-blob}] (:type resource-schema)]
-      (for [[element-name element] (sort-by first (:elements resource-schema))]
-        ^{:key (:path element)}
-        [:tr
-       ;; icon
-         [:td {:style {:margin-left (str (* (dec (:lvl element)) 25) "px")
-                       :margin-top "1px"}}
-          (cond
-          ;; (. (subs (:type element) 0 1))
-          ;; [:img {:width "14" :height "14" :src icon-primitive-blob}]
-
-            (:union? element)
-            [:img {:width "14" :height "14" :src icon-choice-blob}]
-
-            (= "Reference" (:type element))
-            [:img {:width "14" :height "14" :src icon-reference-blob}]
-
-            :else [:img {:width "14" :height "14" :src icon-datatype-blob}])
-        ;; name
-          [:span
-           element-name
-           (when (:union? element) "[x]")]]
-       ;; flags
-         [:td
-          (when (:mustSupport element)
-            [:span "S"])
-          (when (:summary element)
-            [:span "Σ"])
-          (when (:modifier element) [:span "!?"])]
-       ;; card
-         [:td
-          (str (or (:min element) "0") ".." (or (:max element) (when (:array element) "*") 1))]
-       ;; type
-         [:td
-          (when (:type element) (:type element))
-          (when (:refers element)
-            [:span
-             " ("
-             (str/join ", "
-                       (mapv #(last (str/split % #"/"))
-                             (:refers element)))
-             #_(for [r (:refers element)]
-                 ^{:key (:name r)}
-                 [:span (last (str/split r #"/"))])
-             ")"])
-
-          #_(when (:datatype element)
-              [:div
-               (:datatype element)
-               (:slice-type element)
-               (when (:refers element)
-                 [:span
-                  " ("
-                  (for [r (:refers element)] ^{:key (:name r)}
-                       [:span (:name r)])
-                  ")"])])]])]])
-
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
@@ -142,57 +72,82 @@
            [:img {:width "14" :height "14" :src icon-datatype-blob}]
            (:option-name element)])))
 
-(defn render-element [element]
-  (assoc
-   element
-   :title
-   (r/as-element
-    [:> Row {:align  :middle
-             :gutter 16}
-     [:> Col {:span 7}
-      (cond
-        (and (:type element) (subs (:type element) 0 1))
-        [:img {:width "14" :height "14" :src icon-primitive-blob}]
+(defn shorten-valueset-name [value-set-name]
+  (last (str/split value-set-name #"/")))
 
-          ;; (:union? element)
-          ;; [:img {:width "14" :height "14" :src icon-choice-blob}]
+(defn render-element* [element fhir-schema & [lvl]]
+  (let [lvl (or lvl 0)]
+    (r/as-element
+      [:span
+       [:span
+        {:style {:min-width (str (- 200 (* 32 lvl)) "px")
+                 :max-width (str (- 200 (* 32 lvl)) "px")
+                 :display "inline-block"}}
+         [:> Space
+          (cond
+            (:choices element)
+            [:img {:width "14" :height "14" :src icon-choice-blob}]
 
-        (= "Reference" (:type element))
-        [:img {:width "14" :height "14" :src icon-reference-blob}]
+            (= "Reference" (:type element))
+            [:img {:width "14" :height "14" :src icon-reference-blob}]
 
-        :else [:img {:width "14" :height "14" :src icon-datatype-blob}])
-      (:option-name element)]
+            (and (:type element) (subs (:type element) 0 1))
+            [:img {:width "14" :height "14" :src icon-primitive-blob}]
 
-     [:> Col {:span 2}
-      (when (:mustSupport element)
-        [:span "S"])
-      (when (:summary element)
-        [:span "Σ"])
-      (when (:modifier element) [:span "!?"])]
+            :else (println "!! " element))
+          (:option-name element)]]
 
-     [:> Col {:span 2}
-      (str (or (:min element) "0") ".." (or (:max element) (when (:array element) "*") 1))]
+       [:span {:style {:padding-left 32
+                       :min-width "32px"
+                       :max-width "32px"
+                       :display "inline-block"}}
+        (when (:mustSupport element)
+          [:span "S"])
 
-     [:> Col {:span 13}
-      (when (:type element) (:type element))
-      (when (:refers element)
-        [:span
-         " ("
-         (str/join ", "
-                   (mapv #(last (str/split % #"/"))
-                         (:refers element)))
-         #_(for [r (:refers element)]
-             ^{:key (:name r)}
-             [:span (last (str/split r #"/"))])
-         ")"])]])))
+        (when (:summary element)
+          [:span "Σ"])]
+
+       [:span {:style {:padding-left 32
+                       :min-width "32px"
+                       :max-width "32px"
+                       :display "inline-block"}}
+        (str (or (when (contains? (into #{} (:required fhir-schema)) (:option-name element))
+                   "1")
+                 "0")
+             ".."
+             (or (when (:array element) "*") "1"))]
+
+       [:span {:style {:padding-left 32
+                       :min-width "150px"
+                       :max-width "150px"
+                       :display "inline-block"}}
+        (when (:type element) [:a (:type element)])]
+       [:span {:style {:padding-left 32
+                       :display "inline-block"
+                       :min-width "170px"}}
+        (when (:binding element)
+          [:span
+           "Binding: " [:a (shorten-valueset-name (:valueSet (:binding element)))]
+           " (" (:strength (:binding element)) ")"])]])))
 
 (defn create-key [parent-key element-name]
-  (println "parent key " parent-key)
-  (println "element nam e" element-name)
   (when element-name
     (if parent-key
       (str parent-key "-" (str/lower-case element-name))
       (str/lower-case element-name))))
+
+(defn render-element [element fhir-schema]
+  (cond->
+   (assoc
+    element
+    :title
+    (render-element* element fhir-schema))
+    (:choices element)
+    (assoc :children (mapv
+                      (fn [c]
+                        {:title (render-element* c fhir-schema 1)
+                         :key (create-key (:key element) (:option-name c))})
+                      (:choices element)))))
 
 (defn option-name [element-name element]
   (cond
@@ -213,8 +168,38 @@
    []
    (:elements parent-element)))
 
+(defn add-choices [master slaves]
+  (assoc master :choices (get slaves (:option-name master))))
+
+(defn group-choice-of
+  "[{:option-name 'valueA' :choiceOf 'value'}
+    {:option-name 'valueB' :choiceOf 'value'}
+    {:option-name 'value' :choices ['valueA' 'valueB']}]
+  =>
+  [{:option-name 'value' :choices
+    [{:option-name 'valueA' :choiceOf 'value'}
+     {:option-name 'valueB' :choiceOf 'value'}]}]"
+  [fhir-schemas]
+  (let [masters
+        (->>
+         fhir-schemas
+         (filter :choices))
+        slaves
+        (->> fhir-schemas
+             (group-by :choiceOf)
+             (remove (fn [[k _]] (nil? k)))
+             (into {}))]
+    (->> fhir-schemas
+         (remove #(or (:choices %) (:choiceOf %)))
+         (concat (mapv #(add-choices % slaves) masters)))))
+
+(defn pre-process-fhir-schema [fhir-schema]
+  (->> fhir-schema
+       flat-elements
+       group-choice-of
+       (sort-by :option-name)))
+
 (defn fhir-schema->options [resource-type fhir-schema]
-  (println "resource type " resource-type)
   (let [k (create-key nil resource-type)]
     [(render-resource
       {:option-name (option-name resource-type fhir-schema)
@@ -224,8 +209,8 @@
         (fn [element]
           (-> element
               (assoc :key (create-key k (:option-name element)))
-              render-element))
-        (flat-elements fhir-schema))})]))
+              (render-element fhir-schema)))
+        (pre-process-fhir-schema fhir-schema))})]))
 
 (defn schema->tree-data [schema]
   (fhir-schema->options (:id schema) schema))
@@ -233,7 +218,6 @@
 (defn resource-tab []
   (let [spec @(subscribe [::m/spec-map])
         pat (when spec (get (js->clj spec :keywordize-keys true) :Observation))]
-    (js/console.log "schema " pat)
     (when pat
       [tree {:style         {:padding-right "16px"}
              :defaultExpandAll true

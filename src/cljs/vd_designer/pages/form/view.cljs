@@ -116,7 +116,7 @@
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
-     [:> Panel {:minSize 20}
+     [:> Panel {:minSize 55}
       [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
       [resource-tab/resource-tab]
       [table (vec (remove empty? (:data resources)))
