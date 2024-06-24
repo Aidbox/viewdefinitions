@@ -2,6 +2,7 @@
   (:require [clojure.test :refer :all]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test :refer [match?]]
+            [ring.util.http-response :as http-response]
             [vd-designer.aidbox :as sut]
             [vd-designer.fake.clients.portal :as fake-portal]
             [vd-designer.repository.account :as account]
@@ -9,16 +10,21 @@
             [vd-designer.repository.user-server :as user-server]
             [vd-designer.test-context :as test-context]))
 
-(deftest list-user-servers-test
-  (let [valid-access-token "<valid-access-token>"
+(deftest list-servers-test
+  (let [valid-access-token {:token    "<valid-access-token>"
+                            :expired? false}
         [project-1-id project-2-id] (repeatedly 2 random-uuid)
         aidbox-auth-token "<aidbox-auth-token>"
 
-        {:keys [aidbox.portal/client db] :as ctx} (test-context/mk)
-        [account-id-map] (account/create db {:email "<email>"})]
+        {:keys [aidbox.portal/client cfg db] :as ctx} (test-context/mk)
+        [account-id-map] (account/create db {:email "<email>"})
 
-    (testing "0 servers"
-      (is (match? [] (sut/list-user-servers ctx (:accounts/id account-id-map)))))
+        ctx-with-user (assoc ctx :user (:accounts/id account-id-map))
+        public-servers (sut/filter-server-keys (:public-fhir-servers cfg))]
+
+    (testing "public servers only"
+      (is (match? (http-response/ok public-servers)
+                  (sut/list-servers ctx))))
 
     (testing "3 licenses among 2 projects"
 
@@ -42,39 +48,42 @@
              (fake-portal/add-license client)))
 
       ;; to verify the last one is picked
-      (doseq [token ["<access-token-1>"
-                     "<access-token-2>"
+      (doseq [token [{:token "<access-token-1>"}
+                     {:token "<access-token-2>"}
                      valid-access-token]]
         (sso-token/create db {:account_id   (:accounts/id account-id-map)
-                              :access_token token}))
+                              :access_token (:token token)}))
 
       (is (match?
-           (m/in-any-order
-            [{:box-url     "https://box-url-1.com"
-              :server-name "<license-1-name>"
-              :project
-              {:id              project-1-id
-               :name            "<project-1-name>"
-                 ;; Aidbox base URL is taken from cfg
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-1-id)}}
+           (m/via :body
+                  (m/in-any-order
+                   (concat
+                    public-servers
+                    [{:box-url     "https://box-url-1.com"
+                      :server-name "<license-1-name>"
+                      :project
+                      {:id              project-1-id
+                       :name            "<project-1-name>"
+                          ;; Aidbox base URL is taken from cfg
+                       :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                                project-1-id)}}
 
-             {:box-url     "https://box-url-2.com"
-              :server-name "<license-2-name>"
-              :project
-              {:id              project-2-id
-               :name            "<project-2-name>"
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-2-id)}}
+                     {:box-url     "https://box-url-2.com"
+                      :server-name "<license-2-name>"
+                      :project
+                      {:id              project-2-id
+                       :name            "<project-2-name>"
+                       :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                                project-2-id)}}
 
-             {:box-url     "https://box-url-3.com"
-              :server-name "<license-3-name>"
-              :project
-              {:id              project-2-id
-               :name            "<project-2-name>"
-               :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                        project-2-id)}}])
-           (sut/list-user-servers ctx (:accounts/id account-id-map))))
+                     {:box-url     "https://box-url-3.com"
+                      :server-name "<license-3-name>"
+                      :project
+                      {:id              project-2-id
+                       :name            "<project-2-name>"
+                       :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
+                                                project-2-id)}}])))
+           (sut/list-servers ctx-with-user)))
 
       (is (match?
            (m/in-any-order
@@ -90,4 +99,14 @@
                             :server_name       "<license-3-name>"
                             :box_url           "https://box-url-3.com"
                             :aidbox_auth_token aidbox-auth-token}])
-           (user-server/get-all db))))))
+           (user-server/get-all db))))
+
+    (testing "Expired Aidbox portal access token"
+      (let [token {:token    "<expired-token>"
+                   :expired? true}]
+        (fake-portal/add-access-key client token)
+        (sso-token/create db {:account_id   (:accounts/id account-id-map)
+                              :access_token (:token token)})
+        (is (match?
+             (http-response/unauthorized {:error "Session expired"})
+             (sut/list-servers ctx-with-user)))))))

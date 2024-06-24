@@ -3,6 +3,7 @@
             [clojure.string :as str]
             [lambdaisland.uri :as uri]
             [martian.core :as martian]
+            [ring.util.http-predicates :as predicates]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
@@ -54,25 +55,39 @@
   [{:keys [aidbox.portal/client db] :as ctx}
    account-id]
   (let [access-token (:sso_tokens/access_token (sso-token/get-last-by-id db account-id))
-        projects (-> @(portal/rpc:init-project client access-token)
-                     :body :result)
-        licenses (->> projects
-                      (mapcat #(licenses-for-project ctx access-token %))
-                      (filter valid-license?)
-                      (mapv #(enrich-license % account-id)))]
-    (when-not (empty? licenses)
-      (->> licenses
-           (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
-           (user-server/create-many db)))
+        projects-response @(portal/rpc:init-project client access-token)]
+    (if (predicates/unauthorized? projects-response)
+      :unauthorized
+      (let [projects (-> projects-response :body :result)
+            ;; in theory, token can expire between these calls
+            licenses (->> projects
+                          (mapcat #(licenses-for-project ctx access-token %))
+                          (filter valid-license?)
+                          (mapv #(enrich-license % account-id)))]
+        (when-not (empty? licenses)
+          (->> licenses
+               (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
+               (user-server/create-many db)))
 
-    licenses))
+        licenses))))
+
+(defn filter-server-keys [servers]
+  (map #(select-keys % [:box-url :server-name :project])
+       servers))
 
 (defn list-servers [{:keys [cfg user] :as ctx}]
-  (->> (cond->> (cfg :public-fhir-servers)
-         user
-         (concat (list-user-servers ctx user)))
-       (map #(select-keys % [:box-url :server-name :project]))
-       (http-response/ok)))
+  (let [public-servers (:public-fhir-servers cfg)]
+    (if user
+      (let [user-servers-result (list-user-servers ctx user)]
+        (if (= user-servers-result :unauthorized)
+          (http-response/unauthorized {:error "Session expired"})
+          (-> user-servers-result
+              (concat public-servers)
+              filter-server-keys
+              (http-response/ok))))
+      (-> public-servers
+          filter-server-keys
+          (http-response/ok)))))
 
 (defn connect
   [{:keys [box-url fhir-server-headers]}]
