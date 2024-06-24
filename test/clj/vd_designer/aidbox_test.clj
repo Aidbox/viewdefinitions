@@ -109,4 +109,8 @@
                               :access_token (:token token)})
         (is (match?
              (http-response/unauthorized {:error "Session expired"})
-             (sut/list-servers ctx-with-user)))))))
+             (sut/list-servers ctx-with-user)))
+
+        (is (match?
+             (sso-token/get-all db)
+             []))))))

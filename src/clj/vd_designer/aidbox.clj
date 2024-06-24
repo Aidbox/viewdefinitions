@@ -57,7 +57,9 @@
   (let [access-token (:sso_tokens/access_token (sso-token/get-last-by-id db account-id))
         projects-response @(portal/rpc:init-project client access-token)]
     (if (predicates/unauthorized? projects-response)
-      :unauthorized
+      (do
+        (sso-token/delete db account-id)
+        :unauthorized)
       (let [projects (-> projects-response :body :result)
             ;; in theory, token can expire between these calls
             licenses (->> projects
