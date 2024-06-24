@@ -8,18 +8,6 @@
             [vd-designer.pages.form.form.settings :as form-settings]
             [vd-designer.pages.form.form.nodes.nodes :as nodes]))
 
-;; TODO: use this
-(defn- constant-type->input-type [constant-type]
-  (case constant-type
-    (:valueDecimal
-     :valueInteger
-     :valueInteger64
-     :valuePositiveInt
-     :valueUnsignedInt) :number
-
-    :valueBoolean       :boolean
-    :text))
-
 (defn constant-row [{:keys [value-path]} {:keys [name] :as item} {:keys [on-shift-enter]}]
   (let [constant-type (fhir-schema/get-constant-type item)]
     [:> Flex {:gap   8

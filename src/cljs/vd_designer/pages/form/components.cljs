@@ -496,7 +496,7 @@
   (let [value @(subscribe [::m/input-value input-id])]
     [input-component/input-number {:placeholder placeholder
                                    :value       value
-                                   :onChange    #(set-input-value input-id (u/target-value %))}]))
+                                   :onChange    #(set-input-value input-id %)}]))
 
 (defn render-input
   [& {:keys [input-id] :as opts}]

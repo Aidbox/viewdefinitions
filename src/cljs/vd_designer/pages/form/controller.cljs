@@ -210,6 +210,46 @@
    {:db       (assoc db :loading true)
     :dispatch [::choose-vd (:current-vd db)]}))
 
+(declare collect-all-node-paths*)
+
+(defn concat-paths [path v]
+  (->> (collect-all-node-paths* v)
+       (remove empty?)
+       (mapv #(into [path] %))))
+
+(defn collect-all-node-paths* [vd]
+  (cond (map? vd)
+        (mapcat
+         (fn [[k v]]
+           (cond
+             (or (= k :forEach)
+                 (= k :forEachOrNull))
+             (concat-paths :select (:select vd))
+
+             (= k :column)
+             [[:column]]
+
+             (or (= k :select)
+                 (= k :unionAll))
+             (into
+              [[k]]
+              (concat-paths k v))
+
+             :else []))
+         vd)
+
+        (vector? vd)
+        (mapcat
+         (fn [item]
+           (let [k (:tree/key item)]
+             (into
+              [[k]]
+              (concat-paths k item))))
+         vd)))
+
+(defn collect-all-node-paths [vd]
+  (into #{} (collect-all-node-paths* vd)))
+
 (reg-event-fx
  ::choose-vd
  (fn [{:keys [db]} [_ view]]
@@ -221,7 +261,7 @@
            [:dispatch [::eval-view-definition-data]]
            [:dispatch [::update-tree-expanded-nodes
                        (-> m/tree-root-keys
-                           (into (fhir-schema/collect-all-node-paths view-definition))
+                           (into (collect-all-node-paths view-definition))
                            (set/difference m/do-not-expand-tree-keys))]]]
       :db (-> db
               (assoc :current-vd view-definition :loading false)
@@ -590,6 +630,17 @@
 
     (str v)))
 
+(defn- constant-type->input-type [constant-type]
+  (case constant-type
+    (:valueDecimal
+     :valueInteger
+     :valueInteger64
+     :valuePositiveInt
+     :valueUnsignedInt) :number
+
+    :valueBoolean       :boolean
+    :text))
+
 (reg-event-db
  ::normalize-constant-value
  (fn [db [_ path]]
@@ -598,13 +649,20 @@
          constant-map (get-in db real-path)
          current-type (fhir-schema/get-constant-type constant-map)
          new-type (keyword (:type constant-map))
-         new-value (->> (constant-map current-type)
-                        (cast-value new-type))]
-     (assoc-in db real-path
-               (-> constant-map
-                   (dissoc current-type)
-                   (assoc new-type new-value)
-                   (dissoc :type))))))
+         current-ref (get constant-map current-type)
+         current-value (-> db ::m/tree-inputs (get current-ref) :value)
+         new-value (cast-value new-type current-value)
+         input-type (constant-type->input-type new-type)]
+     (-> db
+         (assoc-in real-path
+                   (-> constant-map
+                       (dissoc current-type)
+                       (assoc new-type current-ref)
+                       (dissoc :type)))
+         (assoc-in [::m/tree-inputs current-ref :type]
+                   input-type)
+         (assoc-in [::m/tree-inputs current-ref :value]
+                   new-value)))))
 
 (defn leafs-on-same-level? [path-from path-to]
   (= (pop path-from) (pop path-to)))
