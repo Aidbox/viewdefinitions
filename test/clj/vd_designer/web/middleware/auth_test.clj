@@ -45,8 +45,7 @@
 
     (testing "happy path"
       (is (match?
-           {:user/id        account-id
-            :user/sso-token access-token}
+           {:user {:id account-id, :sso-token access-token}}
            (apply-middleware (partial authentication-middleware true)
                              identity
                              (merge

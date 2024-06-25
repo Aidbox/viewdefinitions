@@ -25,19 +25,23 @@
       {:result nil}
       (jwt/validate cfg referer jwt))))
 
+(defn authentication-middleware* [handler {:keys [db] :as ctx} required?]
+  (let [{:keys [result error]} (jwt->user ctx)
+        account-id result
+        condition (if required?
+                    (or error (nil? account-id))
+                    (not (nil? error)))]
+    (if condition
+      (http-response/unauthorized {:error error})
+      (if account-id
+        (if-let [sso-token (sso-token/get-last-by-id db account-id)]
+          (handler (assoc ctx :user {:id        account-id
+                                     :sso-token (:sso_tokens/access_token sso-token)}))
+          (http-response/unauthorized {:error "Aidbox session expired"}))
+        (handler ctx)))))
 
 (defn authentication-middleware [required?]
   {:name ::authentication
    :wrap (fn [handler]
-           (fn [{:keys [db] :as ctx}]
-             (let [{:keys [result error]} (jwt->user ctx)
-                   condition (if required?
-                               (or error (nil? result))
-                               (not (nil? error)))]
-               (if condition
-                 (http-response/unauthorized {:error error})
-                 (if-let [sso-token (sso-token/get-last-by-id db result)]
-                   (handler (-> ctx
-                                (assoc :user/id result)
-                                (assoc :user/sso-token (:sso_tokens/access_token sso-token))))
-                   (http-response/unauthorized {:error "Aidbox session expired"}))))))})
+           (fn [ctx]
+             (authentication-middleware* handler ctx required?)))})

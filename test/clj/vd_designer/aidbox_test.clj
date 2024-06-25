@@ -14,13 +14,12 @@
   (let [valid-access-token {:token    "<valid-access-token>"
                             :expired? false}
         [project-1-id project-2-id] (repeatedly 2 random-uuid)
-        aidbox-auth-token "<aidbox-auth-token>"
 
         {:keys [aidbox.portal/client cfg db] :as ctx} (test-context/mk)
         [{account-id :accounts/id}] (account/create db {:email "<email>"})
 
         ctx-with-user (assoc ctx :user {:id        account-id
-                                        :sso-token aidbox-auth-token})
+                                        :sso-token (:token valid-access-token)})
         public-servers (sut/filter-server-keys (:public-fhir-servers cfg))]
 
     (testing "public servers only"
@@ -28,7 +27,6 @@
                   (sut/list-servers ctx))))
 
     (testing "3 licenses among 2 projects"
-
       (fake-portal/add-access-key client valid-access-token)
 
       (doseq [project [{:name "<project-1-name>", :id project-1-id}
@@ -45,7 +43,7 @@
                              :name    "<license-3-name>"
                              :project {:id project-2-id}}]]
         (->> license-base
-             (fake-portal/->valid-license aidbox-auth-token)
+             (fake-portal/->valid-license (:token valid-access-token))
              (fake-portal/add-license client)))
 
       ;; to verify the last one is picked
@@ -91,27 +89,13 @@
             [#:user_servers{:account_id        account-id
                             :server_name       "<license-1-name>"
                             :box_url           "https://box-url-1.com"
-                            :aidbox_auth_token aidbox-auth-token}
+                            :aidbox_auth_token (:token valid-access-token)}
              #:user_servers{:account_id        account-id
                             :server_name       "<license-2-name>"
                             :box_url           "https://box-url-2.com"
-                            :aidbox_auth_token aidbox-auth-token}
+                            :aidbox_auth_token (:token valid-access-token)}
              #:user_servers{:account_id        account-id
                             :server_name       "<license-3-name>"
                             :box_url           "https://box-url-3.com"
-                            :aidbox_auth_token aidbox-auth-token}])
-           (user-server/get-all db))))
-
-    (testing "Expired Aidbox portal access token"
-      (let [token {:token    "<expired-token>"
-                   :expired? true}]
-        (fake-portal/add-access-key client token)
-        (sso-token/create db {:account_id   account-id
-                              :access_token (:token token)})
-        (is (match?
-             (http-response/unauthorized {:error "Session expired"})
-             (sut/list-servers ctx-with-user)))
-
-        (is (match?
-             (sso-token/get-all db)
-             []))))))
+                            :aidbox_auth_token (:token valid-access-token)}])
+           (user-server/get-all db))))))

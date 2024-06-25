@@ -8,13 +8,11 @@
             [vd-designer.service.sso :as sso-service]
             [vd-designer.utils.base64 :as base64]))
 
-
-
 (defn check [{:keys [aidbox.portal/client db user]}]
   (if (predicates/unauthorized? @(portal/rpc:init-project client (:sso-token user)))
     (do
       (sso-token/delete db (:id user))
-      (http-response/unauthorized))
+      (http-response/unauthorized {:error "Aidbox session expired"}))
     (http-response/ok)))
 
 

@@ -10,7 +10,8 @@
             [vd-designer.context :as context]
             [vd-designer.monitoring :as monitoring]
             [vd-designer.repository.account :as account]
-            [vd-designer.server :as server]))
+            [vd-designer.server :as server]
+            [vd-designer.repository.sso-token :as sso-token]))
 
 (def ctx (context/mk))
 

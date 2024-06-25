@@ -1,13 +1,12 @@
 (ns vd-designer.auth.controller
   (:require
-    [vd-designer.pages.lists.settings.controller :as settings-controller]
-    [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
+   [vd-designer.pages.lists.settings.controller :as settings-controller]
+   [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
 
 (reg-fx
  :set-authentication
  (fn [v]
    (.setItem (.-localStorage js/window)
-              ;; TODO: keyword or string?
              :authentication
              v)))
 

@@ -4,7 +4,8 @@
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
             [vd-designer.config :refer [config]]
-            [vd-designer.utils.collection :refer [conj-if-new]]))
+            [vd-designer.utils.collection :refer [conj-if-new]]
+            [vd-designer.web.controllers.auth :as auth]))
 
 (defn add-access-key [client access-key]
   (swap! (:db client) update-in [:access-keys] conj-if-new access-key))
