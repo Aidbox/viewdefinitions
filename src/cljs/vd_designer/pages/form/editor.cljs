@@ -7,6 +7,7 @@
             [vd-designer.pages.form.controller :as c]
             [vd-designer.pages.form.model :as m]
             [vd-designer.pages.form.form.uuid-decoration :refer [remove-decoration]]
+            [vd-designer.pages.form.form.input-references :as input-references]
             [vd-designer.utils.yaml :as yaml]))
 
 (defn format-vd [vd lang]
@@ -25,8 +26,10 @@
 (defn editor []
   (let [vd @(subscribe [::m/current-vd])
         lang @(subscribe [::m/language])
+        refs @(subscribe [::m/tree-inputs])
         code (-> vd
                  (remove-decoration)
+                 (input-references/replace-inputs-with-values refs)
                  (format-vd lang))]
     [:div {:style {:height        "calc(100vh - 180px)"
                    :padding-right "8px"}}

@@ -149,7 +149,6 @@ button {
 
 .vd-tree .ant-tree-title .cut-text {
   display: inline-flex;
-  height: 30px;
   overflow: hidden;
   color: #b5b5bc;
   word-break: break-all;

@@ -1,26 +1,28 @@
 (ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
             ["@sooro-io/react-gtm-module" :as TagManager]
-            [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Input
+            [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Flex Input
                           Popover Row Select Space Tooltip Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
-            [re-frame.core :refer [dispatch subscribe]]
+            [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [reagent.core :as r]
             [vd-designer.components.button :as button]
-            [vd-designer.components.dropdown :refer [add-dropdown
-                                                     dropdown-item-img]]
-            [vd-designer.components.input :refer [input input-number]]
+            [vd-designer.components.dropdown :as dropdown-component]
+            [vd-designer.components.input :as input-component]
             [vd-designer.components.select :as select]
             [vd-designer.components.tag :as tag]
-            [vd-designer.components.tree :refer [calc-key]]
+            [vd-designer.components.tree :as tree-component]
             [vd-designer.pages.form.controller :as c]
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]
-            [vd-designer.utils.js :refer [find-elements get-element-by-id
-                                          remove-class toggle-class]]))
+            [vd-designer.utils.js :as js-utils]))
 
-;;;; Tags
+(defn set-input-value [input-id value]
+  (dispatch-sync [::c/set-input-text input-id value]))
+
+(defn update-input-value [input-id f]
+  (dispatch-sync [::c/update-input-text input-id f]))
 
 (defn tree-tag [kind]
   (case kind
@@ -56,6 +58,19 @@
 
 ;;;; Rows
 
+(defn title-node-row [& {:keys [id start end]}]
+  [:> Flex {:justify :space-between
+            :on-click #(dispatch [::c/toggle-expand-collapse id])}
+   (into [:> Row {:align :middle
+                  :wrap false
+                  :gutter 8}]
+         (mapv (fn [c] [:> Col {:flex :auto} c]) start))
+   (into [:> Row {:align :middle
+                  :wrap false
+                  :gutter 8
+                  :style {:margin-right 4}}]
+         (mapv (fn [c] [:> Col {:flex :auto} c]) end))])
+
 (defn base-node-row [node-key col1 & cols]
   (->> cols
        (mapv (fn [col] [:> Col {:flex "30px"} col]))
@@ -67,7 +82,7 @@
 (defn base-input-row [value-path col1 col2]
   [:> Row {:align  :middle
            :gutter 16
-           :id     (calc-key value-path)}
+           :id     (tree-component/calc-key value-path)}
    [:> Col {:span 12}
     [:> Row {:justify :start} col1]]
 
@@ -76,44 +91,32 @@
 
 ;;;; Buttons
 
-(defn add-vd-item [value-path kind leaf?]
-  (let [column-leaf-value {:name "" :path ""}]
-    (dispatch [::c/add-tree-element
-               value-path
-               (if leaf?
-                 (case kind
-                   :constant      {:name "" :valueString ""}
-                   :where         {:path ""}
-                   :column        column-leaf-value)
-                 (case kind
-                   :column        {:column  [column-leaf-value]}
-                   :forEach       {:forEach       "" :select []}
-                   :forEachOrNull {:forEachOrNull "" :select []}
-                   :unionAll      {:unionAll []}))])))
+(defn add-vd-leaf [value-path kind]
+  (dispatch [::c/add-tree-leaf value-path kind]))
 
-(defn add-element-button [name value-path]
-  [button/ghost name icons/PlusOutlined
-   {:onClick #(add-vd-item value-path (keyword name) true)
+(defn add-element-button [value-path node-type]
+  [button/ghost (name node-type) icons/PlusOutlined
+   {:onClick #(dispatch [::c/add-tree-leaf value-path node-type])
     :style   {:width           "100%"
               :text-align      :left
               :justify-content :flex-start}}])
 
 (defn add-select-button [value-path]
   (let [requested-key #(keyword (.-key %))]
-    [add-dropdown "select"
+    [dropdown-component/add-dropdown "select"
      {:style {:width       "55px"
               :height      "18px"
               :flex-shrink 0}
       :menu {:items   (interpose {:type "divider"}
-                                 [(dropdown-item-img "column"        "/img/form/column.svg")
-                                  (dropdown-item-img "forEach"       "/img/form/forEach.svg")
-                                  (dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
-                                  (dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
+                                 [(dropdown-component/dropdown-item-img "column"        "/img/form/column.svg")
+                                  (dropdown-component/dropdown-item-img "forEach"       "/img/form/forEach.svg")
+                                  (dropdown-component/dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
+                                  (dropdown-component/dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
              :on-click #(do
                           (TagManager/dataLayer
                            (clj->js {:dataLayer {:event "vd_edit"
                                                  :node-type (name (requested-key %))}}))
-                          (add-vd-item value-path (requested-key %) false))}}]))
+                          (dispatch [::c/add-tree-node value-path (requested-key %)]))}}]))
 
 (defn convert-foreach [value-path kind]
   (let [to (if (= kind :forEach) :forEachOrNull :forEach)]
@@ -135,11 +138,6 @@
 
 ;;;; Inputs
 
-(defn change-input-value [value-path key value]
-  (dispatch [::c/change-input-value
-             (conj value-path key)
-             value]))
-
 (defn eval-on-ctrl-enter [event]
   (when (and (= "Enter" (.-key event))
              (or (.-ctrlKey event) (.-metaKey event)))
@@ -150,17 +148,17 @@
         name @(subscribe [::m/name-input])]
     [base-input-row value-path
      [tag/default "name"]
-     [input {:value       name
-             :onKeyDown   eval-on-ctrl-enter
-             :placeholder "ViewDefinition"
-             :classNames {:input
-                          (if (and (str/blank? name) errors?)
-                            "default-input red-input"
-                            "default-input")}
-             :style       {:font-style "normal"
-                           :min-width "200px"
-                           :max-width "400px"}
-             :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]))
+     [input-component/input {:value       name
+                             :onKeyDown   eval-on-ctrl-enter
+                             :placeholder "ViewDefinition"
+                             :classNames {:input
+                                          (if (and (str/blank? name) errors?)
+                                            "default-input red-input"
+                                            "default-input")}
+                             :style       {:font-style "normal"
+                                           :min-width "200px"
+                                           :max-width "400px"}
+                             :onChange    (fn [e] (dispatch [::c/change-vd-name (u/target-value e)]))}]]))
 
 (defn resource-input [value-path]
   (let [errors? @(subscribe [::m/empty-inputs?])
@@ -179,7 +177,7 @@
                    :onSelect    #(dispatch [::c/change-vd-resource %])})]]))
 
 (defn- toggle-settings-popover-hover [value-path]
-  (let [tree-element-id (calc-key value-path)
+  (let [tree-element-id (tree-component/calc-key value-path)
         button-id       (str tree-element-id "-settings-btn")
 
         process-hover   (fn [f elements]
@@ -187,20 +185,20 @@
                                   (mapv #(f element %)
                                         ["settings-popover-active" "active"]))
                                 elements))]
-
-    (process-hover remove-class (find-elements ".settings-popover-active.active"))
+    (process-hover js-utils/remove-class (js-utils/find-elements ".settings-popover-active.active"))
     (when value-path
-      (process-hover toggle-class [(get-element-by-id button-id)
-                                   (-> (get-element-by-id tree-element-id)
-                                       (.-parentNode)
-                                       (.-parentNode))]))))
+      (process-hover js-utils/toggle-class [(js-utils/get-element-by-id button-id)
+                                            ;; TODO: it worked long time ago.
+                                            #_(-> (js-utils/get-element-by-id tree-element-id)
+                                                (.-parentNode)
+                                                (.-parentNode))]))))
 
 (defn toggle-popover [value-path button-id]
   (toggle-settings-popover-hover value-path)
   (dispatch [::c/toggle-settings-opened-id button-id]))
 
 (defn settings-popover [value-path & {:as opts}]
-  (let [tree-element-id (calc-key value-path)
+  (let [tree-element-id (tree-component/calc-key value-path)
         button-id (str tree-element-id "-settings-btn")
         opened-id @(subscribe [::m/settings-opened-id])]
     [:> Popover (medley/deep-merge
@@ -213,11 +211,11 @@
                              :id        button-id
                              :tabIndex -1}]]]))
 
-(defn trigger-update-autocomplete-text-event [ctx event]
+(defn trigger-update-autocomplete-text-event [id fhirpath-prefix event]
   (dispatch [::c/update-autocomplete-text
-             {:id              (:value-path ctx)
+             {:id              id
               :text            (u/target-value event)
-              :fhirpath-prefix (:fhirpath-ctx ctx)
+              :fhirpath-prefix fhirpath-prefix
               :cursor-start (u/selection-start event)
               :cursor-end   (u/selection-end event)}]))
 
@@ -360,10 +358,6 @@
                    :value value
                    :cursor cursor))))))
 
-(defn column? [ctx]
-  (and (> (count (:value-path ctx)) 2)
-       (= :column (peek (pop (:value-path ctx))))))
-
 (defn fhirpath-alias [fhirpath]
   (let [tokens (str/split fhirpath #"\.")
         tokens (if (seq tokens) ; (str/split "name" #".") => []
@@ -373,13 +367,20 @@
          (remove (fn [token] (str/ends-with? token ")")))
          last)))
 
-(defn autocomplete [ctx key value placeholder & {:keys [on-ctrl-enter on-shift-enter autoFocus]}]
+(defn autocomplete
+  [& {:keys [input-id
+             name-input-id
+             autoFocus
+             placeholder
+             fhirpath-prefix]
+      {:keys [on-ctrl-enter
+              on-shift-enter]} :handlers}]
   (let [{:keys [options request]} @(subscribe [::m/autocomplete-options])
+        value @(subscribe [::m/input-value input-id])
         errors?  @(subscribe [::m/empty-inputs?])
-        children @(subscribe [::m/children (:value-path ctx)])
         auto-complete-ref (clojure.core/atom nil)
-        update-autocomplete-fn #(trigger-update-autocomplete-text-event ctx %)
-        rendered-options (if (= (:value-path ctx) (:id request))
+        update-autocomplete-fn #(trigger-update-autocomplete-text-event input-id fhirpath-prefix %)
+        rendered-options (if (= input-id (:id request))
                            (->ui-options request options)
                            [])]
     [:> ConfigProvider {:theme {:components {:Input {:activeBorderColor "#7972D3"
@@ -407,11 +408,13 @@
                                      (.stopPropagation e)
                                      (f e)))
                        :onBlur (fn [e]
-                                 (when (and (column? ctx)
-                                            (= "" (:name children)))
-                                   (change-input-value (:value-path ctx) :name (fhirpath-alias value)))
-                                 (change-input-value (:value-path ctx) key (u/target-value e))
-                                 (dispatch [::c/set-focus-node nil])
+                                 (set-input-value input-id (u/target-value e))
+                                 (update-input-value
+                                  name-input-id
+                                  (fn [v] (if (str/blank? v)
+                                            (fhirpath-alias (u/target-value e))
+                                            v)))
+                                 (dispatch [::c/set-input-focus nil])
                                  (dispatch [::c/eval-view-definition-data]))
                        :onInput #(update-autocomplete-fn %)
                        :onClick  (fn [e] (update-autocomplete-fn e))
@@ -436,65 +439,112 @@
 
                  :onFocus (fn [_]
                             (mapv
-                             (fn [one]
-                               (.setAttribute one "draggable" false))
-                             (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
-                 :classNames   {:input (if (and (str/blank? value) errors?)
+                              (fn [one]
+                                (.setAttribute one "draggable" false))
+                              (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                 :classNames   {:input (if errors?
                                          "default-input red-input"
                                          "default-input")}
                  :ref          (fn [el] (reset! auto-complete-ref el))}]]]))
 
-(defn string-input [ctx value-key value placeholder autoFocus on-shift-enter]
-  (let [errors? @(subscribe [::m/empty-inputs?])]
-    [input {:placeholder  (or placeholder "path")
-            :autoFocus autoFocus
-            :onBlur (fn [e]
-                      (mapv
-                       (fn [one]
-                         (.setAttribute one "draggable" true))
-                       (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
-                      (change-input-value (:value-path ctx) value-key (u/target-value e))
-                      (dispatch [::c/set-focus-node nil]))
-            :onKeyDown (fn [event]
-                         (when (and (= "Enter" (.-key event))
-                                    (or (.-ctrlKey event) (.-metaKey event)))
-                           (eval-on-ctrl-enter event))
-                         (when (and (= "Enter" (.-key event))
-                                    (.-shiftKey event))
-                           (on-shift-enter event)))
-            :onFocus (fn [_]
-                       (mapv
-                        (fn [one]
-                          (.setAttribute one "draggable" false))
-                        (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
-            :defaultValue value
-            :classNames   {:input (if (and (str/blank? value) errors?)
-                                    "default-input red-input"
-                                    "default-input")}}]))
+(defn string-input
+  [& {:keys [input-id
+             placeholder
+             autoFocus]
+      {:keys [on-shift-enter
+              on-ctrl-enter]} :handlers}]
+  (let [value @(subscribe [::m/input-value input-id])
+        error? @(subscribe [::m/input-error input-id])]
+    [input-component/input {:placeholder  (or placeholder "path")
+                            :autoFocus autoFocus
+                            :defaultValue value
+                            :onBlur (fn [e]
+                                      (mapv
+                                        (fn [one]
+                                          (.setAttribute one "draggable" true))
+                                        (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                                      (set-input-value input-id (u/target-value e))
+                                      (dispatch [::c/set-input-focus nil]))
+                            :onKeyDown (fn [event]
+                                         (when (and (= "Enter" (.-key event))
+                                                    (or (.-ctrlKey event) (.-metaKey event)))
+                                           (on-ctrl-enter event))
+                                         (when (and (= "Enter" (.-key event))
+                                                    (.-shiftKey event))
+                                           (on-shift-enter event)))
+                            :onFocus (fn [_]
+                                       (mapv
+                                         (fn [one]
+                                           (.setAttribute one "draggable" false))
+                                         (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+                            :classNames   {:input (if error?
+                                                    "default-input red-input"
+                                                    "default-input")}}]))
+
+
+(defn checkbox
+  [& {:keys [input-id]}]
+  (let [value @(subscribe [::m/input-value input-id])]
+    [:div {:style {:width "100%"}}
+     [:> Checkbox
+      {:checked  value
+       :onChange #(set-input-value input-id (-> % .-target .-checked))}]]))
+
+(defn input-number*
+  [& {:keys [input-id
+             placeholder]}]
+  (let [value @(subscribe [::m/input-value input-id])]
+    [input-component/input-number {:placeholder placeholder
+                                   :value       value
+                                   :onChange    #(set-input-value input-id %)}]))
 
 (defn render-input
-  [{value-path :value-path :as ctx} input-type placeholder value-key value deletable? settings-form &
-   {:keys [on-shift-enter autoFocus]}]
-  [:> Space.Compact {:block true
-                     :style {:align-items :center
-                             :gap         4}}
-   (case input-type
-     :number [input-number {:placeholder (or placeholder "path")
-                            :value       value
-                            :onChange    #(change-input-value (:value-path ctx) value-key %)}]
-     :boolean [:div {:style {:width "100%"}}
-               [:> Checkbox
-                {:checked  value
-                 :onChange #(change-input-value (:value-path ctx) value-key (-> % .-target .-checked))}]]
-     :fhirpath [autocomplete ctx value-key value placeholder {:on-ctrl-enter  #(dispatch [::c/eval-view-definition-data])
-                                                              :on-shift-enter on-shift-enter
-                                                              :autoFocus      autoFocus}]
-     [string-input ctx value-key value placeholder autoFocus on-shift-enter])
-   (when settings-form
-     [settings-popover value-path {:placement :right
-                                   :content   (r/as-element [settings-form value-path])}])
-   (when deletable? [delete-button value-path])])
+  [& {:keys [input-id] :as opts}]
+  (let [input-type @(subscribe [::m/input-type input-id])
+        input-focus @(subscribe [::m/input-focus])
+        opts (assoc opts :autoFocus (= input-id input-focus))]
+    (case input-type
+      :number [input-number* opts]
+      :boolean [checkbox opts]
+      :fhirpath [autocomplete
+                 (assoc-in opts [:handlers :on-ctrl-enter] #(dispatch [::c/eval-view-definition-data]))]
+      [string-input
+       (assoc-in opts [:handlers :on-ctrl-enter] #(dispatch [::c/eval-view-definition-data]))])))
 
+(defn column-name-input
+  [& {:keys [input-id
+             autoFocus]
+      {:keys [on-shift-enter]} :handlers}]
+  (let [value @(subscribe [::m/input-value input-id])
+        error? @(subscribe [::m/input-error input-id])]
+    [input-component/input {:defaultValue name
+                            :placeholder "name"
+                            :value value
+                            :autoFocus autoFocus
+                            :onBlur #(do
+                                       (mapv
+                                         (fn [one]
+                                           (.setAttribute one "draggable" true))
+                                         (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable")))
+                                       (dispatch [::c/set-input-focus nil])
+                                       (dispatch [::c/eval-view-definition-data]))
+                            :onFocus
+                            (fn [_]
+                              (mapv
+                                (fn [one]
+                                  (.setAttribute one "draggable" false))
+                                (array-seq (.querySelectorAll js/document ".ant-tree-treenode-draggable"))))
+
+                            :classNames {:input
+                                         (if (and (str/blank? name) error?)
+                                           "default-input red-input"
+                                           "default-input")}
+                            :style       {:font-style "normal"}
+                            :onKeyUp (fn [event]
+                                         (when (and (= "Enter" (.-key event))
+                                                    (.-shiftKey event))
+                                           (on-shift-enter event)))
+                            :onChange #(set-input-value input-id (-> % .-target .-value))}]))
 
 ;;;; Settings
 
