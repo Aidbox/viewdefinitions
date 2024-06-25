@@ -138,12 +138,13 @@
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
      [:> Panel {:minSize 55
-                :display "flex"}
+                :style {:display "flex"}}
       [:> Flex
        {:vertical true
         :flex     "1 0 0%"
         :style    {:override  "hidden"
                    :margin-left "20px"
+                   :display "flex"
                    :min-width "400px"}}
        [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
        [tabs {:animated true

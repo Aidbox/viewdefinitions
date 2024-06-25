@@ -1,6 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Row Col Space Flex]]
+            [antd :refer [Row Col Space Flex Spin]]
             [re-frame.core :refer [dispatch subscribe]]
             [clojure.string :as str]
             [reagent.core :as r]
@@ -63,10 +63,16 @@
        "RklEQVQ4y2P8//8/AyWAhYFCMAgMuHjx4n+KXaCv+I0szW8WpCG8kFO1lGFKW/SIjAUYgxz/MzAw"
        "MDC+nqhDUTQyjuYFBgCNmhP4OvTRgwAAAABJRU5ErkJggg=="))
 
+(def icon-folder
+"data:image/gif;base64,R0lGODlhEAAQAPQfAOvGUf7ztuvPMf/78/fkl/Pbg+u8Rvjqteu2Pf3zxPz36Pz0z+vTmPzurPvuw/npofbjquvNefHVduuyN+uuMu3Oafbgjfnqvf/3zv/3xevPi+vRjP/20/bmsP///wD/ACH5BAEKAB8ALAAAAAAQABAAAAVl4CeOZGme5qCqqDg8jyVJaz1876DsmAQAgqDgltspMEhMJoMZ4iy6I1AooFCIv+wKybziALVAoAEjYLwDgGIpJhMslgxaLR4/3rMAWoBp32V5exg8Shl1ckRUQVaMVkQ2kCstKCEAOw==")
+
+(def icon-datatype
+  "data:image/gif;base64,R0lGODlhEAAQAPZ/APrkusOiYvvfqbiXWaV2G+jGhdq1b8GgYf3v1frw3vTUlsWkZNewbcSjY/DQkad4Hb6dXv3u0f3v1ObEgfPTlerJiP3w1v79+e7OkPrfrfnjuNOtZPrpydaxa+/YrvvdpP779ZxvFPvnwKKBQaFyF/369M2vdaqHRPz58/HNh/vowufFhfroxO3OkPrluv779tK0e6JzGProwvrow9m4eOnIifPTlPDPkP78+Naxaf3v0/zowfXRi+bFhLWUVv379/rnwPvszv3rye3LiPvnv+3MjPDasKiIS/789/3x2f747eXDg+7Mifvu0tu7f+/QkfDTnPXWmPrjsvrjtPbPgrqZW+/QlPz48K2EMv36866OUPvowat8Ivvgq/Pbrvzgq/PguvrgrqN0Gda2evfYm9+7d/rpw9q6e/LSku/Rl/XVl/LSlfrkt+zVqe7Wqv3x1/bNffbOf59wFdS6if3u0vrqyP3owPvepfXQivDQkO/PkKh9K7STVf779P///wD/ACH5BAEKAH8ALAAAAAAQABAAAAemgH+CgxeFF4OIhBdKGwFChYl/hYwbdkoBPnaQkosbG3d3VEpSUlonUoY1Gzo6QkI8SrGxWBOFG4uySgY5ZWR3PFy2hnaWZXC/PHcPwkpJk1ShoHcxhQEXSUmtFy6+0iSFVResrjoTPDzdcoU+F65CduVU6KAhhQa3F8Tx8nchBoYuqoTLZoAKFRIhqGwqJAULFx0GYpBQeChRIR4TJm6KJMhQRUSBAAA7")
+
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
-          [:div
+          [:> Space
            [:img {:width "14" :height "14" :src icon-datatype-blob}]
            (:option-name element)])))
 
@@ -146,11 +152,19 @@
           (= "Reference" (:type element))
           [:img {:width "14" :height "14" :src icon-reference-blob}]
 
-          (and (:type element) (subs (:type element) 0 1))
+          (and (:type element) (let [first-char (subs (:type element) 0 1)]
+                                 (and first-char (= first-char (.toUpperCase first-char)))))
+          [:img {:width "14" :height "14" :src icon-datatype}]
+
+          (= "BackboneElement" (:type element))
+          [:img {:width "14" :height "14" :src icon-folder}]
+
+          (:type element)
           [:img {:width "14" :height "14" :src icon-primitive-blob}]
 
           :else (println "!! " element))
-        (:option-name element)]]
+        (str (:option-name element)
+             (when (:choices element) "[x]"))]]
 
       [:span {:style {:padding-left 32
                       :min-width "32px"
@@ -179,13 +193,14 @@
                       :min-width "150px"
                       :max-width "150px"
                       :display "inline-block"}}
-       (when (:type element) [:a (:type element)])]
+       (when (:type element)
+         [:a (:type element)])]
       [:span {:style {:padding-left 32
                       :display "inline-block"
                       :min-width "170px"}}
        (when (:binding element)
          [:span
-          "Binding: " [:a (shorten-valueset-name (:valueSet (:binding element)))]
+          "Binding: " [:a {:href (:valueSet (:binding element))} (shorten-valueset-name (:valueSet (:binding element)))]
           " (" (:strength (:binding element)) ")"])]])))
 
 (defn render-element [element fhir-schema & [lvl]]
@@ -231,9 +246,14 @@
 (defn resource-tab []
   (let [spec @(subscribe [::m/spec-map])
         resource-input @(subscribe [::form-model/resource-input])
-        pat (when spec (get (js->clj spec :keywordize-keys true)
-                            (keyword resource-input)))]
-    (when pat
+        resource (when spec (get (js->clj spec :keywordize-keys true)
+                                 (keyword resource-input)))]
+    (if resource
       [tree {:style         {:padding-right "16px"}
              :defaultExpandAll true
-             :tree-data (clj->js (schema->tree-data pat))}])))
+             :tree-data (clj->js (schema->tree-data resource))}]
+      [:> Flex {:style   {:padding-top "50%"}
+                :justify :center
+                :align   :center
+                :flex    1}
+       [:> Spin {:size :large}]])))
