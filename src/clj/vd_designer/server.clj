@@ -33,17 +33,17 @@
 
 (defn stop
   "Gracefully shutdown the server. Log the time of shutdown"
-  [ctx]
+  []
   (when-not (nil? @instance)
     (t/log! :info "Application server shutting down...")
-    (pool/close-pool (:db ctx))
+    (pool/close-pool)
     (.stop @instance)
     (reset! instance nil)))
 
 (defn restart
   "Convenience function to stop and start the application server"
   [ctx http-port]
-  (stop ctx)
+  (stop)
   (start ctx http-port))
 
 (defn -main
@@ -64,7 +64,7 @@
   (start ctx 8080)
 
   ;; Stop / restart application server
-  (stop ctx)
+  (stop)
   (restart ctx 8080)
 
   ;; Get all environment variables

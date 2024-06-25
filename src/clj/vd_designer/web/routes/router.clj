@@ -7,6 +7,8 @@
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.controllers.metrics :as metrics]
+            [vd-designer.web.middleware.auth :refer [authentication-optional-middleware
+                                                     authentication-required-middleware]]
             [vd-designer.web.middleware.context :refer [app-context-middleware]]
             [vd-designer.web.middleware.observability :refer [observability-middleware]]
             [vd-designer.web.middleware.query :refer [query-string-middleware]]))
@@ -18,7 +20,7 @@
       {:handler #'metrics/expose}}]
 
     ["/api"
-     ["/aidbox"
+     ["/aidbox" {:middleware [(authentication-optional-middleware)]}
       ["/servers"
        {:get
         {:handler #'aidbox/list-servers}}]
@@ -37,12 +39,14 @@
 
          :post
          {#_#_:parameters {:body {:box-url string? :vd string?}}
-          :handler #'aidbox/save-view-definition}
+          :handler #'aidbox/save-view-definition
+          :middleware [(authentication-required-middleware)]}
 
          :delete
          {:parameters {:body {:box-url string?
                               :vd      string?}}
-          :handler    #'aidbox/delete-view-definition}}]
+          :handler    #'aidbox/delete-view-definition
+          :middleware [(authentication-required-middleware)]}}]
        ["/eval"
         {:post
          {:parameters {:body {:box-url string?
