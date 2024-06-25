@@ -143,7 +143,7 @@
        {:vertical true
         :flex     "1 0 0%"
         :style    {:override  "hidden"
-                   :margin-left "20px"
+                   :margin-left "15px"
                    :display "flex"
                    :min-width "400px"}}
        [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]

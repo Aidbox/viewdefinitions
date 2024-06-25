@@ -170,3 +170,9 @@ button {
   min-width: 48px;
   max-width: 128px;
 }
+
+
+/* first line first element */
+.resource-tab .ant-tree-list-holder-inner:first-child .ant-tree-treenode:first-child .ant-tree-switcher {
+  display: none;
+}

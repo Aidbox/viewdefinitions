@@ -64,16 +64,18 @@
        "MDC+nqhDUTQyjuYFBgCNmhP4OvTRgwAAAABJRU5ErkJggg=="))
 
 (def icon-folder
-"data:image/gif;base64,R0lGODlhEAAQAPQfAOvGUf7ztuvPMf/78/fkl/Pbg+u8Rvjqteu2Pf3zxPz36Pz0z+vTmPzurPvuw/npofbjquvNefHVduuyN+uuMu3Oafbgjfnqvf/3zv/3xevPi+vRjP/20/bmsP///wD/ACH5BAEKAB8ALAAAAAAQABAAAAVl4CeOZGme5qCqqDg8jyVJaz1876DsmAQAgqDgltspMEhMJoMZ4iy6I1AooFCIv+wKybziALVAoAEjYLwDgGIpJhMslgxaLR4/3rMAWoBp32V5exg8Shl1ckRUQVaMVkQ2kCstKCEAOw==")
+  "data:image/gif;base64,R0lGODlhEAAQAPQfAOvGUf7ztuvPMf/78/fkl/Pbg+u8Rvjqteu2Pf3zxPz36Pz0z+vTmPzurPvuw/npofbjquvNefHVduuyN+uuMu3Oafbgjfnqvf/3zv/3xevPi+vRjP/20/bmsP///wD/ACH5BAEKAB8ALAAAAAAQABAAAAVl4CeOZGme5qCqqDg8jyVJaz1876DsmAQAgqDgltspMEhMJoMZ4iy6I1AooFCIv+wKybziALVAoAEjYLwDgGIpJhMslgxaLR4/3rMAWoBp32V5exg8Shl1ckRUQVaMVkQ2kCstKCEAOw==")
 
 (def icon-datatype
   "data:image/gif;base64,R0lGODlhEAAQAPZ/APrkusOiYvvfqbiXWaV2G+jGhdq1b8GgYf3v1frw3vTUlsWkZNewbcSjY/DQkad4Hb6dXv3u0f3v1ObEgfPTlerJiP3w1v79+e7OkPrfrfnjuNOtZPrpydaxa+/YrvvdpP779ZxvFPvnwKKBQaFyF/369M2vdaqHRPz58/HNh/vowufFhfroxO3OkPrluv779tK0e6JzGProwvrow9m4eOnIifPTlPDPkP78+Naxaf3v0/zowfXRi+bFhLWUVv379/rnwPvszv3rye3LiPvnv+3MjPDasKiIS/789/3x2f747eXDg+7Mifvu0tu7f+/QkfDTnPXWmPrjsvrjtPbPgrqZW+/QlPz48K2EMv36866OUPvowat8Ivvgq/Pbrvzgq/PguvrgrqN0Gda2evfYm9+7d/rpw9q6e/LSku/Rl/XVl/LSlfrkt+zVqe7Wqv3x1/bNffbOf59wFdS6if3u0vrqyP3owPvepfXQivDQkO/PkKh9K7STVf779P///wD/ACH5BAEKAH8ALAAAAAAQABAAAAemgH+CgxeFF4OIhBdKGwFChYl/hYwbdkoBPnaQkosbG3d3VEpSUlonUoY1Gzo6QkI8SrGxWBOFG4uySgY5ZWR3PFy2hnaWZXC/PHcPwkpJk1ShoHcxhQEXSUmtFy6+0iSFVResrjoTPDzdcoU+F65CduVU6KAhhQa3F8Tx8nchBoYuqoTLZoAKFRIhqGwqJAULFx0GYpBQeChRIR4TJm6KJMhQRUSBAAA7")
+(def icon-resource
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAACCElEQVQ4y4XTv2sUQRTA8e9Mzt3kjoOLSXFgZ6GJQlALCysLC89OsLTXv0VFxE4stRAEQUghSWEXuM4qMZpATsUD70dyMdnduZ15z2IvMV5IfDDNm5nPm59GVTkpms1mTVXvhxDuichlEZn03m+KyJL3/mWj0fiKqp7YVlZWXrfbbR2PTqeji4uLn1WVEqdECKFRr9eP5WdnZ/HeXwROB0TEA3S7XarVKiLC1tYW8/PzeO/5LxBCUABrLXEc02q1KJfLB30F0P144dPU9LVL1kwcrU06WP0ewhML4JwDYDgcHo7I87wAjNq5ypU3Z8arT8F5u/xejw52zmGM+Rcg1wyIcc/BTYCdBlODyh3ElA1AHMekaUoURURRBECWZSNgaGzBxxAU9jfQ9jrJr2dcbbXobRYHlQAzo9X1gDR9+KUArE6CwLefZD9WCW6P0uRZKreXqADkHXZ3dshzjwRholJH397AOXcTwHTfzQ1n7q6NnYEAy+DWQVNwKWQJ6vcx557Se7HAzIN1M9rCwVteA/rAYDRRICQgSZEr7WLYO3bzJVJGQBu0D74PkoHkoBnIHvjfkO9AGABmDHCjFWgH8i7kPQh9yEeYH4DfLhBJgA2A7BBQJ9uwXWY3rhJqFo1AaiB1CBngwKZQcqAeSFSduL9Akj7qPF64jnALS5VTPwdgPwwJ+uog9Qcx4kRZiPKqxgAAAABJRU5ErkJggg==")
 
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
           [:> Space
-           [:img {:width "14" :height "14" :src icon-datatype-blob}]
+           [:img {:width "14" :height "14" :src icon-resource}]
            (:option-name element)])))
 
 (defn shorten-valueset-name [value-set-name]
@@ -167,23 +169,31 @@
              (when (:choices element) "[x]"))]]
 
       [:span {:style {:padding-left 32
+                      :padding-right 32
                       :min-width "32px"
                       :max-width "32px"
                       :display "inline-block"}}
-       (when (:mustSupport element)
-         [:span "S"])
+       [:> Space
+        (when (:modifier element)
+          [:span "?!"])
 
-       (when (:summary element)
-         [:span "Σ"])]
+        (when (:mustSupport element)
+          [:span "S"])
+
+        (when (:summary element)
+          [:span "Σ"])]]
 
       [:span {:style {:padding-left 32
                       :min-width "32px"
                       :max-width "32px"
                       :display "inline-block"}}
-       (str (or (when (contains? (into #{} (:required fhir-schema)) (:option-name element))
-                  "1")
-                (:min element)
-                "0")
+       (str (or
+             (when (contains?
+                    (into #{} (:required fhir-schema))
+                    (:option-name element))
+               "1")
+             (:min element)
+             "0")
             ".."
             (or (when (:array element) "*")
                 (:max element)
@@ -195,12 +205,15 @@
                       :display "inline-block"}}
        (when (:type element)
          [:a (:type element)])]
-      [:span {:style {:padding-left 32
-                      :display "inline-block"
-                      :min-width "170px"}}
+
+      [:span.cut-text2 {:style {:padding-left 32
+                                :display "inline-block"
+                                :min-width "170px"
+                                :overflow "scroll"}}
        (when (:binding element)
-         [:span
-          "Binding: " [:a {:href (:valueSet (:binding element))} (shorten-valueset-name (:valueSet (:binding element)))]
+         [:<>
+          "Binding: " [:a {:href (:valueSet (:binding element))}
+                       (shorten-valueset-name (:valueSet (:binding element)))]
           " (" (:strength (:binding element)) ")"])]])))
 
 (defn render-element [element fhir-schema & [lvl]]
@@ -229,16 +242,15 @@
 
 (defn fhir-schema->options [resource-type fhir-schema]
   (let [rt-key (create-key nil resource-type)]
-    [(render-resource
-      {:option-name (option-name resource-type fhir-schema)
-       :key rt-key
-       :children
-       (mapv
-        (fn [element]
-          (-> element
-              (assoc :key (create-key rt-key (:option-name element)))
-              (render-element fhir-schema)))
-        (pre-process-fhir-schema fhir-schema))})]))
+    (into [(render-resource
+            {:option-name (option-name resource-type fhir-schema)
+             :key rt-key})]
+          (mapv
+           (fn [element]
+             (-> element
+                 (assoc :key (create-key rt-key (:option-name element)))
+                 (render-element fhir-schema)))
+           (pre-process-fhir-schema fhir-schema)))))
 
 (defn schema->tree-data [schema]
   (fhir-schema->options (:id schema) schema))
@@ -249,8 +261,9 @@
         resource (when spec (get (js->clj spec :keywordize-keys true)
                                  (keyword resource-input)))]
     (if resource
-      [tree {:style         {:padding-right "16px"}
+      [tree {:style         {:padding-right "10px"}
              :defaultExpandAll true
+             :class        "vd-tree resource-tab"
              :tree-data (clj->js (schema->tree-data resource))}]
       [:> Flex {:style   {:padding-top "50%"}
                 :justify :center
