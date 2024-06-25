@@ -1,7 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.view
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Row Col Space Flex Spin]]
-            [re-frame.core :refer [dispatch subscribe]]
+  (:require [antd :refer [Space Flex Spin]]
+            [re-frame.core :refer [subscribe]]
             [clojure.string :as str]
             [reagent.core :as r]
             [vd-designer.components.tree :refer [tree]]
@@ -13,20 +12,6 @@
     (if parent-key
       (str parent-key "-" (str/lower-case element-name))
       (str/lower-case element-name))))
-
-(def icon-datatype-blob
-  (str "data:image/gif;base64,"
-       "R0lGODlhEAAQAPZ/APrkusOiYvvfqbiXWaV2G+jGhdq1b8GgYf3v1frw3vTUlsWkZNewbcSjY/DQ"
-       "kad4Hb6dXv3u0f3v1ObEgfPTlerJiP3w1v79+e7OkPrfrfnjuNOtZPrpydaxa+/YrvvdpP779Zxv"
-       "FPvnwKKBQaFyF/369M2vdaqHRPz58/HNh/vowufFhfroxO3OkPrluv779tK0e6JzGProwvrow9m4"
-       "eOnIifPTlPDPkP78+Naxaf3v0/zowfXRi+bFhLWUVv379/rnwPvszv3rye3LiPvnv+3MjPDasKiI"
-       "S/789/3x2f747eXDg+7Mifvu0tu7f+/QkfDTnPXWmPrjsvrjtPbPgrqZW+/QlPz48K2EMv36866O"
-       "UPvowat8Ivvgq/Pbrvzgq/PguvrgrqN0Gda2evfYm9+7d/rpw9q6e/LSku/Rl/XVl/LSlfrkt+zV"
-       "qe7Wqv3x1/bNffbOf59wFdS6if3u0vrqyP3owPvepfXQivDQkO/PkKh9K7STVf779P///wD/ACH5"
-       "BAEKAH8ALAAAAAAQABAAAAemgH+CgxeFF4OIhBdKGwFChYl/hYwbdkoBPnaQkosbG3d3VEpSUlon"
-       "UoY1Gzo6QkI8SrGxWBOFG4uySgY5ZWR3PFy2hnaWZXC/PHcPwkpJk1ShoHcxhQEXSUmtFy6+0iSF"
-       "VResrjoTPDzdcoU+F65CduVU6KAhhQa3F8Tx8nchBoYuqoTLZoAKFRIhqGwqJAULFx0GYpBQeChR"
-       "IR4TJm6KJMhQRUSBAAA7"))
 
 (def icon-reference-blob
   (str "data:image/png;base64,"
@@ -74,9 +59,30 @@
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
-          [:> Space
-           [:img {:width "14" :height "14" :src icon-resource}]
-           (:option-name element)])))
+          [:span
+           [:> Space
+            [:img {:width "14" :height "14" :src icon-resource}]
+            (:option-name element)]
+           [:span {:style {:padding-left 300
+                           :padding-right 32
+                           :min-width "32px"
+                           :max-width "32px"
+                           :display "inline-block"}}
+            "Flags"]
+           [:span {:style {:padding-left 32
+                           :padding-right 32
+                           :min-width "32px"
+                           :max-width "32px"
+                           :display "inline-block"}}
+            "Card."]
+           [:span {:style {:padding-left 32
+                           :min-width "150px"
+                           :max-width "150px"
+                           :display "inline-block"}}
+            "Type"]
+           [:span {:style {:padding-left 32
+                               :overflow "hidden"}}
+            "Description"]])))
 
 (defn shorten-valueset-name [value-set-name]
   (last (str/split value-set-name #"/")))
@@ -141,7 +147,7 @@
 (defn render-element* [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)]
     (r/as-element
-     [:span
+     [:span {:style {:height "30px"}}
       [:span
        {:style {:min-width (str (- 300 (* 32 lvl)) "px")
                 :max-width (str (- 300 (* 32 lvl)) "px")
@@ -184,6 +190,7 @@
           [:span "Σ"])]]
 
       [:span {:style {:padding-left 32
+                      :padding-right 32
                       :min-width "32px"
                       :max-width "32px"
                       :display "inline-block"}}
@@ -206,15 +213,14 @@
        (when (:type element)
          [:a (:type element)])]
 
-      [:span.cut-text2 {:style {:padding-left 32
-                                :display "inline-block"
-                                :min-width "170px"
-                                :overflow "scroll"}}
+      [:span {:style {:padding-left 32
+                          :overflow "hidden"}}
        (when (:binding element)
          [:<>
-          "Binding: " [:a {:href (:valueSet (:binding element))}
-                       (shorten-valueset-name (:valueSet (:binding element)))]
-          " (" (:strength (:binding element)) ")"])]])))
+          "Binding: "
+          [:a {:href (:valueSet (:binding element))}
+           (shorten-valueset-name (:valueSet (:binding element)))
+           "(" (:strength (:binding element)) ")"]])]])))
 
 (defn render-element [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)
@@ -222,7 +228,8 @@
                   (not (:key element))
                   (assoc :key (create-key (or (:key fhir-schema)
                                               (:option-name fhir-schema)
-                                              (:type fhir-schema)) (:option-name element))))]
+                                              (:type fhir-schema))
+                                          (:option-name element))))]
     (cond->
      (assoc element :title (render-element* element fhir-schema lvl))
 

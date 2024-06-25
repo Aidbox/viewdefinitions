@@ -172,7 +172,10 @@ button {
 }
 
 
-/* first line first element */
-.resource-tab .ant-tree-list-holder-inner:first-child .ant-tree-treenode:first-child .ant-tree-switcher {
+/* rm first line first element line in resource tab tree
+ * TODO: simplify
+ * */
+.resource-tab .ant-tree-list-holder-inner:first-child
+.ant-tree-treenode:first-child .ant-tree-switcher {
   display: none;
 }
