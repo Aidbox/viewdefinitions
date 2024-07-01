@@ -2,16 +2,11 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [lambdaisland.uri :as uri]
-            [ring.util.http-predicates :as predicates]
+            [martian.core :as martian]
             [ring.util.http-response :as http-response]
-            [vd-designer.aidbox.proxy :as proxy]
-            [vd-designer.aidbox.proxy.private :as proxy-private]
-            [vd-designer.aidbox.proxy.public :as proxy-public]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.sso-token :as sso-token]
-            [vd-designer.repository.user-server :as user-server]
-            [vd-designer.utils.http :refer [apply-middleware]]
-            [vd-designer.web.middleware.auth :as auth-middleware]))
+            [vd-designer.repository.user-server :as user-server]))
 
 (defn truncate-box-url [box-url]
   (some-> box-url
@@ -79,46 +74,43 @@
        (map #(select-keys % [:box-url :server-name :project]))
        (http-response/ok)))
 
-(defn public-fhir-server [public-fhir-servers box-url]
-  (some->> public-fhir-servers
-           (filter #(-> % :box-url (= box-url)))
-           first))
+(defn connect
+  [{:keys [box-url fhir-server-headers]}]
+  @(martian/response-for (portal/client box-url)
+                         :connect
+                         fhir-server-headers))
 
-(defn perform-proxied-request
-  [proto-fn
-   {:keys [cfg] :as ctx}
-   box-url
-   & [overrides-on-success]]
-  (let [public-server (public-fhir-server (:public-fhir-servers cfg) box-url)
-        box-response (if public-server
-                       (proto-fn (proxy-public/mk ctx public-server))
-                       ;; TODO this should be done at other place...
-                       (apply-middleware auth-middleware/authentication-required-middleware
-                                         proto-fn
-                                         (proxy-private/map->PrivateAidboxServerProxy ctx)))
-        response-body (:body box-response)]
-    (if (predicates/success? box-response)
-      (merge (http-response/ok response-body) overrides-on-success)
-      (http-response/bad-request response-body))))
+(defn get-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd-id]} (:query-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :get-view-definition
+                           (merge {:vd-id vd-id}
+                                  fhir-server-headers))))
 
-(defn connect [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/connect ctx
-                           (-> request :body-params :box-url)))
+(defn eval-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :rpc
+                           (merge {:method 'sof/eval-view
+                                   :params {:limit 100
+                                            :view  vd}}
+                                  fhir-server-headers))))
 
-(defn get-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/get-view-definition ctx
-                           (-> request :query-params :box-url)))
+(defn save-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd vd-id]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           (if vd-id :update-view-definition :create-view-definition)
+                           (merge {:body  vd
+                                   :vd-id vd-id}
+                                  fhir-server-headers))))
 
-(defn eval-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/eval-view-definition ctx
-                           (-> request :body-params :box-url)
-                           {:headers {}}))
-
-(defn save-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/save-view-definition ctx
-                           (-> request :body-params :box-url)))
-
-(defn delete-view-definition [{:keys [request] :as ctx}]
-  (perform-proxied-request proxy/delete-view-definition ctx
-                           (-> request :body-params :box-url)
-                           {:status 204}))
+(defn delete-view-definition
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd-id]} (:body-params request)]
+    @(martian/response-for (portal/client box-url)
+                           :delete-view-definition
+                           (merge {:vd-id vd-id}
+                                  fhir-server-headers))))

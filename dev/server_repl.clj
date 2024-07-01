@@ -71,7 +71,7 @@
 
   :rcf)
 
-;;; Experimetn with DB queries
+;;; Experiment with DB queries
 (comment
   (account/create (:db ctx) {:email "<EMAIL>"})
 

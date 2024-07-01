@@ -49,8 +49,8 @@
 
 (defmulti rpc :method)
 
-(defmethod rpc 'portal.portal/init-project [{:keys [authorization]} db-mock]
-  (let [[schema access-token] (str/split authorization #" ")
+(defmethod rpc 'portal.portal/init-project [{:keys [Authorization]} db-mock]
+  (let [[schema access-token] (str/split Authorization #" ")
         projects (or (get-in @db-mock [:projects access-token])
                      [])]
     (if (or (not= schema "Bearer")
@@ -64,10 +64,10 @@
        (some #{project-id})))
 
 (defmethod rpc 'portal.portal/fetch-licenses
-  [{:keys                [authorization]
+  [{:keys                [Authorization]
     {:keys [project-id]} :params}
    db-mock]
-  (let [[schema access-token] (str/split authorization #" ")
+  (let [[schema access-token] (str/split Authorization #" ")
         licenses (or (get-in @db-mock [:licenses project-id])
                      [])]
     (if (or (not= schema "Bearer")
@@ -81,13 +81,13 @@
    :leave (fn [{:keys [handler params]}]
             {:response
              (atom
-               (case (:route-name handler)
-                 :sso-code-exchange (exchange params)
-                 :rpc (rpc params db-mock)))})})
+              (case (:route-name handler)
+                :sso-code-exchange (exchange params)
+                :rpc (rpc params db-mock)))})})
 
 (defn client []
   (let [db-mock (atom {})]
     (-> (martian/bootstrap
-          "https://api.com" portal/routes
-          {:interceptors (conj martian/default-interceptors (perform-request db-mock))})
+         "https://api.com" portal/routes
+         {:interceptors (conj martian/default-interceptors (perform-request db-mock))})
         (assoc :db db-mock))))

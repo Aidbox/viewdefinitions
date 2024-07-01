@@ -4,24 +4,24 @@
             [ring.util.http-response :as http-response]
             [vd-designer.service.jwt :as jwt]
             [vd-designer.utils.http :refer [apply-middleware]]
-            [vd-designer.web.middleware.auth :refer [authentication-required-middleware]]))
+            [vd-designer.web.middleware.auth :refer [authentication-middleware]]))
 
-(deftest unauthorized-wo-token-test
+(deftest authentication-middleware-test
   (testing "header is missing"
     (is (match?
          (http-response/unauthorized {:error nil})
-         (apply-middleware authentication-required-middleware
+         (apply-middleware (partial authentication-middleware true)
                            identity
                            {:request {}}))))
 
   (testing "wrong authorization schema"
     (is (match?
          (http-response/unauthorized {:error nil})
-         (apply-middleware authentication-required-middleware
+         (apply-middleware (partial authentication-middleware true)
                            identity
                            {:request
                             {:headers
-                             {"authorization" "Basic am9objpkb2U="}}}))))
+                             {:Authorization "Basic 123"}}}))))
 
   (testing "invalid JWK"
     (let [valid-cfg   {:jwt {:jwk        (jwt/generate-jwk)
@@ -29,28 +29,26 @@
                              :expires-in 1}}
           invalid-cfg {:jwt {:jwk        (jwt/generate-jwk)
                              :sign-opts  {:alg :rs512}
-                             :expires-in 1}}
-          invalid-jwt (jwt/issue invalid-cfg "<account-id>")]
+                             :expires-in 1}}]
       (is (match?
            (http-response/unauthorized
-            {:error "Authentication seems manipulated, please re-authenticae"})
-           (apply-middleware authentication-required-middleware
+            {:error "Authentication seems manipulated, please re-authenticate"})
+           (apply-middleware (partial authentication-middleware true)
                              identity
                              {:cfg valid-cfg
                               :request
                               {:headers
-                               {"authorization" (str "Bearer " invalid-jwt)}}})))))
+                               {:Authorization (str "Bearer " (jwt/issue invalid-cfg "<account-id>"))}}})))))
 
   (testing "happy path"
     (let [cfg {:jwt {:jwk        (jwt/generate-jwk)
                      :sign-opts  {:alg :rs512}
-                     :expires-in 1}}
-          invalid-jwt (jwt/issue cfg "<account-id>")]
+                     :expires-in 1}}]
       (is (match?
            {:user "<account-id>"}
-           (apply-middleware authentication-required-middleware
+           (apply-middleware (partial authentication-middleware true)
                              identity
                              {:cfg cfg
                               :request
                               {:headers
-                               {"authorization" (str "Bearer " invalid-jwt)}}}))))))
+                               {:Authorization (str "Bearer " (jwt/issue cfg "<account-id>"))}}}))))))
