@@ -6,9 +6,7 @@
             [reagent.core :as r]
             [vd-designer.components.tree :refer [tree]]
             [vd-designer.pages.form.model :as form-model]
-            [vd-designer.pages.form.resource-tab.components :refer [icon-resource
-                                                                    render-icon
-                                                                    render-modifiers]]
+            [vd-designer.pages.form.resource-tab.components :as components]
             [vd-designer.pages.form.resource-tab.model :as m]))
 
 (defn create-key [parent-key element-name]
@@ -96,9 +94,10 @@
   (assoc element :title
          (r/as-element
           [:> Flex {:gap 4}
-           [:> Space {:style {:width "264px"}}
-            [icon-resource]
-            (:option-name element)]
+           [:div {:style {:width "264px"}}
+            [components/icon-resource]
+            [:span #_{:style {:padding-bottom "5px"}}
+             (:option-name element)]]
 
            [:div {:style (merge flags-cell-style {:margin-left "68px"})}
             "Flags"]
@@ -114,14 +113,15 @@
     (r/as-element
      [:> Flex {:gap 4, :style {:height "30px"}}
       [:div {:style {:width (str (- 300 (* 32 lvl)) "px")}}
-       [:> Typography.Text {:ellipsis true}
-        [:<>
-         [render-icon element]
+       [:<>
+        [components/render-icon element]
+        [:> Typography.Text {:ellipsis true
+                             :style {:padding-bottom "5px"}}
          (str (:option-name element)
               (when (:choices element) " [x]"))]]]
 
       [:div {:style flags-cell-style}
-       [render-modifiers element]]
+       [components/render-modifiers element]]
 
       [:div {:style cardinality-cell-style}
        (str (or
@@ -137,8 +137,7 @@
                 "1"))]
 
       [:div {:style type-cell-style}
-       (when (:type element)
-         [:a (:type element)])]
+       [components/render-type element]]
 
       [:div {:style description-cell-style}
        (when (:binding element)

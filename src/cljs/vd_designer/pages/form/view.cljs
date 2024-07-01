@@ -137,7 +137,7 @@
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
-     [:> Panel {:minSize 55
+     [:> Panel {:minSize 35
                 :style {:display "flex"}}
       [:> Flex
        {:vertical true
@@ -147,11 +147,12 @@
                    :display     "flex"}}
        [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
        [tabs {:animated true
-              :items [(tab-item {:key      "table"
+              :items [(tab-item {:key      "resource"
+                                 :label    "Resource"
+                                 :children [resource-tab/resource-tab]
+                                 :icon     (r/create-element icons/CodeOutlined)})
+                      (tab-item {:key      "table"
                                  :label    "Table"
                                  :children [render-table resources sandbox? server-url]
                                  :icon     (r/create-element icons/EditOutlined)})
-                      (tab-item {:key      "resource"
-                                 :label    "Resource"
-                                 :children [resource-tab/resource-tab]
-                                 :icon     (r/create-element icons/CodeOutlined)})]}]]]]))
+                      ]}]]]]))
