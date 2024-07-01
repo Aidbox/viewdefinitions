@@ -83,8 +83,7 @@
 
 (defn render-type [element]
   (when (:type element)
-    (if
-     (= "Reference" (:type element))
+    (if (= "Reference" (:type element))
       [:> Tooltip {:placement :top
                    :mouseEnterDelay 0.5
                    :title     (str "Reference" (referenced-resources element))}

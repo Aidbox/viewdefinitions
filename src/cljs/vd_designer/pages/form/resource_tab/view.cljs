@@ -7,71 +7,11 @@
             [vd-designer.components.tree :refer [tree]]
             [vd-designer.pages.form.model :as form-model]
             [vd-designer.pages.form.resource-tab.components :as components]
-            [vd-designer.pages.form.resource-tab.model :as m]))
-
-(defn create-key [parent-key element-name]
-  (when element-name
-    (if parent-key
-      (str parent-key "-" (str/lower-case element-name))
-      (str/lower-case element-name))))
+            [vd-designer.pages.form.resource-tab.model :as m]
+            [vd-designer.pages.form.resource-tab.controller :as c]))
 
 (defn shorten-valueset-name [value-set-name]
   (last (str/split value-set-name #"/")))
-
-(defn add-choices [master slaves]
-  (assoc master :choices (get slaves (:option-name master))))
-
-(defn group-choice-of
-  "[{:option-name 'valueA' :choiceOf 'value'}
-    {:option-name 'valueB' :choiceOf 'value'}
-    {:option-name 'value' :choices ['valueA' 'valueB']}]
-  =>
-  [{:option-name 'value' :choices
-    [{:option-name 'valueA' :choiceOf 'value'}
-     {:option-name 'valueB' :choiceOf 'value'}]}]"
-  [fhir-schemas]
-  (let [masters
-        (->>
-         fhir-schemas
-         (filter :choices))
-        slaves
-        (->> fhir-schemas
-             (group-by :choiceOf)
-             (remove (fn [[k _]] (nil? k)))
-             (into {}))]
-    (->> fhir-schemas
-         (remove #(or (:choices %) (:choiceOf %)))
-         (concat (mapv #(add-choices % slaves) masters)))))
-
-(defn add-keys [option-name elements]
-  (mapv
-   (fn [element]
-     (assoc element :key (create-key option-name (:option-name element))))
-   elements))
-
-(defn flat-elements
-  "{:elements {:a {1 2 3 4}}} => [{:option-name a 1 2 3 4}] "
-  [parent-element]
-  (reduce
-   (fn [acc [k v]]
-     (when (= "language" (name k))
-       (println "parent element " parent-element))
-
-     (conj acc
-           (assoc v :option-name (name k)
-                  :required (if (:required v)
-                              (:required v)
-                              (:required parent-element)))))
-   []
-   (:elements parent-element)))
-
-(defn pre-process-fhir-schema [fhir-schema]
-  (->> fhir-schema
-       flat-elements
-       group-choice-of
-       (sort-by :option-name)
-       (add-keys (:option-name fhir-schema))))
-
 
 (def flags-cell-style
   {:text-align :center
@@ -105,7 +45,7 @@
            [:div {:style description-cell-style}
             "Desc."]])))
 
-(defn render-element* [element fhir-schema & [lvl]]
+(defn render-element* [element & [lvl]]
   (let [lvl (or lvl 0)]
     (r/as-element
      [:> Flex {:gap 4, :style {:height "30px"}}
@@ -123,12 +63,12 @@
       [:div {:style cardinality-cell-style}
        (when-not (:choiceOf element)
          (str (or
-                (when (contains?
-                        (into #{} (:required element))
-                        (:option-name element))
-                  "1")
-                (:min element)
-                "0")
+               (when (contains?
+                      (into #{} (:required element))
+                      (:option-name element))
+                 "1")
+               (:min element)
+               "0")
               ".."
               (or (when (:array element) "*")
                   (:max element)
@@ -152,38 +92,38 @@
   (let [lvl (or lvl 0)
         element (cond-> element
                   (not (:key element))
-                  (assoc :key (create-key (or (:key fhir-schema)
-                                              (:option-name fhir-schema)
-                                              (:type fhir-schema))
-                                          (:option-name element))))]
+                  (assoc :key (c/create-key (or (:key fhir-schema)
+                                                (:option-name fhir-schema)
+                                                (:type fhir-schema))
+                                            (:option-name element))))]
     (cond->
-     (assoc element :title (render-element* element fhir-schema lvl))
+     (assoc element :title (render-element* element lvl))
 
       (:choices element)
       (assoc :children (mapv
                         (fn [c]
-                          {:title (render-element* c fhir-schema (inc lvl))
-                           :key   (create-key (:key element) (:option-name c))})
+                          {:title (render-element* c (inc lvl))
+                           :key   (c/create-key (:key element) (:option-name c))})
                         (:choices element)))
 
       (:elements element) ;; backbone element
       (assoc :children
              (mapv
               (fn [c]
-                (render-element c (pre-process-fhir-schema element) (inc lvl)))
-              (pre-process-fhir-schema element))))))
+                (render-element c (c/pre-process-fhir-schema element) (inc lvl)))
+              (c/pre-process-fhir-schema element))))))
 
 (defn fhir-schema->options [resource-type fhir-schema]
-  (let [rt-key (create-key nil resource-type)]
+  (let [rt-key (c/create-key nil resource-type)]
     (into [(render-resource
             {:option-name (or resource-type (:id fhir-schema) "")
              :key         rt-key})]
           (mapv
            (fn [element]
              (-> element
-                 (assoc :key (create-key rt-key (:option-name element)))
+                 (assoc :key (c/create-key rt-key (:option-name element)))
                  (render-element fhir-schema)))
-           (pre-process-fhir-schema fhir-schema)))))
+           (c/pre-process-fhir-schema fhir-schema)))))
 
 (defn schema->tree-data [schema]
   (fhir-schema->options (:id schema) schema))
