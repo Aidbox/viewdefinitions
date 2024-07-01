@@ -19,9 +19,7 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
-            [vd-designer.utils.utils :as utils]
-            [vd-designer.components.input :as input-component]
-            [vd-designer.components.icon :as icon]))
+            [vd-designer.utils.utils :as utils]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
