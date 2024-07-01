@@ -63,8 +63,14 @@
   [parent-element]
   (reduce
    (fn [acc [k v]]
+     (when (= "language" (name k))
+       (println "parent element " parent-element))
+
      (conj acc
-           (assoc v :option-name (name k))))
+           (assoc v :option-name (name k)
+                  :required (if (:required v)
+                              (:required v)
+                              (:required parent-element)))))
    []
    (:elements parent-element)))
 
@@ -124,9 +130,14 @@
        [components/render-modifiers element]]
 
       [:div {:style cardinality-cell-style}
+       (when (= "language" (:option-name element))
+         (println "element " element )
+         (println "fhir schema " fhir-schema )
+
+         )
        (str (or
              (when (contains?
-                    (into #{} (:required fhir-schema))
+                    (into #{} (:required element))
                     (:option-name element))
                "1")
              (:min element)
