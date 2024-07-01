@@ -81,7 +81,7 @@
                            :display "inline-block"}}
             "Type"]
            [:span {:style {:padding-left 32
-                               :overflow "hidden"}}
+                           :overflow "hidden"}}
             "Description"]])))
 
 (defn shorten-valueset-name [value-set-name]
@@ -144,6 +144,36 @@
        (sort-by :option-name)
        (add-keys (:option-name fhir-schema))))
 
+(defn render-icon [element]
+  (cond
+    (:choices element)
+    [:img {:width "14" :height "14" :src icon-choice-blob}]
+
+    (= "Reference" (:type element))
+    [:img {:width "14" :height "14" :src icon-reference-blob}]
+
+    (and (:type element) (let [first-char (subs (:type element) 0 1)]
+                           (and first-char (= first-char (.toUpperCase first-char)))))
+    [:img {:width "14" :height "14" :src icon-datatype}]
+
+    (= "BackboneElement" (:type element))
+    [:img {:width "14" :height "14" :src icon-folder}]
+
+    (:type element)
+    [:img {:width "14" :height "14" :src icon-primitive-blob}]
+    :else (println "!! " element)))
+
+(defn render-modifiers [element]
+  [:> Space
+   (when (:modifier element)
+     [:span "?!"])
+
+   (when (:mustSupport element)
+     [:span "S"])
+
+   (when (:summary element)
+     [:span "Σ"])])
+
 (defn render-element* [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)]
     (r/as-element
@@ -153,24 +183,7 @@
                 :max-width (str (- 300 (* 32 lvl)) "px")
                 :display "inline-block"}}
        [:> Space
-        (cond
-          (:choices element)
-          [:img {:width "14" :height "14" :src icon-choice-blob}]
-
-          (= "Reference" (:type element))
-          [:img {:width "14" :height "14" :src icon-reference-blob}]
-
-          (and (:type element) (let [first-char (subs (:type element) 0 1)]
-                                 (and first-char (= first-char (.toUpperCase first-char)))))
-          [:img {:width "14" :height "14" :src icon-datatype}]
-
-          (= "BackboneElement" (:type element))
-          [:img {:width "14" :height "14" :src icon-folder}]
-
-          (:type element)
-          [:img {:width "14" :height "14" :src icon-primitive-blob}]
-
-          :else (println "!! " element))
+        [render-icon element]
         (str (:option-name element)
              (when (:choices element) "[x]"))]]
 
@@ -179,15 +192,7 @@
                       :min-width "32px"
                       :max-width "32px"
                       :display "inline-block"}}
-       [:> Space
-        (when (:modifier element)
-          [:span "?!"])
-
-        (when (:mustSupport element)
-          [:span "S"])
-
-        (when (:summary element)
-          [:span "Σ"])]]
+       [render-modifiers element]]
 
       [:span {:style {:padding-left 32
                       :padding-right 32
@@ -214,13 +219,14 @@
          [:a (:type element)])]
 
       [:span {:style {:padding-left 32
-                          :overflow "hidden"}}
+                      :overflow "hidden"}}
        (when (:binding element)
-         [:<>
-          "Binding: "
-          [:a {:href (:valueSet (:binding element))}
-           (shorten-valueset-name (:valueSet (:binding element)))
-           "(" (:strength (:binding element)) ")"]])]])))
+         (let [value-set (-> element :binding :valueSet)]
+           [:<>
+            "Binding: "
+            [:a {:href value-set}
+             (shorten-valueset-name value-set)
+             "(" (:strength (:binding element)) ")"]]))]])))
 
 (defn render-element [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)
