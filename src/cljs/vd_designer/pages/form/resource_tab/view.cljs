@@ -1,5 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.view
-  (:require [antd :refer [Flex Space Spin Typography]]
+  (:require ["@ant-design/icons" :as icons]
+            [antd :refer [Flex Space Spin Tooltip Typography]]
             [clojure.string :as str]
             [re-frame.core :refer [subscribe]]
             [reagent.core :as r]
@@ -89,8 +90,7 @@
   {:width      "150px"})
 
 (def description-cell-style
-  {:min-width  "100px"
-   :max-width  "350px"})
+  {:width      "32px"})
 
 (defn render-resource [element]
   (assoc element :title
@@ -107,7 +107,7 @@
            [:div {:style type-cell-style}
             "Type"]
            [:div {:style description-cell-style}
-            "Description"]])))
+            "Desc."]])))
 
 (defn render-element* [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)]
@@ -143,11 +143,13 @@
       [:div {:style description-cell-style}
        (when (:binding element)
          (let [value-set (-> element :binding :valueSet)]
-           [:> Typography.Text {:ellipsis true, :style {:vertical-align :middle}}
-            "Binding: "
-            [:a {:href value-set, :target "_blank"}
-             (shorten-valueset-name value-set)
-             " (" (:strength (:binding element)) ")"]]))]])))
+           [:> Tooltip {:placement :left
+                        :title     (r/as-element
+                                    [:<> "Binding: "
+                                     [:a {:href value-set, :target "_blank"}
+                                      (shorten-valueset-name value-set)
+                                      " (" (:strength (:binding element)) ")"]])}
+            [:> icons/QuestionCircleOutlined]]))]])))
 
 (defn render-element [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)
