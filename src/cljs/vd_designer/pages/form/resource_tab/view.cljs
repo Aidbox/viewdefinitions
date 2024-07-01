@@ -118,7 +118,7 @@
         [:> Typography.Text {:ellipsis true
                              :style {:padding-bottom "5px"}}
          (str (:option-name element)
-              (when (:choices element) " [x]"))]]]
+              (when (:choices element) "[x]"))]]]
 
       [:div {:style flags-cell-style}
        [components/render-modifiers element]]
