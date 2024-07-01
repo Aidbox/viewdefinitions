@@ -29,10 +29,9 @@
 
     :dispatch [:with-authentication
                (fn [authentication-token]
-                 [:http-xhrio
-                  (assoc (http/get-view-definitions authentication-token server)
-                    :on-success [::connect-success server-name]
-                    :on-failure [::not-connected server-name])])]}))
+                 (assoc (http/get-view-definitions authentication-token server)
+                   :on-success [::connect-success server-name]
+                   :on-failure [::not-connected server-name]))]}))
 
 (reg-event-fx
  ::connect-success
@@ -64,9 +63,9 @@
    {; TODO: добавить флаг о том, что мы начали подгружать список user servers?
     :dispatch [:with-authentication
                (fn [authentication-token]
-                 [:http-xhrio (-> (backend/request:list-server authentication-token)
-                                  (assoc :on-success [::update-user-server-list]
-                                         :on-failure [::not-connected nil]))])]}))
+                 (-> (backend/request:list-server authentication-token)
+                     (assoc :on-success [::update-user-server-list]
+                            :on-failure [::not-connected nil])))]}))
 
 (def used-server-name-kv :used-server-name)
 

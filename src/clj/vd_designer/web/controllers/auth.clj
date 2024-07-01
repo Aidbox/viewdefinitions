@@ -13,7 +13,7 @@
     (do
       (sso-token/delete db (:id user))
       (http-response/unauthorized {:error "Aidbox session expired"}))
-    (http-response/ok)))
+    (http-response/no-content)))
 
 
 (defn sso-redirect

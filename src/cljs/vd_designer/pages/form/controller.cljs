@@ -60,10 +60,8 @@
  (fn [_ [_ vd-id]]
    {:dispatch [:with-authentication
                (fn [authentication-token]
-                 [:http-xhrio (-> (backend/request:list-server authentication-token)
-                                  (assoc :on-success [::got-server-list vd-id]
-                                         ;; TODO
-                                         #_#_:on-failure [::not-connected]))])]}))
+                 (-> (backend/request:list-server authentication-token)
+                     (assoc :on-success [::got-server-list vd-id])))]}))
 
 (reg-event-fx
  ::got-server-list
@@ -198,11 +196,11 @@
 
     :dispatch   [:with-authentication
                  (fn [authentication-token]
-                   [:http-xhrio (-> (http.fhir-server/get-view-definition-user-server
-                                     authentication-token
-                                     (http.fhir-server/active-server db) vd-id)
-                                    (assoc :on-success [::choose-vd]
-                                           :on-failure [::on-vd-error]))])]}))
+                   (-> (http.fhir-server/get-view-definition-user-server
+                        authentication-token
+                        (http.fhir-server/active-server db) vd-id)
+                       (assoc :on-success [::choose-vd]
+                              :on-failure [::on-vd-error])))]}))
 
 (reg-event-fx
  ::process-import
@@ -366,13 +364,12 @@
 
         :dispatch   [:with-authentication
                      (fn [authentication-token]
-                       [:http-xhrio (->
-                                     (http.fhir-server/eval-view-definition-user-server
-                                      authentication-token
-                                      (http.fhir-server/active-server db)
-                                      view-definition)
-                                     (assoc :on-success [::on-eval-view-definition-success]
-                                            :on-failure [::on-eval-view-definition-error]))])]}))))
+                       (-> (http.fhir-server/eval-view-definition-user-server
+                            authentication-token
+                            (http.fhir-server/active-server db)
+                            view-definition)
+                           (assoc :on-success [::on-eval-view-definition-success]
+                                  :on-failure [::on-eval-view-definition-error])))]}))))
 
 (reg-event-db
  ::reset-vd-error
@@ -579,15 +576,15 @@
 
         :dispatch [:with-authentication
                    (fn [authentication-token]
-                     [:http-xhrio (assoc (cond->
-                                          (http.fhir-server/post-view-definition
-                                           authentication-token
-                                           (http.fhir-server/active-server db)
-                                           view-definition)
-                                           (:id view-definition)
-                                           (assoc-in [:params :vd-id] (:id view-definition)))
-                                         :on-success [::save-view-definition-success]
-                                         :on-failure [::save-view-definition-failure])])]}))))
+                     (assoc (cond->
+                             (http.fhir-server/post-view-definition
+                              authentication-token
+                              (http.fhir-server/active-server db)
+                              view-definition)
+                              (:id view-definition)
+                              (assoc-in [:params :vd-id] (:id view-definition)))
+                            :on-success [::save-view-definition-success]
+                            :on-failure [::save-view-definition-failure]))]}))))
 
 (reg-event-fx
  ::save-view-definition-success

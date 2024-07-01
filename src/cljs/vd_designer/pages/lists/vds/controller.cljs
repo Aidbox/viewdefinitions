@@ -27,11 +27,11 @@
 
     :dispatch   [:with-authentication
                  (fn [authentication-token]
-                   [:http-xhrio (-> (http.fhir-server/get-view-definitions
-                                      authentication-token
-                                      (http.fhir-server/active-server db))
-                                    (assoc :on-success [::got-view-definitions-success]
-                                           :on-failure [::get-view-definitions-fail]))])]}))
+                   (-> (http.fhir-server/get-view-definitions
+                         authentication-token
+                         (http.fhir-server/active-server db))
+                       (assoc :on-success [::got-view-definitions-success]
+                              :on-failure [::get-view-definitions-fail])))]}))
 
 (reg-event-fx
  ::got-view-definitions-success
@@ -53,13 +53,12 @@
  (fn [{:keys [db]} [_ id]]
    {:dispatch [:with-authentication
                (fn [authentication-token]
-                 [:http-xhrio
-                  (-> (http.fhir-server/delete-view-definition
-                        authentication-token
-                        (http.fhir-server/active-server db)
-                        id)
-                      (assoc :on-success [::delete-view-definition-success id]
-                             :on-failure [::delete-view-definition-failure]))])]}))
+                 (-> (http.fhir-server/delete-view-definition
+                       authentication-token
+                       (http.fhir-server/active-server db)
+                       id)
+                     (assoc :on-success [::delete-view-definition-success id]
+                            :on-failure [::delete-view-definition-failure])))]}))
 
 (reg-event-fx
  ::delete-view-definition-success
