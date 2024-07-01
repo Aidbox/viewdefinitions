@@ -1,7 +1,7 @@
 (ns vd-designer.pages.lists.vds.controller
   (:require
    [clojure.string :as str]
-   [re-frame.core :refer [reg-event-db reg-event-fx inject-cofx]]
+   [re-frame.core :refer [reg-event-db reg-event-fx]]
    [vd-designer.utils.debounce]
    [vd-designer.http.fhir-server :as http.fhir-server]
    [vd-designer.pages.lists.settings.controller :as settings-controller]
@@ -22,14 +22,16 @@
 
 (reg-event-fx
  ::get-view-definitions
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} [_]]
+ (fn [{:keys [db]} [_]]
    {:db         (assoc db ::m/view-definitions-loading true)
-    :http-xhrio (-> (http.fhir-server/get-view-definitions
-                     authentication-token
-                     (http.fhir-server/active-server db))
-                    (assoc :on-success [::got-view-definitions-success]
-                           :on-failure [::get-view-definitions-fail]))}))
+
+    :dispatch   [:with-authentication
+                 (fn [authentication-token]
+                   [:http-xhrio (-> (http.fhir-server/get-view-definitions
+                                      authentication-token
+                                      (http.fhir-server/active-server db))
+                                    (assoc :on-success [::got-view-definitions-success]
+                                           :on-failure [::get-view-definitions-fail]))])]}))
 
 (reg-event-fx
  ::got-view-definitions-success
@@ -48,14 +50,16 @@
 
 (reg-event-fx
  ::delete-view-definition
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} [_ id]]
-   {:http-xhrio (-> (http.fhir-server/delete-view-definition
-                     authentication-token
-                     (http.fhir-server/active-server db)
-                     id)
-                    (assoc :on-success [::delete-view-definition-success id]
-                           :on-failure [::delete-view-definition-failure]))}))
+ (fn [{:keys [db]} [_ id]]
+   {:dispatch [:with-authentication
+               (fn [authentication-token]
+                 [:http-xhrio
+                  (-> (http.fhir-server/delete-view-definition
+                        authentication-token
+                        (http.fhir-server/active-server db)
+                        id)
+                      (assoc :on-success [::delete-view-definition-success id]
+                             :on-failure [::delete-view-definition-failure]))])]}))
 
 (reg-event-fx
  ::delete-view-definition-success

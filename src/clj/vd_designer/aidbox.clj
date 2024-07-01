@@ -5,8 +5,7 @@
             [martian.core :as martian]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
-            [vd-designer.repository.user-server :as user-server]
-            [vd-designer.utils.debug :refer [?]]))
+            [vd-designer.repository.user-server :as user-server]))
 
 (defn truncate-box-url [box-url]
   (some-> box-url
