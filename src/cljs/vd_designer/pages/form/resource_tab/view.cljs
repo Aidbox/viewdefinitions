@@ -130,22 +130,18 @@
        [components/render-modifiers element]]
 
       [:div {:style cardinality-cell-style}
-       (when (= "language" (:option-name element))
-         (println "element " element )
-         (println "fhir schema " fhir-schema )
-
-         )
-       (str (or
-             (when (contains?
-                    (into #{} (:required element))
-                    (:option-name element))
-               "1")
-             (:min element)
-             "0")
-            ".."
-            (or (when (:array element) "*")
-                (:max element)
-                "1"))]
+       (when-not (:choiceOf element)
+         (str (or
+                (when (contains?
+                        (into #{} (:required element))
+                        (:option-name element))
+                  "1")
+                (:min element)
+                "0")
+              ".."
+              (or (when (:array element) "*")
+                  (:max element)
+                  "1")))]
 
       [:div {:style type-cell-style}
        [components/render-type element]]
