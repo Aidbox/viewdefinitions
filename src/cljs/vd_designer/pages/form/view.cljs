@@ -154,5 +154,4 @@
                       (tab-item {:key      "table"
                                  :label    "Table"
                                  :children [render-table resources sandbox? server-url]
-                                 :icon     (r/create-element icons/EditOutlined)})
-                      ]}]]]]))
+                                 :icon     (r/create-element icons/EditOutlined)})]}]]]]))

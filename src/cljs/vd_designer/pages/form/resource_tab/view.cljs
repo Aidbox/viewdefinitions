@@ -1,6 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.view
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Space Spin Tooltip Typography]]
+            [antd :refer [Flex Spin Tooltip Typography]]
             [clojure.string :as str]
             [re-frame.core :refer [subscribe]]
             [reagent.core :as r]
@@ -17,15 +17,6 @@
 
 (defn shorten-valueset-name [value-set-name]
   (last (str/split value-set-name #"/")))
-
-(defn option-name [element-name element]
-  (cond
-    element-name
-    element-name
-
-    (:id element)
-    (:id element)
-    :else ""))
 
 (defn add-choices [master slaves]
   (assoc master :choices (get slaves (:option-name master))))
@@ -185,7 +176,7 @@
 (defn fhir-schema->options [resource-type fhir-schema]
   (let [rt-key (create-key nil resource-type)]
     (into [(render-resource
-            {:option-name (option-name resource-type fhir-schema)
+            {:option-name (or resource-type (:id fhir-schema) "")
              :key         rt-key})]
           (mapv
            (fn [element]
