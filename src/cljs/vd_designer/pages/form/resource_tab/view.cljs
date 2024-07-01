@@ -33,8 +33,7 @@
           [:> Flex {:gap 4}
            [:div {:style {:width "264px"}}
             [components/icon-resource]
-            [:span #_{:style {:padding-bottom "5px"}}
-             (:option-name element)]]
+            [:span (:option-name element)]]
 
            [:div {:style (merge flags-cell-style {:margin-left "68px"})}
             "Flags"]

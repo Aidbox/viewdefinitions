@@ -67,7 +67,6 @@
     :scroll     {:y 1000
                  :x true}}])
 
-
 (def button-id "root-vd-settings")
 
 (defn viewdefinition-view []
@@ -147,11 +146,11 @@
                    :display     "flex"}}
        [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
        [tabs {:animated true
-              :items [(tab-item {:key      "resource"
-                                 :label    "Resource"
-                                 :children [resource-tab/resource-tab]
-                                 :icon     (r/create-element icons/ApartmentOutlined)})
-                      (tab-item {:key      "table"
+              :items [(tab-item {:key      "table"
                                  :label    "Table"
                                  :children [render-table resources sandbox? server-url]
-                                 :icon     (r/create-element icons/EditOutlined)})]}]]]]))
+                                 :icon     (r/create-element icons/EditOutlined)})
+                      (tab-item {:key      "resource"
+                                 :label    "Resource"
+                                 :children [resource-tab/resource-tab]
+                                 :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]))
