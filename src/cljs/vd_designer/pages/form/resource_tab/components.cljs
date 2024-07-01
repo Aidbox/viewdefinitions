@@ -46,9 +46,6 @@
 
 (defn render-modifiers [element]
   [:> Space
-   (when (:modifier element)
-     [:span "?!"])
-
    (when (:mustSupport element)
      [:span "S"])
 

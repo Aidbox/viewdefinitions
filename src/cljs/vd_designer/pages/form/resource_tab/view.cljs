@@ -1,5 +1,5 @@
 (ns vd-designer.pages.form.resource-tab.view
-  (:require [antd :refer [Flex Space Spin]]
+  (:require [antd :refer [Flex Space Spin Typography]]
             [clojure.string :as str]
             [re-frame.core :refer [subscribe]]
             [reagent.core :as r]
@@ -76,60 +76,53 @@
        (sort-by :option-name)
        (add-keys (:option-name fhir-schema))))
 
+
+(def flags-cell-style
+  {:text-align :center
+   :width      "46px"})
+
+(def cardinality-cell-style
+  {:text-align :center
+   :width      "44px"})
+
+(def type-cell-style
+  {:width      "150px"})
+
+(def description-cell-style
+  {:min-width  "100px"
+   :max-width  "350px"})
+
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
-          [:span
-           [:> Space
+          [:> Flex {:gap 4}
+           [:> Space {:style {:width "264px"}}
             [icon-resource]
-
             (:option-name element)]
-           [:span {:style {:padding-left  300
-                           :padding-right 32
-                           :min-width     "32px"
-                           :max-width     "32px"
-                           :display       "inline-block"}}
+
+           [:div {:style (merge flags-cell-style {:margin-left "68px"})}
             "Flags"]
-           [:span {:style {:padding-left  32
-                           :padding-right 32
-                           :min-width     "32px"
-                           :max-width     "32px"
-                           :display       "inline-block"}}
+           [:div {:style cardinality-cell-style}
             "Card."]
-           [:span {:style {:padding-left 32
-                           :min-width    "150px"
-                           :max-width    "150px"
-                           :display      "inline-block"}}
+           [:div {:style type-cell-style}
             "Type"]
-           [:span {:style {:padding-left 32
-                           :overflow "hidden"}}
+           [:div {:style description-cell-style}
             "Description"]])))
 
 (defn render-element* [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)]
     (r/as-element
-     [:span {:style {:height "30px"}}
-      [:span
-       {:style {:min-width (str (- 300 (* 32 lvl)) "px")
-                :max-width (str (- 300 (* 32 lvl)) "px")
-                :display "inline-block"}}
+     [:> Flex {:gap 4, :style {:height "30px"}}
+      [:div {:style {:width (str (- 300 (* 32 lvl)) "px")}}
        [:> Space
         [render-icon element]
         (str (:option-name element)
-             (when (:choices element) "[x]"))]]
+             (when (:choices element) " [x]"))]]
 
-      [:span {:style {:padding-left  32
-                      :padding-right 32
-                      :min-width     "32px"
-                      :max-width     "32px"
-                      :display       "inline-block"}}
+      [:div {:style flags-cell-style}
        [render-modifiers element]]
 
-      [:span {:style {:padding-left  32
-                      :padding-right 32
-                      :min-width     "32px"
-                      :max-width     "32px"
-                      :display       "inline-block"}}
+      [:div {:style cardinality-cell-style}
        (str (or
              (when (contains?
                     (into #{} (:required fhir-schema))
@@ -142,22 +135,18 @@
                 (:max element)
                 "1"))]
 
-      [:span {:style {:padding-left 32
-                      :min-width    "150px"
-                      :max-width    "150px"
-                      :display      "inline-block"}}
+      [:div {:style type-cell-style}
        (when (:type element)
          [:a (:type element)])]
 
-      [:span {:style {:padding-left 32
-                      :overflow     "hidden"}}
+      [:div {:style description-cell-style}
        (when (:binding element)
          (let [value-set (-> element :binding :valueSet)]
-           [:<>
+           [:> Typography.Text {:ellipsis true, :style {:vertical-align :middle}}
             "Binding: "
-            [:a {:href value-set}
+            [:a {:href value-set, :target "_blank"}
              (shorten-valueset-name value-set)
-             "(" (:strength (:binding element)) ")"]]))]])))
+             " (" (:strength (:binding element)) ")"]]))]])))
 
 (defn render-element [element fhir-schema & [lvl]]
   (let [lvl (or lvl 0)
@@ -177,7 +166,7 @@
                            :key   (create-key (:key element) (:option-name c))})
                         (:choices element)))
 
-      (:elements element) ;; backboneelement
+      (:elements element) ;; backbone element
       (assoc :children
              (mapv
               (fn [c]
