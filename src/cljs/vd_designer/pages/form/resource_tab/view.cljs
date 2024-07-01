@@ -114,10 +114,11 @@
     (r/as-element
      [:> Flex {:gap 4, :style {:height "30px"}}
       [:div {:style {:width (str (- 300 (* 32 lvl)) "px")}}
-       [:> Space
-        [render-icon element]
-        (str (:option-name element)
-             (when (:choices element) " [x]"))]]
+       [:> Typography.Text {:ellipsis true}
+        [:<>
+         [render-icon element]
+         (str (:option-name element)
+              (when (:choices element) " [x]"))]]]
 
       [:div {:style flags-cell-style}
        [render-modifiers element]]
