@@ -13,55 +13,32 @@
       (str parent-key "-" (str/lower-case element-name))
       (str/lower-case element-name))))
 
-(def icon-reference-blob
-  (str "data:image/png;base64,"
-       "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACx"
-       "jwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAadEVYdFNvZnR3YXJlAFBhaW50Lk5FVCB2My41"
-       "LjEwMPRyoQAAAFxJREFUOE/NjEEOACEIA/0o/38GGw+agoXYeNnDJDCUDnd/gkoFKhWozJiZI3gL"
-       "wY6rAgxhsPKTPUzycTl8lAryMyMsVQG6TFi6cHULyz8KOjC7OIQKlQpU3uPjAwhX2CCcGsgOAAAA"
-       "AElFTkSuQmCC"))
 
-(def icon-slice-item-blob
-  (str "data:image/png;base64,"
-       "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAAXNSR0IArs4c6QAAAARnQU1BAACx"
-       "jwv8YQUAAAAJcEhZcwAACxMAAAsTAQCanBgAAAHKSURBVDhPrZLRahNBFIb/mZ3dnd0km22oCdaa"
-       "2lYt0lYrFi+kIHjpUwheKIiP4KMovoCIt3qvBRFpTW0qFqqYJtpkkybZZN2d2XXd1s194n9zGOY/"
-       "35zzMySKIkwielrH1sSAsVcghCT1/01gLUxBs1UEgQ9rxrpqncmumXmec51Br/mtvdWuOlu6yeHW"
-       "+omfspO3U0C2nEd+3rq0euf6/cUbl2/ZJfOiyhUeeNJrH7r7XzY/v/v46v0zZ7dV/etnJkv6UoB9"
-       "pbC+8WTj+bW768sdv4eAuSBaiMin0GQWtp7Dh5ebB28evL4divC7op9MkGbAM9qs5GH509cKao0G"
-       "up1j9Ds9dNtd1OqH2N6rxHuSCyzDypQRhEEIMRAjQDzqUEZa38gZUHUbES0hIiVAKYLFZ8M2IKU6"
-       "PLVjbnEF80urIwAhIVU5DJbVwdgRaKsJsdOD2D2G2PsNsW8hqmcM6Qk/XiH2MCiKMsqAqtQu3px5"
-       "uHRv+VFhxZzVz2pgOQbhCgwbHlqVQbP6dPtF6+2vx6Vzc0Hjx0HSlwL+fYxYC7zA1/i0eV7hiik9"
-       "6XvNQd1zvJ34Lg4Ccmq6COfoZ2JOAeMqzWBcTQgA/gA0frpjmCaTCAAAAABJRU5ErkJggg=="))
+(defn icon-choice []
+  [:img {:width "14" :height "14" :src "/img/fhir/choice.png"}])
 
-(def icon-choice-blob
-  (str "data:image/gif;base64,"
-       "R0lGODlhEAAQAMQfAGm6/idTd4yTmF+v8Xa37KvW+lyh3KHJ62aq41ee2bXZ98nm/2mt5W2Ck5XN"
-       "/C1chEZieho8WXXA/2Gn4P39/W+y6V+l3qjP8Njt/lx2izxPYGyv51Oa1EJWZ////////yH5BAEA"
-       "AB8ALAAAAAAQABAAAAWH4Cd+Xml6Y0pCQts0EKp6GbYshaM/skhjhCChUmFIeL4OsHIxXRAISQTl"
-       "6SgIG8+FgfBMoh2qtbLZQr0TQJhk3TC4pYPBApiyFVDEwSOf18UFXxMWBoUJBn9sDgmDewcJCRyJ"
-       "JBoEkRyYmAABPZQEAAOhA5seFDMaDw8BAQ9TpiokJyWwtLUhADs="))
+(defn icon-datatype []
+  [:img {:width "14" :height "14" :src "/img/fhir/datatype.png"}])
 
-(def icon-primitive-blob
-  (str "data:image/png;base64,"
-       "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA"
-       "RklEQVQ4y2P8//8/AyWAhYFCMAgMuHjx4n+KXaCv+I0szW8WpCG8kFO1lGFKW/SIjAUYgxz/MzAw"
-       "MDC+nqhDUTQyjuYFBgCNmhP4OvTRgwAAAABJRU5ErkJggg=="))
+(defn icon-primitive []
+  [:img {:width "14" :height "14" :src "/img/fhir/primitive.png"}])
 
-(def icon-folder
-  "data:image/gif;base64,R0lGODlhEAAQAPQfAOvGUf7ztuvPMf/78/fkl/Pbg+u8Rvjqteu2Pf3zxPz36Pz0z+vTmPzurPvuw/npofbjquvNefHVduuyN+uuMu3Oafbgjfnqvf/3zv/3xevPi+vRjP/20/bmsP///wD/ACH5BAEKAB8ALAAAAAAQABAAAAVl4CeOZGme5qCqqDg8jyVJaz1876DsmAQAgqDgltspMEhMJoMZ4iy6I1AooFCIv+wKybziALVAoAEjYLwDgGIpJhMslgxaLR4/3rMAWoBp32V5exg8Shl1ckRUQVaMVkQ2kCstKCEAOw==")
+(defn icon-folder []
+  [:img {:width "14" :height "14" :src "/img/fhir/folder.png"}])
 
-(def icon-datatype
-  "data:image/gif;base64,R0lGODlhEAAQAPZ/APrkusOiYvvfqbiXWaV2G+jGhdq1b8GgYf3v1frw3vTUlsWkZNewbcSjY/DQkad4Hb6dXv3u0f3v1ObEgfPTlerJiP3w1v79+e7OkPrfrfnjuNOtZPrpydaxa+/YrvvdpP779ZxvFPvnwKKBQaFyF/369M2vdaqHRPz58/HNh/vowufFhfroxO3OkPrluv779tK0e6JzGProwvrow9m4eOnIifPTlPDPkP78+Naxaf3v0/zowfXRi+bFhLWUVv379/rnwPvszv3rye3LiPvnv+3MjPDasKiIS/789/3x2f747eXDg+7Mifvu0tu7f+/QkfDTnPXWmPrjsvrjtPbPgrqZW+/QlPz48K2EMv36866OUPvowat8Ivvgq/Pbrvzgq/PguvrgrqN0Gda2evfYm9+7d/rpw9q6e/LSku/Rl/XVl/LSlfrkt+zVqe7Wqv3x1/bNffbOf59wFdS6if3u0vrqyP3owPvepfXQivDQkO/PkKh9K7STVf779P///wD/ACH5BAEKAH8ALAAAAAAQABAAAAemgH+CgxeFF4OIhBdKGwFChYl/hYwbdkoBPnaQkosbG3d3VEpSUlonUoY1Gzo6QkI8SrGxWBOFG4uySgY5ZWR3PFy2hnaWZXC/PHcPwkpJk1ShoHcxhQEXSUmtFy6+0iSFVResrjoTPDzdcoU+F65CduVU6KAhhQa3F8Tx8nchBoYuqoTLZoAKFRIhqGwqJAULFx0GYpBQeChRIR4TJm6KJMhQRUSBAAA7")
-(def icon-resource
-  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAACXBIWXMAAAsTAAALEwEAmpwYAAACCElEQVQ4y4XTv2sUQRTA8e9Mzt3kjoOLSXFgZ6GJQlALCysLC89OsLTXv0VFxE4stRAEQUghSWEXuM4qMZpATsUD70dyMdnduZ15z2IvMV5IfDDNm5nPm59GVTkpms1mTVXvhxDuichlEZn03m+KyJL3/mWj0fiKqp7YVlZWXrfbbR2PTqeji4uLn1WVEqdECKFRr9eP5WdnZ/HeXwROB0TEA3S7XarVKiLC1tYW8/PzeO/5LxBCUABrLXEc02q1KJfLB30F0P144dPU9LVL1kwcrU06WP0ewhML4JwDYDgcHo7I87wAjNq5ypU3Z8arT8F5u/xejw52zmGM+Rcg1wyIcc/BTYCdBlODyh3ElA1AHMekaUoURURRBECWZSNgaGzBxxAU9jfQ9jrJr2dcbbXobRYHlQAzo9X1gDR9+KUArE6CwLefZD9WCW6P0uRZKreXqADkHXZ3dshzjwRholJH397AOXcTwHTfzQ1n7q6NnYEAy+DWQVNwKWQJ6vcx557Se7HAzIN1M9rCwVteA/rAYDRRICQgSZEr7WLYO3bzJVJGQBu0D74PkoHkoBnIHvjfkO9AGABmDHCjFWgH8i7kPQh9yEeYH4DfLhBJgA2A7BBQJ9uwXWY3rhJqFo1AaiB1CBngwKZQcqAeSFSduL9Akj7qPF64jnALS5VTPwdgPwwJ+uog9Qcx4kRZiPKqxgAAAABJRU5ErkJggg==")
+(defn icon-reference []
+  [:img {:width "14" :height "14" :src "/img/fhir/reference.png"}])
+
+(defn icon-resource []
+  [:img {:width "14" :height "14" :src "/img/fhir/resource.png"}])
 
 (defn render-resource [element]
   (assoc element :title
          (r/as-element
           [:span
            [:> Space
-            [:img {:width "14" :height "14" :src icon-resource}]
+            [icon-resource]
+
             (:option-name element)]
            [:span {:style {:padding-left 300
                            :padding-right 32
@@ -147,21 +124,21 @@
 (defn render-icon [element]
   (cond
     (:choices element)
-    [:img {:width "14" :height "14" :src icon-choice-blob}]
+    [icon-choice]
 
     (= "Reference" (:type element))
-    [:img {:width "14" :height "14" :src icon-reference-blob}]
+    [icon-reference]
 
-    (and (:type element) (let [first-char (subs (:type element) 0 1)]
-                           (and first-char (= first-char (.toUpperCase first-char)))))
-    [:img {:width "14" :height "14" :src icon-datatype}]
+    (and (:type element)
+         (let [first-char (subs (:type element) 0 1)]
+           (and first-char (= first-char (.toUpperCase first-char)))))
+    [icon-datatype]
 
     (= "BackboneElement" (:type element))
-    [:img {:width "14" :height "14" :src icon-folder}]
+    [icon-folder]
 
     (:type element)
-    [:img {:width "14" :height "14" :src icon-primitive-blob}]
-    :else (println "!! " element)))
+    [icon-primitive]))
 
 (defn render-modifiers [element]
   [:> Space
