@@ -130,3 +130,45 @@
    (-> inputs
        (get input-id)
        (get :type))))
+
+(reg-sub 
+ ::view-definition-code
+ :-> ::view-definition-code)
+
+(reg-sub
+ ::left-panel-active-tab
+ :-> ::left-panel-active-tab)
+
+(reg-sub
+ ::code-dirty?
+ :-> ::code-dirty?)
+
+(reg-sub
+ ::editor-id
+ :-> ::editor-id)
+
+(reg-sub
+ ::view-definition-code-valid?
+ :<- [::view-definition-code]
+ (fn [vd-code _]
+   ()))
+
+(reg-sub
+ ::view-definition-jsonschema
+ :-> ::view-definition-jsonschema)
+
+(reg-sub
+ ::view-definition-jsonschema-json
+ :<- [::view-definition-jsonschema]
+ (fn [vd-jsonschema _]
+   (clj->js vd-jsonschema)))
+
+
+(def editor-error-severity 8)
+(def editor-warning-severity 4)
+(def editor-info-severity 2)
+(def editor-hint-severity 1)
+
+(reg-sub
+ ::code-validation-severity
+ :-> ::code-validation-severity)

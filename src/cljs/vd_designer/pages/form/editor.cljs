@@ -5,16 +5,7 @@
             [vd-designer.components.monaco-editor :refer [monaco]]
             [vd-designer.components.switch :as switch]
             [vd-designer.pages.form.controller :as c]
-            [vd-designer.pages.form.model :as m]
-            [vd-designer.pages.form.form.uuid-decoration :refer [remove-decoration]]
-            [vd-designer.pages.form.form.input-references :as input-references]
-            [vd-designer.utils.yaml :as yaml]))
-
-(defn format-vd [vd lang]
-  (case lang
-    :language/yaml (yaml/edn->yaml vd)
-    :language/json (-> vd clj->js (js/JSON.stringify nil 2))
-    ""))
+            [vd-designer.pages.form.model :as m]))
 
 (defn filename [vd-name lang]
   (when (and vd-name lang)
@@ -24,21 +15,38 @@
       (str vd-name "." ext))))
 
 (defn editor []
-  (let [vd @(subscribe [::m/current-vd])
+  (let [vd-code @(subscribe [::m/view-definition-code])
         lang @(subscribe [::m/language])
-        refs @(subscribe [::m/tree-inputs])
-        code (-> vd
-                 (remove-decoration)
-                 (input-references/replace-inputs-with-values refs)
-                 (format-vd lang))]
+        code-ditry? @(subscribe [::m/code-dirty?])
+        editor-id @(subscribe [::m/editor-id])
+        schema @(subscribe [::m/view-definition-jsonschema])]
+    ^{:key editor-id}
     [:div {:style {:height        "calc(100vh - 180px)"
                    :padding-right "8px"}}
      [monaco {:id       "vd-yaml"
               :language (when lang (name lang))
-              :value    code
+              :defaultValue vd-code
               :schemas  []
-              #_#_:onChange (fn [value & _] (dispatch [::c/set-schema value]))
-              #_#_:onValidate (fn [markers] (dispatch [::c/set-monaco-markers (js->clj markers)]))}]
+              :beforeMount (fn [instance]
+                             (.setDiagnosticsOptions
+                              (.-jsonDefaults (.-json (.-languages ^js/Object instance)))
+                              (clj->js {:validate true
+                                        :allowComments true
+                                        :comments "ignore"
+                                        :enableSchemaRequest true
+                                        :schemas [schema]}))
+                             instance)
+              :onChange (fn [text & _args]
+                          (when (not code-ditry?)
+                            (dispatch [::c/set-code-ditry true]))
+                          (dispatch [::c/set-view-definition-code text]))
+              :onValidate (fn [markers]
+                            (js/console.log markers)
+                            (let [max-severity
+                                  (->> (js->clj markers :keywordize-keys true)
+                                       (mapv :severity)
+                                       (reduce max 0))]
+                              (dispatch [::c/on-code-validation max-severity])))}]
      [:> Flex {:style    {:position :absolute
                           :top      0
                           :right    "24px"
@@ -50,6 +58,6 @@
        :defaultChecked (= lang :language/json)
        :onChange #(dispatch [::c/change-language
                              (if % :language/json :language/yaml)])]
-      [button/copy code]
-      [button/download-text-file {:filename (filename (:name vd) lang)
-                                  :text     code}]]]))
+      [button/copy vd-code]
+      [button/download-text-file {:filename (filename "view-definition" lang)
+                                  :text     vd-code}]]]))

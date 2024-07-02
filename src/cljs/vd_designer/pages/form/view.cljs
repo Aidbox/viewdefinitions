@@ -69,6 +69,16 @@
 
 (def button-id "root-vd-settings")
 
+(defn on-tab-click [tab-key _event]
+  (case tab-key
+    "form"
+    (dispatch [::c/on-form-tab-clicked]) ;; load 
+
+    "code"
+    (dispatch [::c/on-code-tab-clicked])
+
+    nil))
+
 (defn viewdefinition-view []
   (let [resources @(subscribe [::m/view-definition-data])
         error @(subscribe [::m/current-vd-error])
@@ -76,7 +86,8 @@
         current-vd-nil? @(subscribe [::m/current-vd-nil?])
         authorized? @(subscribe [::auth-model/authorized?])
         server-url @(subscribe [::settings-model/current-server-url])
-        sandbox? @(subscribe [::settings-model/sandbox?])]
+        sandbox? @(subscribe [::settings-model/sandbox?])
+        code-validation-severity @(subscribe [::m/code-validation-severity])]
     [:> PanelGroup {:direction "horizontal"
                     :autoSaveId "persistence"
                     :style {:gutter         32
@@ -109,6 +120,7 @@
               :items [(tab-item {:key      "form"
                                  :label    "Form"
                                  :children [form]
+                                 :disabled (>= code-validation-severity m/editor-warning-severity)
                                  :icon     (r/create-element icons/EditOutlined)})
                       (tab-item {:key      "code"
                                  :label    "Code"
@@ -120,6 +132,7 @@
                                  :children [sql]
                                  :disabled (nil? resources)
                                  :icon     (r/create-element icons/HddOutlined)})]
+              :onTabClick on-tab-click
               :tabBarExtraContent {:right (r/as-element
                                            [:> Flex {:gap 8
                                                      :style {:margin-right "8px"}}

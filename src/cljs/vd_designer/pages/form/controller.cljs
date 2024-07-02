@@ -19,7 +19,9 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
-            [vd-designer.utils.utils :as utils]))
+            [vd-designer.utils.utils :as utils]
+            [vd-designer.pages.form.view-definition-jsonschema :as vd-jsonschema]
+            [vd-designer.utils.yaml :as yaml]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -32,6 +34,8 @@
   (cond-> [[:dispatch [::get-supported-resource-types]]]
     vd-id (conj [:dispatch [::get-view-definition vd-id]])))
 
+
+
 (reg-event-fx
  ::start
  (fn [{db :db} [_ parameters]]
@@ -39,13 +43,25 @@
          imported? (-> parameters :query :imported)]
      {:db (cond-> db
             :always
-            (assoc ::m/language :language/yaml)
+            (assoc ::m/language :language/json)
 
             (not vd-id)
             (set-view-definition-status)
 
             :always
-            (assoc :spec-map {}))
+            (assoc :spec-map {})
+            
+            :always
+            (assoc ::m/code-validation-severity 0)
+            
+            :always
+            (assoc ::m/left-panel-active-tab "form")
+            
+            :always
+            (assoc ::m/view-definition-jsonschema 
+                   {:uri "/a.json"
+                    :fileMatch ["*"]
+                    :schema vd-jsonschema/schema}))
       :fx (cond-> (if (-> db :cfg/fhir-servers :user/servers empty?)
                     [[:dispatch [::fetch-user-servers vd-id]]]
                     (ready-server-event-fx vd-id))
@@ -601,10 +617,26 @@
    {:db (assoc db ::m/save-loading false)
     :notification-error (str "Error on save: " (u/response->error result))}))
 
+(defn format-vd [vd lang]
+  (case lang
+    :language/yaml (yaml/edn->yaml vd)
+    :language/json (-> vd clj->js (js/JSON.stringify nil 2))
+    ""))
+
+(defn format-vd-code [vd lang]
+  (case lang
+    :language/yaml (-> vd js/JSON.parse yaml/stringify)
+    :language/json (-> vd yaml/str->yaml (js/JSON.stringify nil 2))
+    ""))
+
 (reg-event-db
  ::change-language
  (fn [db [_ lang]]
-   (assoc db ::m/language lang)))
+   (assoc db
+          ::m/language lang
+          ::m/editor-id (random-uuid)
+          ::m/view-definition-code
+          (format-vd-code (::m/view-definition-code db) lang))))
 
 (reg-event-fx
  ::toggle-settings-opened-id
@@ -791,3 +823,49 @@
  ::update-input-text
  (fn [db [_ input-id f]]
    (update-in db [::m/tree-inputs input-id :value] f)))
+
+(reg-event-fx
+ ::on-form-tab-clicked
+ (fn [{:keys [db]} _]
+   (let [new-db (assoc db ::m/left-panel-active-tab "tab")]
+     (when (not= (::m/left-panel-active-tab db) "tab")
+       (if (::m/code-dirty? db)
+         (try
+           (let [vd (-> (::m/view-definition-code db)
+                        (yaml/yaml->edn)
+                        (js->clj :keywordize-keys true))]
+             {:fx [[:dispatch [::choose-vd vd]]]
+              :db (assoc new-db ::m/code-dirty? false)})
+           (catch js/Error _
+           ;; TODO: Notification
+             {:db new-db}))
+         {:db new-db})))))
+
+(reg-event-db
+ ::on-code-tab-clicked
+ (fn [db _]
+   (when (not= (::m/left-panel-active-tab db) "code")
+     (let [language (::m/language db)]
+       (-> db
+           (assoc ::m/left-panel-active-tab "code")
+           (assoc ::m/editor-id (str (random-uuid)))
+           (assoc ::m/view-definition-code
+                  (-> (:current-vd db)
+                      decoration/remove-decoration
+                      (input-references/replace-inputs-with-values (::m/tree-inputs db))
+                      (format-vd language))))))))
+
+(reg-event-db
+ ::set-code-ditry
+ (fn [db [_ value]]
+   (assoc db ::m/code-dirty? value)))
+
+(reg-event-db
+ ::set-view-definition-code
+ (fn [db [_ value]]
+   (assoc db ::m/view-definition-code value)))
+
+(reg-event-db
+ ::on-code-validation
+ (fn [db [_ severity]]
+   (assoc db ::m/code-validation-severity severity)))

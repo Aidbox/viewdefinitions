@@ -5,6 +5,12 @@
 (defn edn->yaml [edn]
   (y/stringify (clj->js edn)))
 
+(defn stringify [js]
+  (y/stringify js))
+
 (defn str->yaml [^String str]
   (let [wo-comments (str/replace str #"//.*|#.*|/\*[\s\S]*?\*/" "")]
     (y/parse wo-comments)))
+
+(defn yaml->edn [yaml]
+  (y/parse yaml))
