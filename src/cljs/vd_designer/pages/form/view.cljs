@@ -96,7 +96,7 @@
          [:> Typography.Title {:level 1 :style {:margin-top 0}} "ViewDefinition"]
          [button/icon ""
           icons/SettingOutlined
-          {:onClick #(toggle-popover nil button-id)
+          {:onClick #(toggle-popover button-id)
            :style   {:border :none}
            :id      button-id}]]
         [form/root-settings {:open (= button-id opened-id)}]]

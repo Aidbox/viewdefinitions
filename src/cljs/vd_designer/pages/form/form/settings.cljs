@@ -59,14 +59,14 @@
   (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
     (dispatch-sync [::c/change-input-value-merge value-path fields])
     (mapv #(% value-path) extra-actions)
-    (toggle-popover value-path nil)))
+    (toggle-popover nil)))
 
 (defn root-settings [opts]
   (let [vd @(subscribe [::m/current-vd])]
     [:> Modal (medley.core/deep-merge
                {:footer    nil
                 :style     {:top 96 :margin-left 96}
-                :on-cancel #(toggle-popover nil nil)}
+                :on-cancel #(toggle-popover nil)}
                opts)
      [settings-base-form "ViewDefinition"
       {:onFinish      #(save-popover % nil)
