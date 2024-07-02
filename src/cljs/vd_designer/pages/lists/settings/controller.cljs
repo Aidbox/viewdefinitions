@@ -1,6 +1,7 @@
 (ns vd-designer.pages.lists.settings.controller
   (:require [medley.core :as medley]
             [re-frame.core :refer [reg-cofx reg-event-fx reg-fx]]
+            [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http]
             [vd-designer.notifications]
@@ -27,11 +28,11 @@
             (assoc ::request-sent-by server-name)
             (update :cfg/fhir-servers dissoc :used-server-name))
 
-    :dispatch [:with-authentication
+    :dispatch [::auth/with-authentication
                (fn [authentication-token]
                  (assoc (http/get-view-definitions authentication-token server)
-                   :on-success [::connect-success server-name]
-                   :on-failure [::not-connected server-name]))]}))
+                        :on-success [::connect-success server-name]
+                        :on-failure [::not-connected server-name]))]}))
 
 (reg-event-fx
  ::connect-success
@@ -60,8 +61,8 @@
 (reg-event-fx
  ::fetch-user-servers
  (fn [_ _]
-   {; TODO: добавить флаг о том, что мы начали подгружать список user servers?
-    :dispatch [:with-authentication
+   {;; TODO: add a flag when started to load user servers?
+    :dispatch [::auth/with-authentication
                (fn [authentication-token]
                  (-> (backend/request:list-server authentication-token)
                      (assoc :on-success [::update-user-server-list]

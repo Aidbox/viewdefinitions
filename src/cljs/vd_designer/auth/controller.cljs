@@ -42,7 +42,7 @@
     :navigate              [:home]}))
 
 (reg-event-fx
- :with-authentication
+ ::with-authentication
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [authentication-token]} [_ token->http-xhrio-opts]]
    {:http-xhrio
@@ -59,7 +59,7 @@
        :on-failure       [::authentication-failed]})}))
 
 (reg-event-fx
-  ::authentication-failed
-  (fn [_ [_ result]]
-    {:notification-error (u/response->error result)
-     :fx                 [[:dispatch [::sign-out nil]]]}))
+ ::authentication-failed
+ (fn [_ [_ result]]
+   {:notification-error (u/response->error result)
+    :fx                 [[:dispatch [::sign-out nil]]]}))

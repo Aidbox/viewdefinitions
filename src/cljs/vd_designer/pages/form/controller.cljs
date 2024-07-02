@@ -6,6 +6,7 @@
             [clojure.walk :as walk]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]
+            [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.form.fhir-schema :as fhir-schema]
@@ -58,7 +59,7 @@
 (reg-event-fx
  ::fetch-user-servers
  (fn [_ [_ vd-id]]
-   {:dispatch [:with-authentication
+   {:dispatch [::auth/with-authentication
                (fn [authentication-token]
                  (-> (backend/request:list-server authentication-token)
                      (assoc :on-success [::got-server-list vd-id])))]}))
@@ -194,7 +195,7 @@
  (fn [{:keys [db]} [_ vd-id]]
    {:db         (assoc db :loading true)
 
-    :dispatch   [:with-authentication
+    :dispatch   [::auth/with-authentication
                  (fn [authentication-token]
                    (-> (http.fhir-server/get-view-definition-user-server
                         authentication-token
@@ -362,7 +363,7 @@
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
 
-        :dispatch   [:with-authentication
+        :dispatch   [::auth/with-authentication
                      (fn [authentication-token]
                        (-> (http.fhir-server/eval-view-definition-user-server
                             authentication-token
@@ -574,7 +575,7 @@
                        ::m/save-loading true)
                 (dissoc ::m/empty-inputs?))
 
-        :dispatch [:with-authentication
+        :dispatch [::auth/with-authentication
                    (fn [authentication-token]
                      (assoc (cond->
                              (http.fhir-server/post-view-definition
