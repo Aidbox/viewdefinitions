@@ -28,10 +28,9 @@
 (defn authentication-middleware* [handler {:keys [db] :as ctx} required?]
   (let [{:keys [result error]} (jwt->user ctx)
         account-id result
-        condition (if required?
-                    (or error (nil? account-id))
-                    (not (nil? error)))]
-    (if condition
+        jwt-decoding-failed? (or (some? error)
+                                 (and required? (nil? account-id)))]
+    (if jwt-decoding-failed?
       (http-response/unauthorized {:error error})
       (if account-id
         (if-let [sso-token (sso-token/get-last-by-id db account-id)]
