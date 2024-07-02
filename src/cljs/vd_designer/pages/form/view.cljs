@@ -78,6 +78,7 @@
         server-url @(subscribe [::settings-model/current-server-url])
         sandbox? @(subscribe [::settings-model/sandbox?])]
     [:> PanelGroup {:direction "horizontal"
+                    :autoSaveId "persistence"
                     :style {:gutter         32
                             :flex           1
                             :display        "flex"
