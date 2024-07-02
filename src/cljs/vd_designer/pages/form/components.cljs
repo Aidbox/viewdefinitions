@@ -176,40 +176,24 @@
                    :value resource-input
                    :onSelect    #(dispatch [::c/change-vd-resource %])})]]))
 
-(defn- toggle-settings-popover-hover [value-path]
-  (let [tree-element-id (tree-component/calc-key value-path)
-        button-id       (str tree-element-id "-settings-btn")
-
-        process-hover   (fn [f elements]
-                          (mapv (fn [element]
-                                  (mapv #(f element %)
-                                        ["settings-popover-active" "active"]))
-                                elements))]
-    (process-hover js-utils/remove-class (js-utils/find-elements ".settings-popover-active.active"))
-    (when value-path
-      (process-hover js-utils/toggle-class [(js-utils/get-element-by-id button-id)
-                                            ;; TODO: it worked long time ago.
-                                            #_(-> (js-utils/get-element-by-id tree-element-id)
-                                                (.-parentNode)
-                                                (.-parentNode))]))))
-
-(defn toggle-popover [value-path button-id]
-  (toggle-settings-popover-hover value-path)
+(defn toggle-popover [button-id]
   (dispatch [::c/toggle-settings-opened-id button-id]))
 
 (defn settings-popover [value-path & {:as opts}]
   (let [tree-element-id (tree-component/calc-key value-path)
         button-id (str tree-element-id "-settings-btn")
-        opened-id @(subscribe [::m/settings-opened-id])]
+        opened-id @(subscribe [::m/settings-opened-id])
+        opened? (= button-id opened-id)]
     [:> Popover (medley/deep-merge
-                 {:trigger :click
-                  :open    (= button-id opened-id)}
-                 opts)
-     [:div [settings-button {:onClick   #(toggle-popover value-path button-id)
-                             :onKeyDown #(when (= "Escape" (.-key %))
-                                           (toggle-popover nil nil))
-                             :id        button-id
-                             :tabIndex -1}]]]))
+                  {:trigger :click
+                   :open    opened?}
+                  opts)
+     [:div [settings-button (cond-> {:onClick   #(toggle-popover button-id)
+                                     :onKeyDown #(when (= "Escape" (.-key %))
+                                                   (toggle-popover button-id))
+                                     :id        button-id
+                                     :tabIndex  -1}
+                              opened? (assoc :class "settings-popover-active active"))]]]))
 
 (defn trigger-update-autocomplete-text-event [id fhirpath-prefix event]
   (dispatch [::c/update-autocomplete-text
@@ -562,7 +546,7 @@
     [:div {:style {:textAlign :right}}
      [:> Space
       [button/button "Close" {:size     "small"
-                              :onClick  #(toggle-popover nil nil)
+                              :onClick  #(toggle-popover nil)
                               :type     "default"
                               :htmlType "reset"}]
       [button/button "Save" {:size     "small"
