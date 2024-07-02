@@ -1,5 +1,6 @@
 (ns vd-designer.pages.form.resource-tab.controller
-  (:require [clojure.string :as str]))
+  (:require [clojure.string :as str]
+            [medley.core :as medley]))
 
 (defn create-key [parent-key element-name]
   (if parent-key
@@ -15,15 +16,12 @@
 (defn flat-elements
   "{:elements {:a {1 2 3 4}}} => [{:option-name a 1 2 3 4}] "
   [parent-element]
-  (reduce
-   (fn [acc [k v]]
-     (conj acc
-           (assoc v :option-name (name k)
-                  :required (if (:required v)
-                              (:required v)
-                              (:required parent-element)))))
-   []
-   (:elements parent-element)))
+  (mapv
+    (fn [[k v]]
+      (assoc v :option-name (name k)
+             :required (or (:required v)
+                           (:required parent-element))))
+    (:elements parent-element)))
 
 (defn add-choices [master slaves]
   (assoc master :choices (get slaves (:option-name master))))
@@ -44,7 +42,7 @@
         slaves
         (->> fhir-schemas
              (group-by :choiceOf)
-             (remove (fn [[k _]] (nil? k)))
+             (medley/remove-keys nil?)
              (into {}))]
     (->> fhir-schemas
          (remove #(or (:choices %) (:choiceOf %)))
@@ -53,11 +51,8 @@
 (defn fhir-schema->options [resource-type fhir-schema]
   (let [k (create-key nil resource-type)]
     [{:option-name (or resource-type (:id fhir-schema) "")
-      :key (create-key nil resource-type)
-      :children (mapv
-                 (fn [element]
-                   (assoc element :key (create-key k (:option-name element))))
-                 (flat-elements fhir-schema))}]))
+      :key k
+      :children (add-keys k (flat-elements fhir-schema))}]))
 
 (defn pre-process-fhir-schema [fhir-schema]
   (->> fhir-schema
