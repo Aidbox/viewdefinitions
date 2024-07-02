@@ -17,8 +17,8 @@
             [vd-designer.pages.lists.settings.view]
             [vd-designer.pages.lists.vds.view]
             [vd-designer.utils.debounce]
-            [vd-designer.routes :as routes]
-            ["@sooro-io/react-gtm-module" :as TagManager]))
+            [vd-designer.utils.tag-manager :as tag-manager]
+            [vd-designer.routes :as routes]))
 
 ;;;; Layout
 
@@ -66,14 +66,14 @@
         current-route (-> route :data :name)]
     [layout
      {:on-menu-click   (fn [key]
-                         (cond 
+                         (cond
                            (= key :vd-list)
-                           (TagManager/dataLayer
-                            (clj->js {:dataLayer {:event "vd_list"}}))
-                           
+                           (tag-manager/data-layer
+                             {:dataLayer {:event "vd_list"}})
+
                            (= key :settings)
-                           (TagManager/dataLayer
-                            (clj->js {:dataLayer {:event "vd_servers"}})))
+                           (tag-manager/data-layer
+                             {:dataLayer {:event "vd_servers"}}))
 
                          (rfe/navigate (keyword key)))
       :menu-active-key (when current-route (name current-route))
@@ -98,11 +98,8 @@
   "https://github.com/reagent-project/reagent/blob/master/doc/ReagentCompiler.md"
   (reagent.core/create-compiler {:function-components true}))
 
-(def tag-manager-args
-  (clj->js {:gtmId "GTM-PMS5LG2"}))
-
 (defn init []
-  (TagManager/initialize tag-manager-args)
+  (tag-manager/init)
   (routes/start-reitit)
   (dispatch-sync [::initialize-db])
   (dispatch-sync [::auth.controller/store-authentication (:query-params @routes/match)])
