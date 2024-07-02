@@ -149,7 +149,7 @@
               :items [(tab-item {:key      "table"
                                  :label    "Table"
                                  :children [render-table resources sandbox? server-url]
-                                 :icon     (r/create-element icons/EditOutlined)})
+                                 :icon     (r/create-element icons/TableOutlined)})
                       (tab-item {:key      "resource"
                                  :label    "Resource"
                                  :children [resource-tab/resource-tab]
