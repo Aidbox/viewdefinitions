@@ -1,13 +1,14 @@
 (ns vd-designer.auth.controller
-  (:require
-    [vd-designer.pages.lists.settings.controller :as settings-controller]
-    [re-frame.core :refer [reg-event-fx reg-cofx reg-fx]]))
+  (:require [ajax.core :as ajax]
+            [re-frame.core :refer [inject-cofx reg-cofx reg-event-fx reg-fx]]
+            [vd-designer.http.backend :refer [authorization-header]]
+            [vd-designer.utils.event :as u]
+            [vd-designer.utils.http :as http-utils]))
 
 (reg-fx
  :set-authentication
  (fn [v]
    (.setItem (.-localStorage js/window)
-              ;; TODO: keyword or string?
              :authentication
              v)))
 
@@ -35,8 +36,30 @@
 
 (reg-event-fx
  ::sign-out
- (fn [{:keys [db]} [_ _]]
+ (fn [{:keys [db]} _]
    {:delete-authentication nil
     :db                    (assoc db :authorized? false)
-    :message-success       "Signed out"
-    :dispatch [::settings-controller/fetch-user-servers]}))
+    :navigate              [:home]}))
+
+(reg-event-fx
+ ::with-authentication
+ [(inject-cofx :get-authentication-token)]
+ (fn [{:keys [authentication-token]} [_ token->http-xhrio-opts]]
+   {:http-xhrio
+    (if (nil? authentication-token)
+      (token->http-xhrio-opts nil)
+      {:method           :get
+       :timeout          8000
+       :uri              "/api/auth/check"
+       :with-credentials true
+       :headers          (authorization-header authentication-token)
+       :format           (ajax/json-request-format)
+       :response-format  (ajax/json-response-format {:keywords? true})
+       :on-success       [::http-utils/request (token->http-xhrio-opts authentication-token)]
+       :on-failure       [::authentication-failed]})}))
+
+(reg-event-fx
+ ::authentication-failed
+ (fn [_ [_ result]]
+   {:notification-error (u/response->error result)
+    :fx                 [[:dispatch [::sign-out nil]]]}))

@@ -4,13 +4,14 @@
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
             [vd-designer.config :refer [config]]
-            [vd-designer.utils.collection :refer [conj-if-new]]))
+            [vd-designer.utils.collection :refer [conj-if-new]]
+            [vd-designer.web.controllers.auth :as auth]))
 
 (defn add-access-key [client access-key]
   (swap! (:db client) update-in [:access-keys] conj-if-new access-key))
 
 (defn add-project [client access-key project]
-  (swap! (:db client) update-in [:projects access-key] conj-if-new project))
+  (swap! (:db client) update-in [:projects (:token access-key)] conj-if-new project))
 
 (defn add-license [client {{project-id :id} :project
                            :as              license}]
@@ -45,7 +46,8 @@
 
 (defn- authorized? [db-mock access-key]
   (let [all-access-keys (:access-keys @db-mock)]
-    (some #{access-key} all-access-keys)))
+    (some #{{:token    access-key
+             :expired? false}} all-access-keys)))
 
 (defmulti rpc :method)
 

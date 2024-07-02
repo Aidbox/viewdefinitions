@@ -2,7 +2,7 @@
   (:require [clojure.java.shell :refer [sh]]
             [clojure.string :as str]
             [next.jdbc :as jdbc]
-            [vd-designer.config :refer [config]]
+            [vd-designer.config :refer [config set-min-log-level!]]
             [vd-designer.db.migrations :as migrate]
             [vd-designer.fake.clients.portal :as portal]))
 
@@ -18,4 +18,6 @@
 (defn mk []
   {:aidbox.portal/client (portal/client)
    :db                   (mk-db)
-   :cfg                  (update config :log-level :report)})
+   :cfg                  config})
+
+(set-min-log-level! :report)

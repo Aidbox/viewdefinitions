@@ -4,10 +4,10 @@
   #?(:cljs (.. event -target -value)
      :clj  (-> @event :target :value)))
 
-(defn response->error [resp-body]
-  (or (-> resp-body :response :error)
-      (-> resp-body :response :text :div)
-      (:status-text resp-body)))
+(defn response->error [response]
+  (or (-> response :response :error)
+      (-> response :response :text :div)
+      (:status-text response)))
 
 (defn selection-start [event]
   #?(:cljs (.. event -target -selectionStart)

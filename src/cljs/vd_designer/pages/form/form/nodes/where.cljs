@@ -1,11 +1,9 @@
 (ns vd-designer.pages.form.form.nodes.where
   (:require [antd :refer [Flex]]
-            [re-frame.core :refer [subscribe]]
             [vd-designer.components.icon :as icon]
             [vd-designer.components.tree :as tree-component]
             [vd-designer.pages.form.components :as form-components]
             [vd-designer.pages.form.fhir-schema :as fhir-schema]
-            [vd-designer.pages.form.model :as m]
             [reagent.core :as r]
             [vd-designer.pages.form.form.settings :as form-settings]
             [vd-designer.pages.form.form.nodes.nodes :as nodes]))
@@ -14,12 +12,12 @@
 (defn where-row [{:keys [value-path]} {:keys [path]} {:keys [on-shift-enter]}]
   [:> Flex {:gap   8
             :align :center
-            :style {:width "100%"
+            :style {:width         "100%"
                     :padding-right 10}}
    [icon/where]
-   [form-components/render-input {:input-id path
+   [form-components/render-input {:input-id    path
                                   :placeholder "expression"
-                                  :handlers {:on-shift-enter on-shift-enter}}]
+                                  :handlers    {:on-shift-enter on-shift-enter}}]
    [form-components/settings-popover value-path
     {:placement :right
      :content   (r/as-element [form-settings/where-settings value-path])}]
@@ -44,11 +42,9 @@
      :start [[form-components/tree-tag :where]]
      :end   []}]
    (conj
-     (render-where-rows ctx where-rows)
-     (tree-component/tree-leaf
-       (conj value-path :add)
-       [form-components/add-element-button
-        value-path
-        :where]))))
-
-
+    (render-where-rows ctx where-rows)
+    (tree-component/tree-leaf
+     (conj value-path :add)
+     [form-components/add-element-button
+      value-path
+      :where]))))

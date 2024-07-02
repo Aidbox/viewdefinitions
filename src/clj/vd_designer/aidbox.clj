@@ -5,7 +5,6 @@
             [martian.core :as martian]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
-            [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]))
 
 (defn truncate-box-url [box-url]
@@ -49,30 +48,35 @@
       (update :box-url truncate-box-url)
       (set/rename-keys {:name :server-name})))
 
-;; TODO: rework portal to have a middleware that takes care of access/refresh tokens
 (defn list-user-servers
-  [{:keys [aidbox.portal/client db] :as ctx}
-   account-id]
-  (let [access-token (:sso_tokens/access_token (sso-token/get-last-by-id db account-id))
-        projects (-> @(portal/rpc:init-project client access-token)
+  [{{:keys [id sso-token]}   :user
+    client :aidbox.portal/client
+    db     :db
+    :as    ctx}]
+  (let [projects (-> @(portal/rpc:init-project client sso-token)
                      :body :result)
         licenses (->> projects
-                      (mapcat #(licenses-for-project ctx access-token %))
+                      (mapcat #(licenses-for-project ctx sso-token %))
                       (filter valid-license?)
-                      (mapv #(enrich-license % account-id)))]
+                      (mapv #(enrich-license % id)))]
     (when-not (empty? licenses)
       (->> licenses
            (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
            (user-server/create-many db)))
-
     licenses))
 
-(defn list-servers [{:keys [cfg user] :as ctx}]
-  (->> (cond->> (cfg :public-fhir-servers)
-         user
-         (concat (list-user-servers ctx user)))
-       (map #(select-keys % [:box-url :server-name :project]))
-       (http-response/ok)))
+(defn select-server-keys [servers]
+  (map #(select-keys % [:box-url :server-name :project])
+       servers))
+
+(defn list-servers
+  [{:keys [cfg user] :as ctx}]
+  (let [public-servers (:public-fhir-servers cfg)]
+    (-> (if user
+          (concat (list-user-servers ctx) public-servers)
+          public-servers)
+        select-server-keys
+        (http-response/ok))))
 
 (defn connect
   [{:keys [box-url fhir-server-headers]}]

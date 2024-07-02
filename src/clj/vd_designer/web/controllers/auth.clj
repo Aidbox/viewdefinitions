@@ -1,9 +1,20 @@
 (ns vd-designer.web.controllers.auth
   (:require [clojure.string :as str]
             [lambdaisland.uri :as uri]
+            [ring.util.http-predicates :as predicates]
             [ring.util.http-response :as http-response]
+            [vd-designer.clients.portal :as portal]
+            [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.service.sso :as sso-service]
             [vd-designer.utils.base64 :as base64]))
+
+(defn check [{:keys [aidbox.portal/client db user]}]
+  (if (predicates/unauthorized? @(portal/rpc:init-project client (:sso-token user)))
+    (do
+      (sso-token/delete db (:id user))
+      (http-response/unauthorized {:error "Aidbox session expired"}))
+    (http-response/no-content)))
+
 
 (defn sso-redirect
   [{{{:keys [route]} :query-params} :request
@@ -23,9 +34,9 @@
 (defn- construct-sso-callback-response [sso-config state sso-result]
   (let [default-url (:default-redirect-url sso-config)
         box-url (if (empty? state)
-                   default-url
-                   (try (base64/decode state)
-                        (catch Exception _ default-url)))
+                  default-url
+                  (try (base64/decode state)
+                       (catch Exception _ default-url)))
         query-map (if (empty? (:error sso-result))
                     {:authentication (:result sso-result)}
                     sso-result)]

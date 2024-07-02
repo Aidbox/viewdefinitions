@@ -1,6 +1,6 @@
 (ns vd-designer.repository.sso-token
-  (:require [honey.sql.helpers :refer [from insert-into limit order-by select
-                                       values where]]
+  (:require [honey.sql.helpers :refer [delete-from from insert-into limit
+                                       order-by select values where]]
             [vd-designer.db.query :as q]))
 
 (defn create [db sso-tokens-data]
@@ -20,3 +20,8 @@
                          (where [:= :account_id account-id])
                          (order-by [:id :desc])
                          (limit 1)))))
+
+(defn delete [db account-id]
+  (q/execute! db
+              (-> (delete-from :sso-tokens)
+                  (where [:= :account_id account-id]))))

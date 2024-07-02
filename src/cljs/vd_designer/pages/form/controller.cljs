@@ -5,8 +5,8 @@
             [clojure.string :as str]
             [clojure.walk :as walk]
             [medley.core :as medley]
-            [re-frame.core :refer [dispatch inject-cofx reg-event-db
-                                   reg-event-fx reg-fx]]
+            [re-frame.core :refer [dispatch reg-event-db reg-event-fx reg-fx]]
+            [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http.fhir-server]
             [vd-designer.pages.form.fhir-schema :as fhir-schema]
@@ -58,12 +58,11 @@
 
 (reg-event-fx
  ::fetch-user-servers
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [authentication-token]} [_ vd-id]]
-   {:http-xhrio (-> (backend/request:list-server authentication-token)
-                    (assoc :on-success [::got-server-list vd-id]
-                            ;; TODO
-                           #_#_:on-failure [::not-connected]))}))
+ (fn [_ [_ vd-id]]
+   {:dispatch [::auth/with-authentication
+               (fn [authentication-token]
+                 (-> (backend/request:list-server authentication-token)
+                     (assoc :on-success [::got-server-list vd-id])))]}))
 
 (reg-event-fx
  ::got-server-list
@@ -193,14 +192,16 @@
 
 (reg-event-fx
  ::get-view-definition
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} [_ vd-id]]
+ (fn [{:keys [db]} [_ vd-id]]
    {:db         (assoc db :loading true)
-    :http-xhrio (-> (http.fhir-server/get-view-definition-user-server
-                     authentication-token
-                     (http.fhir-server/active-server db) vd-id)
-                    (assoc :on-success [::choose-vd]
-                           :on-failure [::on-vd-error]))}))
+
+    :dispatch   [::auth/with-authentication
+                 (fn [authentication-token]
+                   (-> (http.fhir-server/get-view-definition-user-server
+                        authentication-token
+                        (http.fhir-server/active-server db) vd-id)
+                       (assoc :on-success [::choose-vd]
+                              :on-failure [::on-vd-error])))]}))
 
 (reg-event-fx
  ::process-import
@@ -335,11 +336,10 @@
 
 (reg-event-fx
  ::eval-view-definition-data
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} _]
+ (fn [{:keys [db]} _]
    (tag-manager/data-layer
-     {:dataLayer {:event "vd_run"
-                  :resource-type (get (:current-vd db) :resource "")}})
+    {:dataLayer {:event         "vd_run"
+                 :resource-type (get (:current-vd db) :resource "")}})
    (let [sandbox? (settings-model/in-sandbox? db)
          view-definition (-> (:current-vd db)
                              decoration/remove-decoration
@@ -362,13 +362,15 @@
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
-        :http-xhrio (->
-                     (http.fhir-server/eval-view-definition-user-server
-                      authentication-token
-                      (http.fhir-server/active-server db)
-                      view-definition)
-                     (assoc :on-success [::on-eval-view-definition-success]
-                            :on-failure [::on-eval-view-definition-error]))}))))
+
+        :dispatch   [::auth/with-authentication
+                     (fn [authentication-token]
+                       (-> (http.fhir-server/eval-view-definition-user-server
+                            authentication-token
+                            (http.fhir-server/active-server db)
+                            view-definition)
+                           (assoc :on-success [::on-eval-view-definition-success]
+                                  :on-failure [::on-eval-view-definition-error])))]}))))
 
 (reg-event-db
  ::reset-vd-error
@@ -555,34 +557,35 @@
 
 (reg-event-fx
  ::save-view-definition
- [(inject-cofx :get-authentication-token)]
- (fn [{:keys [db authentication-token]} [_]]
+ (fn [{:keys [db]} [_]]
    (tag-manager/data-layer
-     {:dataLayer {:event "vd_save"
-                  :resource-type (get (:current-vd db) :resource "")}})
+    {:dataLayer {:event         "vd_save"
+                 :resource-type (get (:current-vd db) :resource "")}})
    (let [refs (::m/tree-inputs db)
          view-definition (-> (:current-vd db)
                              decoration/remove-decoration
                              (input-references/replace-inputs-with-values refs)
                              strip-empty-collections
                              remove-meta)
-         empty-fields? (empty-inputs-in-vd? view-definition)
-         req (cond->
-              (http.fhir-server/post-view-definition
-               authentication-token
-               (http.fhir-server/active-server db)
-               view-definition)
-               (:id view-definition)
-               (assoc-in [:params :vd-id] (:id view-definition)))]
+         empty-fields? (empty-inputs-in-vd? view-definition)]
      (if empty-fields?
        {:db (assoc db ::m/empty-inputs? true)}
        {:db (-> db
                 (assoc ::m/save-view-definition-loading true
                        ::m/save-loading true)
                 (dissoc ::m/empty-inputs?))
-        :http-xhrio (assoc req
-                           :on-success [::save-view-definition-success]
-                           :on-failure [::save-view-definition-failure])}))))
+
+        :dispatch [::auth/with-authentication
+                   (fn [authentication-token]
+                     (assoc (cond->
+                             (http.fhir-server/post-view-definition
+                              authentication-token
+                              (http.fhir-server/active-server db)
+                              view-definition)
+                              (:id view-definition)
+                              (assoc-in [:params :vd-id] (:id view-definition)))
+                            :on-success [::save-view-definition-success]
+                            :on-failure [::save-view-definition-failure]))]}))))
 
 (reg-event-fx
  ::save-view-definition-success
