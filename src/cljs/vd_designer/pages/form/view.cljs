@@ -5,6 +5,7 @@
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
+            [vd-designer.pages.form.resource-tab.view :as resource-tab]
             [vd-designer.auth.model :as auth-model]
             [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.alert :refer [alert]]
@@ -45,6 +46,26 @@
       :else
       [auth-required (button {})])))
 
+(defn render-table [resources sandbox? server-url]
+  [table (vec (remove empty? (:data resources)))
+   {:class      "vd-table"
+    :pagination {:hideOnSinglePage true}
+    :locale     {:emptyText (r/as-element
+                             [:> Empty
+                              {:description
+                               (r/as-element
+                                [:div
+                                 [:> Typography.Paragraph {:level 1
+                                                           :type  "secondary"}
+                                  "No data."
+                                  (when-not sandbox?
+                                    [:<> " See: "
+                                     [:> Typography.Link
+                                      {:target "_blank"
+                                       :href   (m/import-synthetic-data-notebook-url server-url)}
+                                      "Import synthetic data to Aidbox."]])]])}])}
+    :scroll     {:y 1000
+                 :x true}}])
 
 (def button-id "root-vd-settings")
 
@@ -99,40 +120,37 @@
                                  :disabled (nil? resources)
                                  :icon     (r/create-element icons/HddOutlined)})]
               :tabBarExtraContent {:right (r/as-element
-                                            [:> Flex {:gap 8
-                                                      :style {:margin-right "8px"}}
-                                             [:> Tooltip
-                                              {:placement       "bottom"
-                                               :mouseEnterDelay 0.5
-                                               :title           "Ctrl+Enter"}
-                                              [:> Button {:id      "vd_run"
-                                                          :class   "mobile-icon-button"
-                                                          :onClick #(dispatch [::c/eval-view-definition-data])
-                                                          :icon    (r/create-element icons/PlayCircleOutlined)
-                                                          :loading @(subscribe [::m/eval-loading])}
-                                               "Run"]]
-                                             [save-vd-button authorized?]])}}]]]
+                                           [:> Flex {:gap 8
+                                                     :style {:margin-right "8px"}}
+                                            [:> Tooltip
+                                             {:placement       "bottom"
+                                              :mouseEnterDelay 0.5
+                                              :title           "Ctrl+Enter"}
+                                             [:> Button {:id      "vd_run"
+                                                         :class   "mobile-icon-button"
+                                                         :onClick #(dispatch [::c/eval-view-definition-data])
+                                                         :icon    (r/create-element icons/PlayCircleOutlined)
+                                                         :loading @(subscribe [::m/eval-loading])}
+                                              "Run"]]
+                                            [save-vd-button authorized?]])}}]]]
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
-     [:> Panel {:minSize 20}
-      [:> Typography.Title {:level 1 :style {:margin-top 0 :margin-left "20px"}} "Results"]
-      [table (vec (remove empty? (:data resources)))
-       {:class  "vd-table"
-        :pagination {:hideOnSinglePage true}
-        :locale {:emptyText
-                 (r/as-element
-                   [:> Empty
-                    {:description
-                     (r/as-element
-                       [:div
-                        [:> Typography.Paragraph {:level 1 :type "secondary"}
-                         "No data."
-                         (when-not sandbox?
-                           [:<> " See: "
-                            [:> Typography.Link
-                             {:target "_blank"
-                              :href (m/import-synthetic-data-notebook-url server-url)}
-                             "Import synthetic data to Aidbox."]])]])}])}
-        :scroll {:y 1000
-                 :x true}}]]]))
+     [:> Panel {:minSize 35
+                :style {:display "flex"}}
+      [:> Flex
+       {:vertical true
+        :flex     "1 0 0%"
+        :style    {:override    "hidden"
+                   :margin-left "15px"
+                   :display     "flex"}}
+       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
+       [tabs {:animated true
+              :items [(tab-item {:key      "table"
+                                 :label    "Table"
+                                 :children [render-table resources sandbox? server-url]
+                                 :icon     (r/create-element icons/EditOutlined)})
+                      (tab-item {:key      "resource"
+                                 :label    "Resource"
+                                 :children [resource-tab/resource-tab]
+                                 :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]))

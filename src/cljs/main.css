@@ -160,3 +160,12 @@ button {
   min-width: 48px;
   max-width: 128px;
 }
+
+
+/* rm first line first element line in resource tab tree
+ * TODO: simplify
+ * */
+.resource-tab .ant-tree-list-holder-inner:first-child
+.ant-tree-treenode:first-child .ant-tree-switcher {
+  display: none;
+}
