@@ -54,7 +54,7 @@
        :with-credentials true
        :headers          (authorization-header authentication-token)
        :format           (ajax/json-request-format)
-       :response-format  (ajax/json-response-format {:keywords? true})
+       :response-format  (ajax/raw-response-format)
        :on-success       [::http-utils/request (token->http-xhrio-opts authentication-token)]
        :on-failure       [::authentication-failed]})}))
 
