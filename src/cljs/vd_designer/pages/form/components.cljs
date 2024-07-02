@@ -1,6 +1,6 @@
 (ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
-            ["@sooro-io/react-gtm-module" :as TagManager]
+            [vd-designer.utils.tag-manager :as tag-manager]
             [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Flex Input
                           Popover Row Select Space Tooltip Typography]]
             [clojure.string :as str]
@@ -113,9 +113,9 @@
                                   (dropdown-component/dropdown-item-img "forEachOrNull" "/img/form/forEach.svg")
                                   (dropdown-component/dropdown-item-img "unionAll"      "/img/form/unionAll.svg")])
              :on-click #(do
-                          (TagManager/dataLayer
-                           (clj->js {:dataLayer {:event "vd_edit"
-                                                 :node-type (name (requested-key %))}}))
+                          (tag-manager/data-layer
+                            {:dataLayer {:event "vd_edit"
+                                         :node-type (name (requested-key %))}})
                           (dispatch [::c/add-tree-node value-path (requested-key %)]))}}]))
 
 (defn convert-foreach [value-path kind]

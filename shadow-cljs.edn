@@ -20,12 +20,14 @@
                        :external-config {:devtools/config
                                          {:min-expandable-sequable-count-for-well-known-types 1
                                           :features-to-install                                [:formatters :hints]}}
-                       :closure-defines {re-frame.trace.trace-enabled?        true
+                       :closure-defines {goog.DEBUG true
+                                         re-frame.trace.trace-enabled? true
                                          day8.re-frame.tracing.trace-enabled? true}}
     :build-hooks      [(postcss/watch "src/cljs/main.css" "resources/client/public/app.css")]}
 
    :release
-   {:compiler-options {:optimizations :simple}
+   {:compiler-options {:optimizations :simple
+                       :closure-defines {goog.DEBUG false}}
     :build-hooks      [(postcss/release "src/cljs/main.css" "resources/client/public/app.css")]
     :build-options    {:ns-aliases {day8.re-frame.tracing day8.re-frame.tracing-stubs}}}}
 

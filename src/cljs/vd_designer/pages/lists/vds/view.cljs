@@ -14,7 +14,7 @@
             [vd-designer.pages.lists.vds.import :refer [import-modal]]
             [vd-designer.pages.lists.vds.model :as m]
             [vd-designer.utils.string :as string-utils]
-            ["@sooro-io/react-gtm-module" :as TagManager]))
+            [vd-designer.utils.tag-manager :as tag-manager]))
 
 (defn- grep-vd [vd filter-phrase]
   (or (some-> vd :resource :title (str/includes? filter-phrase))
@@ -56,8 +56,8 @@
        [search-input]]
       [vd-data-list
        #(do
-          (TagManager/dataLayer
-           (clj->js {:dataLayer {:event "vd_view" :id %}}))
+          (tag-manager/data-layer
+            {:dataLayer {:event "vd_view" :id %}})
           (rfe/navigate :form-edit {:path-params {:id %}}))
        (when authorized?
          [(fn [id]

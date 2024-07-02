@@ -1,5 +1,5 @@
 (ns vd-designer.pages.form.controller
-  (:require ["@sooro-io/react-gtm-module" :as TagManager]
+  (:require [vd-designer.utils.tag-manager :as tag-manager]
             [ajax.core :as ajax]
             [clojure.set :as set :refer [rename-keys]]
             [clojure.string :as str]
@@ -337,9 +337,9 @@
  ::eval-view-definition-data
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} _]
-   (TagManager/dataLayer
-    (clj->js {:dataLayer {:event "vd_run"
-                          :resource-type (get (:current-vd db) :resource "")}}))
+   (tag-manager/data-layer
+     {:dataLayer {:event "vd_run"
+                  :resource-type (get (:current-vd db) :resource "")}})
    (let [sandbox? (settings-model/in-sandbox? db)
          view-definition (-> (:current-vd db)
                              decoration/remove-decoration
@@ -557,9 +557,9 @@
  ::save-view-definition
  [(inject-cofx :get-authentication-token)]
  (fn [{:keys [db authentication-token]} [_]]
-   (TagManager/dataLayer
-    (clj->js {:dataLayer {:event "vd_save"
-                          :resource-type (get (:current-vd db) :resource "")}}))
+   (tag-manager/data-layer
+     {:dataLayer {:event "vd_save"
+                  :resource-type (get (:current-vd db) :resource "")}})
    (let [refs (::m/tree-inputs db)
          view-definition (-> (:current-vd db)
                              decoration/remove-decoration
