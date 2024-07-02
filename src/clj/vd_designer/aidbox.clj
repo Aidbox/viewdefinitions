@@ -65,7 +65,7 @@
            (user-server/create-many db)))
     licenses))
 
-(defn filter-server-keys [servers]
+(defn select-server-keys [servers]
   (map #(select-keys % [:box-url :server-name :project])
        servers))
 
@@ -75,7 +75,7 @@
     (-> (if user
           (concat (list-user-servers ctx) public-servers)
           public-servers)
-        filter-server-keys
+        select-server-keys
         (http-response/ok))))
 
 (defn connect

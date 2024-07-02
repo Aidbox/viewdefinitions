@@ -20,7 +20,7 @@
 
         ctx-with-user (assoc ctx :user {:id        account-id
                                         :sso-token (:token valid-access-token)})
-        public-servers (sut/filter-server-keys (:public-fhir-servers cfg))]
+        public-servers (sut/select-server-keys (:public-fhir-servers cfg))]
 
     (testing "public servers only"
       (is (match? (http-response/ok public-servers)
