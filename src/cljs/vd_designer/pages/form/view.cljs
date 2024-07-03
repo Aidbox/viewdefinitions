@@ -46,7 +46,7 @@
       :else
       [auth-required (button {})])))
 
-(defn- duplicate-vd-button [authorized?]
+(defn- clone-vd-button [authorized?]
   (let [sandbox? @(subscribe [::settings-model/sandbox?])
         button (fn [overrides]
                  [:> Button
@@ -54,19 +54,19 @@
                    {:class "mobile-icon-button"
                     :icon  (r/create-element icons/BlockOutlined)}
                    overrides)
-                  "Duplicate"])]
+                  "Clone"])]
     (cond
       sandbox?
 
       [:> Tooltip
        {:placement       "bottom"
         :mouseEnterDelay 0.5
-        :title           "Duplicate is not allowed in Sandbox"}
+        :title           "Clone is not allowed in Sandbox"}
        (button {:disabled true})]
 
       authorized?
-      (button {:id      "vd_duplicate"
-               :onClick #(dispatch [::c/duplicate-view-definition])
+      (button {:id      "vd_clone"
+               :onClick #(dispatch [::c/clone-view-definition])
                :loading @(subscribe [::m/save-loading])
                :style   {#_#_:width :fit-content
                          :padding-left  "4px"
@@ -161,7 +161,7 @@
                                                          :loading @(subscribe [::m/eval-loading])}
                                               "Run"]]
                                             [save-vd-button authorized?]
-                                            [duplicate-vd-button authorized?]])}}]]]
+                                            [clone-vd-button authorized?]])}}]]]
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]

@@ -590,14 +590,14 @@
                        :on-success [::save-view-definition-success]
                        :on-failure [::save-view-definition-failure]))]}))))
 
-(defn duplicate-view-definition [vd]
+(defn clone-view-definition [vd]
   (-> vd
       (dissoc :id :fullUrl :link)
       (medley/update-existing :name str "_clone")
       (medley/update-existing :title str "_clone)")))
 
 (reg-event-fx
-  ::duplicate-view-definition
+  ::clone-view-definition
   (fn [{:keys [db]} _]
     (let [refs (::m/tree-inputs db)
           view-definition (-> (:current-vd db)
@@ -605,7 +605,7 @@
                               (input-references/replace-inputs-with-values refs)
                               strip-empty-collections
                               remove-meta
-                              duplicate-view-definition)
+                              clone-view-definition)
           empty-fields? (empty-inputs-in-vd? view-definition)]
       (if empty-fields?
         {:db (assoc db ::m/empty-inputs? true)}
@@ -613,7 +613,7 @@
          :dispatch [::auth/with-authentication
                     (fn [authentication-token]
                       (assoc (post-vd-request db authentication-token view-definition)
-                        :on-success [::duplicate-view-definition-success]
+                        :on-success [::clone-view-definition-success]
                         ;; TODO
                         #_#_:on-failure [::save-view-definition-failure]))]}))))
 
@@ -626,10 +626,10 @@
     :message-success "Saved"}))
 
 (reg-event-fx
- ::duplicate-view-definition-success
+ ::clone-view-definition-success
  (fn [_ [_ _result]]
    {:navigate [:vd-list]
-    :message-success "Duplicated"}))
+    :message-success "Cloned"}))
 
 (reg-event-fx
  ::save-view-definition-failure
