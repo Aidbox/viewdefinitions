@@ -1,7 +1,6 @@
 (ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
-            [vd-designer.utils.tag-manager :as tag-manager]
-            [antd :refer [AutoComplete Checkbox Col ConfigProvider Form Flex Input
+            [antd :refer [AutoComplete Checkbox Col ConfigProvider Flex Form Input
                           Popover Row Select Space Tooltip Typography]]
             [clojure.string :as str]
             [medley.core :as medley]
@@ -16,7 +15,7 @@
             [vd-designer.pages.form.controller :as c]
             [vd-designer.pages.form.model :as m]
             [vd-designer.utils.event :as u]
-            [vd-designer.utils.js :as js-utils]))
+            [vd-designer.utils.tag-manager :as tag-manager]))
 
 (defn set-input-value [input-id value]
   (dispatch-sync [::c/set-input-text input-id value]))

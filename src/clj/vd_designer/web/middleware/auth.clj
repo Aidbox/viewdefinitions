@@ -26,8 +26,8 @@
       (jwt/validate cfg referer jwt))))
 
 (defn authentication-middleware* [handler {:keys [db] :as ctx} required?]
-  (let [{:keys [result error]} (jwt->user ctx)
-        account-id result
+  (let [{account-id :result
+         error      :error} (jwt->user ctx)
         jwt-decoding-failed? (or (some? error)
                                  (and required? (nil? account-id)))]
     (if jwt-decoding-failed?
