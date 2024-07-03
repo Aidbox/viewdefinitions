@@ -33,6 +33,13 @@
           (assoc m :key (:name m)))
         fields))
 
+(defn- popover-collapse-item [title content]
+  [collapse {:expandIconPosition :end
+             :items [(collapse-item
+                      [:> Typography.Title {:level 4
+                                            :style {:margin 0}} title]
+                      content)]}])
+
 (defn popover-form-list [name render-list-items]
   [:> Form.List {:name name}
    (fn [raw-fields actions]
@@ -72,9 +79,6 @@
       {:onFinish      #(save-popover % nil)
        :initialValues vd}
       [:<>
-       [:> Form.Item {:label "Title" :name "title"} [:> Input]]
-       [:> Form.Item {:label "Description" :name "description"}
-        [:> Input.TextArea {:autoSize true :allowClear true}]]
        [:> Form.Item {:label "Status" :name "status" :rules [{:required true}]}
         [:> Select (select/with-default-props
                      {:placeholder "status"
@@ -82,37 +86,37 @@
                       :variant     :outlined
                       :options     (select/options-from-vec
                                     ["draft" "active" "retired" "unknown"])})]]
+       [:> Form.Item {:label "Title" :name "title"} [:> Input]]
+       [:> Form.Item {:label "Description" :name "description"}
+        [:> Input.TextArea {:autoSize true :allowClear true}]]
        [:> Form.Item {:label "Url" :name "url"} [:> Input]]
        [:> Form.Item {:label "Publisher" :name "publisher"} [:> Input]]
        [:> Form.Item {:label "Copyright" :name "copyright"}
         [:> Input.TextArea {:autoSize true :allowClear true}]]
 
-       [collapse
-        :expandIconPosition :end
-        :items [(collapse-item
-                 [:> Typography.Title {:level 4 :style {:margin 0}} "Identifier"]
-                 (let [id :identifier]
-                   [:<>
-                    [:> Form.Item {:label "Use"      :name [id :use]}
-                     [:> Select (select/with-default-props
-                                  {:variant :outlined
-                                   :options [{:label "Usual"     :value "usual"}
-                                             {:label "Official"  :value "official"}
-                                             {:label "Temp"      :value "temp"}
-                                             {:label "Secondary" :value "secondary"}
-                                             {:label "Old"       :value "old"}]})]]
-                    #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
-                    [:> Form.Item {:label "Type"     :name [id :type]}
-                     [:> Input]]
-                    [:> Form.Item {:label "System"   :name [id :system]}
-                     [:> Input]]
-                    [:> Form.Item {:label "Value"    :name [id :value]}
-                     [:> Input]]
-                    [:> Form.Item {:label "Period"   :name [id :period]}
-                     #_#_TODO "allow to select only year or year-month"
-                     [:> DatePicker.RangePicker {:style {:width "100%"}}]]
-                    [:> Form.Item {:label "Assigner" :name [id :assigner]}
-                     [:> Input]]]))]]
+       [popover-collapse-item "Identifier"
+        (let [id :identifier]
+          [:<>
+           [:> Form.Item {:label "Use"      :name [id :use]}
+            [:> Select (select/with-default-props
+                         {:variant :outlined
+                          :options [{:label "Usual"     :value "usual"}
+                                    {:label "Official"  :value "official"}
+                                    {:label "Temp"      :value "temp"}
+                                    {:label "Secondary" :value "secondary"}
+                                    {:label "Old"       :value "old"}]})]]
+           #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
+           [:> Form.Item {:label "Type"     :name [id :type]}
+            [:> Input]]
+           [:> Form.Item {:label "System"   :name [id :system]}
+            [:> Input]]
+           [:> Form.Item {:label "Value"    :name [id :value]}
+            [:> Input]]
+           [:> Form.Item {:label "Period"   :name [id :period]}
+            #_#_TODO "allow to select only year or year-month"
+            [:> DatePicker.RangePicker {:style {:width "100%"}}]]
+           [:> Form.Item {:label "Assigner" :name [id :assigner]}
+            [:> Input]]])]
 
        [:> Form.Item {:label "Experimental" :name "experimental"}
         [:> Switch {:size "small"}]]

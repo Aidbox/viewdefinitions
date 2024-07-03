@@ -7,7 +7,7 @@
   {:label (r/as-element title) :children (r/as-element children)})
 
 (defn collapse
-  "Section with collapsable elements.
+  "Section with collapsible elements.
    For more details see: https://ant.design/components/collapse#api
    NOTE: each item should be created with collapse-item function"
   [& {:as opts}]
