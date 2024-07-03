@@ -43,7 +43,7 @@
          imported? (-> parameters :query :imported)]
      {:db (cond-> db
             :always
-            (assoc ::m/language :language/json)
+            (assoc ::m/language :language/yaml)
 
             (not vd-id)
             (set-view-definition-status)
@@ -836,9 +836,9 @@
                         (js->clj :keywordize-keys true))]
              {:fx [[:dispatch [::choose-vd vd]]]
               :db (assoc new-db ::m/code-dirty? false)})
-           (catch js/Error _
-           ;; TODO: Notification
-             {:db new-db}))
+           (catch js/Error e
+             {:db new-db
+              :notification-error (.-message e)}))
          {:db new-db})))))
 
 (reg-event-db
