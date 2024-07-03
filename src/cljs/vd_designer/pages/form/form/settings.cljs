@@ -174,7 +174,6 @@
         [:> Switch {:size "small"}]]
 
        #_"TODO: Meta object"
-       #_"TODO: useContext array"
 
        [:> Form.Item {:label "FHIR version"}
         [popover-form-list "fhirVersion"
@@ -184,7 +183,21 @@
                            :key   element-key
                            :rules [{:required true
                                     :message  "FHIR version is required"}]}
-             [:> Input]]])]]]]]))
+             [:> Input]]])]]
+
+       [:> Form.Item {:label "Use context"}
+        [popover-form-list "useContext"
+         (fn [element-key]
+           [:<>
+            [:> Form.Item {:name  [element-key :code]
+                           :rules [{:required true
+                                    :message  "Code is required"}]}
+             [:> Input {:placeholder "Code"}]]
+            #_"TODO: can be: valueCodeableConcept | valueQuantity | valueRange | valueReference"
+            [:> Form.Item {:name  [element-key :valueCodeableConcept]
+                           :rules [{:required true
+                                    :message  "Value is required"}]}
+             [:> Input {:placeholder "Value"}]]])]]]]]))
 
 (defn- vd-subset [vd value-path]
   (get-in vd (uuid->idx value-path vd)))
