@@ -19,7 +19,9 @@
             [vd-designer.utils.event :as u]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
-            [vd-designer.utils.utils :as utils]))
+            [vd-designer.utils.utils :as utils]
+            [vd-designer.pages.form.view-definition-jsonschema :as vd-jsonschema]
+            [vd-designer.utils.yaml :as yaml]))
 
 #_"status is required"
 (defn set-view-definition-status [db]
@@ -31,6 +33,8 @@
 (defn ready-server-event-fx [vd-id]
   (cond-> [[:dispatch [::get-supported-resource-types]]]
     vd-id (conj [:dispatch [::get-view-definition vd-id]])))
+
+
 
 (reg-event-fx
  ::start
@@ -45,7 +49,19 @@
             (set-view-definition-status)
 
             :always
-            (assoc :spec-map {}))
+            (assoc :spec-map {})
+            
+            :always
+            (assoc ::m/code-validation-severity 0)
+            
+            :always
+            (assoc ::m/left-panel-active-tab "form")
+            
+            :always
+            (assoc ::m/view-definition-jsonschema 
+                   {:uri "/viewdefinition_jsonschema.json"
+                    :fileMatch ["*"]
+                    :schema vd-jsonschema/schema}))
       :fx (cond-> (if (-> db :cfg/fhir-servers :user/servers empty?)
                     [[:dispatch [::fetch-user-servers vd-id]]]
                     (ready-server-event-fx vd-id))
@@ -337,6 +353,13 @@
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
+   (if (= (::m/left-panel-active-tab db) :left-panel-tab/code)
+     {:dispatch [::eval-view-definition-code]}
+     {:dispatch [::eval-view-definition-tree]})))
+
+(reg-event-fx
+ ::eval-view-definition-tree
+ (fn [{:keys [db]} _]
    (tag-manager/data-layer
     {:dataLayer {:event         "vd_run"
                  :resource-type (get (:current-vd db) :resource "")}})
@@ -362,6 +385,40 @@
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
+
+        :dispatch   [::auth/with-authentication
+                     (fn [authentication-token]
+                       (-> (http.fhir-server/eval-view-definition-user-server
+                            authentication-token
+                            (http.fhir-server/active-server db)
+                            view-definition)
+                           (assoc :on-success [::on-eval-view-definition-success]
+                                  :on-failure [::on-eval-view-definition-error])))]}))))
+
+(reg-event-fx
+ ::eval-view-definition-code
+ (fn [{:keys [db]} _]
+   (tag-manager/data-layer
+    {:dataLayer {:event         "vd_run"
+                 :resource-type (get (:current-vd db) :resource "")}})
+   (let [sandbox? (settings-model/in-sandbox? db)
+         view-definition (-> (::m/view-definition-code db)
+                             yaml/try-parse
+                             (js->clj :keywordize-keys true)
+                             strip-empty-select-nodes
+                             strip-empty-where-nodes
+                             (lower-case-resource-in-sandbox sandbox?))
+         missing-required-fields (missing-required-fields view-definition)]
+     (cond
+       (seq missing-required-fields)
+       {:notification-error
+        (let [fields (mapv name missing-required-fields)
+              fields-str (str/join ", " fields)]
+          (utils.string/format
+           "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
+
+       :else
+       {:db         (assoc db ::m/eval-loading true)
 
         :dispatch   [::auth/with-authentication
                      (fn [authentication-token]
@@ -601,10 +658,26 @@
    {:db (assoc db ::m/save-loading false)
     :notification-error (str "Error on save: " (u/response->error result))}))
 
+(defn format-vd [vd lang]
+  (case lang
+    :language/yaml (yaml/edn->yaml vd)
+    :language/json (-> vd clj->js (js/JSON.stringify nil 2))
+    ""))
+
+(defn format-vd-code [vd lang]
+  (case lang
+    :language/yaml (-> vd js/JSON.parse yaml/stringify)
+    :language/json (-> vd yaml/str->yaml (js/JSON.stringify nil 2))
+    ""))
+
 (reg-event-db
  ::change-language
  (fn [db [_ lang]]
-   (assoc db ::m/language lang)))
+   (assoc db
+          ::m/language lang
+          ::m/editor-id (random-uuid)
+          ::m/view-definition-code
+          (format-vd-code (::m/view-definition-code db) lang))))
 
 (reg-event-fx
  ::toggle-settings-opened-id
@@ -791,3 +864,54 @@
  ::update-input-text
  (fn [db [_ input-id f]]
    (update-in db [::m/tree-inputs input-id :value] f)))
+
+(reg-event-fx
+ ::on-form-tab-clicked
+ (fn [{:keys [db]} _]
+   (let [new-db (assoc db ::m/left-panel-active-tab :left-panel-tab/form)]
+     (when (not= (::m/left-panel-active-tab db) :left-panel-tab/form)
+       (if (::m/code-dirty? db)
+         (try
+           (let [vd (-> (::m/view-definition-code db)
+                        (yaml/yaml->edn)
+                        (js->clj :keywordize-keys true))]
+             {:fx [[:dispatch [::choose-vd vd]]]
+              :db (assoc new-db ::m/code-dirty? false)})
+           (catch js/Error e
+             {:db new-db
+              :notification-error (.-message e)}))
+         {:db new-db})))))
+
+(reg-event-db
+ ::on-code-tab-clicked
+ (fn [db _]
+   (when (not= (::m/left-panel-active-tab db) :left-panel-tab/code)
+     (let [language (::m/language db)]
+       (-> db
+           (assoc ::m/left-panel-active-tab :left-panel-tab/code)
+           (assoc ::m/editor-id (str (random-uuid)))
+           (assoc ::m/view-definition-code
+                  (-> (:current-vd db)
+                      decoration/remove-decoration
+                      (input-references/replace-inputs-with-values (::m/tree-inputs db))
+                      (format-vd language))))))))
+
+(reg-event-db
+ ::on-sql-tab-clicked
+ (fn [db _]
+   (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)))
+
+(reg-event-db
+ ::set-code-dirty
+ (fn [db [_ value]]
+   (assoc db ::m/code-dirty? value)))
+
+(reg-event-db
+ ::set-view-definition-code
+ (fn [db [_ value]]
+   (assoc db ::m/view-definition-code value)))
+
+(reg-event-db
+ ::set-code-validation-severity
+ (fn [db [_ severity]]
+   (assoc db ::m/code-validation-severity severity)))

@@ -29,5 +29,5 @@
                     :folding              true
                     :renderIndentGuides   false
                     :tabSize              2
-                    :readOnly             true}}
+                    :readOnly             false}}
      properties)])
