@@ -555,6 +555,15 @@
     :db (let [real-path (decoration/uuid->idx path (:current-vd db))]
           (update db :current-vd remove-tree-element real-path))}))
 
+(defn post-vd-request [db authentication-token view-definition]
+  (cond->
+    (http.fhir-server/post-view-definition
+      authentication-token
+      (http.fhir-server/active-server db)
+      view-definition)
+    (:id view-definition)
+    (assoc-in [:params :vd-id] (:id view-definition))))
+
 (reg-event-fx
  ::save-view-definition
  (fn [{:keys [db]} [_]]
@@ -577,15 +586,36 @@
 
         :dispatch [::auth/with-authentication
                    (fn [authentication-token]
-                     (assoc (cond->
-                             (http.fhir-server/post-view-definition
-                              authentication-token
-                              (http.fhir-server/active-server db)
-                              view-definition)
-                              (:id view-definition)
-                              (assoc-in [:params :vd-id] (:id view-definition)))
-                            :on-success [::save-view-definition-success]
-                            :on-failure [::save-view-definition-failure]))]}))))
+                     (assoc (post-vd-request db authentication-token view-definition)
+                       :on-success [::save-view-definition-success]
+                       :on-failure [::save-view-definition-failure]))]}))))
+
+(defn duplicate-view-definition [vd]
+  (-> vd
+      (dissoc :id :fullUrl :link)
+      (medley/update-existing :name str "_clone")
+      (medley/update-existing :title str "_clone)")))
+
+(reg-event-fx
+  ::duplicate-view-definition
+  (fn [{:keys [db]} _]
+    (let [refs (::m/tree-inputs db)
+          view-definition (-> (:current-vd db)
+                              decoration/remove-decoration
+                              (input-references/replace-inputs-with-values refs)
+                              strip-empty-collections
+                              remove-meta
+                              duplicate-view-definition)
+          empty-fields? (empty-inputs-in-vd? view-definition)]
+      (if empty-fields?
+        {:db (assoc db ::m/empty-inputs? true)}
+        {:db       (dissoc db ::m/empty-inputs?)
+         :dispatch [::auth/with-authentication
+                    (fn [authentication-token]
+                      (assoc (post-vd-request db authentication-token view-definition)
+                        :on-success [::duplicate-view-definition-success]
+                        ;; TODO
+                        #_#_:on-failure [::save-view-definition-failure]))]}))))
 
 (reg-event-fx
  ::save-view-definition-success
@@ -594,6 +624,12 @@
             (assoc  ::m/save-loading false)
             (dissoc ::m/save-view-definition-loading))
     :message-success "Saved"}))
+
+(reg-event-fx
+ ::duplicate-view-definition-success
+ (fn [_ [_ _result]]
+   {:navigate [:vd-list]
+    :message-success "Duplicated"}))
 
 (reg-event-fx
  ::save-view-definition-failure
