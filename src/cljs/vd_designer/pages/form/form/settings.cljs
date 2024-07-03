@@ -170,10 +170,26 @@
            [:> Form.Item {:label "Assigner" :name [id :assigner]}
             [:> Input]]])]
 
+       [popover-collapse-item "Meta"
+        (let [id :meta]
+          [:<>
+           [:> Form.Item {:label "Id"       :name [id :id]
+                          :rules [{:pattern #"^[A-Za-z0-9\-\.]{1,64}$"
+                                   :message  "Can contain only letters, numbers, dash and dot"}]}
+            [:> Input {:maxLength 64}]]
+           [:> Form.Item {:label "Last updated"
+                          :name  [id :lastUpdated]}
+            #_#_"FIXME" "change input to DatePicker (not working right now...)"
+            [:> Input {:showTime true
+                       :format   "YYYY-MM-DDTHH:mm:ss.SSSZ[Z]"}]]
+           [:> Form.Item {:label "Source"   :name [id :source]}
+            [:> Input]]
+           #_#_TODO "add profile"
+           #_#_TODO "add security"
+           #_#_TODO "add tag"])]
+
        [:> Form.Item {:label "Experimental" :name "experimental"}
         [:> Switch {:size "small"}]]
-
-       #_"TODO: Meta object"
 
        [:> Form.Item {:label "FHIR version"}
         [popover-form-list "fhirVersion"
