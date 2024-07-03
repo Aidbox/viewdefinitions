@@ -17,7 +17,7 @@
 (defn editor []
   (let [vd-code @(subscribe [::m/view-definition-code])
         lang @(subscribe [::m/language])
-        code-ditry? @(subscribe [::m/code-dirty?])
+        code-dirty? @(subscribe [::m/code-dirty?])
         editor-id @(subscribe [::m/editor-id])
         schema @(subscribe [::m/view-definition-jsonschema])]
     ^{:key editor-id}
@@ -37,16 +37,15 @@
                                         :schemas [schema]}))
                              instance)
               :onChange (fn [text & _args]
-                          (when (not code-ditry?)
-                            (dispatch [::c/set-code-ditry true]))
+                          (when (not code-dirty?)
+                            (dispatch [::c/set-code-dirty true]))
                           (dispatch [::c/set-view-definition-code text]))
               :onValidate (fn [markers]
-                            (js/console.log markers)
                             (let [max-severity
                                   (->> (js->clj markers :keywordize-keys true)
                                        (mapv :severity)
                                        (reduce max 0))]
-                              (dispatch [::c/on-code-validation max-severity])))}]
+                              (dispatch [::c/set-code-validation-severity max-severity])))}]
      [:> Flex {:style    {:position :absolute
                           :top      0
                           :right    "24px"

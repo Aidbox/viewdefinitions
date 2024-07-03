@@ -353,6 +353,13 @@
 (reg-event-fx
  ::eval-view-definition-data
  (fn [{:keys [db]} _]
+   (if (= (::m/left-panel-active-tab db) :left-panel-tab/code)
+     {:dispatch [::eval-view-definition-code]}
+     {:dispatch [::eval-view-definition-tree]})))
+
+(reg-event-fx
+ ::eval-view-definition-tree
+ (fn [{:keys [db]} _]
    (tag-manager/data-layer
     {:dataLayer {:event         "vd_run"
                  :resource-type (get (:current-vd db) :resource "")}})
@@ -378,6 +385,40 @@
        :else
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
+
+        :dispatch   [::auth/with-authentication
+                     (fn [authentication-token]
+                       (-> (http.fhir-server/eval-view-definition-user-server
+                            authentication-token
+                            (http.fhir-server/active-server db)
+                            view-definition)
+                           (assoc :on-success [::on-eval-view-definition-success]
+                                  :on-failure [::on-eval-view-definition-error])))]}))))
+
+(reg-event-fx
+ ::eval-view-definition-code
+ (fn [{:keys [db]} _]
+   (tag-manager/data-layer
+    {:dataLayer {:event         "vd_run"
+                 :resource-type (get (:current-vd db) :resource "")}})
+   (let [sandbox? (settings-model/in-sandbox? db)
+         view-definition (-> (::m/view-definition-code db)
+                             yaml/try-parse
+                             (js->clj :keywordize-keys true)
+                             strip-empty-select-nodes
+                             strip-empty-where-nodes
+                             (lower-case-resource-in-sandbox sandbox?))
+         missing-required-fields (missing-required-fields view-definition)]
+     (cond
+       (seq missing-required-fields)
+       {:notification-error
+        (let [fields (mapv name missing-required-fields)
+              fields-str (str/join ", " fields)]
+          (utils.string/format
+           "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
+
+       :else
+       {:db         (assoc db ::m/eval-loading true)
 
         :dispatch   [::auth/with-authentication
                      (fn [authentication-token]
@@ -827,8 +868,8 @@
 (reg-event-fx
  ::on-form-tab-clicked
  (fn [{:keys [db]} _]
-   (let [new-db (assoc db ::m/left-panel-active-tab "tab")]
-     (when (not= (::m/left-panel-active-tab db) "tab")
+   (let [new-db (assoc db ::m/left-panel-active-tab :left-panel-tab/form)]
+     (when (not= (::m/left-panel-active-tab db) :left-panel-tab/form)
        (if (::m/code-dirty? db)
          (try
            (let [vd (-> (::m/view-definition-code db)
@@ -844,10 +885,10 @@
 (reg-event-db
  ::on-code-tab-clicked
  (fn [db _]
-   (when (not= (::m/left-panel-active-tab db) "code")
+   (when (not= (::m/left-panel-active-tab db) :left-panel-tab/code)
      (let [language (::m/language db)]
        (-> db
-           (assoc ::m/left-panel-active-tab "code")
+           (assoc ::m/left-panel-active-tab :left-panel-tab/code)
            (assoc ::m/editor-id (str (random-uuid)))
            (assoc ::m/view-definition-code
                   (-> (:current-vd db)
@@ -856,7 +897,12 @@
                       (format-vd language))))))))
 
 (reg-event-db
- ::set-code-ditry
+ ::on-sql-tab-clicked
+ (fn [db _]
+   (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)))
+
+(reg-event-db
+ ::set-code-dirty
  (fn [db [_ value]]
    (assoc db ::m/code-dirty? value)))
 
@@ -866,6 +912,6 @@
    (assoc db ::m/view-definition-code value)))
 
 (reg-event-db
- ::on-code-validation
+ ::set-code-validation-severity
  (fn [db [_ severity]]
    (assoc db ::m/code-validation-severity severity)))

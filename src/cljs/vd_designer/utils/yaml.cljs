@@ -14,3 +14,9 @@
 
 (defn yaml->edn [yaml]
   (y/parse yaml))
+
+(defn try-parse [^String content]
+  (try
+    (str->yaml content)
+    (catch js/Error _
+      (js/JSON.parse content))))

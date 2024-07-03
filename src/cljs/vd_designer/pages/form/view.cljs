@@ -72,12 +72,13 @@
 (defn on-tab-click [tab-key _event]
   (case tab-key
     "form"
-    (dispatch [::c/on-form-tab-clicked]) ;; load 
+    (dispatch [::c/on-form-tab-clicked])
 
     "code"
     (dispatch [::c/on-code-tab-clicked])
 
-    nil))
+    "sql"
+    (dispatch [::c/on-sql-tab-clicked])))
 
 (defn viewdefinition-view []
   (let [resources @(subscribe [::m/view-definition-data])
