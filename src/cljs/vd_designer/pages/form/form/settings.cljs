@@ -3,6 +3,7 @@
             [antd :refer [DatePicker Divider Flex Form Input InputNumber Modal
                           Select Space Switch Typography]]
             [clojure.string :as str]
+            [vd-designer.components.date-picker :as date-picker]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [reagent.core :as r]
@@ -132,8 +133,9 @@
                  [:> Form.Item {:label "Rank"
                                 :name  [element-key :rank]}
                   [:> InputNumber {:min 1}]]
-                 [:> Form.Item {:label "Period"
-                                :name  [element-key :period]}
+                 [:> Form.Item (merge {:label "Period"
+                                       :name  [element-key :period]}
+                                      date-picker/date-range-form-item-props)
                   [:> DatePicker.RangePicker {:style {:width "100%"}}]]])
               (fn [items delete-button]
                 [:> Flex {:justify :space-between
@@ -149,26 +151,32 @@
 
 
        [popover-collapse-item "Identifier"
-        (let [id :identifier]
+        (let [element-key :identifier]
           [:<>
-           [:> Form.Item {:label "Use"      :name [id :use]}
+           [:> Form.Item {:label "Use"      :name [element-key :use]}
             [:> Select (select/with-default-props
                          {:variant :outlined
                           :options (select/options-from-vec
                                     ["Usual" "Official" "Temp" "Secondary" "Old"]
                                     str/lower-case)})]]
            #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
-           [:> Form.Item {:label "Type"     :name [id :type]}
+           [:> Form.Item {:label "Type"}
+            [:> Form.Item {:label "Coding" :name [element-key :period :coding]}
+             [:> Input]]
+            [:> Form.Item {:label "Text" :name [element-key :period :text]}
+             [:> Input]]]
+
+           [:> Form.Item {:label "System" :name [element-key :system]}
             [:> Input]]
-           [:> Form.Item {:label "System"   :name [id :system]}
+           [:> Form.Item {:label "Value" :name [element-key :value]}
             [:> Input]]
-           [:> Form.Item {:label "Value"    :name [id :value]}
-            [:> Input]]
-           [:> Form.Item {:label "Period"   :name [id :period]}
+           [:> Form.Item (merge {:label "Period"
+                                 :name  [element-key :period]}
+                                date-picker/date-range-form-item-props)
             #_#_TODO "allow to select only year or year-month"
             [:> DatePicker.RangePicker {:style {:width "100%"}}]]
-           [:> Form.Item {:label "Assigner" :name [id :assigner]}
-            [:> Input]]])]
+           ; TODO: add assigner
+           ])]
 
        [popover-collapse-item "Meta"
         (let [id :meta]

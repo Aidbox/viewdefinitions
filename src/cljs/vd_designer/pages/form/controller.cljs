@@ -318,12 +318,13 @@
        (remove #(blank? :path %) where)))))
 
 (defn strip-empty-collections [vd]
-  (medley/remove-kv
-   (fn [k v]
-     (and (not (= k :select))
-          (coll? v)
-          (empty? v)))
-   vd))
+  (-> vd
+      (update :identifier #(medley/remove-vals nil? %))
+      (->> (medley/remove-kv
+             (fn [k v]
+               (and (not (= k :select))
+                    (coll? v)
+                    (empty? v)))))))
 
 ;; remove when #4390 is resolves
 (defn remove-meta [vd]
