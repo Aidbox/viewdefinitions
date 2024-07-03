@@ -59,7 +59,7 @@
             
             :always
             (assoc ::m/view-definition-jsonschema 
-                   {:uri "/a.json"
+                   {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
       :fx (cond-> (if (-> db :cfg/fhir-servers :user/servers empty?)
