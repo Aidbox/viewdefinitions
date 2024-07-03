@@ -148,20 +148,8 @@
  :-> ::editor-id)
 
 (reg-sub
- ::view-definition-code-valid?
- :<- [::view-definition-code]
- (fn [vd-code _]
-   ()))
-
-(reg-sub
  ::view-definition-jsonschema
  :-> ::view-definition-jsonschema)
-
-(reg-sub
- ::view-definition-jsonschema-json
- :<- [::view-definition-jsonschema]
- (fn [vd-jsonschema _]
-   (clj->js vd-jsonschema)))
 
 
 (def editor-error-severity 8)
