@@ -1,8 +1,10 @@
 (ns vd-designer.components.select
   (:require [medley.core :as medley]))
 
-(defn options-from-vec [o]
-  (map #(hash-map :value % :label %) o))
+(defn options-from-vec [o & [transform]]
+  (let [transform (if (nil? transform) identity transform)]
+    (map #(hash-map :label %
+                    :value (transform %)) o)))
 
 (defn with-default-props
   "For more details see: https://ant.design/components/select#api"

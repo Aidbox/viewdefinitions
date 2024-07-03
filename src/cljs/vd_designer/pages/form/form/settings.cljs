@@ -1,7 +1,8 @@
 (ns vd-designer.pages.form.form.settings
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [DatePicker Form Input Modal Select Space Switch
-                          Typography]]
+            [antd :refer [DatePicker Divider Flex Form Input InputNumber Modal
+                          Select Space Switch Typography]]
+            [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
             [reagent.core :as r]
@@ -40,21 +41,24 @@
                                             :style {:margin 0}} title]
                       content)]}])
 
-(defn popover-form-list [name render-list-items]
+(defn popover-form-list [name render-list-items & [wrapper]]
   [:> Form.List {:name name}
    (fn [raw-fields actions]
      (let [fields (-> raw-fields
                       (js->clj :keywordize-keys true)
                       set-keys-to-names)
-           {:keys [add remove]} (js->clj actions :keywordize-keys true)]
+           {:keys [add remove]} (js->clj actions :keywordize-keys true)
+           wrapper (if (nil? wrapper)
+                     (fn [items delete-button]
+                       [:> Space {:align "baseline"} [:<> items delete-button]])
+                     wrapper)]
        (r/as-element
         [:div
          (map (fn [{:keys [key name]}]
                 ^{:key key}
-                [:> Space {:align "baseline"}
-                 [:<>
-                  (render-list-items key)
-                  [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
+                [wrapper
+                 (render-list-items key)
+                 [:> icons/MinusCircleOutlined {:onClick #(remove name)}]])
               fields)
          [:> Form.Item
           [button/icon "Add" icons/PlusOutlined
@@ -94,17 +98,65 @@
        [:> Form.Item {:label "Copyright" :name "copyright"}
         [:> Input.TextArea {:autoSize true :allowClear true}]]
 
+       [popover-collapse-item "Contact"
+        [popover-form-list "contact"
+         (fn [element-key]
+           [:> Flex {:vertical true}
+            [:> Form.Item {:name  [element-key :name]
+                           :rules [{:required true
+                                    :message  "Name is required"}]}
+             [:> Input {:placeholder "Name", :style {:width 386}}]]
+            [:<> "Telecom"
+             [popover-form-list [element-key :telecom]
+              (fn [element-key]
+                [:> Flex {:vertical true, :style {:margin-left 32}}
+                 [:> Form.Item {:label "System"
+                                :name  [element-key :system]}
+                  [:> Select (select/with-default-props
+                               {:variant :outlined
+                                :options (select/options-from-vec
+                                          ["Phone" "Fax" "Email" "Pager" "Url" "SMS" "Other"]
+                                          str/lower-case)})]]
+                 [:> Form.Item {:label "Value"
+                                :name  [element-key :value]
+                                :rules [{:required true
+                                         :message  "Value is required"}]}
+                  [:> Input]]
+                 [:> Form.Item {:label "Use"
+                                :name  [element-key :use]}
+                  [:> Select (select/with-default-props
+                               {:variant :outlined
+                                :options (select/options-from-vec
+                                          ["Home" "Work" "Temp" "Old" "Mobile"]
+                                          str/lower-case)})]]
+                 [:> Form.Item {:label "Rank"
+                                :name  [element-key :rank]}
+                  [:> InputNumber {:min 1}]]
+                 [:> Form.Item {:label "Period"
+                                :name  [element-key :period]}
+                  [:> DatePicker.RangePicker {:style {:width "100%"}}]]])
+              (fn [items delete-button]
+                [:> Flex {:justify :space-between
+                          :align   :baseline
+                          :gap     16}
+                 items delete-button])]]])
+         (fn [items delete-button]
+           [:<>
+            [:> Flex {:justify :space-between
+                      :align   :baseline}
+             items delete-button]
+            [:> Divider {:dashed true, :style {:margin "8px 0"}}]])]]
+
+
        [popover-collapse-item "Identifier"
         (let [id :identifier]
           [:<>
            [:> Form.Item {:label "Use"      :name [id :use]}
             [:> Select (select/with-default-props
                          {:variant :outlined
-                          :options [{:label "Usual"     :value "usual"}
-                                    {:label "Official"  :value "official"}
-                                    {:label "Temp"      :value "temp"}
-                                    {:label "Secondary" :value "secondary"}
-                                    {:label "Old"       :value "old"}]})]]
+                          :options (select/options-from-vec
+                                    ["Usual" "Official" "Temp" "Secondary" "Old"]
+                                    str/lower-case)})]]
            #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
            [:> Form.Item {:label "Type"     :name [id :type]}
             [:> Input]]
@@ -122,7 +174,6 @@
         [:> Switch {:size "small"}]]
 
        #_"TODO: Meta object"
-       #_"TODO: contact array"
        #_"TODO: useContext array"
 
        [:> Form.Item {:label "FHIR version"}
