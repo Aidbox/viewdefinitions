@@ -134,7 +134,7 @@
                                 :name  [element-key :rank]}
                   [:> InputNumber {:min 1}]]
                  [:> Form.Item (merge {:label "Period"
-                                       :name  [:contact 0 :telecom element-key :period]}
+                                       :name  [element-key :period]}
                                       date-picker/date-range-form-item-props)
                   [:> DatePicker.RangePicker {:style {:width "100%"}}]]])
               (fn [items delete-button]
@@ -161,10 +161,11 @@
                                     str/lower-case)})]]
            #_#_TODO "rework to select https://hl7.org/fhir/R5/valueset-identifier-type.html#4.4.1.657"
            [:> Form.Item {:label "Type"}
-            [:> Form.Item {:label "Coding" :name [element-key :type :coding]}
-             [:> Input]]
-            [:> Form.Item {:label "Text" :name [element-key :type :text]}
-             [:> Input]]]
+            [:> Space {:align "baseline"}
+             [:> Form.Item {:name [element-key :type :coding]}
+              [:> Input {:placeholder "Coding"}]]
+             [:> Form.Item {:name [element-key :type :text]}
+              [:> Input {:placeholder "Text"}]]]]
 
            [:> Form.Item {:label "System" :name [element-key :system]}
             [:> Input]]
