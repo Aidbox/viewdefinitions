@@ -103,10 +103,11 @@
         [popover-form-list "contact"
          (fn [element-key]
            [:> Flex {:vertical true}
-            [:> Form.Item {:name  [element-key :name]
+            [:> Form.Item {:label "Name"
+                           :name  [element-key :name]
                            :rules [{:required true
                                     :message  "Name is required"}]}
-             [:> Input {:placeholder "Name", :style {:width 386}}]]
+             [:> Input]]
             [:<> "Telecom"
              [popover-form-list [element-key :telecom]
               (fn [element-key]
