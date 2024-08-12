@@ -2,6 +2,7 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [lambdaisland.uri :as uri]
+            [jsonista.core :as json]
             [martian.core :as martian]
             [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
@@ -78,19 +79,36 @@
         select-server-keys
         (http-response/ok))))
 
+(defn hack-view-definitions-meta [view-definitions]
+  (update-in view-definitions
+             [:body :entry]
+             (fn [entry]
+               (mapv
+                 (fn [view-definition]
+                   (if (-> view-definition :resource :meta :createdAt)
+                     (update-in view-definition [:resource :meta] dissoc :createdAt)
+                     view-definition))
+                 entry))))
+
+(defn hack-view-definition-meta [view-definition]
+  (if (-> view-definition :body :meta :createdAt)
+    (update-in view-definition [:body :meta] dissoc :createdAt)
+    view-definition))
+
 (defn connect
   [{:keys [box-url fhir-server-headers]}]
-  @(martian/response-for (portal/client box-url)
-                         :connect
-                         fhir-server-headers))
+  (hack-view-definitions-meta
+    @(martian/response-for (portal/client box-url)
+                           :connect
+                           fhir-server-headers)))
 
 (defn get-view-definition
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [vd-id]} (:query-params request)]
-    @(martian/response-for (portal/client box-url)
-                           :get-view-definition
-                           (merge {:vd-id vd-id}
-                                  fhir-server-headers))))
+    (hack-view-definition-meta @(martian/response-for (portal/client box-url)
+                                                      :get-view-definition
+                                                      (merge {:vd-id vd-id}
+                                                             fhir-server-headers)))))
 
 (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
