@@ -81,6 +81,25 @@
            (filter #(-> % :box-url (= box-url)))
            first))
 
+(defn hack-view-definitions-json-meta [json-view-definitions]
+  (let [body (json/read-value (:body json-view-definitions) json/keyword-keys-object-mapper)
+        hacked-entry
+        (update body :entry
+                (fn [entry]
+                  (mapv
+                    (fn [view-definition] (if (-> view-definition :resource :meta :createdAt)
+                                            (update-in view-definition [:resource :meta] dissoc :createdAt)
+                                            view-definition))
+                    entry)))]
+    (json/write-value-as-string hacked-entry)))
+
+(defn hack-view-definition-json-meta [json-view-definitions]
+  (let [body (json/read-value (:body json-view-definitions) json/keyword-keys-object-mapper)
+        body (if (-> body :meta :createdAt)
+               (update-in body [:meta] dissoc :createdAt)
+               body)]
+    (json/write-value-as-string body)))
+
 (defn public-server:connect [box-url public-server]
   (let [box-response @(http-client/get
                         (str box-url "/fhir/ViewDefinition")
@@ -90,7 +109,7 @@
                                 (:headers public-server))})]
     (if (predicates/success? box-response)
       {:status 200
-       :body (:body box-response)
+       :body (hack-view-definitions-json-meta box-response)
        :headers {"Content-Type" "application/json"}}
       (http-response/bad-request (:body box-response)))))
 
@@ -131,7 +150,7 @@
                           "Content-Type" "application/transit+json"}})]
     (if (predicates/success? box-response)
       {:status 200
-       :body (:body box-response)
+       :body (hack-view-definition-json-meta box-response)
        :headers {"Content-Type" "application/json"}}
       (http-response/bad-request (:body box-response)))))
 
@@ -145,7 +164,7 @@
                              (merge (:headers public-server)))})]
     (if (predicates/success? box-response)
       {:status 200
-       :body (:body box-response)
+       :body (hack-view-definition-json-meta box-response)
        :headers {"Content-Type" "application/json"}}
       (http-response/bad-request (:body box-response)))))
 
