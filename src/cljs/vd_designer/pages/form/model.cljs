@@ -160,3 +160,7 @@
 (reg-sub
  ::code-validation-severity
  :-> ::code-validation-severity)
+
+(reg-sub
+ ::table-panel-size
+ :-> ::table-panel-size)

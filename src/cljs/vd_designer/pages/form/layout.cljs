@@ -23,7 +23,8 @@
   [:> ConfigProvider {:theme theme}
    [:> Layout {:style {:marginLeft 72
                        :background "#fff"
-                       :height     "100%"}}
+                       :height     "100%"
+                       :overflow   "hidden"}}
     [banner/sign-in]
     [:> Flex {:vertical true
               :gap      16

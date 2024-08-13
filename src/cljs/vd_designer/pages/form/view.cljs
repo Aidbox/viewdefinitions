@@ -46,26 +46,33 @@
       :else
       [auth-required (button {})])))
 
+(def table-rest-size 93)
+
 (defn render-table [resources sandbox? server-url]
-  [table (vec (remove empty? (:data resources)))
-   {:class      "vd-table"
-    :pagination {:hideOnSinglePage true}
-    :locale     {:emptyText (r/as-element
-                             [:> Empty
-                              {:description
-                               (r/as-element
-                                [:div
-                                 [:> Typography.Paragraph {:level 1
-                                                           :type  "secondary"}
-                                  "No data."
-                                  (when-not sandbox?
-                                    [:<> " See: "
-                                     [:> Typography.Link
-                                      {:target "_blank"
-                                       :href   (m/import-synthetic-data-notebook-url server-url)}
-                                      "Import synthetic data to Aidbox."]])]])}])}
-    :scroll     {:y 1000
-                 :x true}}])
+  (let [size @(subscribe [::m/table-panel-size])
+        panel-size (- js/window.screen.height 32 170)
+        table-size (* panel-size (/ size 100))
+        available-height (- table-size table-rest-size)]
+    [table (vec (remove empty? (:data resources)))
+     {:class      "vd-table"
+      :pagination {:hideOnSinglePage true
+                   :pageSize 20}
+      :locale     {:emptyText (r/as-element
+                               [:> Empty
+                                {:description
+                                 (r/as-element
+                                  [:div
+                                   [:> Typography.Paragraph {:level 1
+                                                             :type  "secondary"}
+                                    "No data."
+                                    (when-not sandbox?
+                                      [:<> " See: "
+                                       [:> Typography.Link
+                                        {:target "_blank"
+                                         :href   (m/import-synthetic-data-notebook-url server-url)}
+                                        "Import synthetic data to Aidbox."]])]])}])}
+      :scroll     {:y (- available-height 16)
+                   :x true}}]))
 
 (def button-id "root-vd-settings")
 
@@ -89,83 +96,106 @@
         server-url @(subscribe [::settings-model/current-server-url])
         sandbox? @(subscribe [::settings-model/sandbox?])
         code-validation-severity @(subscribe [::m/code-validation-severity])]
-    [:> PanelGroup {:direction "horizontal"
-                    :autoSaveId "persistence"
-                    :style {:gutter         32
-                            :flex           1
-                            :display        "flex"
-                            :flex-direction "row"
-                            :flex-flow      "row"
-                            :overflow       "hidden"}}
+    [:> PanelGroup
+     {:direction "vertical"
+      :autoSaveId "persistence2"
+      :style {:gutter         32
+              :flex           1
+              :display        "flex"
+              :flex-direction "column"
+              :flex-flow      "column"
+              :overflow       "hidden"}}
      [:> Panel
       {:minSize 25
        :style   {:display "flex"}}
-      [:> Flex {:vertical true
-                :flex     "1 0 0%"
-                :style    {:override  "hidden"
-                           :min-width "400px"}}
-       [:> Row
-        [:> Space {:align :start}
-         [:> Typography.Title {:level 1 :style {:margin-top 0}} "ViewDefinition"]
-         [button/icon ""
-          icons/SettingOutlined
-          {:onClick #(toggle-popover button-id)
-           :style   {:border :none}
-           :id      button-id}]]
-        [form/root-settings {:open (= button-id opened-id)}]]
+      [:> PanelGroup {:direction "horizontal"
+                      :autoSaveId "persistence"
+                      :style {:gutter         32
+                              :flex           1
+                              :display        "flex"
+                              :flex-direction "row"
+                              :flex-flow      "row"
+                              :overflow       "hidden"}}
+       [:> Panel
+        {:minSize 25
+         :style   {:display "flex"}}
+        [:> Flex {:vertical true
+                  :flex     "1 0 0%"
+                  :style    {:override  "hidden"
+                             :min-width "400px"}}
+         [:> Row
+          [:> Space {:align :start}
+           [:> Typography.Title {:level 1 :style {:margin-top 0}} "ViewDefinition"]
+           [button/icon ""
+            icons/SettingOutlined
+            {:onClick #(toggle-popover button-id)
+             :style   {:border :none}
+             :id      button-id}]]
+          [form/root-settings {:open (= button-id opened-id)}]]
 
-       (when error
-         [alert :type :error :message error])
+         (when error
+           [alert :type :error :message error])
 
-       [tabs {:animated true
-              :items [(tab-item {:key      "form"
-                                 :label    "Form"
-                                 :children [form]
-                                 :disabled (>= code-validation-severity m/editor-warning-severity)
-                                 :icon     (r/create-element icons/EditOutlined)})
-                      (tab-item {:key      "code"
-                                 :label    "Code"
-                                 :disabled current-vd-nil?
-                                 :children [editor]
-                                 :icon     (r/create-element icons/CodeOutlined)})
-                      (tab-item {:key      "sql"
-                                 :label    "SQL"
-                                 :children [sql]
-                                 :disabled (nil? resources)
-                                 :icon     (r/create-element icons/HddOutlined)})]
-              :onTabClick on-tab-click
-              :tabBarExtraContent {:right (r/as-element
-                                           [:> Flex {:gap 8
-                                                     :style {:margin-right "8px"}}
-                                            [:> Tooltip
-                                             {:placement       "bottom"
-                                              :mouseEnterDelay 0.5
-                                              :title           "Ctrl+Enter"}
-                                             [:> Button {:id      "vd_run"
-                                                         :class   "mobile-icon-button"
-                                                         :onClick #(dispatch [::c/eval-view-definition-data])
-                                                         :icon    (r/create-element icons/PlayCircleOutlined)
-                                                         :loading @(subscribe [::m/eval-loading])}
-                                              "Run"]]
-                                            [save-vd-button authorized?]])}}]]]
+         [tabs {:animated true
+                :items [(tab-item {:key      "form"
+                                   :label    "Form"
+                                   :children [form]
+                                   :disabled (>= code-validation-severity m/editor-warning-severity)
+                                   :icon     (r/create-element icons/EditOutlined)})
+                        (tab-item {:key      "code"
+                                   :label    "Code"
+                                   :disabled current-vd-nil?
+                                   :children [editor]
+                                   :icon     (r/create-element icons/CodeOutlined)})
+                        (tab-item {:key      "sql"
+                                   :label    "SQL"
+                                   :children [sql]
+                                   :disabled (nil? resources)
+                                   :icon     (r/create-element icons/HddOutlined)})]
+                :onTabClick on-tab-click
+                :tabBarExtraContent {:right (r/as-element
+                                             [:> Flex {:gap 8
+                                                       :style {:margin-right "8px"}}
+                                              [:> Tooltip
+                                               {:placement       "bottom"
+                                                :mouseEnterDelay 0.5
+                                                :title           "Ctrl+Enter"}
+                                               [:> Button {:id      "vd_run"
+                                                           :class   "mobile-icon-button"
+                                                           :onClick #(dispatch [::c/eval-view-definition-data])
+                                                           :icon    (r/create-element icons/PlayCircleOutlined)
+                                                           :loading @(subscribe [::m/eval-loading])}
+                                                "Run"]]
+                                              [save-vd-button authorized?]])}}]]]
+       [:> PanelResizeHandle {:style {:border-right       "solid"
+                                      :border-right-color "#F0F0F0"
+                                      :border-width       "1px"}}]
+       [:> Panel {:minSize 35
+                  :style {:display "flex"}}
+        [:> Flex
+         {:vertical true
+          :flex     "1 0 0%"
+          :style    {:override    "hidden"
+                     :margin-left "15px"
+                     :display     "flex"}}
+         [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
+         [:div {:style {:overflow "auto"}}
+          [resource-tab/resource-tab]]
+         #_[tabs {:animated true
+                :items [(tab-item {:key      "table"
+                                   :label    "Table"
+                                   :children [render-table resources sandbox? server-url]
+                                   :icon     (r/create-element icons/TableOutlined)})
+                        (tab-item {:key      "resource"
+                                   :label    "Resource"
+                                   :children [resource-tab/resource-tab]
+                                   :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]]
      [:> PanelResizeHandle {:style {:border-right       "solid"
                                     :border-right-color "#F0F0F0"
                                     :border-width       "1px"}}]
-     [:> Panel {:minSize 35
-                :style {:display "flex"}}
-      [:> Flex
-       {:vertical true
-        :flex     "1 0 0%"
-        :style    {:override    "hidden"
-                   :margin-left "15px"
-                   :display     "flex"}}
-       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
-       [tabs {:animated true
-              :items [(tab-item {:key      "table"
-                                 :label    "Table"
-                                 :children [render-table resources sandbox? server-url]
-                                 :icon     (r/create-element icons/TableOutlined)})
-                      (tab-item {:key      "resource"
-                                 :label    "Resource"
-                                 :children [resource-tab/resource-tab]
-                                 :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]))
+     [:> Panel
+      {:minSize 25
+       :style   {:display "flex"
+                 :margin-bottom "16px"}
+       :onResize (fn [size] (dispatch [::c/set-table-panel-size size]))}
+      [render-table resources sandbox? server-url]]]))

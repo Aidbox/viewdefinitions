@@ -915,3 +915,8 @@
  ::set-code-validation-severity
  (fn [db [_ severity]]
    (assoc db ::m/code-validation-severity severity)))
+
+(reg-event-db
+ ::set-table-panel-size
+ (fn [db [_ size]]
+   (assoc db ::m/table-panel-size size)))
