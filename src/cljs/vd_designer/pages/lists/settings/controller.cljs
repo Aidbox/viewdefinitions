@@ -1,9 +1,10 @@
 (ns vd-designer.pages.lists.settings.controller
   (:require [medley.core :as medley]
-            [re-frame.core :refer [reg-cofx reg-event-fx reg-fx]]
+            [re-frame.core :refer [reg-cofx reg-event-fx reg-fx reg-event-db]]
             [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http]
+            [vd-designer.pages.lists.settings.model :as m]
             [vd-designer.notifications]
             [vd-designer.polling :as polling]
             [vd-designer.utils.event :as u]))
@@ -116,3 +117,18 @@
      {:dispatch [::store-used-server-name
                  (-> db :cfg/fhir-servers :user/servers
                      first-sandbox-server)]})))
+
+(reg-event-db
+ ::open-server-form
+ (fn [db [_ ]]
+   (assoc db ::m/server-form-opened true)))
+
+(reg-event-db
+ ::close-server-form
+ (fn [db [_ ]]
+   (assoc db ::m/server-form-opened false)))
+
+(reg-event-db
+  ::change-server-name
+ (fn [db [_ ]]
+   (assoc-in db [:cfg/fhir-servers :user/servers 2] 1)))

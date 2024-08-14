@@ -62,3 +62,7 @@
  :<- [::current-server]
  (fn [current-server _]
   (:box-url current-server)))
+
+(reg-sub
+ ::server-form-opened
+ :-> ::server-form-opened)
