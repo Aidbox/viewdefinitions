@@ -9,7 +9,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.3.1",
     "react-resizable-panels": "^2.0.19",
-    "shadow-cljs": "^2.28.10",
+    "shadow-cljs": "^2.28.12",
     "sql-formatter": "^15.3.2",
     "xmlhttprequest": "^1.8.0",
     "yaml": "^2.4.5"
