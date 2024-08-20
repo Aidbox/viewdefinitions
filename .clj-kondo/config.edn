@@ -1,0 +1,7 @@
+{:lint-as       {}
+ :ns-groups     [{:pattern "^.*-test$" :name tests}]
+ :skip-comments true
+ :config-in-ns  {tests                        {:linters {:inline-def {:level :off}}}}
+
+ :linters       {}
+ :output        {:show-rule-name-in-message true}}

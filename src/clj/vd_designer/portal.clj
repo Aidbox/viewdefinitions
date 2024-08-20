@@ -70,9 +70,12 @@
 
 (defn list-servers
   [{:keys [cfg user] :as ctx}]
-  (let [public-servers (:public-fhir-servers cfg)]
-    (-> (if user
-          (concat (list-user-servers ctx) public-servers)
-          public-servers)
-        select-server-keys
-        (http-response/ok))))
+  (let [public-servers (:public-fhir-servers cfg)
+        portal-boxes
+        (-> (if user
+              (concat (list-user-servers ctx) public-servers)
+              public-servers)
+            select-server-keys)]
+    (http-response/ok
+      {:portal-boxes portal-boxes
+       :custom-boxes [{:box-url "http://someurl.com" :server-name "somebox" :headers {:header1 "header1" :Authorization "Basic somebasic"}}]})))

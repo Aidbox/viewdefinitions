@@ -9,5 +9,5 @@ create table if not exists user_servers_custom (
     account_id integer not null references accounts on delete cascade,
     server_name varchar(256) not null,
     box_url varchar(256) not null,
-    aidbox_auth_token text not null,
+    aidbox_auth_token text not null
 );
