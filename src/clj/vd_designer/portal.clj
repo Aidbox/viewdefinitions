@@ -47,7 +47,7 @@
       (update :box-url truncate-box-url)
       (set/rename-keys {:name :server-name})))
 
-(defn list-user-servers
+(defn list-portal-user-servers
   [{{:keys [id sso-token]}   :user
     client :aidbox.portal/client
     db     :db
@@ -65,7 +65,7 @@
     licenses))
 
 (defn select-server-keys [servers]
-  (map #(select-keys % [:box-url :server-name :project])
+  (map #(select-keys % [:box-url :server-name :project :type :sandbox :headers])
        servers))
 
 (defn list-servers
@@ -73,9 +73,16 @@
   (let [public-servers (:public-fhir-servers cfg)
         portal-boxes
         (-> (if user
-              (concat (list-user-servers ctx) public-servers)
+              (concat (list-portal-user-servers ctx) public-servers)
               public-servers)
             select-server-keys)]
     (http-response/ok
       {:portal-boxes portal-boxes
-       :custom-boxes [{:box-url "http://someurl.com" :server-name "somebox" :headers {:header1 "header1" :Authorization "Basic somebasic"}}]})))
+       :custom-servers [{:box-url "https://9a35-65-108-58-36.ngrok-free.app"
+                         :server-name "somebox"
+                         :headers {:header1 "header1" :Authorization "Basic YmFzaWM6c2VjcmV0"}
+                         :type "custom"}
+                        {:box-url "http://someurl2.com"
+                         :server-name "somebox2"
+                         :headers {:header1 "header1" :Authorization "Basic somebasic"}
+                         :type "custom"}]})))

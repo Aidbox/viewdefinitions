@@ -6,8 +6,12 @@
 (defn active-server [db]
   (let [{user-servers :user/servers
          used-server-name :used-server-name}
-        (:cfg/fhir-servers db)]
-    (when user-servers (user-servers used-server-name))))
+        (:cfg/fhir-servers db)
+        portal-boxes (:portal-boxes user-servers)
+        custom-servers (:custom-servers user-servers)]
+    (when user-servers
+     (or (get portal-boxes used-server-name)
+         (get custom-servers used-server-name)))))
 
 (defn- with-defaults [req db]
   (merge {:headers          (-> db active-server :headers)

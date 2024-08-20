@@ -40,12 +40,9 @@
   (let [request-sent-by  @(subscribe [::m/request-sent-by])
         used-server-name @(subscribe [::m/used-server-name])
         connect-error    @(subscribe [::m/connect-error])
-        fhir-servers     @(subscribe [::m/user-servers])
-        server-form-opened? @(subscribe [::m/server-form-opened])
-        user-servers [{:box-url "url1" :server-name "name1"
-                       :headers [{:Authorization "Basic mytoken"}]}
-                      {:box-url "url2" :server-name "name2"
-                       :headers [{:Authorization "Basic ..."}]}]]
+        portal-boxes     @(subscribe [::m/portal-boxes])
+        custom-servers   @(subscribe [::m/custom-servers])
+        server-form-opened? @(subscribe [::m/server-form-opened])]
     [:<>
      [:> Flex {:align   :center
                :justify :space-between}
@@ -92,7 +89,7 @@
                :styles {:body {:padding-top    0
                                :padding-bottom 0}}}
       [components.list/data-list
-       {:dataSource user-servers
+       {:dataSource custom-servers
         :renderItem (fn [raw-item]
                       (r/as-element
                         (let [{:keys [server-name box-url]
@@ -106,14 +103,14 @@
                                                              :target "_blank"}
                                                          box-url])}]])))}]]
 
-     (for [[project-name project-licenses] fhir-servers]
+     (for [[project-name project-licenses] portal-boxes]
        (let [project-name (or project-name "Public servers")]
          ^{:key project-name}
          [:> Card {:title  (r/as-element
                             [:> Flex {:justify :space-between}
                              project-name
                              (when-let [new-license-url
-                                        (some-> fhir-servers
+                                        (some-> portal-boxes
                                                 (get project-name)
                                                 first :project
                                                 :new-license-url)]

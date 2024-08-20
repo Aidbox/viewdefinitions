@@ -52,12 +52,19 @@
 
 (reg-event-fx
  ::update-user-server-list
- (fn [{:keys [db]} [_ user-server-list]]
-   {:db (->> user-server-list
-             (group-by :server-name)
-             (medley/map-vals first)
-             (assoc-in db [:cfg/fhir-servers :user/servers]))
-    :dispatch [::use-sandbox-if-not-selected]}))
+ (fn [{:keys [db]} [_ list-servers-body]]
+   (let [portal-boxes (->> (:portal-boxes list-servers-body)
+                           (group-by :server-name)
+                           (medley/map-vals first))
+         custom-servers
+         (->> (:custom-servers list-servers-body)
+              (group-by :server-name)
+              (medley/map-vals first))]
+     {:db (-> db
+              (assoc-in [:cfg/fhir-servers :user/servers :portal-boxes] portal-boxes)
+              (assoc-in [:cfg/fhir-servers :user/servers :custom-servers]
+                        custom-servers))
+    :dispatch [::use-sandbox-if-not-selected]})))
 
 (reg-event-fx
  ::fetch-user-servers
@@ -97,26 +104,16 @@
           used-server-name-kv
           (js->clj (.getItem js/localStorage used-server-name-kv)))))
 
-(defn unknown-server-selected? [db]
-  ;; TODO: use subs?
-  (let [servers (-> db :cfg/fhir-servers :user/servers)
-        used-server-name (-> db :cfg/fhir-servers :used-server-name)]
-    (not (get servers used-server-name))))
-
-(defn first-sandbox-server [servers]
- ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
-  (->> servers
-       (remove (fn [[_ s]] (:project s)))
-       first
-       first))
-
 (reg-event-fx
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
-   (when (unknown-server-selected? db)
+   (println "!!!!!!!! "  (m/unknown-server-selected? db) )
+   ;; FIXME
+   (when (or (m/unknown-server-selected? db)
+             (and (not (m/unknown-server-selected? db))
+                  (not (m/used-server-name db))))
      {:dispatch [::store-used-server-name
-                 (-> db :cfg/fhir-servers :user/servers
-                     first-sandbox-server)]})))
+                 (m/first-sandbox-server-name db)]})))
 
 (reg-event-db
  ::open-server-form

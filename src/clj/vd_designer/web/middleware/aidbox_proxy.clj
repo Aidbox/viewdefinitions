@@ -18,9 +18,11 @@
     (:headers public-server)
     ;; Verify that user has access to the server
     (when-let [user-server (user-server/get-by-account-id-and-box-url db (:id user) box-url)]
-      {:Cookie (->> user-server
-                    :user_servers/aidbox_auth_token
-                    (format "aidbox-auth-token=%s;"))})))
+      (if (:user_servers/is_custom user-server)
+        (:user_servers/headers user-server)
+        {:Cookie (->> user-server
+                      :user_servers/aidbox_auth_token
+                      (format "aidbox-auth-token=%s;"))}))))
 
 (defn aidbox-proxy-middleware*
   [handler {:keys [db request user] :as ctx}]
