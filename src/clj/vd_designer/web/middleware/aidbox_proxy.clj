@@ -28,6 +28,7 @@
   [handler {:keys [db request user] :as ctx}]
   (let [ctx        (assoc ctx :box-url (get-box-url request))
         headers    (get-fhir-server-headers ctx)]
+    (def h headers)
     (if-not headers
       (http-response/unauthorized {:error "Unknown server"})
       (let [{:keys [body status]} (handler (assoc ctx :fhir-server-headers headers))]

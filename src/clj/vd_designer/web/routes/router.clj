@@ -6,6 +6,7 @@
             [vd-designer.portal :as portal]
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
+            [vd-designer.web.controllers.custom-servers :as custom-servers]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.controllers.metrics :as metrics]
             [vd-designer.web.middleware.aidbox-proxy :refer [aidbox-proxy-middleware]]
@@ -23,8 +24,16 @@
     ["/api"
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
-       {:get
-        {:handler #'portal/list-servers}}]
+       {:get  {:handler #'portal/list-servers}
+        :post {:parameters {:body {:server-name string?
+                                   :box-url string?
+                                   :headers any? } }
+               :handler    #'custom-servers/add-custom-server
+               ;; :middleware [(authentication-middleware true)]
+               ;; :middleware [(aidbox-proxy-middleware)]
+
+               }
+        }]
       ["/connect"
        {:post
         {:parameters {:body {:box-url string?}}

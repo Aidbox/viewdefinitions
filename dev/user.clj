@@ -52,7 +52,22 @@
   (def app (server/app ctx))
   (app {:request-method :get
         :uri            "/api/health"})
+
   (def jwt (vd-designer.service.jwt/issue (:cfg ctx) 1))
+
+  (-> (app {:request-method :post
+            :uri            "/api/aidbox/servers"
+            :headers        {"Authorization" (str "Bearer " jwt)
+                             "Content-Type"  "application/json"}
+            :body-params
+            (jsonista.core/write-value-as-string
+              {:box-url "url"
+               :server-name "mybox"
+               :headers {"Authorization" "Basic YmFzaWM6c2VjcmV"}})})
+      :body
+      slurp
+      jsonista.core/read-value)
+
   (-> (app {:request-method :get
             :uri            "/api/aidbox/servers"
             :headers        {"authorization" (str "Bearer " jwt)}})
