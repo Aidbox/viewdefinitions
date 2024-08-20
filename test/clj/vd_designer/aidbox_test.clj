@@ -3,7 +3,7 @@
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test :refer [match?]]
             [ring.util.http-response :as http-response]
-            [vd-designer.aidbox :as sut]
+            [vd-designer.portal :as sut]
             [vd-designer.fake.clients.portal :as fake-portal]
             [vd-designer.repository.account :as account]
             [vd-designer.repository.sso-token :as sso-token]

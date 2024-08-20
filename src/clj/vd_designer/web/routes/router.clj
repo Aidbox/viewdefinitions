@@ -3,6 +3,7 @@
             [reitit.ring :as ring]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.muuntaja :as muuntaja]
+            [vd-designer.portal :as portal]
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
             [vd-designer.web.controllers.health :as health]
@@ -23,7 +24,7 @@
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
        {:get
-        {:handler #'aidbox/list-servers}}]
+        {:handler #'portal/list-servers}}]
       ["/connect"
        {:post
         {:parameters {:body {:box-url string?}}
