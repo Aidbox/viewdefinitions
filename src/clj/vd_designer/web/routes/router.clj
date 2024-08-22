@@ -29,7 +29,7 @@
                                    :box-url string?
                                    :headers any? } }
                :handler    #'custom-servers/add-custom-server
-               ;; :middleware [(authentication-middleware true)]
+               :middleware [(authentication-middleware true)]
                ;; :middleware [(aidbox-proxy-middleware)]
 
                }

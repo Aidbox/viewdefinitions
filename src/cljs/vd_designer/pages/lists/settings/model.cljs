@@ -70,8 +70,6 @@
    (let [custom-servers (custom-servers db)
          portal-boxes (portal-boxes db)
          used-server-name (used-server-name db)]
-     (println "p boxes " portal-boxes)
-     (println "u ser name " used-server-name)
      (current-server portal-boxes custom-servers used-server-name))))
 
 (reg-sub

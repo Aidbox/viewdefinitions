@@ -1,15 +1,16 @@
 (ns vd-designer.pages.lists.settings.view
   (:require
-   [antd :refer [Card Flex Form Input List Modal Typography Row Space]]
-   [medley.core :as medley]
-   [re-frame.core :refer [dispatch dispatch-sync subscribe]]
-   [reagent.core :as r]
-   [vd-designer.components.button :as button]
-   [vd-designer.components.list :as components.list]
-   [vd-designer.components.form :as form-components]
-   [vd-designer.pages.lists.settings.controller :as c]
-   [vd-designer.pages.lists.settings.model :as m]
-   [vd-designer.utils.react :refer [js-obj->clj-map]]))
+    [antd :refer [Card Flex Form Input List Modal Typography Row Space]]
+    [medley.core :as medley]
+    [re-frame.core :refer [dispatch dispatch-sync subscribe]]
+    [reagent.core :as r]
+    [vd-designer.components.button :as button]
+    [vd-designer.auth.model :as auth-model]
+    [vd-designer.components.list :as components.list]
+    [vd-designer.components.form :as form-components]
+    [vd-designer.pages.lists.settings.controller :as c]
+    [vd-designer.pages.lists.settings.model :as m]
+    [vd-designer.utils.react :refer [js-obj->clj-map]]))
 
 (defn connect [server-config request-sent-by used-server-name connect-error]
   (cond
@@ -30,10 +31,8 @@
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
 (defn save-popover [values]
-  (let [fields (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-    ;; TODO: !
-    (println "fields" fields)
-    ;; (dispatch-sync [:: value-path fields])
+  (let [server-settings (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+    (dispatch-sync [::c/new-server server-settings])
     (dispatch-sync [::c/close-server-form])))
 
 (defn server-list []
@@ -42,7 +41,8 @@
         connect-error    @(subscribe [::m/connect-error])
         portal-boxes     @(subscribe [::m/portal-boxes])
         custom-servers   @(subscribe [::m/custom-servers])
-        server-form-opened? @(subscribe [::m/server-form-opened])]
+        server-form-opened? @(subscribe [::m/server-form-opened])
+        authorized? @(subscribe [::auth-model/authorized?])]
     [:<>
      [:> Flex {:align   :center
                :justify :space-between}
@@ -56,16 +56,18 @@
 
       [form-components/settings-base-form "New Server"
        {:onFinish #(save-popover %)
-        :initialValues {"server-name" "123"
-                        "box-url" "2454"
-                        :headers [{"name" "Authorization"
-                                    "value" "Basic"}] }
+        :initialValues {:headers [{"name" "Authorization"
+                                   "value" "Basic"}] }
         :labelCol {:span 4}
         :style {:width "600px"}}
        #(dispatch [::c/close-server-form])
        [:<>
-        [:> Form.Item {:label "server-name" :name "server-name"} [:> Input]]
-        [:> Form.Item {:label "box-url" :name "box-url"} [:> Input]]
+        [:> Form.Item {:label "Server name" :name "server-name"
+                       :rules [{:required true}]}
+         [:> Input]]
+        [:> Form.Item {:label "URL" :name "box-url"
+                       :rules [{:required true}]}
+         [:> Input]]
         [:> Form.Item {:label "Headers" :name "headers"}
          [form-components/form-list "headers"
           (fn [element-key]
@@ -80,28 +82,29 @@
                                       :message  "Value is required"}]}
                [:> Input {:placeholder "Value"}]]]])]]]]]
 
-     [:> Card {:title  (r/as-element
-                         [:> Flex {:justify :space-between}
-                          "User servers"
-                          [button/add "New server" {:on-click #(dispatch [::c/open-server-form])}]])
-               :key    "user-servers"
-               :style  {:margin-bottom "24px"}
-               :styles {:body {:padding-top    0
-                               :padding-bottom 0}}}
-      [components.list/data-list
-       {:dataSource custom-servers
-        :renderItem (fn [raw-item]
-                      (r/as-element
-                        (let [{:keys [server-name box-url]
-                               :as   server-config}
-                              (js-obj->clj-map raw-item)]
-                          [:> List.Item
-                           {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
-                           [:> List.Item.Meta
-                            {:title (str server-name " " box-url)
-                             :description (r/as-element [:a {:href   box-url
-                                                             :target "_blank"}
-                                                         box-url])}]])))}]]
+     (when authorized?
+       [:> Card {:title  (r/as-element
+                           [:> Flex {:justify :space-between}
+                            "User servers"
+                            [button/add "New server" {:on-click #(dispatch [::c/open-server-form])}]])
+                 :key    "user-servers"
+                 :style  {:margin-bottom "24px"}
+                 :styles {:body {:padding-top    0
+                                 :padding-bottom 0}}}
+        [components.list/data-list
+         {:dataSource custom-servers
+          :renderItem (fn [raw-item]
+                        (r/as-element
+                          (let [{:keys [server-name box-url]
+                                 :as   server-config}
+                                (js-obj->clj-map raw-item)]
+                            [:> List.Item
+                             {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
+                             [:> List.Item.Meta
+                              {:title server-name
+                               :description (r/as-element [:a {:href   box-url
+                                                               :target "_blank"}
+                                                           box-url])}]])))}]])
 
      (for [[project-name project-licenses] portal-boxes]
        (let [project-name (or project-name "Public servers")]

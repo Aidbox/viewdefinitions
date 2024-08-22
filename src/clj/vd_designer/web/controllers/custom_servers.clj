@@ -6,9 +6,10 @@
 
 ;; looks like it is also update
 (defn add-custom-server [{:keys [request db user cfg] :as r}]
+  (def r request)
+  (:body-params r)
   (let [{:keys [box-url server-name headers] :as b}
         (-> (:body-params request)
-            (json/read-value json/keyword-keys-object-mapper)
             (select-keys [:box-url :server-name :headers]))
         inserted-count (first (user-server-repository/create-custom db (:id user) server-name box-url headers))]
     (def b b)

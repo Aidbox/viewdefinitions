@@ -60,3 +60,9 @@
   (q/execute! db
               (-> (select :*)
                   (from :user-servers))))
+
+(defn get-custom-servers [db]
+  (q/execute! db
+              (-> (select :server_name :box_url :headers)
+                  (from :user-servers)
+                  (where [:= :is_custom true]))))

@@ -16,8 +16,7 @@
 
             [vd-designer.db.query :as q])
   (:import (org.postgresql.util PGobject)
-           [java.sql PreparedStatement])
-  )
+           [java.sql PreparedStatement]))
 
 
 (def mapper (json/object-mapper {:decode-key-fn keyword}))

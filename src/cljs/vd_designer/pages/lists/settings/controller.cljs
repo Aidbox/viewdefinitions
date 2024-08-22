@@ -50,6 +50,17 @@
                                 :server-name server-name})
     :notification-error (str "Error on connect: " (u/response->error result))}))
 
+(defn add-custom-servers [db custom-servers]
+  (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers]
+            custom-servers))
+
+(defn add-portal-boxes [db portal-boxes]
+  (assoc-in db [:cfg/fhir-servers :user/servers :portal-boxes] portal-boxes))
+
+(defn add-custom-server [db custom-server]
+  (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers
+                 (:server-name custom-server)] custom-server))
+
 (reg-event-fx
  ::update-user-server-list
  (fn [{:keys [db]} [_ list-servers-body]]
@@ -61,9 +72,8 @@
               (group-by :server-name)
               (medley/map-vals first))]
      {:db (-> db
-              (assoc-in [:cfg/fhir-servers :user/servers :portal-boxes] portal-boxes)
-              (assoc-in [:cfg/fhir-servers :user/servers :custom-servers]
-                        custom-servers))
+              (add-portal-boxes portal-boxes)
+              (add-custom-servers custom-servers))
     :dispatch [::use-sandbox-if-not-selected]})))
 
 (reg-event-fx
@@ -107,7 +117,6 @@
 (reg-event-fx
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
-   (println "!!!!!!!! "  (m/unknown-server-selected? db) )
    ;; FIXME
    (when (or (m/unknown-server-selected? db)
              (and (not (m/unknown-server-selected? db))
@@ -125,7 +134,31 @@
  (fn [db [_ ]]
    (assoc db ::m/server-form-opened false)))
 
+(reg-event-fx
+ ::new-server
+ (fn [_ [_ fhir-server]]
+   (let [fhir-server
+         (cond-> fhir-server
+           (:headers fhir-server)
+           (update :headers
+                   (fn [headers-vec]
+                     (->> headers-vec
+                          (mapv #(hash-map (:name %) (:value %)))
+                          (into {})))))]
+     {:dispatch [::auth/with-authentication
+                 (fn [authentication-token]
+                   (assoc (backend/post-fhir-server
+                            authentication-token fhir-server)
+                          :on-success [::new-server-success]
+                          :on-failure [::new-server-failure]))]})))
+
 (reg-event-db
-  ::change-server-name
- (fn [db [_ ]]
-   (assoc-in db [:cfg/fhir-servers :user/servers 2] 1)))
+  ::new-server-success
+  (fn [db [_ result]]
+    (add-custom-server db result)))
+
+(reg-event-fx
+  ::new-server-failure
+  (fn [_ [_ result]]
+    (println " res " result)
+    {:notification-error (str "Error on adding FHIR server: " (u/response->error result))}))

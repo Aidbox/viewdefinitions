@@ -69,20 +69,24 @@
        servers))
 
 (defn list-servers
-  [{:keys [cfg user] :as ctx}]
+  [{:keys [cfg user db] :as ctx}]
+  (def k (keys ctx))
   (let [public-servers (:public-fhir-servers cfg)
         portal-boxes
         (-> (if user
               (concat (list-portal-user-servers ctx) public-servers)
               public-servers)
-            select-server-keys)]
+            select-server-keys)
+        custom-servers
+        (when user
+          ;; fixme
+          (mapv
+            (fn [server]
+              {:server-name (:user_servers/server_name server)
+               :box-url (:user_servers/box_url server)
+               :headers (:user_servers/headers server)})
+            (user-server/get-custom-servers db)))]
     (http-response/ok
-      {:portal-boxes portal-boxes
-       :custom-servers [{:box-url "https://9a35-65-108-58-36.ngrok-free.app"
-                         :server-name "somebox"
-                         :headers {:header1 "header1" :Authorization "Basic YmFzaWM6c2VjcmV0"}
-                         :type "custom"}
-                        {:box-url "http://someurl2.com"
-                         :server-name "somebox2"
-                         :headers {:header1 "header1" :Authorization "Basic somebasic"}
-                         :type "custom"}]})))
+     (cond-> {:portal-boxes portal-boxes}
+       custom-servers
+       (assoc :custom-servers custom-servers)))))

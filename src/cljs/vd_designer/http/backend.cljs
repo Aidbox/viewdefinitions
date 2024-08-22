@@ -13,3 +13,13 @@
    :with-credentials true
    :method           :get
    :headers          (authorization-header authentication-token)})
+
+(defn post-fhir-server [authentication-token fhir-server]
+  {:uri              "/api/aidbox/servers"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format {:keywords? true})
+   :with-credentials true
+   :method           :post
+   :params           fhir-server
+   :headers          (authorization-header authentication-token)})
