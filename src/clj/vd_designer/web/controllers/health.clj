@@ -5,7 +5,8 @@
   (:import (java.lang.management ManagementFactory)
            (java.util Date)))
 
-(defn check [_req]
+(defn check [req]
+  (def ra req)
   (http-response/ok
    {:version  (-> (io/resource "version") slurp str/trim-newline str/trim)
     :time     (-> (System/currentTimeMillis)

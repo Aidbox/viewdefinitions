@@ -21,13 +21,21 @@
  (fn [_ [_]]
    {::polling/clear-polling-timer ::fetch-user-servers}))
 
+(def used-server-name-kv :used-server-name)
+
+(defn remove-server-name [db]
+  (update db :cfg/fhir-servers dissoc used-server-name-kv))
+
+(defn set-server-name [db used-server-name]
+  (assoc-in db [:cfg/fhir-servers used-server-name-kv] used-server-name))
+
 (reg-event-fx
  ::connect
  (fn [{:keys [db]} [_ {:keys [server-name] :as server}]]
    {:delete-used-server-name true
     :db (-> db
             (assoc ::request-sent-by server-name)
-            (update :cfg/fhir-servers dissoc :used-server-name))
+            (remove-server-name))
 
     :dispatch [::auth/with-authentication
                (fn [authentication-token]
@@ -37,7 +45,7 @@
 
 (reg-event-fx
  ::connect-success
- (fn [{:keys [db]} [_ server-name _result]]
+ (fn [{:keys [db]} [_ server-name _]]
    {:fx [[:dispatch [::store-used-server-name server-name]]]
     :db (dissoc db ::request-sent-by :edit-server
                 :fhir-server :cfg/connect-error)}))
@@ -86,7 +94,6 @@
                      (assoc :on-success [::update-user-server-list]
                             :on-failure [::not-connected nil])))]}))
 
-(def used-server-name-kv :used-server-name)
 
 (reg-fx
  :set-used-server-name
@@ -105,7 +112,7 @@
  ::store-used-server-name
  (fn [{:keys [db]} [_ used-server-name]]
    {:set-used-server-name used-server-name
-    :db                   (assoc-in db [:cfg/fhir-servers used-server-name-kv] used-server-name)}))
+    :db (set-server-name db used-server-name)}))
 
 (reg-cofx
  :get-used-server-name
@@ -118,6 +125,8 @@
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
    ;; FIXME
+   (println " unknown server selected "  (m/unknown-server-selected? db))
+   (println "not used server name " (not (m/used-server-name db)))
    (when (or (m/unknown-server-selected? db)
              (and (not (m/unknown-server-selected? db))
                   (not (m/used-server-name db))))

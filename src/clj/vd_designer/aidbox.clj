@@ -1,6 +1,9 @@
 (ns vd-designer.aidbox
-  (:require [martian.core :as martian]
-            [vd-designer.clients.portal :as portal]))
+  (:require
+   [clojure.string :as str]
+   [martian.core :as martian]
+   [ring.util.http-response :as http-response]
+   [vd-designer.clients.portal :as portal]))
 
 (defn hack-view-definitions-meta [view-definitions]
   (update-in view-definitions
@@ -33,15 +36,19 @@
                                                       (merge {:vd-id vd-id}
                                                              fhir-server-headers)))))
 
-(defn eval-view-definition
+ (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
-  (let [{:keys [vd]} (:body-params request)]
-    @(martian/response-for (portal/client box-url)
-                           :rpc
-                           (merge {:method 'sof/eval-view
-                                   :params {:limit 100
-                                            :view  vd}}
-                                  fhir-server-headers))))
+  (let [{:keys [vd]} (:body-params request)
+        ;; FIXME: move
+        vd (cond-> vd (:resource vd)
+             (update :resource str/lower-case))]
+    @(martian/response-for
+         (portal/client box-url)
+         :rpc
+         (merge {:method 'sof/eval-view
+                 :params {:limit 100
+                          :view  vd}}
+                fhir-server-headers))))
 
 (defn save-view-definition
   [{:keys [box-url request fhir-server-headers]}]
@@ -59,3 +66,13 @@
                            :delete-view-definition
                            (merge {:vd-id vd-id}
                                   fhir-server-headers))))
+
+(defn get-metadata
+  [request]
+  (let [box-url (-> request :request :query-params :box-url)
+        resp @(martian/response-for
+                (portal/client box-url)
+                :metadata
+                {:box-url box-url})]
+    (http-response/ok
+      (:body resp))))

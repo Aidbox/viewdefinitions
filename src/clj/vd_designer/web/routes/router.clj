@@ -22,6 +22,13 @@
       {:handler #'metrics/expose}}]
 
     ["/api"
+     ;; should be public
+     ["/metadata"
+      {:get
+       {:parameters {:query {:box-url string?}}
+        :handler    #'aidbox/get-metadata
+        #_#_:middleware [(aidbox-proxy-middleware)]}}]
+
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
        {:get  {:handler #'portal/list-servers}
@@ -31,12 +38,11 @@
                :handler    #'custom-servers/add-custom-server
                :middleware [(authentication-middleware true)]
                ;; :middleware [(aidbox-proxy-middleware)]
-
                }
         }]
       ["/connect"
        {:post
-        {:parameters {:body {:box-url string?}}
+        {:parameters {:body {:box-url string? :headers any?}}
          :handler    #'aidbox/connect
          :middleware [(aidbox-proxy-middleware)]}}]
 
@@ -82,7 +88,10 @@
          :handler    #'auth/sso-callback}}]]
 
      ["/health"
-      {:get #'health/check}]]]
+      {:get {:handler #'health/check
+             :parameters {:query {:box-url string?}}
+             }
+       }]]]
 
    {:data {:muuntaja   m/instance
            :middleware [muuntaja/format-middleware
@@ -91,4 +100,4 @@
                         coercion/coerce-request-middleware
                         coercion/coerce-response-middleware
                         (app-context-middleware ctx)
-                        (observability-middleware)]}}))
+                        #_(observability-middleware)]}}))

@@ -50,15 +50,15 @@
 
             :always
             (assoc :spec-map {})
-            
+
             :always
             (assoc ::m/code-validation-severity 0)
-            
+
             :always
             (assoc ::m/left-panel-active-tab "form")
-            
+
             :always
-            (assoc ::m/view-definition-jsonschema 
+            (assoc ::m/view-definition-jsonschema
                    {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
@@ -120,7 +120,7 @@
  ::get-supported-resource-types
  (fn [{:keys [db]} [_]]
    {:db         (assoc db :loading true)
-    :http-xhrio (-> (http.fhir-server/get-metadata db)
+    :http-xhrio (-> (http.fhir-server/get-metadata (http.fhir-server/active-server db))
                     (assoc :on-success [::get-supported-resource-types-success])
                     (assoc :on-failure [::on-vd-error]))}))
 

@@ -39,8 +39,8 @@
   (let [request-sent-by  @(subscribe [::m/request-sent-by])
         used-server-name @(subscribe [::m/used-server-name])
         connect-error    @(subscribe [::m/connect-error])
-        portal-boxes     @(subscribe [::m/portal-boxes])
-        custom-servers   @(subscribe [::m/custom-servers])
+        portal-boxes     @(subscribe [::m/portal-boxes-groupped-project])
+        custom-servers   @(subscribe [::m/custom-servers-vec])
         server-form-opened? @(subscribe [::m/server-form-opened])
         authorized? @(subscribe [::auth-model/authorized?])]
     [:<>

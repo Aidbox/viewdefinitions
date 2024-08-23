@@ -13,36 +13,33 @@
   (filterv sandbox? (vals (portal-boxes-raw db))))
 
 (reg-sub
- ::portal-boxes-raw
+ ::portal-boxes-map
  (fn [db _]
    (portal-boxes-raw db)))
 
-(defn custom-servers-raw [db]
+(defn custom-servers-map [db]
   (->> db :cfg/fhir-servers :user/servers :custom-servers))
 
 (reg-sub
- ::custom-servers-raw
+ ::custom-servers-map
  (fn [db _]
-   (custom-servers-raw db)))
+   (custom-servers-map db)))
 
-(defn portal-boxes [db]
+(reg-sub
+ ::custom-servers-vec
+ (fn [db _]
+   (vals (custom-servers-map db))))
+
+(defn portal-boxes-groupped-project [db]
   (or (->> db portal-boxes-raw vals
+           ;; sandbox is [nil {..}]
            (group-by #(-> % :project :name)))
       []))
 
 (reg-sub
- ::portal-boxes
+ ::portal-boxes-groupped-project
  (fn [db _]
-   (portal-boxes db)))
-
-(defn custom-servers [db]
-  (or (->> db custom-servers-raw vals)
-      []))
-
-(reg-sub
- ::custom-servers
- (fn [db _]
-   (custom-servers db)))
+   (portal-boxes-groupped-project db)))
 
 (reg-sub
  ::request-sent-by
@@ -67,15 +64,15 @@
    (or (get portal-boxes used-server-name)
        (get custom-servers used-server-name)))
   ([db]
-   (let [custom-servers (custom-servers db)
-         portal-boxes (portal-boxes db)
+   (let [custom-servers (custom-servers-map db)
+         portal-boxes (portal-boxes-groupped-project db)
          used-server-name (used-server-name db)]
      (current-server portal-boxes custom-servers used-server-name))))
 
 (reg-sub
  ::current-server
- :<- [::portal-boxes-raw]
- :<- [::custom-servers-raw]
+ :<- [::portal-boxes-map]
+ :<- [::custom-servers-map]
  :<- [::used-server-name]
  (fn [[portal-boxes custom-servers used-server-name] _]
    (current-server portal-boxes custom-servers used-server-name)))
@@ -101,6 +98,7 @@
  :-> ::server-form-opened)
 
 (defn unknown-server-selected? [db]
+  (println " !!!!!!!!!!!1 current server " (current-server db))
   (not (current-server db)))
 
 (defn first-sandbox-server-name [db]

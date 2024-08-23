@@ -70,13 +70,28 @@
     :produces       ["application/transit+json"]
     :consumes       ["application/transit+json"]
     :body-schema    {:body {:method                  s/Symbol
-                            (s/optional-key :params) s/Any}}}])
+                            (s/optional-key :params) s/Any}}}
+
+   {:route-name     :metadata
+    :query-schema   {:box-url s/Str}
+    :path-parts     ["/fhir/metadata"]
+    :produces       ["application/json"]
+    :consumes       ["application/json"]
+    :method         :get}])
 
 (defn client [url]
   (martian/bootstrap
    url
    routes
    {:interceptors (concat [(interceptors/observability "portal")]
+                          martian-http/default-interceptors)}))
+
+;; TODO: move
+(defn client-custom-server [url]
+  (martian/bootstrap
+   url
+   routes
+   {:interceptors (concat [(interceptors/observability "custom-server")]
                           martian-http/default-interceptors)}))
 
 (defn rpc:init-project [portal-client access-token]

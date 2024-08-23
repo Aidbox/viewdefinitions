@@ -15,7 +15,9 @@
 
 (defn- get-fhir-server-headers [{:keys [cfg db box-url user]}]
   (if-let [public-server (get-public-fhir-server (:public-fhir-servers cfg) box-url)]
-    (:headers public-server)
+    (do
+      (def abc (:headers public-server))
+      (:headers public-server))
     ;; Verify that user has access to the server
     (when-let [user-server (user-server/get-by-account-id-and-box-url db (:id user) box-url)]
       (if (:user_servers/is_custom user-server)
@@ -28,7 +30,7 @@
   [handler {:keys [db request user] :as ctx}]
   (let [ctx        (assoc ctx :box-url (get-box-url request))
         headers    (get-fhir-server-headers ctx)]
-    (def h headers)
+    (def hh headers)
     (if-not headers
       (http-response/unauthorized {:error "Unknown server"})
       (let [{:keys [body status]} (handler (assoc ctx :fhir-server-headers headers))]
