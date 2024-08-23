@@ -27,10 +27,66 @@
     :else
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
-(defn save-popover [values]
+(defn save-changes [values edit?]
   (let [server-settings (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
-    (dispatch-sync [::c/new-server server-settings])
+    (if edit?
+      (dispatch-sync [::c/update-server server-settings])
+      (dispatch-sync [::c/new-server server-settings]))
     (dispatch-sync [::c/close-server-form])))
+
+(defn server->ant-form-format [server]
+  (->> (update server :headers
+               (fn [headers]
+                 (mapv
+                   (fn [[header-name header-value]]
+                     {:name header-name
+                      :value header-value})
+                   headers)))
+       (map (fn [[k v]] [(name k) v]))
+       (into {})))
+
+(defn add-or-update-server-modal []
+  (let [server-form-opened? @(subscribe [::m/server-form-opened])
+        edit? @(subscribe [::m/server-form-edit?])
+        form-header (if edit? "Edit Server" "New Server")
+        editable-server @(subscribe [::m/editable-server])
+        initial-values
+        (if edit?
+          (server->ant-form-format editable-server)
+          {:headers [{"name" "Authorization"
+                      "value" "Basic"}]})]
+    [:> Modal {:open server-form-opened?
+               :footer    nil
+               :width 650
+               :style {:width 1000}
+               :on-cancel #(dispatch [::c/close-server-form])}
+
+     [form-components/settings-base-form form-header
+      {:onFinish #(save-changes % edit?)
+       :initialValues initial-values
+       :labelCol {:span 4}
+       :style {:width "600px"}}
+      #(dispatch [::c/close-server-form])
+      [:<>
+       [:> Form.Item {:label "Server name" :name "server-name"
+                      :rules [{:required true}]}
+        [:> Input]]
+       [:> Form.Item {:label "URL" :name "box-url"
+                      :rules [{:required true}]}
+        [:> Input]]
+       [:> Form.Item {:label "Headers" :name "headers"}
+        [form-components/form-list "headers"
+         (fn [element-key]
+           [:> Row
+            [:> Space
+             [:> Form.Item {:name  [element-key "name"]
+                            :rules [{:required true
+                                     :message  "Name is required"}]}
+              [:> Input {:placeholder "Name"}]]
+             [:> Form.Item {:name  [element-key "value"]
+                            :rules [{:required true
+                                     :message  "Value is required"}]}
+              [:> Input {:placeholder "Value"}]]]])]]]]]))
 
 (defn server-list []
   (let [request-sent-by  @(subscribe [::m/request-sent-by])
@@ -38,46 +94,12 @@
         connect-error    @(subscribe [::m/connect-error])
         portal-boxes     @(subscribe [::m/portal-boxes-groupped-project])
         custom-servers   @(subscribe [::m/custom-servers-vec])
-        server-form-opened? @(subscribe [::m/server-form-opened])
-        authorized? @(subscribe [::auth-model/authorized?])]
+        authorized?      @(subscribe [::auth-model/authorized?])]
     [:<>
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
-
-     [:> Modal {:open server-form-opened?
-                :footer    nil
-                :width 650
-                :style {:width 1000}
-                :on-cancel #(dispatch [::c/close-server-form])}
-
-      [form-components/settings-base-form "New Server"
-       {:onFinish #(save-popover %)
-        :initialValues {:headers [{"name" "Authorization"
-                                   "value" "Basic"}] }
-        :labelCol {:span 4}
-        :style {:width "600px"}}
-       #(dispatch [::c/close-server-form])
-       [:<>
-        [:> Form.Item {:label "Server name" :name "server-name"
-                       :rules [{:required true}]}
-         [:> Input]]
-        [:> Form.Item {:label "URL" :name "box-url"
-                       :rules [{:required true}]}
-         [:> Input]]
-        [:> Form.Item {:label "Headers" :name "headers"}
-         [form-components/form-list "headers"
-          (fn [element-key]
-            [:> Row
-             [:> Space
-              [:> Form.Item {:name  [element-key "name"]
-                             :rules [{:required true
-                                      :message  "Name is required"}]}
-               [:> Input {:placeholder "Name"}]]
-              [:> Form.Item {:name  [element-key "value"]
-                             :rules [{:required true
-                                      :message  "Value is required"}]}
-               [:> Input {:placeholder "Value"}]]]])]]]]]
+     [add-or-update-server-modal]
 
      (when authorized?
        [:> Card {:title  (r/as-element
@@ -100,7 +122,9 @@
                                {:actions [(r/as-element
                                             [:> Row
                                              [:> Space
-                                              [:div "edit"]
+                                              [:a
+                                               {:on-click #(dispatch [::c/open-server-form server-config])}
+                                               "edit"]
                                               [:a
                                                {:on-click #(dispatch [::c/delete-custom-server server-config]) }
                                                "delete"]

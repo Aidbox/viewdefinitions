@@ -97,6 +97,10 @@
  ::server-form-opened
  :-> ::server-form-opened)
 
+(reg-sub
+  ::server-form-edit?
+  :-> ::server-edit-form-mode)
+
 (defn unknown-server-selected? [db]
   (not (current-server db)))
 
@@ -104,3 +108,12 @@
   (->> (sandboxes db)
        first
        :server-name))
+
+
+(reg-sub
+  ::server-form-edit?
+  :-> ::server-edit-form-mode)
+
+(reg-sub
+  ::editable-server
+  :-> ::editable-server)

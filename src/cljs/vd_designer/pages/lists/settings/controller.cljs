@@ -67,7 +67,7 @@
 
 (defn add-custom-server [db custom-server]
   (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers
-                 (:server-name custom-server)] custom-server))
+                (:server-name custom-server)] custom-server))
 
 (defn delete-custom-server [db custom-server]
   (update-in db [:cfg/fhir-servers :user/servers :custom-servers]
@@ -86,7 +86,7 @@
      {:db (-> db
               (add-portal-boxes portal-boxes)
               (add-custom-servers custom-servers))
-    :dispatch [::use-sandbox-if-not-selected]})))
+      :dispatch [::use-sandbox-if-not-selected]})))
 
 (reg-event-fx
  ::fetch-user-servers
@@ -97,7 +97,6 @@
                  (-> (backend/request:list-server authentication-token)
                      (assoc :on-success [::update-user-server-list]
                             :on-failure [::not-connected nil])))]}))
-
 
 (reg-fx
  :set-used-server-name
@@ -136,14 +135,40 @@
                  (m/first-sandbox-server-name db)]})))
 
 (reg-event-db
+ ::set-edit-mode
+ (fn [db [_]]
+   (assoc db ::m/server-edit-form-mode true)))
+
+(reg-event-db
+ ::set-add-mode
+ (fn [db [_]]
+   (assoc db ::m/server-edit-form-mode false)))
+
+(reg-event-db
+ ::set-editable-server
+ (fn [db [_ server]]
+   (assoc db ::m/editable-server server)))
+
+(reg-event-fx
  ::open-server-form
- (fn [db [_ ]]
-   (assoc db ::m/server-form-opened true)))
+ (fn [{:keys [db]} [_ server-config]]
+   {:db (assoc db ::m/server-form-opened true)
+    :fx (if (:headers server-config)
+          [[:dispatch [::set-edit-mode]]
+           [:dispatch [::set-editable-server server-config]]]
+          [[:dispatch [::set-add-mode]]])}))
 
 (reg-event-db
  ::close-server-form
- (fn [db [_ ]]
+ (fn [db [_]]
    (assoc db ::m/server-form-opened false)))
+
+(defn update-headers-map [server]
+  (update server :headers
+          (fn [headers-vec]
+            (->> headers-vec
+                 (mapv #(hash-map (:name %) (:value %)))
+                 (into {})))))
 
 (reg-event-fx
  ::new-server
@@ -151,44 +176,64 @@
    (let [fhir-server
          (cond-> fhir-server
            (:headers fhir-server)
-           (update :headers
-                   (fn [headers-vec]
-                     (->> headers-vec
-                          (mapv #(hash-map (:name %) (:value %)))
-                          (into {})))))]
+           (update-headers-map))]
      {:dispatch [::auth/with-authentication
                  (fn [authentication-token]
                    (assoc (backend/post-fhir-server
-                            authentication-token fhir-server)
+                           authentication-token fhir-server)
                           :on-success [::new-server-success]
                           :on-failure [::new-server-failure]))]})))
 
 (reg-event-db
-  ::new-server-success
-  (fn [db [_ result]]
-    (add-custom-server db result)))
+ ::new-server-success
+ (fn [db [_ result]]
+   (add-custom-server db result)))
 
 (reg-event-fx
-  ::new-server-failure
-  (fn [_ [_ result]]
-    {:notification-error (str "Error on adding FHIR server: " (u/response->error result))}))
+ ::new-server-failure
+ (fn [_ [_ result]]
+   {:notification-error (str "Error on adding FHIR server: " (u/response->error result))}))
 
 (reg-event-fx
-  ::delete-custom-server
-  (fn [_ [_ custom-server]]
-    {:dispatch [::auth/with-authentication
-                (fn [authentication-token]
-                  (assoc (backend/delete-fhir-server
-                           authentication-token custom-server)
-                         :on-success [::delete-custom-server-success]
-                         :on-failure [::delete-custom-server-failure]))]}))
+ ::update-server
+ (fn [_ [_ fhir-server]]
+   (let [fhir-server
+         (cond-> fhir-server
+           (:headers fhir-server)
+           (update-headers-map))]
+     {:dispatch [::auth/with-authentication
+                 (fn [authentication-token]
+                   (assoc (backend/post-fhir-server
+                           authentication-token fhir-server)
+                          :on-success [::update-server-success]
+                          :on-failure [::update-server-failure]))]})))
+
+(reg-event-db
+ ::update-server-success
+ (fn [db [_ result]]
+   (add-custom-server db result)))
 
 (reg-event-fx
-  ::delete-custom-server-success
-  (fn [{:keys [db]} [_ custom-server]]
-    {:db (delete-custom-server db custom-server)}))
+ ::update-server-failure
+ (fn [_ [_ result]]
+   {:notification-error (str "Error on updating FHIR server: " (u/response->error result))}))
 
 (reg-event-fx
-  ::delete-custom-server-failure
-  (fn [_ [_ result]]
-    {:notification-error (str "Error on deleting FHIR server: " (u/response->error result))}))
+ ::delete-custom-server
+ (fn [_ [_ custom-server]]
+   {:dispatch [::auth/with-authentication
+               (fn [authentication-token]
+                 (assoc (backend/delete-fhir-server
+                         authentication-token custom-server)
+                        :on-success [::delete-custom-server-success]
+                        :on-failure [::delete-custom-server-failure]))]}))
+
+(reg-event-fx
+ ::delete-custom-server-success
+ (fn [{:keys [db]} [_ custom-server]]
+   {:db (delete-custom-server db custom-server)}))
+
+(reg-event-fx
+ ::delete-custom-server-failure
+ (fn [_ [_ result]]
+   {:notification-error (str "Error on deleting FHIR server: " (u/response->error result))}))
