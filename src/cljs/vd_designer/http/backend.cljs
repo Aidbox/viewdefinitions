@@ -24,6 +24,16 @@
    :params           fhir-server
    :headers          (authorization-header authentication-token)})
 
+(defn update-fhir-server [authentication-token old-settings new-settings]
+  {:uri              "/api/aidbox/servers"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format {:keywords? true})
+   :with-credentials true
+   :method           :put
+   :params           {:old old-settings :new new-settings}
+   :headers          (authorization-header authentication-token)})
+
 (defn delete-fhir-server [authentication-token fhir-server]
   {:uri              "/api/aidbox/servers"
    :timeout          8000

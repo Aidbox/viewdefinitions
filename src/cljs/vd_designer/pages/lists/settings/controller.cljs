@@ -196,17 +196,21 @@
 
 (reg-event-fx
  ::update-server
- (fn [_ [_ fhir-server]]
-   (let [fhir-server
-         (cond-> fhir-server
-           (:headers fhir-server)
+ (fn [_ [_ old-settings new-settings]]
+   (let [new-settings
+         (cond-> new-settings
+           (:headers new-settings)
            (update-headers-map))]
-     {:dispatch [::auth/with-authentication
-                 (fn [authentication-token]
-                   (assoc (backend/post-fhir-server
-                           authentication-token fhir-server)
-                          :on-success [::update-server-success]
-                          :on-failure [::update-server-failure]))]})))
+     {:fx
+      [[:dispatch [::auth/with-authentication
+                  (fn [authentication-token]
+                    (assoc (backend/update-fhir-server
+                             authentication-token
+                             old-settings
+                             new-settings)
+                           :on-success [::update-server-success]
+                           :on-failure [::update-server-failure]))]]
+       [:dispatch [::set-editable-server nil]]]})))
 
 (reg-event-db
  ::update-server-success

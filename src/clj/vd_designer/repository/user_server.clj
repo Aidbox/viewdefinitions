@@ -28,26 +28,32 @@
                            :columns [:account-id :server-name :box-url
                                      :is-custom
                                      :headers
-                                     :aidbox-auth-token ;; non null
-                                     ]
+                                     ;; non null
+                                     :aidbox-auth-token]
                            :values [[account-id server-name box-url true
                                      [:param :headers-json]
                                      "custom"]]
                            :on-conflict {:on-constraint :user_servers_pkey}
-                           :do-nothing true
-
-                           }
+                           :do-nothing true}
               {:params {:headers-json headers}}))
 
+(defn update-custom [db account-id
+                     old-server-name old-box-url
+                     server-name box-url headers]
+  (q/execute-with-params!
+    db
+    {:update [:user-servers]
+     :set {:server-name server-name
+           :box-url box-url
+           :headers [:param :headers-json]}
+     :where [:and
+             [:= :account-id account-id]
+             [:= :is-custom true]
+             [:= :server-name old-server-name]
+             [:= :box-url old-box-url]]}
+    {:params {:headers-json headers}}))
+
 (defn delete-custom [db account-id box-url server-name]
-  (def sqlq
-    (-> (delete-from :user_servers)
-        (where [:and
-                [:= :box_url box-url]
-                [:= :account-id account-id]
-                [:= :is-custom true]
-                [:= :server-name server-name]]))
-    )
   (q/execute! db
               (-> (delete-from :user_servers)
                   (where [:and

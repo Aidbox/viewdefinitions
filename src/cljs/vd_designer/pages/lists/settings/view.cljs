@@ -27,11 +27,15 @@
     :else
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
-(defn save-changes [values edit?]
-  (let [server-settings (medley/remove-vals nil? (js->clj values :keywordize-keys true))]
+(defn save-changes [new-settings edit? old-settings]
+  (let [new-settings
+        (medley/remove-vals
+          nil?
+          (js->clj new-settings :keywordize-keys true))
+        old-settings (dissoc (medley/map-keys keyword old-settings) :headers)]
     (if edit?
-      (dispatch-sync [::c/update-server server-settings])
-      (dispatch-sync [::c/new-server server-settings]))
+      (dispatch-sync [::c/update-server old-settings new-settings])
+      (dispatch-sync [::c/new-server new-settings]))
     (dispatch-sync [::c/close-server-form])))
 
 (defn server->ant-form-format [server]
@@ -54,19 +58,23 @@
         (if edit?
           (server->ant-form-format editable-server)
           {:headers [{"name" "Authorization"
-                      "value" "Basic"}]})]
+                      "value" "Basic"}]})
+        on-close
+        (fn [_]
+          (dispatch [::c/set-editable-server nil])
+          (dispatch [::c/close-server-form]))]
     [:> Modal {:open server-form-opened?
                :footer    nil
                :width 650
                :style {:width 1000}
-               :on-cancel #(dispatch [::c/close-server-form])}
+               :on-cancel on-close}
 
      [form-components/settings-base-form form-header
-      {:onFinish #(save-changes % edit?)
+      {:onFinish #(save-changes % edit? initial-values)
        :initialValues initial-values
        :labelCol {:span 4}
        :style {:width "600px"}}
-      #(dispatch [::c/close-server-form])
+      on-close
       [:<>
        [:> Form.Item {:label "Server name" :name "server-name"
                       :rules [{:required true}]}

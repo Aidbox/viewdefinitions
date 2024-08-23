@@ -37,6 +37,18 @@
                :handler    #'custom-servers/add-custom-server
                :middleware [(authentication-middleware true)]}
 
+        :put {:parameters
+                 {:body
+                  {:old
+                   {:server-name string?
+                    :box-url string?}
+                   :new
+                   {:server-name string?
+                    :box-url string?
+                    :headers any?}}}
+               :handler    #'custom-servers/update-custom-server
+               :middleware [(authentication-middleware true)]}
+
         :delete {:parameters {:body {:server-name string?
                                      :box-url string?}}
                :handler    #'custom-servers/delete-custom-server
@@ -101,4 +113,4 @@
                         coercion/coerce-request-middleware
                         coercion/coerce-response-middleware
                         (app-context-middleware ctx)
-                        #_(observability-middleware)]}}))
+                        (observability-middleware)]}}))
