@@ -69,6 +69,10 @@
   (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers
                  (:server-name custom-server)] custom-server))
 
+(defn delete-custom-server [db custom-server]
+  (update-in db [:cfg/fhir-servers :user/servers :custom-servers]
+             dissoc (:server-name custom-server)))
+
 (reg-event-fx
  ::update-user-server-list
  (fn [{:keys [db]} [_ list-servers-body]]
@@ -125,8 +129,6 @@
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
    ;; FIXME
-   (println " unknown server selected "  (m/unknown-server-selected? db))
-   (println "not used server name " (not (m/used-server-name db)))
    (when (or (m/unknown-server-selected? db)
              (and (not (m/unknown-server-selected? db))
                   (not (m/used-server-name db))))
@@ -169,5 +171,24 @@
 (reg-event-fx
   ::new-server-failure
   (fn [_ [_ result]]
-    (println " res " result)
     {:notification-error (str "Error on adding FHIR server: " (u/response->error result))}))
+
+(reg-event-fx
+  ::delete-custom-server
+  (fn [_ [_ custom-server]]
+    {:dispatch [::auth/with-authentication
+                (fn [authentication-token]
+                  (assoc (backend/delete-fhir-server
+                           authentication-token custom-server)
+                         :on-success [::delete-custom-server-success]
+                         :on-failure [::delete-custom-server-failure]))]}))
+
+(reg-event-fx
+  ::delete-custom-server-success
+  (fn [{:keys [db]} [_ custom-server]]
+    {:db (delete-custom-server db custom-server)}))
+
+(reg-event-fx
+  ::delete-custom-server-failure
+  (fn [_ [_ result]]
+    {:notification-error (str "Error on deleting FHIR server: " (u/response->error result))}))

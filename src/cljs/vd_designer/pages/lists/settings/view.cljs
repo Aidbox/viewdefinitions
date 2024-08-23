@@ -16,10 +16,7 @@
   (cond
     (and connect-error (= (:server-name server-config)
                           (:server-name connect-error)))
-    [:div
-     [:label {:style {:color "red"}} (:status-text (:result connect-error))]
-     " "
-     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]]
+    [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]
 
     (-> server-config :server-name (= request-sent-by))
     [:label {:style {:color "lightgrey"}} "connecting..."]
@@ -91,53 +88,62 @@
                  :style  {:margin-bottom "24px"}
                  :styles {:body {:padding-top    0
                                  :padding-bottom 0}}}
-        [components.list/data-list
-         {:dataSource custom-servers
-          :renderItem (fn [raw-item]
-                        (r/as-element
-                          (let [{:keys [server-name box-url]
-                                 :as   server-config}
-                                (js-obj->clj-map raw-item)]
-                            [:> List.Item
-                             {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
-                             [:> List.Item.Meta
-                              {:title server-name
-                               :description (r/as-element [:a {:href   box-url
-                                                               :target "_blank"}
-                                                           box-url])}]])))}]])
-
-     (for [[project-name project-licenses] portal-boxes]
-       (let [project-name (or project-name "Public servers")]
-         ^{:key project-name}
-         [:> Card {:title  (r/as-element
-                            [:> Flex {:justify :space-between}
-                             project-name
-                             (when-let [new-license-url
-                                        (some-> portal-boxes
-                                                (get project-name)
-                                                first :project
-                                                :new-license-url)]
-                               [button/add "New server" {:href   new-license-url
-                                                         :target "_blank"}])])
-                   :key    project-name
-                   :style  {:margin-bottom "24px"}
-                   :styles {:body {:padding-top    0
-                                   :padding-bottom 0}}}
+        (when custom-servers
           [components.list/data-list
-           {:dataSource project-licenses
+           {:dataSource custom-servers
             :renderItem (fn [raw-item]
                           (r/as-element
-                           (let [{:keys [server-name box-url]
-                                  :as   server-config}
-                                 (js-obj->clj-map raw-item)]
-                             [:> List.Item
-                              {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
-                              [:> List.Item.Meta
-                               (cond->
-                                 {:title server-name}
+                            (let [{:keys [server-name box-url]
+                                   :as   server-config}
+                                  (js-obj->clj-map raw-item)]
+                              [:> List.Item
+                               {:actions [(r/as-element
+                                            [:> Row
+                                             [:> Space
+                                              [:div "edit"]
+                                              [:a
+                                               {:on-click #(dispatch [::c/delete-custom-server server-config]) }
+                                               "delete"]
+                                              [connect server-config request-sent-by used-server-name connect-error]]])]}
+                               [:> List.Item.Meta
+                                {:title server-name
+                                 :description (r/as-element [:a {:href   box-url
+                                                                 :target "_blank"}
+                                                             box-url])}]])))}])])
 
-                                 (not (m/sandbox? server-config))
-                                 (assoc
-                                   :description (r/as-element [:a {:href   box-url
-                                                                   :target "_blank"}
-                                                               box-url])))]])))}]]))]))
+     (when portal-boxes
+       (for [[project-name project-licenses] portal-boxes]
+         (let [project-name (or project-name "Public servers")]
+           ^{:key project-name}
+           [:> Card {:title  (r/as-element
+                               [:> Flex {:justify :space-between}
+                                project-name
+                                (when-let [new-license-url
+                                           (some-> portal-boxes
+                                                   (get project-name)
+                                                   first :project
+                                                   :new-license-url)]
+                                  [button/add "New server" {:href   new-license-url
+                                                            :target "_blank"}])])
+                     :key    project-name
+                     :style  {:margin-bottom "24px"}
+                     :styles {:body {:padding-top    0
+                                     :padding-bottom 0}}}
+            [components.list/data-list
+             {:dataSource project-licenses
+              :renderItem (fn [raw-item]
+                            (r/as-element
+                              (let [{:keys [server-name box-url]
+                                     :as   server-config}
+                                    (js-obj->clj-map raw-item)]
+                                [:> List.Item
+                                 {:actions [(r/as-element [connect server-config request-sent-by used-server-name connect-error])]}
+                                 [:> List.Item.Meta
+                                  (cond->
+                                    {:title server-name}
+
+                                    (not (m/sandbox? server-config))
+                                    (assoc
+                                      :description (r/as-element [:a {:href   box-url
+                                                                      :target "_blank"}
+                                                                  box-url])))]])))}]])))]))

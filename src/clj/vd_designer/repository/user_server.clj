@@ -1,7 +1,8 @@
 (ns vd-designer.repository.user-server
   (:require [honey.sql :as sql]
             [honey.sql.helpers :refer [do-update-set from insert-into limit
-                                       on-conflict select values where returning]]
+                                       delete-from
+                                       on-conflict select values where]]
             [jsonista.core :as json]
             [next.jdbc.prepare :as prepare]
             [next.jdbc.result-set :as rs]
@@ -21,7 +22,6 @@
 
 
 (defn create-custom [db account-id server-name box-url headers]
-  (def h headers)
   (q/execute-with-params! db
                           {:insert-into
                            [:user-servers]
@@ -38,6 +38,23 @@
 
                            }
               {:params {:headers-json headers}}))
+
+(defn delete-custom [db account-id box-url server-name]
+  (def sqlq
+    (-> (delete-from :user_servers)
+        (where [:and
+                [:= :box_url box-url]
+                [:= :account-id account-id]
+                [:= :is-custom true]
+                [:= :server-name server-name]]))
+    )
+  (q/execute! db
+              (-> (delete-from :user_servers)
+                  (where [:and
+                          [:= :box_url box-url]
+                          [:= :account-id account-id]
+                          [:= :is-custom true]
+                          [:= :server-name server-name]]))))
 
 ;; insert all servers. if server with account_id+box_url exists, update auth token
 (defn create-many [db user-server-data]

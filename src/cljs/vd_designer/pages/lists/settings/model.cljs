@@ -6,16 +6,16 @@
 (defn sandbox? [server]
   (true? (:sandbox server)))
 
-(defn portal-boxes-raw [db]
+(defn portal-boxes-map [db]
   (->> db :cfg/fhir-servers :user/servers :portal-boxes))
 
 (defn sandboxes [db]
-  (filterv sandbox? (vals (portal-boxes-raw db))))
+  (filterv sandbox? (vals (portal-boxes-map db))))
 
 (reg-sub
  ::portal-boxes-map
  (fn [db _]
-   (portal-boxes-raw db)))
+   (portal-boxes-map db)))
 
 (defn custom-servers-map [db]
   (->> db :cfg/fhir-servers :user/servers :custom-servers))
@@ -31,7 +31,7 @@
    (vals (custom-servers-map db))))
 
 (defn portal-boxes-groupped-project [db]
-  (or (->> db portal-boxes-raw vals
+  (or (->> db portal-boxes-map vals
            ;; sandbox is [nil {..}]
            (group-by #(-> % :project :name)))
       []))
@@ -65,7 +65,7 @@
        (get custom-servers used-server-name)))
   ([db]
    (let [custom-servers (custom-servers-map db)
-         portal-boxes (portal-boxes-groupped-project db)
+         portal-boxes (portal-boxes-map db)
          used-server-name (used-server-name db)]
      (current-server portal-boxes custom-servers used-server-name))))
 
@@ -98,7 +98,6 @@
  :-> ::server-form-opened)
 
 (defn unknown-server-selected? [db]
-  (println " !!!!!!!!!!!1 current server " (current-server db))
   (not (current-server db)))
 
 (defn first-sandbox-server-name [db]

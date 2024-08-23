@@ -26,20 +26,21 @@
      ["/metadata"
       {:get
        {:parameters {:query {:box-url string?}}
-        :handler    #'aidbox/get-metadata
-        #_#_:middleware [(aidbox-proxy-middleware)]}}]
+        :handler    #'aidbox/get-metadata}}]
 
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
        {:get  {:handler #'portal/list-servers}
         :post {:parameters {:body {:server-name string?
                                    :box-url string?
-                                   :headers any? } }
+                                   :headers any?}}
                :handler    #'custom-servers/add-custom-server
-               :middleware [(authentication-middleware true)]
-               ;; :middleware [(aidbox-proxy-middleware)]
-               }
-        }]
+               :middleware [(authentication-middleware true)]}
+
+        :delete {:parameters {:body {:server-name string?
+                                     :box-url string?}}
+               :handler    #'custom-servers/delete-custom-server
+               :middleware [(authentication-middleware true)]}}]
       ["/connect"
        {:post
         {:parameters {:body {:box-url string? :headers any?}}

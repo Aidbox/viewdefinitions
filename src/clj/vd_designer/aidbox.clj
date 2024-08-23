@@ -5,8 +5,8 @@
    [ring.util.http-response :as http-response]
    [vd-designer.clients.portal :as portal]))
 
-(defn hack-view-definitions-meta [view-definitions]
-  (update-in view-definitions
+(defn hack-view-definitions-meta [view-definitions-response]
+  (update-in view-definitions-response
              [:body :entry]
              (fn [entry]
                (mapv
@@ -23,10 +23,12 @@
 
 (defn connect
   [{:keys [box-url fhir-server-headers]}]
-  (hack-view-definitions-meta
-    @(martian/response-for (portal/client box-url)
-                           :connect
-                           fhir-server-headers)))
+  (let [response @(martian/response-for (portal/client box-url)
+                                        :connect
+                                        fhir-server-headers)]
+    (cond-> response
+      (:body response)
+      (hack-view-definitions-meta))))
 
 (defn get-view-definition
   [{:keys [box-url request fhir-server-headers]}]
