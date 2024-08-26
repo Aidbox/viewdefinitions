@@ -26,9 +26,12 @@
   (let [response @(martian/response-for (portal/client box-url)
                                         :connect
                                         fhir-server-headers)]
-    (cond-> response
-      (:body response)
-      (hack-view-definitions-meta))))
+    (if (= 503 (:status response))
+      {:status 400
+       :body {:error "aidbox.app is down. Try again in few minutes."}}
+      (cond-> response
+        (:body response)
+        (hack-view-definitions-meta)))))
 
 (defn get-view-definition
   [{:keys [box-url request fhir-server-headers]}]
