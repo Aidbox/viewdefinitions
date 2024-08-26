@@ -1,19 +1,14 @@
 (ns vd-designer.repository.user-server
   (:require #_[honey.sql :as sql]
             [honey.sql.helpers :refer [do-update-set from insert-into limit
-                                       delete-from
-                                       on-conflict select values where]]
+                                       delete-from on-conflict select values where]]
             [vd-designer.db.query :as q]))
-
 
 ; TODO: upsert, not insert!
 (defn create [db user-server-data]
   (q/execute! db
               (-> (insert-into :user-servers)
-                  (values [user-server-data])
-                  ;; (on-conflict {:on-constraint :user_servers_pkey})
-                  )))
-
+                  (values [user-server-data]))))
 
 (defn create-custom [db account-id server-name box-url headers]
   (q/execute-with-params! db

@@ -102,9 +102,7 @@
 
      ["/health"
       {:get {:handler #'health/check
-             :parameters {:query {:box-url string?}}
-             }
-       }]]]
+             :parameters {:query {:box-url string?}}}}]]]
 
    {:data {:muuntaja   m/instance
            :middleware [muuntaja/format-middleware
