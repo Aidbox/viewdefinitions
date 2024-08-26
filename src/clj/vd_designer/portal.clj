@@ -2,7 +2,6 @@
   (:require [clojure.set :as set]
             [clojure.string :as str]
             [lambdaisland.uri :as uri]
-            [ring.util.http-response :as http-response]
             [vd-designer.clients.portal :as portal]
             [vd-designer.repository.user-server :as user-server]))
 
@@ -63,30 +62,3 @@
            (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))
            (user-server/create-many db)))
     licenses))
-
-(defn select-server-keys [servers]
-  (map #(select-keys % [:box-url :server-name :project :type :sandbox :headers])
-       servers))
-
-(defn list-servers
-  [{:keys [cfg user db] :as ctx}]
-  (def k (keys ctx))
-  (let [public-servers (:public-fhir-servers cfg)
-        portal-boxes
-        (-> (if user
-              (concat (list-portal-user-servers ctx) public-servers)
-              public-servers)
-            select-server-keys)
-        custom-servers
-        (when user
-          ;; fixme
-          (mapv
-            (fn [server]
-              {:server-name (:user_servers/server_name server)
-               :box-url (:user_servers/box_url server)
-               :headers (:user_servers/headers server)})
-            (user-server/get-custom-servers db)))]
-    (http-response/ok
-     (cond-> {:portal-boxes portal-boxes}
-       custom-servers
-       (assoc :custom-servers custom-servers)))))

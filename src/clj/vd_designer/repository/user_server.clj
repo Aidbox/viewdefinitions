@@ -1,15 +1,9 @@
 (ns vd-designer.repository.user-server
-  (:require [honey.sql :as sql]
+  (:require #_[honey.sql :as sql]
             [honey.sql.helpers :refer [do-update-set from insert-into limit
                                        delete-from
                                        on-conflict select values where]]
-            [jsonista.core :as json]
-            [next.jdbc.prepare :as prepare]
-            [next.jdbc.result-set :as rs]
-
-            [vd-designer.db.query :as q])
-  (:import (org.postgresql.util PGobject)
-           [java.sql PreparedStatement]))
+            [vd-designer.db.query :as q]))
 
 
 ; TODO: upsert, not insert!

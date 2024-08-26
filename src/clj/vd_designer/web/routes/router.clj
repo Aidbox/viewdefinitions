@@ -3,9 +3,9 @@
             [reitit.ring :as ring]
             [reitit.ring.coercion :as coercion]
             [reitit.ring.middleware.muuntaja :as muuntaja]
-            [vd-designer.portal :as portal]
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
+            [vd-designer.web.controllers.servers :as servers]
             [vd-designer.web.controllers.custom-servers :as custom-servers]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.controllers.metrics :as metrics]
@@ -30,7 +30,7 @@
 
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
-       {:get  {:handler #'portal/list-servers}
+       {:get  {:handler #'servers/list-servers}
         :post {:parameters {:body {:server-name string?
                                    :box-url string?
                                    :headers any?}}

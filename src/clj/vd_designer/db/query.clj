@@ -1,11 +1,12 @@
 (ns vd-designer.db.query
   (:require [honey.sql :as sql]
             [honey.sql.helpers
-             :refer [do-update-set from insert-into limit
-                     truncate on-conflict select values where returning]]
+             :refer [truncate
+                     ;; do-update-set from insert-into limit on-conflict select values where returning
+                     ]]
             [jsonista.core :as json]
             [next.jdbc :as jdbc]
-            [next.jdbc.sql :as jdbc-sql]
+            ;; [next.jdbc.sql :as jdbc-sql]
             [next.jdbc.prepare :as prepare]
             [next.jdbc.result-set :as rs]
             [iapetos.core :as prometheus]

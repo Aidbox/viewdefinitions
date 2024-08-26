@@ -5,52 +5,7 @@
             [vd-designer.clients.interceptors :as interceptors]))
 
 (def routes
-  [{:route-name     :connect
-    :path-parts     ["/fhir/ViewDefinition"]
-    :produces       ["application/transit+json"]
-    :consumes       ["application/json"]
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :method         :get}
-
-   {:route-name     :get-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/transit+json"]
-    :consumes       ["application/json"]
-    :method         :get}
-
-   {:route-name     :create-view-definition
-    :path-parts     ["/fhir/ViewDefinition"]
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :post
-    :body-schema    {:body s/Any}}
-
-   {:route-name     :update-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :put
-    :body-schema    {:body s/Any}}
-
-   {:route-name     :delete-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :delete}
-
-   {:route-name  :sso-code-exchange
+  [{:route-name  :sso-code-exchange
     :path-parts  ["/auth/token"]
     :produces    ["application/json"]
     :consumes    ["application/json"]
@@ -70,28 +25,13 @@
     :produces       ["application/transit+json"]
     :consumes       ["application/transit+json"]
     :body-schema    {:body {:method                  s/Symbol
-                            (s/optional-key :params) s/Any}}}
-
-   {:route-name     :metadata
-    :query-schema   {:box-url s/Str}
-    :path-parts     ["/fhir/metadata"]
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :get}])
+                            (s/optional-key :params) s/Any}}}])
 
 (defn client [url]
   (martian/bootstrap
    url
    routes
    {:interceptors (concat [(interceptors/observability "portal")]
-                          martian-http/default-interceptors)}))
-
-;; TODO: move
-(defn client-custom-server [url]
-  (martian/bootstrap
-   url
-   routes
-   {:interceptors (concat [(interceptors/observability "custom-server")]
                           martian-http/default-interceptors)}))
 
 (defn rpc:init-project [portal-client access-token]
