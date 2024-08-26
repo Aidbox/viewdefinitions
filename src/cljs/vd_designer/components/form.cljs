@@ -4,7 +4,7 @@
     [medley.core :as medley]
     [reagent.core :as r]
     ["@ant-design/icons" :as icons]
-    [antd :refer [ConfigProvider Form
+    [antd :refer [ConfigProvider Form Row Col
                   Space Typography]]))
 
 
@@ -57,9 +57,12 @@
         [:div
          (map (fn [{:keys [key name]}]
                 ^{:key key}
-                [:> Space {:align "baseline"}
-                 [:<>
-                  [render-list-items key]
+                [:> Row {:align "middle"
+                         :gutter "5"}
+                 [:> Col {:span 23}
+                  [render-list-items key]]
+                 [:> Col {:span 1
+                          :style {:padding-bottom 8}}
                   [:> icons/MinusCircleOutlined {:onClick #(remove name)}]]])
               fields)
          [:> Form.Item
@@ -67,3 +70,5 @@
            {:type    "dashed"
             :block   true
             :onClick #(add)}]]])))])
+
+

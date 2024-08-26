@@ -154,8 +154,8 @@
  (fn [{:keys [db]} [_ server-config]]
    {:db (assoc db ::m/server-form-opened true)
     :fx (if (:headers server-config)
-          [[:dispatch [::set-edit-mode]]
-           [:dispatch [::set-editable-server server-config]]]
+          [[:dispatch [::set-editable-server server-config]]
+           [:dispatch [::set-edit-mode]]]
           [[:dispatch [::set-add-mode]]])}))
 
 (reg-event-db

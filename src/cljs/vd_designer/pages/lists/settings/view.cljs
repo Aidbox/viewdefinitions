@@ -1,10 +1,12 @@
 (ns vd-designer.pages.lists.settings.view
   (:require
-    [antd :refer [Card Flex Form Input List Modal Typography Row Space]]
+    [antd :refer [Card Flex Form Input List Modal Typography Row Col Space]]
     [medley.core :as medley]
     [re-frame.core :refer [dispatch dispatch-sync subscribe]]
     [reagent.core :as r]
     [vd-designer.components.button :as button]
+    [vd-designer.components.modal :as modal]
+    [vd-designer.utils.string :as string-utils]
     [vd-designer.auth.model :as auth-model]
     [vd-designer.components.list :as components.list]
     [vd-designer.components.form :as form-components]
@@ -49,9 +51,9 @@
        (map (fn [[k v]] [(name k) v]))
        (into {})))
 
-(defn add-or-update-server-modal []
+(defn add-or-update-server-modal [edit?]
   (let [server-form-opened? @(subscribe [::m/server-form-opened])
-        edit? @(subscribe [::m/server-form-edit?])
+        ;; edit?
         form-header (if edit? "Edit Server" "New Server")
         editable-server @(subscribe [::m/editable-server])
         initial-values
@@ -85,16 +87,25 @@
        [:> Form.Item {:label "Headers" :name "headers"}
         [form-components/form-list "headers"
          (fn [element-key]
-           [:> Row
-            [:> Space
+           [:> Row {:gutter 5}
+            [:> Col {:span 12}
              [:> Form.Item {:name  [element-key "name"]
                             :rules [{:required true
                                      :message  "Name is required"}]}
-              [:> Input {:placeholder "Name"}]]
+              [:> Input {:placeholder "Name"}]]]
+            [:> Col {:span 12}
              [:> Form.Item {:name  [element-key "value"]
                             :rules [{:required true
                                      :message  "Value is required"}]}
               [:> Input {:placeholder "Value"}]]]])]]]]]))
+
+(defn delete-server-modal [server-config]
+  (modal/modal-confirm
+    {:title   "Delete Server"
+     :ok-text "Delete"
+     :onOk    #(dispatch [::c/delete-custom-server server-config])
+     :content (r/as-element
+                [:div (string-utils/format "Are you sure you want to delete %s?" (:server-name server-config))])}))
 
 (defn server-list []
   (let [request-sent-by  @(subscribe [::m/request-sent-by])
@@ -102,12 +113,13 @@
         connect-error    @(subscribe [::m/connect-error])
         portal-boxes     @(subscribe [::m/portal-boxes-groupped-project])
         custom-servers   @(subscribe [::m/custom-servers-vec])
-        authorized?      @(subscribe [::auth-model/authorized?])]
+        authorized?      @(subscribe [::auth-model/authorized?])
+        edit-form? @(subscribe [::m/server-form-edit?])]
     [:<>
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
-     [add-or-update-server-modal]
+     [add-or-update-server-modal edit-form?]
 
      (when authorized?
        [:> Card {:title  (r/as-element
@@ -134,7 +146,9 @@
                                                {:on-click #(dispatch [::c/open-server-form server-config])}
                                                "edit"]
                                               [:a
-                                               {:on-click #(dispatch [::c/delete-custom-server server-config]) }
+                                               {:on-click
+                                                #(delete-server-modal server-config)
+                                                 }
                                                "delete"]
                                               [connect server-config request-sent-by used-server-name connect-error]]])]}
                                [:> List.Item.Meta
