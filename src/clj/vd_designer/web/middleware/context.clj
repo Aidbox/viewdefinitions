@@ -7,5 +7,4 @@
   {:name ::app-context
    :wrap (fn [handler]
            (fn [req]
-             (def r req)
              (handler (assoc ctx :request req))))})

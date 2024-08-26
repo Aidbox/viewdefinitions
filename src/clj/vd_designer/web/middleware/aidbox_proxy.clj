@@ -15,9 +15,7 @@
 
 (defn- get-fhir-server-headers [{:keys [cfg db box-url user]}]
   (if-let [public-server (get-public-fhir-server (:public-fhir-servers cfg) box-url)]
-    (do
-      (def abc (:headers public-server))
-      (:headers public-server))
+    (:headers public-server)
     ;; Verify that user has access to the server
     (when-let [user-server (user-server/get-by-account-id-and-box-url db (:id user) box-url)]
       (if (:user_servers/is_custom user-server)

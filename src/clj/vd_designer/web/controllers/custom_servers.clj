@@ -14,7 +14,6 @@
          :headers headers}))))
 
 (defn update-custom-server [{:keys [request db user]}]
-  (def rrrs (:body-params request))
   (let [{:keys [old new]} (:body-params request)
 
         {old-server-name :server-name
