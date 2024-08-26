@@ -135,33 +135,26 @@
                  (m/first-sandbox-server-name db)]})))
 
 (reg-event-db
- ::set-edit-mode
- (fn [db [_]]
-   (assoc db ::m/server-edit-form-mode true)))
-
-(reg-event-db
- ::set-add-mode
- (fn [db [_]]
-   (assoc db ::m/server-edit-form-mode false)))
-
-(reg-event-db
  ::set-editable-server
  (fn [db [_ server]]
    (assoc db ::m/editable-server server)))
 
 (reg-event-fx
- ::open-server-form
+ ::open-add-server-form
+ (fn [{:keys [db]} [_]]
+   {:db (assoc db ::m/add-server-form-opened true)}))
+
+(reg-event-fx
+ ::open-update-server-form
  (fn [{:keys [db]} [_ server-config]]
-   {:db (assoc db ::m/server-form-opened true)
-    :fx (if (:headers server-config)
-          [[:dispatch [::set-editable-server server-config]]
-           [:dispatch [::set-edit-mode]]]
-          [[:dispatch [::set-add-mode]]])}))
+   {:db (assoc db ::m/update-server-form-opened true)
+    :fx [[:dispatch [::set-editable-server server-config]]]}))
 
 (reg-event-db
  ::close-server-form
  (fn [db [_]]
-   (assoc db ::m/server-form-opened false)))
+   (assoc db ::m/update-server-form-opened false
+          ::m/add-server-form-opened false)))
 
 (defn update-headers-map [server]
   (update server :headers

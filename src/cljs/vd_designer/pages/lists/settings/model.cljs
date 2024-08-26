@@ -94,12 +94,12 @@
    (:box-url current-server)))
 
 (reg-sub
- ::server-form-opened
- :-> ::server-form-opened)
+ ::update-server-form-opened
+ :-> ::update-server-form-opened)
 
 (reg-sub
-  ::server-form-edit?
-  :-> ::server-edit-form-mode)
+ ::add-server-form-opened
+ :-> ::add-server-form-opened)
 
 (defn unknown-server-selected? [db]
   (not (current-server db)))
@@ -109,11 +109,24 @@
        first
        :server-name))
 
-
-(reg-sub
-  ::server-form-edit?
-  :-> ::server-edit-form-mode)
-
 (reg-sub
   ::editable-server
   :-> ::editable-server)
+
+(defn server->ant-form-format [server]
+  (->> (update server :headers
+               (fn [headers]
+                 (mapv
+                   (fn [[header-name header-value]]
+                     {:name header-name
+                      :value header-value})
+                   headers)))
+       (map (fn [[k v]] [(name k) v]))
+       (into {})))
+
+(reg-sub
+  ::editable-server-ant
+  :<- [::editable-server]
+  (fn [editable-server _]
+    (when editable-server
+      (server->ant-form-format editable-server))))

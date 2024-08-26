@@ -40,64 +40,63 @@
       (dispatch-sync [::c/new-server new-settings]))
     (dispatch-sync [::c/close-server-form])))
 
-(defn server->ant-form-format [server]
-  (->> (update server :headers
-               (fn [headers]
-                 (mapv
-                   (fn [[header-name header-value]]
-                     {:name header-name
-                      :value header-value})
-                   headers)))
-       (map (fn [[k v]] [(name k) v]))
-       (into {})))
+;; here we explicitly distinguish add-server modal and edit-server modal
+;; ant-design Form somehow caches initial-values,
+;; which causes bugs when not distinguish add and edit
+(defn server-form [edit? form-header initial-values on-close]
+  [form-components/settings-base-form form-header
+   {:onFinish #(save-changes % edit? initial-values)
+    :initialValues (or initial-values {})
+    :labelCol {:span 4}
+    :style {:width "600px"}}
+   on-close
+   [:<>
+    [:> Form.Item {:label "Server name" :name "server-name"
+                   :rules [{:required true}]}
+     [:> Input]]
+    [:> Form.Item {:label "URL" :name "box-url"
+                   :rules [{:required true}]}
+     [:> Input]]
+    [:> Form.Item {:label "Headers" :name "headers"}
+     [form-components/form-list "headers"
+      (fn [element-key]
+        [:> Row {:gutter 5}
+         [:> Col {:span 12}
+          [:> Form.Item {:name  [element-key "name"]
+                         :rules [{:required true
+                                  :message  "Name is required"}]}
+           [:> Input {:placeholder "Name"}]]]
+         [:> Col {:span 12}
+          [:> Form.Item {:name  [element-key "value"]
+                         :rules [{:required true
+                                  :message  "Value is required"}]}
+           [:> Input {:placeholder "Value"}]]]])]]]])
 
-(defn add-or-update-server-modal [edit?]
-  (let [server-form-opened? @(subscribe [::m/server-form-opened])
-        ;; edit?
-        form-header (if edit? "Edit Server" "New Server")
-        editable-server @(subscribe [::m/editable-server])
-        initial-values
-        (if edit?
-          (server->ant-form-format editable-server)
-          {:headers [{"name" "Authorization"
-                      "value" "Basic"}]})
+(defn add-server-modal []
+  (let [server-form-opened? @(subscribe [::m/add-server-form-opened])
         on-close
         (fn [_]
-          (dispatch [::c/set-editable-server nil])
-          (dispatch [::c/close-server-form]))]
+          (dispatch-sync [::c/close-server-form]))]
     [:> Modal {:open server-form-opened?
                :footer    nil
                :width 650
                :style {:width 1000}
                :on-cancel on-close}
+     [server-form false "New Server" {} on-close]]))
 
-     [form-components/settings-base-form form-header
-      {:onFinish #(save-changes % edit? initial-values)
-       :initialValues initial-values
-       :labelCol {:span 4}
-       :style {:width "600px"}}
-      on-close
-      [:<>
-       [:> Form.Item {:label "Server name" :name "server-name"
-                      :rules [{:required true}]}
-        [:> Input]]
-       [:> Form.Item {:label "URL" :name "box-url"
-                      :rules [{:required true}]}
-        [:> Input]]
-       [:> Form.Item {:label "Headers" :name "headers"}
-        [form-components/form-list "headers"
-         (fn [element-key]
-           [:> Row {:gutter 5}
-            [:> Col {:span 12}
-             [:> Form.Item {:name  [element-key "name"]
-                            :rules [{:required true
-                                     :message  "Name is required"}]}
-              [:> Input {:placeholder "Name"}]]]
-            [:> Col {:span 12}
-             [:> Form.Item {:name  [element-key "value"]
-                            :rules [{:required true
-                                     :message  "Value is required"}]}
-              [:> Input {:placeholder "Value"}]]]])]]]]]))
+(defn update-server-modal []
+  (let [server-form-opened? @(subscribe [::m/update-server-form-opened])
+        editable-server @(subscribe [::m/editable-server-ant])
+        on-close
+        (fn [_]
+          (dispatch-sync [::c/set-editable-server nil])
+          (dispatch-sync [::c/close-server-form]))]
+    [:> Modal {:open (and server-form-opened? editable-server)
+               :footer    nil
+               :width 650
+               :style {:width 1000}
+               :on-cancel on-close}
+     [server-form true "Edit Server" editable-server on-close]]))
 
 (defn delete-server-modal [server-config]
   (modal/modal-confirm
@@ -113,19 +112,20 @@
         connect-error    @(subscribe [::m/connect-error])
         portal-boxes     @(subscribe [::m/portal-boxes-groupped-project])
         custom-servers   @(subscribe [::m/custom-servers-vec])
-        authorized?      @(subscribe [::auth-model/authorized?])
-        edit-form? @(subscribe [::m/server-form-edit?])]
+        authorized?      @(subscribe [::auth-model/authorized?])]
     [:<>
+     [add-server-modal]
+     [update-server-modal]
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "Server list"]]
-     [add-or-update-server-modal edit-form?]
 
      (when authorized?
        [:> Card {:title  (r/as-element
                            [:> Flex {:justify :space-between}
                             "User servers"
-                            [button/add "New server" {:on-click #(dispatch [::c/open-server-form])}]])
+                            [button/add "New server" {:on-click
+                                                      #(dispatch [::c/open-add-server-form])}]])
                  :key    "user-servers"
                  :style  {:margin-bottom "24px"}
                  :styles {:body {:padding-top    0
@@ -143,12 +143,11 @@
                                             [:> Row
                                              [:> Space
                                               [:a
-                                               {:on-click #(dispatch [::c/open-server-form server-config])}
+                                               {:on-click #(dispatch [::c/open-update-server-form server-config])}
                                                "edit"]
                                               [:a
                                                {:on-click
-                                                #(delete-server-modal server-config)
-                                                 }
+                                                #(delete-server-modal server-config)}
                                                "delete"]
                                               [connect server-config request-sent-by used-server-name connect-error]]])]}
                                [:> List.Item.Meta
