@@ -6,8 +6,7 @@
   (->> data
        first
        (into (array-map))
-       (mapv first)
-       (mapv #(hash-map :title (subs (str %) 1) :dataIndex % :key %))))
+       (mapv (comp name first))))
 
 (defn one-row-data->ant-row-data [row-data index]
   (let [column-named-key? (:key row-data)]
@@ -31,8 +30,12 @@
 
     [:> ConfigProvider {:theme {:token {:Table {:lineHeight         "13px"
                                                 :headerBorderRadius 0}}}}
-     [:> Table (medley/deep-merge
+     [:> Table
+      (update (medley/deep-merge
                 {:columns    columns
                  :sticky     true
                  :dataSource data-with-keys}
-                opts)]]))
+                opts)
+              :columns
+              (fn [columns-vec]
+                (mapv (fn [column] (hash-map :title (str column) :dataIndex column :key column)) columns-vec)))]]))

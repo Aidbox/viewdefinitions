@@ -52,27 +52,31 @@
   (let [size @(subscribe [::m/table-panel-size])
         panel-size (- js/window.screen.height 32 170)
         table-size (* panel-size (/ size 100))
-        available-height (- table-size table-rest-size)]
+        available-height (- table-size table-rest-size)
+        column-order (:column-order resources)]
     [table (vec (remove empty? (:data resources)))
-     {:class      "vd-table"
-      :pagination {:hideOnSinglePage true
-                   :pageSize 20}
-      :locale     {:emptyText (r/as-element
-                               [:> Empty
-                                {:description
-                                 (r/as-element
-                                  [:div
-                                   [:> Typography.Paragraph {:level 1
-                                                             :type  "secondary"}
-                                    "No data."
-                                    (when-not sandbox?
-                                      [:<> " See: "
-                                       [:> Typography.Link
-                                        {:target "_blank"
-                                         :href   (m/import-synthetic-data-notebook-url server-url)}
-                                        "Import synthetic data to Aidbox."]])]])}])}
-      :scroll     {:y (- available-height 16)
-                   :x true}}]))
+     (cond-> {:class      "vd-table"
+              :pagination {:hideOnSinglePage true
+                           :pageSize 20}
+              :locale     {:emptyText (r/as-element
+                                        [:> Empty
+                                         {:description
+                                          (r/as-element
+                                            [:div
+                                             [:> Typography.Paragraph {:level 1
+                                                                       :type  "secondary"}
+                                              "No data."
+                                              (when-not sandbox?
+                                                [:<> " See: "
+                                                 [:> Typography.Link
+                                                  {:target "_blank"
+                                                   :href   (m/import-synthetic-data-notebook-url server-url)}
+                                                  "Import synthetic data to Aidbox."]])]])}])}
+              :scroll     {:y (- available-height 16)
+                           :x true}}
+       ;; works since 2408 aidbox release. #4466
+       column-order
+       (assoc :columns column-order))]))
 
 (def button-id "root-vd-settings")
 

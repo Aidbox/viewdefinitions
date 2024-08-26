@@ -50,15 +50,15 @@
 
             :always
             (assoc :spec-map {})
-            
+
             :always
             (assoc ::m/code-validation-severity 0)
-            
+
             :always
             (assoc ::m/left-panel-active-tab "form")
-            
+
             :always
-            (assoc ::m/view-definition-jsonschema 
+            (assoc ::m/view-definition-jsonschema
                    {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
