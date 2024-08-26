@@ -1,6 +1,6 @@
 (ns vd-designer.pages.lists.settings.controller
   (:require [medley.core :as medley]
-            [re-frame.core :refer [reg-cofx reg-event-fx reg-fx reg-event-db]]
+            [re-frame.core :refer [reg-cofx reg-event-fx reg-fx reg-event-db inject-cofx]]
             [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
             [vd-designer.http.fhir-server :as http]
@@ -23,32 +23,23 @@
 
 (def used-server-name-kv :used-server-name)
 
-(defn remove-server-name [db]
-  (update db :cfg/fhir-servers dissoc used-server-name-kv))
-
-(defn set-server-name [db used-server-name]
-  (assoc-in db [:cfg/fhir-servers used-server-name-kv] used-server-name))
-
 (reg-event-fx
  ::connect
  (fn [{:keys [db]} [_ {:keys [server-name] :as server}]]
-   {:delete-used-server-name true
-    :db (-> db
-            (assoc ::request-sent-by server-name)
-            (remove-server-name))
-
-    :dispatch [::auth/with-authentication
-               (fn [authentication-token]
-                 (assoc (http/get-view-definitions authentication-token server)
-                        :on-success [::connect-success server-name]
-                        :on-failure [::not-connected server-name]))]}))
+   {:db (-> db
+            (assoc ::request-sent-by server-name))
+    :fx [[:dispatch [::delete-used-server-name]]
+         [:dispatch [::auth/with-authentication
+                     (fn [authentication-token]
+                       (assoc (http/get-view-definitions authentication-token server)
+                              :on-success [::connect-success server-name]
+                              :on-failure [::not-connected server-name]))]]]}))
 
 (reg-event-fx
  ::connect-success
  (fn [{:keys [db]} [_ server-name _]]
    {:fx [[:dispatch [::store-used-server-name server-name]]]
-    :db (dissoc db ::request-sent-by :edit-server
-                :fhir-server :cfg/connect-error)}))
+    :db (dissoc db ::request-sent-by :edit-server :cfg/connect-error)}))
 
 (reg-event-fx
  ::not-connected
@@ -115,7 +106,16 @@
  ::store-used-server-name
  (fn [{:keys [db]} [_ used-server-name]]
    {:set-used-server-name used-server-name
-    :db (set-server-name db used-server-name)}))
+    :db (assoc-in db [:cfg/fhir-servers used-server-name-kv] used-server-name)}))
+
+(reg-event-fx
+ ::delete-used-server-name
+ (fn [{:keys [db]} [_]]
+   (let [first-sandbox (m/first-sandbox-server-name db)]
+     (if first-sandbox
+       {:dispatch [::store-used-server-name first-sandbox]}
+       {:delete-used-server-name true
+        :db (update db :cfg/fhir-servers dissoc used-server-name-kv)}))))
 
 (reg-cofx
  :get-used-server-name
@@ -177,10 +177,11 @@
                           :on-success [::new-server-success]
                           :on-failure [::new-server-failure]))]})))
 
-(reg-event-db
+(reg-event-fx
  ::new-server-success
- (fn [db [_ result]]
-   (add-custom-server db result)))
+ (fn [{:keys [db]} [_ result]]
+   {:db (add-custom-server db result)
+    :fx [[:dispatch [::close-server-form]]]}))
 
 (reg-event-fx
  ::new-server-failure
@@ -201,14 +202,23 @@
                              authentication-token
                              old-settings
                              new-settings)
-                           :on-success [::update-server-success]
+                           :on-success [::update-server-success old-settings]
                            :on-failure [::update-server-failure]))]]
        [:dispatch [::set-editable-server nil]]]})))
 
-(reg-event-db
+(reg-event-fx
  ::update-server-success
- (fn [db [_ result]]
-   (add-custom-server db result)))
+ [(inject-cofx :get-used-server-name)]
+ (fn [{:keys [db used-server-name]} [_ old-settings result]]
+   (let [currently-connected? (= (:server-name old-settings) used-server-name)
+         new-name? (not= (:server-name old-settings) (:server-name result))
+         change-used-name? (and currently-connected? new-name?)]
+     {:db (-> db
+              (delete-custom-server old-settings)
+              (add-custom-server result))
+    :fx [(when change-used-name?
+           [:dispatch [::store-used-server-name (:server-name result)]])
+         [:dispatch [::close-server-form]]]})))
 
 (reg-event-fx
  ::update-server-failure
@@ -218,12 +228,13 @@
 (reg-event-fx
  ::delete-custom-server
  (fn [_ [_ custom-server]]
-   {:dispatch [::auth/with-authentication
-               (fn [authentication-token]
-                 (assoc (backend/delete-fhir-server
-                         authentication-token custom-server)
-                        :on-success [::delete-custom-server-success]
-                        :on-failure [::delete-custom-server-failure]))]}))
+   {:fx [[:dispatch [::auth/with-authentication
+                     (fn [authentication-token]
+                       (assoc (backend/delete-fhir-server
+                                authentication-token custom-server)
+                              :on-success [::delete-custom-server-success]
+                              :on-failure [::delete-custom-server-failure]))]]
+         [:dispatch [::use-sandbox-if-not-selected]]]}))
 
 (reg-event-fx
  ::delete-custom-server-success

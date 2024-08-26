@@ -37,8 +37,7 @@
         old-settings (dissoc (medley/map-keys keyword old-settings) :headers)]
     (if edit?
       (dispatch-sync [::c/update-server old-settings new-settings])
-      (dispatch-sync [::c/new-server new-settings]))
-    (dispatch-sync [::c/close-server-form])))
+      (dispatch-sync [::c/new-server new-settings]))))
 
 ;; here we explicitly distinguish add-server modal and edit-server modal
 ;; ant-design Form somehow caches initial-values,
@@ -76,6 +75,7 @@
   (let [server-form-opened? @(subscribe [::m/add-server-form-opened])
         on-close
         (fn [_]
+          (dispatch-sync [::c/set-editable-server nil])
           (dispatch-sync [::c/close-server-form]))]
     [:> Modal {:open server-form-opened?
                :footer    nil

@@ -78,3 +78,4 @@
                 {:box-url box-url})]
     (http-response/ok
       (:body resp))))
+
