@@ -39,6 +39,9 @@
       (dispatch-sync [::c/update-server old-settings new-settings])
       (dispatch-sync [::c/new-server new-settings]))))
 
+(def aidbox-getting-started-locally-url
+  "https://docs.aidbox.app/getting-started/run-aidbox-locally-with-docker")
+
 ;; here we explicitly distinguish add-server modal and edit-server modal
 ;; ant-design Form somehow caches initial-values,
 ;; which causes bugs when not distinguish add and edit
@@ -69,7 +72,9 @@
           [:> Form.Item {:name  [element-key "value"]
                          :rules [{:required true
                                   :message  "Value is required"}]}
-           [:> Input {:placeholder "Value"}]]]])]]]])
+           [:> Input {:placeholder "Value"}]]]])]]
+
+    [:a {:href aidbox-getting-started-locally-url} "Aidbox Getting started locally guide"]]])
 
 (defn add-server-modal []
   (let [server-form-opened? @(subscribe [::m/add-server-form-opened])
