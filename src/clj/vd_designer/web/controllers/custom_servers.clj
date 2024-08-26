@@ -4,10 +4,17 @@
 
 (defn add-custom-server [{:keys [request db user]}]
   (let [{:keys [box-url server-name headers]} (:body-params request)
-        inserted-count (first (user-server-repository/create-custom db (:id user) server-name box-url headers))]
-    (if (= 0 (:next.jdbc/update-count inserted-count))
+        inserted-count (when (and box-url server-name)
+                         (first (user-server-repository/create-custom db (:id user) server-name box-url headers)))]
+    (cond
+      (not inserted-count)
       (http-response/bad-request
-        "Server already exists")
+        {:error "Must be provided: box-url, server-name"})
+
+      (= 0 (:next.jdbc/update-count inserted-count))
+      (http-response/bad-request {:error "Server already exists"})
+
+      :else
       (http-response/ok
         {:box-url box-url
          :server-name server-name

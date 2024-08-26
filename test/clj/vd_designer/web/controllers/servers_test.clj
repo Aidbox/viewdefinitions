@@ -1,16 +1,18 @@
-(ns vd-designer.aidbox-test
-  (:require [clojure.test :refer :all]
+(ns vd-designer.web.controllers.servers-test
+  (:require [clojure.test :refer [deftest testing is]]
             [matcher-combinators.matchers :as m]
             [matcher-combinators.test :refer [match?]]
             [ring.util.http-response :as http-response]
-            [vd-designer.portal :as sut]
+            [vd-designer.web.controllers.servers :as servers]
+            [vd-designer.db.query :as query]
+            [vd-designer.web.controllers.custom-servers :as custom-servers]
             [vd-designer.fake.clients.portal :as fake-portal]
             [vd-designer.repository.account :as account]
             [vd-designer.repository.sso-token :as sso-token]
             [vd-designer.repository.user-server :as user-server]
             [vd-designer.test-context :as test-context]))
 
-(deftest list-servers-test
+(deftest servers-test
   (def valid-access-token {:token "<valid-access-token>" :expired? false})
   (def project-1-id (random-uuid))
   (def project-2-id (random-uuid))
@@ -25,12 +27,11 @@
 
   (def ctx-with-user (assoc ctx :user {:id        account-id
                                        :sso-token (:token valid-access-token)}))
-  (def public-servers (sut/select-server-keys (:public-fhir-servers cfg)))
-
+  (def public-servers (servers/select-server-keys (:public-fhir-servers cfg)))
 
   (testing "public servers only"
     (is (match? (http-response/ok {:portal-boxes public-servers})
-                (sut/list-servers ctx))))
+                (servers/list-servers ctx))))
 
   (testing "3 licenses among 2 projects"
     (fake-portal/add-access-key client valid-access-token)
@@ -88,7 +89,7 @@
                         :name            "<project-2-name>"
                         :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
                                                  project-2-id)}}])))
-          (sut/list-servers ctx-with-user)))
+          (servers/list-servers ctx-with-user)))
 
     (is (match?
           (m/in-any-order
@@ -104,4 +105,73 @@
                             :server_name       "<license-3-name>"
                             :box_url           "https://box-url-3.com"
                             :aidbox_auth_token (:token valid-access-token)}])
-          (user-server/get-all db)))))
+          (user-server/get-all db))))
+
+  (testing "custom user servers"
+
+    (testing "create custom user server"
+
+      (query/truncate! db "user_servers")
+
+      (is (match?
+            (http-response/ok
+              {:box-url "<url>"
+               :server-name "<server-name>"
+               :headers {} })
+            (custom-servers/add-custom-server
+              (assoc ctx-with-user :request
+                     {:body-params
+                      {:box-url "<url>"
+                       :server-name "<server-name>"
+                       :headers {}}}))))
+
+      (is (match?
+            (http-response/bad-request {:error "Server already exists"})
+            (custom-servers/add-custom-server
+              (assoc ctx-with-user :request
+                     {:body-params
+                      {:box-url "<url>"
+                       :server-name "<server-name>"
+                       :headers {}}})))))
+
+    (testing "update custom user server"
+      (is (match?
+            (http-response/ok
+              {:box-url "<url1>"
+               :server-name "<server-name1>"
+               :headers {:header "1"} })
+            (custom-servers/update-custom-server
+              (assoc ctx-with-user :request
+                     {:body-params
+                      {:old {:box-url "<url>"
+                             :server-name "<server-name>"
+                             :headers {}}
+                       :new
+                       {:box-url "<url1>"
+                        :server-name "<server-name1>"
+                        :headers {:header "1"}}}})))))
+
+    (testing "list custom user server"
+      (is (match?
+            (http-response/ok
+              {:portal-boxes
+               [{:project {}}
+                {:project {}}
+                {:project {}}
+                {:sandbox true}]
+               :custom-servers
+               [{:server-name "<server-name1>"
+                 :box-url "<url1>"
+                 :headers {:header "1"}}]})
+            (servers/list-servers ctx-with-user))))
+
+    (testing "delete custom user server"
+      (is (match?
+            (http-response/ok
+              {:box-url "<url1>"
+               :server-name "<server-name1>"})
+            (custom-servers/delete-custom-server
+              (assoc ctx-with-user :request
+                     {:body-params
+                      {:box-url "<url1>"
+                        :server-name "<server-name1>"}})))))))
