@@ -1,5 +1,5 @@
-.clj-kondo/.cache
-.clj-kondo/imports/
+.clj-kondo/*
+!.clj-kondo/config.edn
 .cpcache/
 .calva/
 .lsp/
