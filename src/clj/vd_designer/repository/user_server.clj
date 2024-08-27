@@ -11,25 +11,25 @@
                   (values [user-server-data]))))
 
 (defn create-custom [db account-id server-name box-url headers]
-  (q/execute-with-params! db
-                          {:insert-into
-                           [:user-servers]
-                           :columns [:account-id :server-name :box-url
-                                     :is-custom
-                                     :headers
-                                     ;; non null
-                                     :aidbox-auth-token]
-                           :values [[account-id server-name box-url true
-                                     [:param :headers-json]
-                                     "custom"]]
-                           :on-conflict {:on-constraint :user_servers_pkey}
-                           :do-nothing true}
+  (q/execute! db
+              {:insert-into
+               [:user-servers]
+               :columns [:account-id :server-name :box-url
+                         :is-custom
+                         :headers
+                         ;; non null
+                         :aidbox-auth-token]
+               :values [[account-id server-name box-url true
+                         [:param :headers-json]
+                         "custom"]]
+               :on-conflict {:on-constraint :user_servers_pkey}
+               :do-nothing true}
               {:params {:headers-json headers}}))
 
 (defn update-custom [db account-id
                      old-server-name old-box-url
                      server-name box-url headers]
-  (q/execute-with-params!
+  (q/execute!
     db
     {:update [:user-servers]
      :set {:server-name server-name

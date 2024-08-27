@@ -18,7 +18,6 @@
             select-server-keys)
         custom-servers
         (when user
-          ;; fixme
           (mapv
             (fn [server]
               {:server-name (:user_servers/server_name server)

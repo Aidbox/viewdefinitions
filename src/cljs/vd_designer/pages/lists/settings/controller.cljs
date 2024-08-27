@@ -127,10 +127,7 @@
 (reg-event-fx
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
-   ;; FIXME
-   (when (or (m/unknown-server-selected? db)
-             (and (not (m/unknown-server-selected? db))
-                  (not (m/used-server-name db))))
+   (when (m/unknown-server-selected? db)
      {:dispatch [::store-used-server-name
                  (m/first-sandbox-server-name db)]})))
 

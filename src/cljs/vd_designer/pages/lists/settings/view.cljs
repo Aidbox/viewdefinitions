@@ -76,32 +76,28 @@
 
     [:a {:href aidbox-getting-started-locally-url} "Aidbox Getting started locally guide"]]])
 
+(defn change-server-modal-on-close []
+  (dispatch-sync [::c/set-editable-server nil])
+  (dispatch-sync [::c/close-server-form]))
+
 (defn add-server-modal []
-  (let [server-form-opened? @(subscribe [::m/add-server-form-opened])
-        on-close
-        (fn [_]
-          (dispatch-sync [::c/set-editable-server nil])
-          (dispatch-sync [::c/close-server-form]))]
+  (let [server-form-opened? @(subscribe [::m/add-server-form-opened])]
     [:> Modal {:open server-form-opened?
                :footer    nil
                :width 650
                :style {:width 1000}
-               :on-cancel on-close}
-     [server-form false "New Server" {} on-close]]))
+               :on-cancel change-server-modal-on-close}
+     [server-form false "New Server" {} change-server-modal-on-close]]))
 
 (defn update-server-modal []
   (let [server-form-opened? @(subscribe [::m/update-server-form-opened])
-        editable-server @(subscribe [::m/editable-server-ant])
-        on-close
-        (fn [_]
-          (dispatch-sync [::c/set-editable-server nil])
-          (dispatch-sync [::c/close-server-form]))]
+        editable-server @(subscribe [::m/editable-server-ant])]
     [:> Modal {:open (and server-form-opened? editable-server)
                :footer    nil
                :width 650
                :style {:width 1000}
-               :on-cancel on-close}
-     [server-form true "Edit Server" editable-server on-close]]))
+               :on-cancel change-server-modal-on-close}
+     [server-form true "Edit Server" editable-server change-server-modal-on-close]]))
 
 (defn delete-server-modal [server-config]
   (modal/modal-confirm

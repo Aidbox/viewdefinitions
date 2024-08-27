@@ -26,9 +26,16 @@
   (let [response @(martian/response-for (aidbox-client/aidbox-client box-url)
                                         :connect
                                         fhir-server-headers)]
-    (if (= 503 (:status response))
+    (cond
+      (= 503 (:status response))
       {:status 400
        :body {:error "aidbox.app is down. Try again in few minutes."}}
+
+      (= 400 (:status response))
+      {:status 400
+       :body {:error (str "Can't connect to " box-url)}}
+
+      :else
       (cond-> response
         (:body response)
         (hack-view-definitions-meta)))))
@@ -41,19 +48,18 @@
                                                       (merge {:vd-id vd-id}
                                                              fhir-server-headers)))))
 
- (defn eval-view-definition
+(defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [vd]} (:body-params request)
-        ;; FIXME: move
         vd (cond-> vd (:resource vd)
              (update :resource str/lower-case))]
     @(martian/response-for
-         (aidbox-client/aidbox-client box-url)
-         :rpc
-         (merge {:method 'sof/eval-view
-                 :params {:limit 100
-                          :view  vd}}
-                fhir-server-headers))))
+       (aidbox-client/aidbox-client box-url)
+       :rpc
+       (merge {:method 'sof/eval-view
+               :params {:limit 100
+                        :view  vd}}
+              fhir-server-headers))))
 
 (defn save-view-definition
   [{:keys [box-url request fhir-server-headers]}]

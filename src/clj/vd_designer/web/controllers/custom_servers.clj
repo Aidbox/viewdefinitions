@@ -11,7 +11,7 @@
       (http-response/bad-request
         {:error "Must be provided: box-url, server-name"})
 
-      (= 0 (:next.jdbc/update-count inserted-count))
+      (zero? (:next.jdbc/update-count inserted-count))
       (http-response/bad-request {:error "Server already exists"})
 
       :else
@@ -40,7 +40,7 @@
                    (:id user)
                    old-server-name old-box-url
                    new-server-name new-box-url new-headers)))]
-    (if (= 0 (:next.jdbc/update-count updated-count))
+    (if (zero? (:next.jdbc/update-count updated-count))
       (http-response/bad-request
         "Cannot update server")
       (http-response/ok
@@ -53,7 +53,7 @@
   (let [{:keys [box-url server-name]} (:body-params request)
         jdbc-ans (when (and box-url server-name)
                    (user-server-repository/delete-custom db (:id user) box-url server-name))]
-    (if (= 0 (:next.jdbc/update-count jdbc-ans))
+    (if (zero? (:next.jdbc/update-count jdbc-ans))
       (http-response/bad-request "Cannot delete the server")
       (http-response/ok
         {:box-url box-url
