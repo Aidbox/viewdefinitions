@@ -1,6 +1,6 @@
-(ns vd-designer.pages.form.resource-tab.controller-test
+(ns vd-designer.pages.form.resource-schema-tab.controller-test
   (:require [cljs.test :as t :refer [is]]
-            [vd-designer.pages.form.resource-tab.controller :as sut]
+            [vd-designer.pages.form.resource-schema-tab.controller :as sut]
             [matcher-combinators.test :refer [match?]]))
 
 (t/deftest fhir-schema-to-ant-tree-test
@@ -27,6 +27,6 @@
   )
 
 (comment
-  (t/run-tests 'vd-designer.pages.form.resource-tab.controller-test))
+  (t/run-tests 'vd-designer.pages.form.resource-schema-tab.controller-test))
 
 

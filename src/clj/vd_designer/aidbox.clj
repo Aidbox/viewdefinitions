@@ -1,6 +1,10 @@
 (ns vd-designer.aidbox
   (:require
    [clojure.string :as str]
+   [clojure.walk]
+   [cheshire.core :as json]
+   [lambdaisland.uri :as uri]
+   [org.httpkit.client :as client]
    [martian.core :as martian]
    [ring.util.http-response :as http-response]
    [vd-designer.clients.aidbox :as aidbox-client]))
@@ -43,10 +47,11 @@
 (defn get-view-definition
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [vd-id]} (:query-params request)]
-    (hack-view-definition-meta @(martian/response-for (aidbox-client/aidbox-client box-url)
-                                                      :get-view-definition
-                                                      (merge {:vd-id vd-id}
-                                                             fhir-server-headers)))))
+    (hack-view-definition-meta
+     @(martian/response-for (aidbox-client/aidbox-client box-url)
+                            :get-view-definition
+                            (merge {:vd-id vd-id}
+                                   fhir-server-headers)))))
 
 (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
@@ -87,3 +92,30 @@
                 {:box-url box-url})]
     (http-response/ok
       (:body resp))))
+
+(defn get-resource
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [resource-type]} (:query-params request)
+        search-params (-> request :query-params :search-params)
+        response @(client/get (str box-url "/fhir/" resource-type)
+                              {:headers (clojure.walk/stringify-keys fhir-server-headers)
+                               :query-params (merge
+                                              (uri/query-string->map search-params)
+                                              {:_count 1})})
+        body (some-> response :body (json/parse-string keyword)) 
+        status (:status response)]
+    (cond
+      (not= 200 status)
+      {:status 400
+       :body {:error (-> body :text :div)}}
+
+      (zero? (:total body 0))
+      {:status status
+       :body []
+       :headers {:content-type "application/json"}}
+      
+      :else
+      (let [resource (some-> body :entry first :resource)]
+        {:status status
+         :body resource
+         :headers {:content-type "application/json"}}))))

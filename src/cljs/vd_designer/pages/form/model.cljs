@@ -164,3 +164,23 @@
 (reg-sub
  ::table-panel-size
  :-> ::table-panel-size)
+
+(reg-sub
+ ::resource-value
+ :-> ::resource-value)
+
+(reg-sub
+ ::resource-error
+ :-> ::resource-error)
+
+(reg-sub
+ ::resource-language
+ :-> ::resource-language)
+
+(reg-sub
+ ::resource-search-request
+ :-> ::resource-search-request)
+
+(reg-sub
+ ::resource-loading?
+ :-> ::resource-loading?)

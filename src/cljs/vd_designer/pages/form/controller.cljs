@@ -43,14 +43,18 @@
          imported? (-> parameters :query :imported)]
      {:db (cond-> db
             :always
-            (assoc ::m/language :language/yaml)
+            (assoc ::m/language :language/yaml
+                   ::m/resource-language :language/yaml)
 
             (not vd-id)
             (set-view-definition-status)
 
             :always
             (assoc :spec-map {})
-
+            
+            :always
+            (assoc ::m/resource-value {})
+            
             :always
             (assoc ::m/code-validation-severity 0)
 
@@ -277,10 +281,43 @@
            [:dispatch [::update-tree-expanded-nodes
                        (-> m/tree-root-keys
                            (into (collect-all-node-paths view-definition))
-                           (set/difference m/do-not-expand-tree-keys))]]]
+                           (set/difference m/do-not-expand-tree-keys))]]
+           [:dispatch [::load-resource (:resource view-definition)]]]
       :db (-> db
               (assoc :current-vd view-definition :loading false)
               (assoc ::m/tree-inputs refs))})))
+
+(reg-event-db
+ ::set-resource-loading
+ (fn [db [_ value]]
+   (assoc db ::m/resource-loading? value)))
+
+(reg-event-fx
+ ::load-resource
+ (fn [{:keys [db]} [_ resource-type]]
+   (let [search-request (get db ::m/resource-search-request)]
+     {:fx [[:dispatch [::set-resource-loading true]]]
+      :dispatch [::auth/with-authentication
+                 (fn [authentication-token]
+                   (assoc (http.fhir-server/get-resource authentication-token
+                                                         (http.fhir-server/active-server db)
+                                                         resource-type
+                                                         search-request)
+                          :on-success [::get-resource-success]
+                          :on-failure [::get-resource-failure]))]})))
+
+(reg-event-fx
+ ::get-resource-success
+ (fn [{:keys [db]} [_ resource-value]]
+   {:db (assoc db ::m/resource-value resource-value)
+    :dispatch [::set-resource-loading false]}))
+
+(reg-event-fx
+ ::get-resource-failure
+ (fn [{:keys [db]} [_ resource-value]]
+   {:db (assoc db ::m/resource-value nil)
+    :dispatch [::set-resource-loading false]
+    :notification-error (-> resource-value :response (get "error"))}))
 
 (defn contains-blank-string? [element]
   (cond
@@ -658,16 +695,16 @@
    {:db (assoc db ::m/save-loading false)
     :notification-error (str "Error on save: " (u/response->error result))}))
 
-(defn format-vd [vd lang]
+(defn format-code [code lang]
   (case lang
-    :language/yaml (yaml/edn->yaml vd)
-    :language/json (-> vd clj->js (js/JSON.stringify nil 2))
+    :language/yaml (yaml/edn->yaml code)
+    :language/json (-> code clj->js (js/JSON.stringify nil 2))
     ""))
 
-(defn format-vd-code [vd lang]
+(defn format-vd-code [code lang]
   (case lang
-    :language/yaml (-> vd js/JSON.parse yaml/stringify)
-    :language/json (-> vd yaml/str->yaml (js/JSON.stringify nil 2))
+    :language/yaml (-> code js/JSON.parse yaml/stringify)
+    :language/json (-> code yaml/str->yaml (js/JSON.stringify nil 2))
     ""))
 
 (reg-event-db
@@ -678,6 +715,11 @@
           ::m/editor-id (random-uuid)
           ::m/view-definition-code
           (format-vd-code (::m/view-definition-code db) lang))))
+
+(reg-event-db
+ ::change-resource-language
+ (fn [db [_ lang]]
+   (assoc db ::m/resource-language lang)))
 
 (reg-event-fx
  ::toggle-settings-opened-id
@@ -894,7 +936,7 @@
                   (-> (:current-vd db)
                       decoration/remove-decoration
                       (input-references/replace-inputs-with-values (::m/tree-inputs db))
-                      (format-vd language))))))))
+                      (format-code language))))))))
 
 (reg-event-db
  ::on-sql-tab-clicked
@@ -920,3 +962,24 @@
  ::set-table-panel-size
  (fn [db [_ size]]
    (assoc db ::m/table-panel-size size)))
+
+(reg-event-fx
+ ::search-resource
+ (fn [{:keys [db]} [_]]
+   (let [resource-type (get-in db [:current-vd :resource])
+         search-request (get db ::m/resource-search-request)]
+     (when-not (str/blank? resource-type)
+       {:fx [[:dispatch [::set-resource-loading true]]]
+        :dispatch [::auth/with-authentication
+                   (fn [authentication-token]
+                     (assoc (http.fhir-server/get-resource authentication-token
+                                                           (http.fhir-server/active-server db)
+                                                           resource-type
+                                                           search-request)
+                            :on-success [::get-resource-success]
+                            :on-failure [::get-resource-failure]))]}))))
+
+(reg-event-db
+ ::set-resource-search-request
+ (fn [db [_ request]]
+   (assoc db ::m/resource-search-request request)))

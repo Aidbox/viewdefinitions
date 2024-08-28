@@ -1,4 +1,4 @@
-(ns vd-designer.pages.form.resource-tab.model
+(ns vd-designer.pages.form.resource-schema-tab.model
   (:require [re-frame.core :refer [reg-sub]]))
 
 (reg-sub

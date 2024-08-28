@@ -12,4 +12,6 @@
   "Tabs with icons
    For more details see: https://ant.design/components/tabs#tabs"
   [& {:as opts}]
-  [:> Tabs (medley/deep-merge {:defaultActiveKey 1} opts)])
+  [:> Tabs (medley/deep-merge {:defaultActiveKey 1
+                               :overflow :hidden
+                               :height "100%"} opts)])

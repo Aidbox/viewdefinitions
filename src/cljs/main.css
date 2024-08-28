@@ -51,10 +51,26 @@ div.ant-tabs {
 }
 
 .ant-tabs-content-holder {
-  overflow-y: auto;
+  overflow-y: hidden;
   overflow-x: hidden;
   scrollbar-width: thin;
   scrollbar-color: #f0f0f0 #ffffff;
+  display: flex;
+  flex-direction: column;
+}
+
+.ant-tabs-content {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	flex: 1 1 auto;
+}
+
+.ant-tabs-tabpane {
+	overflow: hidden;
+	flex: 1 1 auto;
+	display: flex;
+	flex-direction: column;
 }
 
 .vd-resource > .ant-select-selector {
@@ -106,6 +122,15 @@ button {
 }
 
 /* TREE */
+
+.ant-tree {
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ant-tree-list {
+  overflow: hidden;
+}
 
 .vd-tree .ant-tree-node-content-wrapper {
   border-radius: 0;
@@ -160,6 +185,18 @@ button {
   max-width: 128px;
 }
 
+.vd-table-panel-bottom {
+  width: 140px; 
+  height: 32px;
+  border-radius: 8px 8px 0px 0px;
+  position: relative;
+  left: 45%;
+  background: white;
+  border: 2px solid #F0F0F0;
+  z-index: 1000;
+  align-content: center;
+  border-bottom: unset;
+}
 
 /* rm first line first element line in resource tab tree
  * TODO: simplify
@@ -167,4 +204,21 @@ button {
 .resource-tab .ant-tree-list-holder-inner:first-child
 .ant-tree-treenode:first-child .ant-tree-switcher {
   display: none;
+}
+
+.visible,
+.hidden {
+  overflow: hidden;
+}
+
+.visible {
+  visibility: visible;
+  opacity: 1;
+  transition: opacity 100ms linear;
+}
+
+.hidden {
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 1s, opacity 0.5s 0.5s linear;
 }

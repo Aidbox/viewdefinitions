@@ -5,7 +5,6 @@
             [re-frame.core :refer [dispatch subscribe]]
             [react-resizable-panels :refer [Panel PanelGroup PanelResizeHandle]]
             [reagent.core :as r]
-            [vd-designer.pages.form.resource-tab.view :as resource-tab]
             [vd-designer.auth.model :as auth-model]
             [vd-designer.auth.view :refer [auth-required]]
             [vd-designer.components.alert :refer [alert]]
@@ -19,6 +18,8 @@
             [vd-designer.pages.form.form :refer [form]]
             [vd-designer.pages.form.form.settings :as form]
             [vd-designer.pages.form.model :as m]
+            [vd-designer.pages.form.resource-tab.view :as resource-tab]
+            [vd-designer.pages.form.resource-schema-tab.view :as resource-schema-tab]
             [vd-designer.pages.form.sql :refer [sql]]))
 
 (defn- save-vd-button [authorized?]
@@ -111,7 +112,8 @@
               :overflow       "hidden"}}
      [:> Panel
       {:minSize 25
-       :style   {:display "flex"}}
+       :style   {:display "flex"
+                 :margin-bottom "-32px"}}
       [:> PanelGroup {:direction "horizontal"
                       :autoSaveId "persistence"
                       :style {:gutter         32
@@ -126,7 +128,8 @@
         [:> Flex {:vertical true
                   :flex     "1 0 0%"
                   :style    {:override  "hidden"
-                             :min-width "400px"}}
+                             :min-width "400px"
+                             :height "100%"}}
          [:> Row
           [:> Space {:align :start}
            [:> Typography.Title {:level 1 :style {:margin-top 0}} "ViewDefinition"]
@@ -179,26 +182,55 @@
         [:> Flex
          {:vertical true
           :flex     "1 0 0%"
-          :style    {:override    "hidden"
-                     :margin-left "15px"
-                     :display     "flex"}}
+          :style    {:override "hidden"
+                     :width "100%"
+                     :padding-left "15px"
+                     :display "flex"}}
          [:> Typography.Title {:level 1 :style {:margin-top 0}} "Results"]
-         [:div {:style {:overflow "auto"}}
-          [resource-tab/resource-tab]]
-         #_[tabs {:animated true
-                :items [(tab-item {:key      "table"
-                                   :label    "Table"
-                                   :children [render-table resources sandbox? server-url]
-                                   :icon     (r/create-element icons/TableOutlined)})
-                        (tab-item {:key      "resource"
-                                   :label    "Resource"
-                                   :children [resource-tab/resource-tab]
-                                   :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]]
-     [:> PanelResizeHandle {:style {:border-right       "solid"
-                                    :border-right-color "#F0F0F0"
-                                    :border-width       "1px"}}]
+         [:div {:style {:overflow "hidden"
+                        :display "flex"
+                        :flex-direction "column"
+                        :height "100%"}}
+          [tabs {:animated true
+                 :items [(tab-item {:key      "resource"
+                                    :label    "Resource"
+                                    :children [resource-tab/resource]
+                                    :icon     (r/create-element icons/FileTextOutlined)})
+                         (tab-item {:key      "resource-schema"
+                                    :label    "Resource Schema"
+                                    :children [resource-schema-tab/resource-schema-tab]
+                                    :icon     (r/create-element icons/ApartmentOutlined)})]}]]]]]]
+     [:> PanelResizeHandle {:class "vd-table-panel-bottom"}
+      [:div {:style {:position :absolute
+                     :top "4px"
+                     :left "4px"
+                     :width "14px"
+                     :height "14px"
+                     :border-top-left-radius "4px"
+                     :border-left "2px solid #F4F4F4"
+                     :border-top "2px solid #F4F4F4"}}]
+      [:div {:style {:position :absolute
+                     :top "4px"
+                     :right "4px"
+                     :width "14px"
+                     :height "14px"
+                     :border-top-right-radius "4px"
+                     :border-right "2px solid #F4F4F4"
+                     :border-top "2px solid #F4F4F4"}}]
+      [:span
+       {:style {:width "100%"
+                :text-align :center
+                :display :inline-block
+                #_#_:font-weight :bold}}
+       [:> Typography.Paragraph
+        {:level 1
+         :type  "secondary"
+         :style {:position :relative
+                 :top "6px"}}
+        "Result Table"]]]
      [:> Panel
-      {:minSize 25
+      {:minSize 1 
+       :collapsible true
        :style   {:display "flex"
                  :margin-bottom "16px"}
        :onResize (fn [size] (dispatch [::c/set-table-panel-size size]))}
