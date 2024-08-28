@@ -24,3 +24,4 @@ server-repl:
 	source ./.env && clj -M:server:server-test:nrepl
 
 up:
+	docker compose --profile local up
