@@ -120,7 +120,7 @@
  ::get-supported-resource-types
  (fn [{:keys [db]} [_]]
    {:db         (assoc db :loading true)
-    :http-xhrio (-> (http.fhir-server/get-metadata db)
+    :http-xhrio (-> (http.fhir-server/get-metadata (http.fhir-server/active-server db))
                     (assoc :on-success [::get-supported-resource-types-success])
                     (assoc :on-failure [::on-vd-error]))}))
 

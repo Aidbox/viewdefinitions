@@ -3,20 +3,43 @@
    [re-frame.core :refer [reg-sub]]
    [vd-designer.pages.lists.settings.controller :as-alias c]))
 
-(defn user-servers-raw [db]
-  (->> db :cfg/fhir-servers :user/servers))
+(defn sandbox? [server]
+  (true? (:sandbox server)))
+
+(defn portal-boxes-map [db]
+  (->> db :cfg/fhir-servers :user/servers :portal-boxes))
+
+(defn sandboxes [db]
+  (filterv sandbox? (vals (portal-boxes-map db))))
 
 (reg-sub
- ::user-servers-raw
+ ::portal-boxes-map
  (fn [db _]
-   (user-servers-raw db)))
+   (portal-boxes-map db)))
+
+(defn custom-servers-map [db]
+  (->> db :cfg/fhir-servers :user/servers :custom-servers))
 
 (reg-sub
- ::user-servers
+ ::custom-servers-map
  (fn [db _]
-   (or (->> db :cfg/fhir-servers :user/servers vals
-            (group-by #(-> % :project :name)))
-       [])))
+   (custom-servers-map db)))
+
+(reg-sub
+ ::custom-servers-vec
+ (fn [db _]
+   (vals (custom-servers-map db))))
+
+(defn portal-boxes-groupped-project [db]
+  (or (->> db portal-boxes-map vals
+           ;; sandbox is [nil {..}]
+           (group-by #(-> % :project :name)))
+      []))
+
+(reg-sub
+ ::portal-boxes-groupped-project
+ (fn [db _]
+   (portal-boxes-groupped-project db)))
 
 (reg-sub
  ::request-sent-by
@@ -36,29 +59,74 @@
  (fn [db _]
    (:cfg/connect-error db)))
 
+(defn current-server
+  ([portal-boxes custom-servers used-server-name]
+   (or (get portal-boxes used-server-name)
+       (get custom-servers used-server-name)))
+  ([db]
+   (let [custom-servers (custom-servers-map db)
+         portal-boxes (portal-boxes-map db)
+         used-server-name (used-server-name db)]
+     (current-server portal-boxes custom-servers used-server-name))))
+
 (reg-sub
  ::current-server
- :<- [::user-servers-raw]
+ :<- [::portal-boxes-map]
+ :<- [::custom-servers-map]
  :<- [::used-server-name]
- (fn [[user-servers used-server-name] _]
-  (get user-servers used-server-name)))
-
-(defn sandbox? [server]
- ;; TODO: may be a reason of bug one day. explicitly set sandbox = true at backend
- (not (:project server)))
+ (fn [[portal-boxes custom-servers used-server-name] _]
+   (current-server portal-boxes custom-servers used-server-name)))
 
 (defn in-sandbox? [db]
-  (get (user-servers-raw db)
+  (get (sandboxes db)
        (used-server-name db)))
 
 (reg-sub
  ::sandbox?
  :<- [::current-server]
  (fn [current-server _]
-  (sandbox? current-server)))
+   (sandbox? current-server)))
 
 (reg-sub
  ::current-server-url
  :<- [::current-server]
  (fn [current-server _]
-  (:box-url current-server)))
+   (:box-url current-server)))
+
+(reg-sub
+ ::update-server-form-opened
+ :-> ::update-server-form-opened)
+
+(reg-sub
+ ::add-server-form-opened
+ :-> ::add-server-form-opened)
+
+(defn unknown-server-selected? [db]
+  (not (current-server db)))
+
+(defn first-sandbox-server-name [db]
+  (->> (sandboxes db)
+       first
+       :server-name))
+
+(reg-sub
+  ::editable-server
+  :-> ::editable-server)
+
+(defn server->ant-form-format [server]
+  (->> (update server :headers
+               (fn [headers]
+                 (mapv
+                   (fn [[header-name header-value]]
+                     {:name header-name
+                      :value header-value})
+                   headers)))
+       (map (fn [[k v]] [(name k) v]))
+       (into {})))
+
+(reg-sub
+  ::editable-server-ant
+  :<- [::editable-server]
+  (fn [editable-server _]
+    (when editable-server
+      (server->ant-form-format editable-server))))

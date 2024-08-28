@@ -5,6 +5,8 @@
             [reitit.ring.middleware.muuntaja :as muuntaja]
             [vd-designer.aidbox :as aidbox]
             [vd-designer.web.controllers.auth :as auth]
+            [vd-designer.web.controllers.servers :as servers]
+            [vd-designer.web.controllers.custom-servers :as custom-servers]
             [vd-designer.web.controllers.health :as health]
             [vd-designer.web.controllers.metrics :as metrics]
             [vd-designer.web.middleware.aidbox-proxy :refer [aidbox-proxy-middleware]]
@@ -20,13 +22,40 @@
       {:handler #'metrics/expose}}]
 
     ["/api"
+     ;; should be public
+     ["/metadata"
+      {:get
+       {:parameters {:query {:box-url string?}}
+        :handler    #'aidbox/get-metadata}}]
+
      ["/aidbox" {:middleware [(authentication-middleware false)]}
       ["/servers"
-       {:get
-        {:handler #'aidbox/list-servers}}]
+       {:get  {:handler #'servers/list-servers}
+        :post {:parameters {:body {:server-name string?
+                                   :box-url string?
+                                   :headers any?}}
+               :handler    #'custom-servers/add-custom-server
+               :middleware [(authentication-middleware true)]}
+
+        :put {:parameters
+                 {:body
+                  {:old
+                   {:server-name string?
+                    :box-url string?}
+                   :new
+                   {:server-name string?
+                    :box-url string?
+                    :headers any?}}}
+               :handler    #'custom-servers/update-custom-server
+               :middleware [(authentication-middleware true)]}
+
+        :delete {:parameters {:body {:server-name string?
+                                     :box-url string?}}
+               :handler    #'custom-servers/delete-custom-server
+               :middleware [(authentication-middleware true)]}}]
       ["/connect"
        {:post
-        {:parameters {:body {:box-url string?}}
+        {:parameters {:body {:box-url string? :headers any?}}
          :handler    #'aidbox/connect
          :middleware [(aidbox-proxy-middleware)]}}]
 
@@ -72,7 +101,8 @@
          :handler    #'auth/sso-callback}}]]
 
      ["/health"
-      {:get #'health/check}]]]
+      {:get {:handler #'health/check
+             :parameters {:query {:box-url string?}}}}]]]
 
    {:data {:muuntaja   m/instance
            :middleware [muuntaja/format-middleware

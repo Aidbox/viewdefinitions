@@ -1,7 +1,7 @@
 (ns vd-designer.pages.form.components
   (:require ["@ant-design/icons" :as icons]
-            [antd :refer [AutoComplete Checkbox Col ConfigProvider Flex Form Input
-                          Popover Row Select Space Tooltip Typography]]
+            [antd :refer [AutoComplete Checkbox Col ConfigProvider Flex Input
+                          Popover Row Select Tooltip]]
             [clojure.string :as str]
             [medley.core :as medley]
             [re-frame.core :refer [dispatch dispatch-sync subscribe]]
@@ -10,6 +10,7 @@
             [vd-designer.components.dropdown :as dropdown-component]
             [vd-designer.components.input :as input-component]
             [vd-designer.components.select :as select]
+            [vd-designer.components.form :as form-component]
             [vd-designer.components.tag :as tag]
             [vd-designer.components.tree :as tree-component]
             [vd-designer.pages.form.controller :as c]
@@ -532,22 +533,4 @@
 ;;;; Settings
 
 (defn settings-base-form [title props items]
-  [:> ConfigProvider {:theme {:components {:Form {:itemMarginBottom 8}}}}
-   [:> Form (medley/deep-merge
-             {:labelCol   {:span 6},
-              :layout     :horizontal
-              :style      {:width 472} ;; default modal width - 24 * 2 paddings
-              :colon      false
-              :labelAlign :left}
-             props)
-    [:> Typography.Title {:level 4 :style {:margin-top 0}} title]
-    items
-    [:div {:style {:textAlign :right}}
-     [:> Space
-      [button/button "Close" {:size     "small"
-                              :onClick  #(toggle-popover nil)
-                              :type     "default"
-                              :htmlType "reset"}]
-      [button/button "Save" {:size     "small"
-                             :type     "primary"
-                             :htmlType "submit"}]]]]])
+  [form-component/settings-base-form title props #(toggle-popover nil) items])

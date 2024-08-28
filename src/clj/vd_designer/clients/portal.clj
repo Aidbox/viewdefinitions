@@ -5,52 +5,7 @@
             [vd-designer.clients.interceptors :as interceptors]))
 
 (def routes
-  [{:route-name     :connect
-    :path-parts     ["/fhir/ViewDefinition"]
-    :produces       ["application/transit+json"]
-    :consumes       ["application/json"]
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :method         :get}
-
-   {:route-name     :get-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/transit+json"]
-    :consumes       ["application/json"]
-    :method         :get}
-
-   {:route-name     :create-view-definition
-    :path-parts     ["/fhir/ViewDefinition"]
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :post
-    :body-schema    {:body s/Any}}
-
-   {:route-name     :update-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :put
-    :body-schema    {:body s/Any}}
-
-   {:route-name     :delete-view-definition
-    :path-parts     ["/fhir/ViewDefinition/" :vd-id]
-    :path-schema    {:vd-id s/Str}
-    :headers-schema {(s/optional-key :Cookie)        s/Str
-                     (s/optional-key :Authorization) s/Str}
-    :produces       ["application/json"]
-    :consumes       ["application/json"]
-    :method         :delete}
-
-   {:route-name  :sso-code-exchange
+  [{:route-name  :sso-code-exchange
     :path-parts  ["/auth/token"]
     :produces    ["application/json"]
     :consumes    ["application/json"]

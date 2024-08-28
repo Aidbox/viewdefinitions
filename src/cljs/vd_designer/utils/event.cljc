@@ -5,9 +5,12 @@
      :clj  (-> @event :target :value)))
 
 (defn response->error [response]
-  (or (-> response :response :error)
+  (or (-> response :response :original-text)
+      (:original-text response)
+      (-> response :response :error)
       (-> response :response :text :div)
-      (:status-text response)))
+      (:status-text response)
+      (str response)))
 
 (defn selection-start [event]
   #?(:cljs (.. event -target -selectionStart)

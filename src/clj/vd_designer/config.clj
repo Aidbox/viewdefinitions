@@ -62,6 +62,7 @@
    :public-fhir-servers
    [{:server-name "Aidbox Sandbox"
      :box-url     "https://viewdefs.aidbox.app"
+     :sandbox true
      :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}]})
 
 (defonce ^:private __set-default-log-level (set-min-log-level! (:log-level config)))
