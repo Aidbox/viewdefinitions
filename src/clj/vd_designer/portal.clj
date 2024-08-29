@@ -48,26 +48,23 @@
     db     :db
     cfg    :cfg
     :as    ctx}]
-  (def cfg cfg)
   (let [projects (-> @(portal/rpc:init-project client sso-token) :body :result)
         licenses (->> projects
                       (mapcat #(licenses-for-project ctx sso-token (:id %)))
                       (filter valid-license?)
                       (mapv #(enrich-license % id)))
         projects-with-licenses (as-> projects $
-                            (group-by :id $)
-                            (update-vals $ (fn [project]
-                                             (let [project
-                                                   (-> project
-                                                       (first)
-                                                       (select-keys [:id :new-license-url :name])
-                                                       (assoc :new-license-url (license-url project cfg)))
-                                                   boxes (->> (licenses-for-project ctx sso-token (:id project))
-                                                              (filter valid-license?)
-                                                              (mapv #(enrich-license % id)))]
-                                               (assoc project :boxes boxes)))))]
-    (def projects-with-licenses projects-with-licenses)
-    (def licenses licenses)
+                                 (group-by :id $)
+                                 (update-vals $ (fn [p]
+                                                  (let [pp (first p)
+                                                        project
+                                                        (-> pp
+                                                            (select-keys [:id :name])
+                                                            (assoc :new-license-url (license-url pp cfg)))
+                                                        boxes (->> (licenses-for-project ctx sso-token (:id project))
+                                                                   (filter valid-license?)
+                                                                   (mapv #(enrich-license % id)))]
+                                                    (assoc project :boxes boxes)))))]
     (when-not (empty? licenses)
       (->> licenses
            (map #(select-keys % [:box-url :account-id :server-name :aidbox-auth-token]))

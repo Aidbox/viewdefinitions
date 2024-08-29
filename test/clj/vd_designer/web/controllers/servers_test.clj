@@ -14,8 +14,8 @@
 
 (deftest servers-test
   (def valid-access-token {:token "<valid-access-token>" :expired? false})
-  (def project-1-id (random-uuid))
-  (def project-2-id (random-uuid))
+  (def project-1-id (str (random-uuid)))
+  (def project-2-id (str (random-uuid)))
   (def ctx (test-context/mk))
   (def db (:db ctx))
   (def cfg (:cfg ctx))
