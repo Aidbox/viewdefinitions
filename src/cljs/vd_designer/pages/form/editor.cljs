@@ -21,7 +21,7 @@
         editor-id @(subscribe [::m/editor-id])
         schema @(subscribe [::m/view-definition-jsonschema])]
     ^{:key editor-id}
-    [:div {:style {:height        "calc(100vh - 180px)"
+    [:div {:style {:height        "100%"
                    :padding-right "8px"}}
      [monaco {:id       "vd-yaml"
               :language (when lang (name lang))
@@ -48,7 +48,7 @@
                               (dispatch [::c/set-code-validation-severity max-severity])))}]
      [:> Flex {:style    {:position :absolute
                           :top      0
-                          :right    "24px"
+                          :right    "26px"
                           :z-index  1000}
                :vertical true
                :align    :end

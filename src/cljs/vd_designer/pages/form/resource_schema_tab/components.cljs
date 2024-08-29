@@ -1,4 +1,4 @@
-(ns vd-designer.pages.form.resource-tab.components
+(ns vd-designer.pages.form.resource-schema-tab.components
   (:require [antd :refer [Space Tooltip]]
             [clojure.string :as str]))
 

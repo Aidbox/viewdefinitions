@@ -1,11 +1,11 @@
 (ns vd-designer.web.middleware.query
   (:require [lambdaisland.uri :as uri]))
 
-(defn query-string->map [{:keys [query-string] :as req}]
+(defn request->query-params [{:keys [query-string] :as req}]
   (assoc req :query-params (uri/query-string->map query-string)))
 
 (def query-string-middleware
   {:name ::parse-query-params
    :wrap (fn [handler]
            (fn [req]
-             (-> req query-string->map handler)))})
+             (-> req request->query-params handler)))})

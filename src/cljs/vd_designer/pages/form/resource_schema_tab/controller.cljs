@@ -1,4 +1,4 @@
-(ns vd-designer.pages.form.resource-tab.controller
+(ns vd-designer.pages.form.resource-schema-tab.controller
   (:require [clojure.string :as str]
             [medley.core :as medley]))
 

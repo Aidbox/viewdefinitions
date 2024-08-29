@@ -1,144 +1,120 @@
 (ns vd-designer.pages.form.resource-tab.view
-  (:require ["@ant-design/icons" :as icons]
-            [antd :refer [Flex Spin Tooltip Typography]]
-            [clojure.string :as str]
-            [re-frame.core :refer [subscribe]]
+  (:require [antd :refer [Flex Input Typography Empty Spin]]
+            [re-frame.core :refer [dispatch subscribe]]
             [reagent.core :as r]
-            [vd-designer.components.tree :refer [tree]]
-            [vd-designer.pages.form.model :as form-model]
-            [vd-designer.pages.form.resource-tab.components :as components]
-            [vd-designer.pages.form.resource-tab.model :as m]
-            [vd-designer.pages.form.resource-tab.controller :as c]))
+            [vd-designer.components.button :as button]
+            [vd-designer.components.monaco-editor :refer [monaco]]
+            [vd-designer.components.switch :as switch]
+            [vd-designer.pages.form.controller :as c]
+            [vd-designer.pages.form.model :as m]
+            [vd-designer.utils.event :as u]))
 
-(defn shorten-valueset-name [value-set-name]
-  (last (str/split value-set-name #"/")))
+(defn resource-search-request []
+  (let [resource-search-request @(subscribe [::m/resource-search-request])]
+    [:> Input
+     {:default-value resource-search-request
+      :onKeyUp  (fn [e]
+                  (when (= "Enter" (u/pressed-key e))
+                    (dispatch [::c/search-resource])))
+      :on-change (fn [e] (dispatch [::c/set-resource-search-request (u/target-value e)]))}]))
 
-(def flags-cell-style
-  {:text-align :center
-   :width      "46px"})
-
-(def cardinality-cell-style
-  {:text-align :center
-   :width      "44px"})
-
-(def type-cell-style
-  {:width      "150px"})
-
-(def description-cell-style
-  {:width      "32px"})
-
-(defn render-resource [element]
-  (assoc element :title
-         (r/as-element
-          [:> Flex {:gap 4}
-           [:div {:style {:width "264px"}}
-            [components/icon-resource]
-            [:span (:option-name element)]]
-
-           [:div {:style (merge flags-cell-style {:margin-left "68px"})}
-            "Flags"]
-           [:div {:style cardinality-cell-style}
-            "Card."]
-           [:div {:style type-cell-style}
-            "Type"]
-           [:div {:style description-cell-style}
-            "Desc."]])))
-
-(defn render-element* [element & [lvl]]
-  (let [lvl (or lvl 0)]
+(defn empty-widget []
+  [:> Empty
+   {:style {:position :relative
+            :top "50%"}
+    :description
     (r/as-element
-     [:> Flex {:gap 4, :style {:height "30px"}}
-      [:div {:style {:width (str (- 300 (* 32 lvl)) "px")}}
-       [:<>
-        [components/render-icon element]
-        [:> Typography.Text {:ellipsis true
-                             :style {:padding-bottom "5px"}}
-         (str (:option-name element)
-              (when (:choices element) "[x]"))]]]
+     [:div
+      [:> Typography.Paragraph
+       {:level 1
+        :type  "secondary"}
+       "No Data"]])}])
 
-      [:div {:style flags-cell-style}
-       [components/render-modifiers element]]
+(defn error-widget [text]
+  [:> Empty
+   {:style {:position :relative
+            :top "50%"}
+    :description
+    (r/as-element
+     [:div {:style {:display :flex
+                    :flex-direction :row
+                    :gap "4px"
+                    :justify-content :center}}
+      [:> Typography.Paragraph
+       {:level 1
+        :type "danger"}
+       "Error:"]
+      [:> Typography.Paragraph
+       {:level 1
+        :type  "secondary"}
+       text]])}])
 
-      [:div {:style cardinality-cell-style}
-       (when-not (:choiceOf element)
-         (str (or
-               (when (contains?
-                      (into #{} (:required element))
-                      (:option-name element))
-                 "1")
-               (:min element)
-               "0")
-              ".."
-              (or (when (:array element) "*")
-                  (:max element)
-                  "1")))]
+(defn loading-widget []
+  (let [loading @(subscribe [::m/resource-loading?])]
+    [:div
+     {:class (if loading "visible" "hidden")
+      :style {:position :absolute
+              :height "100%"
+              :width "100%"
+              :background "#FFFFFF"
+              :z-index 1000}}
+     [:> Spin {:style {:position :absolute
+                       :top "50%"
+                       :left "50%"}}]]))
 
-      [:div {:style type-cell-style}
-       [components/render-type element]]
+(defn editor [resource]
+  (let [lang @(subscribe [::m/resource-language])
+        formatted-resource (c/format-code resource lang)]
+    [:div {:style {:width "100%"
+                   :height "100%"}}
+     [monaco {:id "vd-yaml"
+              :height "100%"
+              :readOnly true
+              :language (when lang (name lang))
+              :value formatted-resource}]
+     [:> Flex {:style    {:position :absolute
+                          :top      "55px"
+                          :right    "26px"
+                          :z-index  1000}
+               :vertical true
+               :align    :end
+               :gap      8}
+      [switch/json<->yaml
+       :defaultChecked (= lang :language/json)
+       :onChange #(dispatch [::c/change-resource-language
+                             (if % :language/json :language/yaml)])]
+      [button/copy formatted-resource]]]))
 
-      [:div {:style description-cell-style}
-       (when (:binding element)
-         (let [value-set (-> element :binding :valueSet)]
-           [:> Tooltip {:placement :left
-                        :title     (r/as-element
-                                    [:<> "Binding: "
-                                     [:a {:href value-set, :target "_blank"}
-                                      (shorten-valueset-name value-set)
-                                      " (" (:strength (:binding element)) ")"]])}
-            [:> icons/QuestionCircleOutlined]]))]])))
+(defn search-widget []
+  [:div {:style {:height "35px"
+                 :display :flex
+                 :flex-direction :row
+                 :align-items :center
+                 :gap "8px"
+                 :margin-right "9px"}}
+   [:span  {:style {:flex "3 0 auto"}}
+    "Search request"]
+   [resource-search-request]])
 
-(defn render-element [element fhir-schema & [lvl]]
-  (let [lvl (or lvl 0)
-        element (cond-> element
-                  (not (:key element))
-                  (assoc :key (c/create-key (or (:key fhir-schema)
-                                                (:option-name fhir-schema)
-                                                (:type fhir-schema))
-                                            (:option-name element))))]
-    (cond->
-     (assoc element :title (render-element* element lvl))
+(defn resource []
+  (let [resource @(subscribe [::m/resource-value])]
+    [:div {:style {:display :flex
+                   :flex-direction :column
+                   :overflow :hidden
+                   :height "100%"
+                   :gap "8px"}}
+     [search-widget]
+     [:div {:style {:height "calc(100% - 42px)"
+                    :padding-right "8px"}}
+      [loading-widget]
+      (cond
+        (:error resource)
+        [error-widget (or (:error resource) "Unknown error")]
 
-      (:choices element)
-      (assoc :children (mapv
-                        (fn [c]
-                          {:title (render-element* c (inc lvl))
-                           :key   (c/create-key (:key element) (:option-name c))})
-                        (:choices element)))
 
-      (:elements element) ;; backbone element
-      (assoc :children
-             (mapv
-              (fn [c]
-                (render-element c (c/pre-process-fhir-schema element) (inc lvl)))
-              (c/pre-process-fhir-schema element))))))
+        (as-> (:value resource) value
+          (and (coll? value) (empty? value)))
+        [empty-widget]
 
-(defn fhir-schema->options [resource-type fhir-schema]
-  (let [rt-key (c/create-key nil resource-type)]
-    (into [(render-resource
-            {:option-name (or resource-type (:id fhir-schema) "")
-             :key         rt-key})]
-          (mapv
-           (fn [element]
-             (-> element
-                 (assoc :key (c/create-key rt-key (:option-name element)))
-                 (render-element fhir-schema)))
-           (c/pre-process-fhir-schema fhir-schema)))))
-
-(defn schema->tree-data [schema]
-  (fhir-schema->options (:id schema) schema))
-
-(defn resource-tab []
-  (let [spec @(subscribe [::m/spec-map])
-        resource-input @(subscribe [::form-model/resource-input])
-        resource (when spec (get (js->clj spec :keywordize-keys true)
-                                 (keyword resource-input)))]
-    (if resource
-      [tree {:style            {:padding-right "10px"}
-             :defaultExpandAll true
-             :class            "vd-tree resource-tab"
-             :tree-data        (clj->js (schema->tree-data resource))}]
-      [:> Flex {:style   {:padding-top "50%"}
-                :justify :center
-                :align   :center
-                :flex    1}
-       [:> Spin {:size :large}]])))
+        :else
+        [editor (:value resource)])]]))

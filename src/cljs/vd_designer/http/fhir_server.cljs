@@ -77,3 +77,15 @@
    :method           :post
    :params           {:box-url box-url :vd vd}
    :headers          (authorization-header authentication-token)})
+
+(defn get-resource [authentication-token {:keys [box-url]} resource-type search-params]
+  {:uri              "/api/aidbox/Resource"
+   :timeout          8000
+   :response-format  (ajax/json-response-format
+                      {:keywords? false})
+   :with-credentials true
+   :method           :get
+   :params           {:box-url box-url 
+                      :resource-type resource-type
+                      :search-params search-params}
+   :headers          (authorization-header authentication-token)})

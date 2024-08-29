@@ -9,15 +9,15 @@
 (defn sql []
   (let [sql @(subscribe [::m/sql])
         formatted-sql (sqlf/format sql (clj->js {:language "postgresql"}))]
-    [:div {:style {:height        "calc(100vh - 180px)"
+    [:div {:style {:height        "100%"
                    :padding-right "8px"}}
      [monaco {:id       "vd-sql"
               :language "sql"
               :value    formatted-sql
               :schemas  []}]
      [:> Flex {:style    {:position :absolute
-                          :top      "16px"
-                          :right    "16px"}
+                          :top      "6px"
+                          :right    "26px"}
                :vertical true
                :align    :end
                :gap      8}

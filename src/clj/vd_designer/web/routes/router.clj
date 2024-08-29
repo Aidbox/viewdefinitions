@@ -81,7 +81,13 @@
         {:post
          {:parameters {:body {:box-url string?
                               :vd      string?}}
-          :handler    #'aidbox/eval-view-definition}}]]]
+          :handler    #'aidbox/eval-view-definition}}]]
+      ["/Resource"
+       {:get
+        {:parameters {:query {:vd-id   string?
+                              :box-url string?}}
+         :handler    #'aidbox/get-resource
+         :middleware [(aidbox-proxy-middleware)]}}]]
 
      ["/auth"
       ["/check"
