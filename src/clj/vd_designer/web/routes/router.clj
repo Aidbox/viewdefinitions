@@ -83,12 +83,11 @@
                               :vd      string?}}
           :handler    #'aidbox/eval-view-definition}}]]
       ["/Resource"
-       {:middleware [(aidbox-proxy-middleware)]}
-       [""
-        {:get
-         {:parameters {:query {:vd-id   string?
-                               :box-url string?}}
-          :handler    #'aidbox/get-resource}}]]]
+       {:get
+        {:parameters {:query {:vd-id   string?
+                              :box-url string?}}
+         :handler    #'aidbox/get-resource
+         :middleware [(aidbox-proxy-middleware)]}}]]
 
      ["/auth"
       ["/check"

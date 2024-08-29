@@ -53,7 +53,7 @@
             (assoc :spec-map {})
             
             :always
-            (assoc ::m/resource-value {})
+            (assoc ::m/resource-value {:value {}})
             
             :always
             (assoc ::m/code-validation-severity 0)
@@ -296,28 +296,29 @@
  ::load-resource
  (fn [{:keys [db]} [_ resource-type]]
    (let [search-request (get db ::m/resource-search-request)]
-     {:fx [[:dispatch [::set-resource-loading true]]]
-      :dispatch [::auth/with-authentication
-                 (fn [authentication-token]
-                   (assoc (http.fhir-server/get-resource authentication-token
-                                                         (http.fhir-server/active-server db)
-                                                         resource-type
-                                                         search-request)
-                          :on-success [::get-resource-success]
-                          :on-failure [::get-resource-failure]))]})))
+     {:fx [[:dispatch [::set-resource-loading true]]
+           [:dispatch [::auth/with-authentication
+                       (fn [authentication-token]
+                         (assoc (http.fhir-server/get-resource authentication-token
+                                                               (http.fhir-server/active-server db)
+                                                               resource-type
+                                                               search-request)
+                                :on-success [::get-resource-success]
+                                :on-failure [::get-resource-failure]))]]]})))
 
 (reg-event-fx
  ::get-resource-success
  (fn [{:keys [db]} [_ resource-value]]
-   {:db (assoc db ::m/resource-value resource-value)
+   {:db (assoc db ::m/resource-value {:value resource-value})
     :dispatch [::set-resource-loading false]}))
 
 (reg-event-fx
  ::get-resource-failure
  (fn [{:keys [db]} [_ resource-value]]
-   {:db (assoc db ::m/resource-value nil)
-    :dispatch [::set-resource-loading false]
-    :notification-error (-> resource-value :response (get "error"))}))
+   (let [error-msg (-> resource-value :response (get "error"))]
+     {:db (assoc db ::m/resource-value {:error error-msg})
+      :dispatch [::set-resource-loading false]
+      :notification-error error-msg})))
 
 (defn contains-blank-string? [element]
   (cond
@@ -969,15 +970,15 @@
    (let [resource-type (get-in db [:current-vd :resource])
          search-request (get db ::m/resource-search-request)]
      (when-not (str/blank? resource-type)
-       {:fx [[:dispatch [::set-resource-loading true]]]
-        :dispatch [::auth/with-authentication
-                   (fn [authentication-token]
-                     (assoc (http.fhir-server/get-resource authentication-token
-                                                           (http.fhir-server/active-server db)
-                                                           resource-type
-                                                           search-request)
-                            :on-success [::get-resource-success]
-                            :on-failure [::get-resource-failure]))]}))))
+       {:fx [[:dispatch [::set-resource-loading true]]
+             [:dispatch [::auth/with-authentication
+                         (fn [authentication-token]
+                           (assoc (http.fhir-server/get-resource authentication-token
+                                                                 (http.fhir-server/active-server db)
+                                                                 resource-type
+                                                                 search-request)
+                                  :on-success [::get-resource-success]
+                                  :on-failure [::get-resource-failure]))]]]}))))
 
 (reg-event-db
  ::set-resource-search-request

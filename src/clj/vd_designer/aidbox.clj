@@ -107,7 +107,7 @@
     (cond
       (not= 200 status)
       {:status 400
-       :body {:error (-> body :text :div)}}
+       :body {:error (-> body :issue first :diagnostics)}}
 
       (zero? (:total body 0))
       {:status status

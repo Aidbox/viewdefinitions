@@ -12,20 +12,38 @@
 (defn resource-search-request []
   (let [resource-search-request @(subscribe [::m/resource-search-request])]
     [:> Input
-     {:style {:margin-right "4px"}
-      :default-value resource-search-request
+     {:default-value resource-search-request
       :onKeyUp  (fn [e]
                   (when (= "Enter" (u/pressed-key e))
                     (dispatch [::c/search-resource])))
       :on-change (fn [e] (dispatch [::c/set-resource-search-request (u/target-value e)]))}]))
 
-(defn empty-widget [text]
+(defn empty-widget []
   [:> Empty
    {:style {:position :relative
             :top "50%"}
     :description
     (r/as-element
      [:div
+      [:> Typography.Paragraph
+       {:level 1
+        :type  "secondary"}
+       "No Data"]])}])
+
+(defn error-widget [text]
+  [:> Empty
+   {:style {:position :relative
+            :top "50%"}
+    :description
+    (r/as-element
+     [:div {:style {:display :flex
+                    :flex-direction :row
+                    :gap "4px"
+                    :justify-content :center}}
+      [:> Typography.Paragraph
+       {:level 1
+        :type "danger"}
+       "Error:"]
       [:> Typography.Paragraph
        {:level 1
         :type  "secondary"}
@@ -56,7 +74,7 @@
               :value formatted-resource}]
      [:> Flex {:style    {:position :absolute
                           :top      "55px"
-                          :right    "24px"
+                          :right    "26px"
                           :z-index  1000}
                :vertical true
                :align    :end
@@ -72,7 +90,8 @@
                  :display :flex
                  :flex-direction :row
                  :align-items :center
-                 :gap "8px"}}
+                 :gap "8px"
+                 :margin-right "9px"}}
    [:span  {:style {:flex "3 0 auto"}}
     "Search request"]
    [resource-search-request]])
@@ -89,12 +108,13 @@
                     :padding-right "8px"}}
       [loading-widget]
       (cond
-        (nil? resource)
-        [empty-widget "Error"]
+        (:error resource)
+        [error-widget (or (:error resource) "Unknown error")]
 
 
-        (and (coll? resource) (empty? resource))
-        [empty-widget "No data"]
+        (as-> (:value resource) value
+          (and (coll? value) (empty? value)))
+        [empty-widget]
 
         :else
-        [editor resource])]]))
+        [editor (:value resource)])]]))

@@ -170,10 +170,6 @@
  :-> ::resource-value)
 
 (reg-sub
- ::resource-error
- :-> ::resource-error)
-
-(reg-sub
  ::resource-language
  :-> ::resource-language)
 
