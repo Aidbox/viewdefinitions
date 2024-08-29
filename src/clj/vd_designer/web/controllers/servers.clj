@@ -23,7 +23,7 @@
               {:server-name (:user_servers/server_name server)
                :box-url (:user_servers/box_url server)
                :headers (:user_servers/headers server)})
-            (user-server/get-custom-servers db)))]
+            (user-server/get-custom-servers db (:id user))))]
     (http-response/ok
      (cond-> {:portal-boxes portal-boxes}
        custom-servers

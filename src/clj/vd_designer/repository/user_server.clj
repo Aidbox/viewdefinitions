@@ -73,8 +73,10 @@
               (-> (select :*)
                   (from :user-servers))))
 
-(defn get-custom-servers [db]
+(defn get-custom-servers [db account-id]
   (q/execute! db
               (-> (select :server_name :box_url :headers)
                   (from :user-servers)
-                  (where [:= :is_custom true]))))
+                  (where [:and
+                          [:= :is_custom true]
+                          [:= :account_id account-id]]))))
