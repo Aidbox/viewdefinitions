@@ -40,13 +40,13 @@
                 [:div (string-utils/format "Are you sure you want to delete ViewDefinition %s?" vd-name)])})))
 
 (defn viewdefinition-list-view []
-  (let [used-server-name @(subscribe [::settings-model/used-server-name])
+  (let [chosen-server @(subscribe [::settings-model/chosen-server])
         authorized? @(subscribe [::auth-model/authorized?])]
     [:<>
      [:> Flex {:align   :center
                :justify :space-between}
       [:> Typography.Title {:level 1 :style {:margin-top 0}} "View Definitions"]
-      (when used-server-name
+      (when chosen-server
         [:<>
          [import-modal]
          [add-view-definition]])]
@@ -66,6 +66,6 @@
        :dataSource (-> @(subscribe [::m/view-defs])
                        filter-vds
                        sort-vds)]
-      (when-not used-server-name
+      (when-not chosen-server
         [:a {:on-click #(rfe/navigate :settings)}
          "Connect"])]]))

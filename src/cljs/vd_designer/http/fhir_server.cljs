@@ -1,17 +1,10 @@
 (ns vd-designer.http.fhir-server
-  (:require
-   [ajax.core :as ajax]
-   [vd-designer.http.backend :refer [authorization-header]]))
+ (:require
+  [ajax.core :as ajax]
+  [vd-designer.servers :as servers]
+  [vd-designer.http.backend :refer [authorization-header]]))
 
-(defn active-server [db]
-  (let [{user-servers :user/servers
-         used-server-name :used-server-name}
-        (:cfg/fhir-servers db)
-        portal-boxes (:portal-boxes user-servers)
-        custom-servers (:custom-servers user-servers)]
-    (when user-servers
-     (or (get portal-boxes used-server-name)
-         (get custom-servers used-server-name)))))
+(def active-server servers/active-server)
 
 (defn get-view-definitions [authentication-token {:keys [box-url headers]}]
   {:uri              "/api/aidbox/connect"
@@ -85,7 +78,7 @@
                       {:keywords? false})
    :with-credentials true
    :method           :get
-   :params           {:box-url box-url 
+   :params           {:box-url box-url
                       :resource-type resource-type
                       :search-params search-params}
    :headers          (authorization-header authentication-token)})

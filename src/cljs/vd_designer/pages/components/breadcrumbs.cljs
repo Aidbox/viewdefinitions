@@ -12,10 +12,10 @@
    [:> Breadcrumb {:items (:breadcrumbs props)}]
    [:> Flex {:gap   "4px"
              :align :center}
-    (if-let [used-server-name @(subscribe [::settings-model/used-server-name])]
+    (if-let [chosen-server (:server-name @(subscribe [::settings-model/chosen-server]))]
       [:<>
        (r/create-element icons/ApiOutlined)
-       [:label used-server-name]]
+       [:label chosen-server]]
       [:<>
        (r/create-element icons/DisconnectOutlined)
        [:label "not connected"]])]])

@@ -30,7 +30,7 @@
   (def public-servers (servers/select-server-keys (:public-fhir-servers cfg)))
 
   (testing "public servers only"
-    (is (match? (http-response/ok {:portal-boxes public-servers})
+    (is (match? (http-response/ok {:public-servers public-servers})
                 (servers/list-servers ctx))))
 
   (testing "3 licenses among 2 projects"
@@ -61,34 +61,31 @@
                             :access_token (:token token)}))
 
     (is (match?
-          (m/via (fn [r] (-> r :body :portal-boxes))
+          (m/via (fn [r] (-> r :body :portal-servers))
                  (m/in-any-order
-                   (concat
-                     public-servers
-                     [{:box-url     "https://box-url-1.com"
-                       :server-name "<license-1-name>"
-                       :project
-                       {:id              project-1-id
-                        :name            "<project-1-name>"
-                        ;; Aidbox base URL is taken from cfg
-                        :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                                 project-1-id)}}
-
-                      {:box-url     "https://box-url-2.com"
-                       :server-name "<license-2-name>"
-                       :project
-                       {:id              project-2-id
-                        :name            "<project-2-name>"
-                        :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                                 project-2-id)}}
-
-                      {:box-url     "https://box-url-3.com"
-                       :server-name "<license-3-name>"
-                       :project
-                       {:id              project-2-id
-                        :name            "<project-2-name>"
-                        :new-license-url (format "http://127.0.0.1.nip.io:8789/ui/portal#/project/%s/license/new"
-                                                 project-2-id)}}])))
+                   [{:name "<project-2-name>",
+                     :id some?
+                     :new-license-url string?
+                     :boxes
+                     [{:box-url "https://box-url-3.com",
+                       :project-id some?
+                       :aidbox-auth-token "<valid-access-token>",
+                       :account-id 1,
+                       :server-name "<license-3-name>"}
+                      {:box-url "https://box-url-2.com",
+                       :project-id some?
+                       :aidbox-auth-token "<valid-access-token>",
+                       :account-id 1,
+                       :server-name "<license-2-name>"}]}
+                    {:id some?
+                     :name "<project-1-name>",
+                     :new-license-url string?
+                     :boxes
+                     [{:box-url "https://box-url-1.com",
+                       :project-id some?
+                       :aidbox-auth-token "<valid-access-token>",
+                       :account-id 1,
+                       :server-name "<license-1-name>"}]}]))
           (servers/list-servers ctx-with-user)))
 
     (is (match?
@@ -154,11 +151,8 @@
     (testing "list custom user server"
       (is (match?
             (http-response/ok
-              {:portal-boxes
-               [{:project {}}
-                {:project {}}
-                {:project {}}
-                {:sandbox true}]
+              {:portal-servers [{} {}]
+               :public-servers [{:sandbox true}]
                :custom-servers
                [{:server-name "<server-name1>"
                  :box-url "<url1>"

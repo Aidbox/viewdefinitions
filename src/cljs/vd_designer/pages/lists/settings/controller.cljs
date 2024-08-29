@@ -21,24 +21,23 @@
  (fn [_ [_]]
    {::polling/clear-polling-timer ::fetch-user-servers}))
 
-(def used-server-name-kv :used-server-name)
+(def chosen-server-kv :chosen-server)
 
 (reg-event-fx
  ::connect
- (fn [{:keys [db]} [_ {:keys [server-name] :as server}]]
-   {:db (-> db
-            (assoc ::request-sent-by server-name))
-    :fx [[:dispatch [::delete-used-server-name]]
+ (fn [{:keys [db]} [_ {:keys [name] :as chosen-server}]]
+   {:db (-> db (assoc ::request-sent-by name))
+    :fx [[:dispatch [::delete-chosen-server]]
          [:dispatch [::auth/with-authentication
                      (fn [authentication-token]
-                       (assoc (http/get-view-definitions authentication-token server)
-                              :on-success [::connect-success server-name]
-                              :on-failure [::not-connected server-name]))]]]}))
+                       (assoc (http/get-view-definitions authentication-token chosen-server)
+                              :on-success [::connect-success chosen-server]
+                              :on-failure [::not-connected name]))]]]}))
 
 (reg-event-fx
  ::connect-success
- (fn [{:keys [db]} [_ server-name _]]
-   {:fx [[:dispatch [::store-used-server-name server-name]]]
+ (fn [{:keys [db]} [_ chosen-server _]]
+   {:fx [[:dispatch [::store-chosen-server chosen-server]]]
     :db (dissoc db ::request-sent-by :edit-server :cfg/connect-error)}))
 
 (reg-event-fx
@@ -50,34 +49,30 @@
     :notification-error (str "Error on connect: " (u/response->error result))}))
 
 (defn add-custom-servers [db custom-servers]
-  (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers]
+  (assoc-in db [:cfg/fhir-servers  :custom-servers]
             custom-servers))
 
-(defn add-portal-boxes [db portal-boxes]
-  (assoc-in db [:cfg/fhir-servers :user/servers :portal-boxes] portal-boxes))
+(defn add-public-servers [db public-servers]
+  (assoc-in db [:cfg/fhir-servers  :public-servers] public-servers))
+
+(defn add-portal-servers [db portal-servers]
+  (assoc-in db [:cfg/fhir-servers  :portal-servers] portal-servers))
 
 (defn add-custom-server [db custom-server]
-  (assoc-in db [:cfg/fhir-servers :user/servers :custom-servers
-                (:server-name custom-server)] custom-server))
+  (update-in db [:cfg/fhir-servers :custom-servers] conj custom-server))
 
 (defn delete-custom-server [db custom-server]
-  (update-in db [:cfg/fhir-servers :user/servers :custom-servers]
-             dissoc (:server-name custom-server)))
-
+  (update-in db [:cfg/fhir-servers :custom-servers]
+             (fn [servers]
+               (vec (remove (fn [server] (= (:box-url server) (:box-url custom-server))) servers)))))
 (reg-event-fx
  ::update-user-server-list
  (fn [{:keys [db]} [_ list-servers-body]]
-   (let [portal-boxes (->> (:portal-boxes list-servers-body)
-                           (group-by :server-name)
-                           (medley/map-vals first))
-         custom-servers
-         (->> (:custom-servers list-servers-body)
-              (group-by :server-name)
-              (medley/map-vals first))]
-     {:db (-> db
-              (add-portal-boxes portal-boxes)
-              (add-custom-servers custom-servers))
-      :dispatch [::use-sandbox-if-not-selected]})))
+   {:db (-> db
+            (add-portal-servers (:portal-servers list-servers-body))
+            (add-custom-servers (:custom-servers list-servers-body))
+            (add-public-servers (:public-servers list-servers-body)))
+    :dispatch [::use-sandbox-if-not-selected]}))
 
 (reg-event-fx
  ::fetch-user-servers
@@ -90,46 +85,47 @@
                             :on-failure [::not-connected nil])))]}))
 
 (reg-fx
- :set-used-server-name
+ :set-chosen-server
  (fn [v]
    (.setItem (.-localStorage js/window)
               ;; TODO: keyword or string?
-             used-server-name-kv
+             chosen-server-kv
              v)))
 
 (reg-fx
- :delete-used-server-name
+ :delete-chosen-server
  (fn []
-   (.removeItem (.-localStorage js/window) used-server-name-kv)))
+   (.removeItem (.-localStorage js/window) chosen-server-kv)))
 
 (reg-event-fx
- ::store-used-server-name
- (fn [{:keys [db]} [_ used-server-name]]
-   {:set-used-server-name used-server-name
-    :db (assoc-in db [:cfg/fhir-servers used-server-name-kv] used-server-name)}))
+ ::store-chosen-server
+ (fn [{:keys [db]} [_ chosen-server]]
+   (let [chosen-server (select-keys chosen-server [:server-name :name :project-id :type])]
+     {:set-chosen-server chosen-server
+      :db (assoc-in db [:cfg/fhir-servers chosen-server-kv] chosen-server)})))
 
 (reg-event-fx
- ::delete-used-server-name
+ ::delete-chosen-server
  (fn [{:keys [db]} [_]]
-   (let [first-sandbox (m/first-sandbox-server-name db)]
+   (let [first-sandbox (m/first-public-server-name db)]
      (if first-sandbox
-       {:dispatch [::store-used-server-name first-sandbox]}
-       {:delete-used-server-name true
-        :db (update db :cfg/fhir-servers dissoc used-server-name-kv)}))))
+       {:dispatch [::store-chosen-server {:type :public-servers :server-name first-sandbox}]}
+       {:delete-chosen-server true
+        :db (update db :cfg/fhir-servers dissoc chosen-server-kv)}))))
 
 (reg-cofx
- :get-used-server-name
+ :get-chosen-server
  (fn [coeffects]
    (assoc coeffects
-          used-server-name-kv
-          (js->clj (.getItem js/localStorage used-server-name-kv)))))
+          chosen-server-kv
+          (js->clj (.getItem js/localStorage chosen-server-kv)))))
 
 (reg-event-fx
  ::use-sandbox-if-not-selected
  (fn [{:keys [db]} _]
    (when (m/unknown-server-selected? db)
-     {:dispatch [::store-used-server-name
-                 (m/first-sandbox-server-name db)]})))
+     {:dispatch [::store-chosen-server {:type :public-servers
+                                        :server-name (m/first-public-server-name db)}]})))
 
 (reg-event-db
  ::set-editable-server
@@ -194,28 +190,27 @@
            (update-headers-map))]
      {:fx
       [[:dispatch [::auth/with-authentication
-                  (fn [authentication-token]
-                    (assoc (backend/update-fhir-server
+                   (fn [authentication-token]
+                     (assoc (backend/update-fhir-server
                              authentication-token
                              old-settings
                              new-settings)
-                           :on-success [::update-server-success old-settings]
-                           :on-failure [::update-server-failure]))]]
+                            :on-success [::update-server-success old-settings]
+                            :on-failure [::update-server-failure]))]]
        [:dispatch [::set-editable-server nil]]]})))
 
 (reg-event-fx
  ::update-server-success
- [(inject-cofx :get-used-server-name)]
- (fn [{:keys [db used-server-name]} [_ old-settings result]]
-   (let [currently-connected? (= (:server-name old-settings) used-server-name)
+ (fn [{:keys [db]} [_ old-settings result]]
+   (let [currently-connected? (= (:server-name old-settings) (:server-name m/chosen-server))
          new-name? (not= (:server-name old-settings) (:server-name result))
          change-used-name? (and currently-connected? new-name?)]
      {:db (-> db
               (delete-custom-server old-settings)
               (add-custom-server result))
-    :fx [(when change-used-name?
-           [:dispatch [::store-used-server-name (:server-name result)]])
-         [:dispatch [::close-server-form]]]})))
+      :fx [(when change-used-name?
+             [:dispatch [::store-chosen-server result]])
+           [:dispatch [::close-server-form]]]})))
 
 (reg-event-fx
  ::update-server-failure
@@ -228,7 +223,7 @@
    {:fx [[:dispatch [::auth/with-authentication
                      (fn [authentication-token]
                        (assoc (backend/delete-fhir-server
-                                authentication-token custom-server)
+                               authentication-token custom-server)
                               :on-success [::delete-custom-server-success]
                               :on-failure [::delete-custom-server-failure]))]]
          [:dispatch [::use-sandbox-if-not-selected]]]}))

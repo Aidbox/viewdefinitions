@@ -1,95 +1,74 @@
 (ns vd-designer.pages.lists.settings.model
   (:require
    [re-frame.core :refer [reg-sub]]
+   [vd-designer.servers :as servers]
    [vd-designer.pages.lists.settings.controller :as-alias c]))
 
 (defn sandbox? [server]
   (true? (:sandbox server)))
 
-(defn portal-boxes-map [db]
-  (->> db :cfg/fhir-servers :user/servers :portal-boxes))
+(defn portal-servers-map [db]
+  (->> db :cfg/fhir-servers :portal-servers))
 
-(defn sandboxes [db]
-  (filterv sandbox? (vals (portal-boxes-map db))))
-
-(reg-sub
- ::portal-boxes-map
- (fn [db _]
-   (portal-boxes-map db)))
-
-(defn custom-servers-map [db]
-  (->> db :cfg/fhir-servers :user/servers :custom-servers))
+(defn public-servers [db]
+  (->> db :cfg/fhir-servers :public-servers))
 
 (reg-sub
- ::custom-servers-map
+ ::portal-servers
  (fn [db _]
-   (custom-servers-map db)))
+   (portal-servers-map db)))
+
+(defn custom-servers [db]
+  (->> db :cfg/fhir-servers  :custom-servers))
 
 (reg-sub
- ::custom-servers-vec
+ ::custom-servers
  (fn [db _]
-   (vals (custom-servers-map db))))
-
-(defn portal-boxes-groupped-project [db]
-  (or (->> db portal-boxes-map vals
-           ;; sandbox is [nil {..}]
-           (group-by #(-> % :project :name)))
-      []))
-
-(reg-sub
- ::portal-boxes-groupped-project
- (fn [db _]
-   (portal-boxes-groupped-project db)))
+   (custom-servers db)))
 
 (reg-sub
  ::request-sent-by
  (fn [db _]
    (::c/request-sent-by db)))
 
-(defn used-server-name [db]
-  (-> db :cfg/fhir-servers :used-server-name))
+(defn chosen-server [db]
+  (-> db :cfg/fhir-servers :chosen-server))
 
 (reg-sub
- ::used-server-name
+ ::chosen-server
  (fn [db _]
-   (used-server-name db)))
+   (chosen-server db)))
 
 (reg-sub
  ::connect-error
  (fn [db _]
    (:cfg/connect-error db)))
 
-(defn current-server
-  ([portal-boxes custom-servers used-server-name]
-   (or (get portal-boxes used-server-name)
-       (get custom-servers used-server-name)))
-  ([db]
-   (let [custom-servers (custom-servers-map db)
-         portal-boxes (portal-boxes-map db)
-         used-server-name (used-server-name db)]
-     (current-server portal-boxes custom-servers used-server-name))))
+(def chosen-server-config servers/active-server)
 
 (reg-sub
- ::current-server
- :<- [::portal-boxes-map]
- :<- [::custom-servers-map]
- :<- [::used-server-name]
- (fn [[portal-boxes custom-servers used-server-name] _]
-   (current-server portal-boxes custom-servers used-server-name)))
+ ::chosen-server-config
+ (fn [db _]
+   (chosen-server-config db)))
+
+(reg-sub
+ ::public-servers
+ (fn [db _]
+   (public-servers db)))
 
 (defn in-sandbox? [db]
-  (get (sandboxes db)
-       (used-server-name db)))
+  (get (public-servers db)
+       (chosen-server db)))
 
 (reg-sub
  ::sandbox?
- :<- [::current-server]
+ :<- [::chosen-server-config]
  (fn [current-server _]
    (sandbox? current-server)))
 
 (reg-sub
  ::current-server-url
- :<- [::current-server]
+ :<- [::chosen-server-config]
  (fn [current-server _]
    (:box-url current-server)))
 
@@ -102,31 +81,31 @@
  :-> ::add-server-form-opened)
 
 (defn unknown-server-selected? [db]
-  (not (current-server db)))
+  (not (chosen-server-config db)))
 
-(defn first-sandbox-server-name [db]
-  (->> (sandboxes db)
+(defn first-public-server-name [db]
+  (->> (public-servers db)
        first
        :server-name))
 
 (reg-sub
-  ::editable-server
-  :-> ::editable-server)
+ ::editable-server
+ :-> ::editable-server)
 
 (defn server->ant-form-format [server]
   (->> (update server :headers
                (fn [headers]
                  (mapv
-                   (fn [[header-name header-value]]
-                     {:name header-name
-                      :value header-value})
-                   headers)))
+                  (fn [[header-name header-value]]
+                    {:name header-name
+                     :value header-value})
+                  headers)))
        (map (fn [[k v]] [(name k) v]))
        (into {})))
 
 (reg-sub
-  ::editable-server-ant
-  :<- [::editable-server]
-  (fn [editable-server _]
-    (when editable-server
-      (server->ant-form-format editable-server))))
+ ::editable-server-ant
+ :<- [::editable-server]
+ (fn [editable-server _]
+   (when editable-server
+     (server->ant-form-format editable-server))))

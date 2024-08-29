@@ -11,11 +11,7 @@
 (defn list-servers
   [{:keys [cfg user db] :as ctx}]
   (let [public-servers (:public-fhir-servers cfg)
-        portal-boxes
-        (-> (if user
-              (concat (portal/list-portal-user-servers ctx) public-servers)
-              public-servers)
-            select-server-keys)
+        portal-servers (when user (portal/list-portal-user-servers ctx))
         custom-servers
         (when user
           (mapv
@@ -25,6 +21,8 @@
                :headers (:user_servers/headers server)})
             (user-server/get-custom-servers db (:id user))))]
     (http-response/ok
-     (cond-> {:portal-boxes portal-boxes}
-       custom-servers
-       (assoc :custom-servers custom-servers)))))
+      (cond-> {:public-servers public-servers}
+        custom-servers
+        (assoc :custom-servers custom-servers)
+        portal-servers
+        (assoc :portal-servers portal-servers)))))

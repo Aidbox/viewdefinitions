@@ -17,6 +17,7 @@
             [vd-designer.pages.form.model :as m]
             [vd-designer.pages.lists.settings.model :as settings-model]
             [vd-designer.utils.event :as u]
+            [vd-designer.pages.lists.settings.controller]
             [vd-designer.utils.fhir-spec :as utils.fhir-spec]
             [vd-designer.utils.string :as utils.string]
             [vd-designer.utils.utils :as utils]
@@ -51,10 +52,10 @@
 
             :always
             (assoc :spec-map {})
-            
+
             :always
             (assoc ::m/resource-value {:value {}})
-            
+
             :always
             (assoc ::m/code-validation-severity 0)
 
@@ -66,7 +67,7 @@
                    {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
-      :fx (cond-> (if (-> db :cfg/fhir-servers :user/servers empty?)
+      :fx (cond-> (if (-> db :cfg/fhir-servers  empty?)
                     [[:dispatch [::fetch-user-servers vd-id]]]
                     (ready-server-event-fx vd-id))
 
@@ -92,7 +93,7 @@
    {:db (->> user-server-list
              (group-by :server-name)
              (medley/map-vals first)
-             (assoc-in db [:cfg/fhir-servers :user/servers]))
+             (assoc-in db [:cfg/fhir-servers ]))
     :fx (ready-server-event-fx vd-id)}))
 
 (reg-event-fx

@@ -40,15 +40,15 @@
 (reg-event-fx
  ::initialize-db
  [(inject-cofx :get-authentication-token)
-  (inject-cofx :get-used-server-name)]
- (fn [{:keys [db authentication-token used-server-name]} _]
+  (inject-cofx :get-chosen-server)]
+ (fn [{:keys [db authentication-token chosen-server]} _]
    (if (seq db)
      {:db db}
      {:db {:view-definitions    []
            :onboarding          {:sandbox 0
                                  :aidbox  0}
            :authorized?         (boolean authentication-token)
-           :cfg/fhir-servers    {:used-server-name used-server-name}}})))
+           :cfg/fhir-servers    {:chosen-server chosen-server}}})))
 
 (defn wrap-view-layout [route view]
   (let [breadcrumbs {:breadcrumbs (breadcrumbs route)}]

@@ -12,7 +12,7 @@
 (reg-event-fx
  ::start
  (fn [{db :db} [_]]
-   {:fx (if (-> db :cfg/fhir-servers :user/servers)
+   {:fx (if (-> db :cfg/fhir-servers )
           [[:dispatch [::get-view-definitions]]]
 
           [[:dispatch [::settings-controller/fetch-user-servers]]
