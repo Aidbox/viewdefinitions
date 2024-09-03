@@ -1,18 +1,19 @@
 (ns vd-designer.pages.lists.settings.view
   (:require
-   [antd :refer [Card Flex Form Input List Modal Typography Row Col Space]]
+   [antd :refer [Card Col Flex Form Input List Modal Row Space Typography]]
+   [clojure.string :as str]
    [medley.core :as medley]
    [re-frame.core :refer [dispatch dispatch-sync subscribe]]
    [reagent.core :as r]
-   [vd-designer.components.button :as button]
-   [vd-designer.components.modal :as modal]
-   [vd-designer.utils.string :as string-utils]
    [vd-designer.auth.model :as auth-model]
-   [vd-designer.components.list :as components.list]
+   [vd-designer.components.button :as button]
    [vd-designer.components.form :as form-components]
+   [vd-designer.components.list :as components.list]
+   [vd-designer.components.modal :as modal]
    [vd-designer.pages.lists.settings.controller :as c]
    [vd-designer.pages.lists.settings.model :as m]
-   [vd-designer.utils.react :refer [js-obj->clj-map]]))
+   [vd-designer.utils.react :refer [js-obj->clj-map]]
+   [vd-designer.utils.string :as string-utils]))
 
 (defn connect [server-config request-sent-by chosen-server connect-error]
   (cond
@@ -32,10 +33,15 @@
     [:a {:onClick #(dispatch [::c/connect server-config])} "connect"]))
 
 (defn save-changes [new-settings edit? old-settings]
-  (let [new-settings
-        (medley/remove-vals
-         nil?
-         (js->clj new-settings :keywordize-keys true))
+  (let [new-settings (medley/remove-vals
+                       nil?
+                       (js->clj new-settings :keywordize-keys true))
+        new-settings (cond-> new-settings
+                       (:box-url new-settings)
+                       (update :box-url str/trim)
+
+                       (:server-name new-settings)
+                       (update :server-name str/trim))
         old-settings (dissoc (medley/map-keys keyword old-settings) :headers)]
     (if edit?
       (dispatch-sync [::c/update-server old-settings new-settings])
