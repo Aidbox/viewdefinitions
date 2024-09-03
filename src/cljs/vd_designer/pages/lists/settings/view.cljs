@@ -48,7 +48,7 @@
       (dispatch-sync [::c/new-server new-settings]))))
 
 (def aidbox-getting-started-locally-url
-  "https://docs.aidbox.app/getting-started/run-aidbox-locally-with-docker")
+  "https://docs.aidbox.app/modules-1/security-and-access-control/auth/basic-auth")
 
 ;; here we explicitly distinguish add-server modal and edit-server modal
 ;; ant-design Form somehow caches initial-values,
@@ -82,7 +82,7 @@
                                   :message  "Value is required"}]}
            [:> Input {:placeholder "Value"}]]]])]]
 
-    [:a {:href aidbox-getting-started-locally-url} "Aidbox Getting started locally guide"]]])
+    [:a {:href aidbox-getting-started-locally-url} "Create Aidbox client"]]])
 
 (defn change-server-modal-on-close []
   (dispatch-sync [::c/set-editable-server nil])
