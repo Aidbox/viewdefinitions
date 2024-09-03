@@ -25,6 +25,7 @@
                                               line-number))
                     :lineNumbersMinChars  3
                     :scrollBeyondLastLine false
+                    :stickyScroll {:enabled false}
                     :renderLineHighlight  "none"
                     :folding              true
                     :renderIndentGuides   false
