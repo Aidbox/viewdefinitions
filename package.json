@@ -4,7 +4,7 @@
     "@ant-design/icons": "^5.3.7",
     "@monaco-editor/react": "^4.5.0",
     "@sooro-io/react-gtm-module": "^3.0.0",
-    "antd": "^5.18.3",
+    "antd": "^5.20.6",
     "fhirpath-autocomplete-ts": "git@github.com:Aidbox/fhirpath-autocomplete-ts.git",
     "react": "^18.2.0",
     "react-dom": "^18.3.1",
