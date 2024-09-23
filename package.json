@@ -1,7 +1,7 @@
 {
   "name": "client",
   "dependencies": {
-    "@ant-design/icons": "^5.3.7",
+    "@ant-design/icons": "^5.5.1",
     "@monaco-editor/react": "^4.5.0",
     "@sooro-io/react-gtm-module": "^3.0.0",
     "antd": "^5.18.3",
