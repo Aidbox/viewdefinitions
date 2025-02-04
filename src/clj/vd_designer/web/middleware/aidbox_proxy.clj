@@ -29,7 +29,7 @@
   (let [ctx        (assoc ctx :box-url (get-box-url request))
         headers    (get-fhir-server-headers ctx)]
     (if-not headers
-      (http-response/unauthorized {:error "Unknown server"})
+      (http-response/unauthorized {:error "Unknown server. No authorization headers provided."})
       (let [{:keys [body status]} (handler (assoc ctx :fhir-server-headers headers))]
         (case status
           401 (do
