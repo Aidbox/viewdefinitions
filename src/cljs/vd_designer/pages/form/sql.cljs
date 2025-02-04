@@ -14,7 +14,8 @@
      [monaco {:id       "vd-sql"
               :language "sql"
               :value    formatted-sql
-              :schemas  []}]
+              :schemas  []
+              :options {:readOnly true}}]
      [:> Flex {:style    {:position :absolute
                           :top      "6px"
                           :right    "26px"}
