@@ -29,7 +29,7 @@
 
       (testing "doesn't belong to user"
         (is (match?
-             (http-response/unauthorized {:error "Unknown server"})
+             (http-response/unauthorized {:error "Unknown server. No authorization headers provided."})
              (apply-middleware
               aidbox-proxy-middleware
               identity
