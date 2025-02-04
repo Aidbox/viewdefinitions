@@ -10,6 +10,7 @@
       (-> response :response :error)
       (-> response :response :text :div)
       (:status-text response)
+      (-> response :parse-error :original-text)
       (str response)))
 
 (defn selection-start [event]
