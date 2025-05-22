@@ -73,7 +73,7 @@ spec:
               memory: 512Mi
 
       imagePullSecrets:
-        - name: hs-robot-secret
+        - name: github-registry
 
   volumeClaimTemplates:
     - metadata:
