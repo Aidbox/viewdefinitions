@@ -336,11 +336,11 @@
 (deftest strip-empty-where-nodes-test
   (testing "strip empty where"
     (is (match?
-         {:where nil}
+         {}
          (sut/strip-empty-where-nodes {:where []}))))
   (testing "strip non empty where with empty node"
     (is (match?
-         {:where nil}
+         {}
          (sut/strip-empty-where-nodes {:where [{:path ""}]}))))
   (testing "strip non empty where with non empty node"
     (is (match?
