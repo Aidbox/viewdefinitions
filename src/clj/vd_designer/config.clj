@@ -63,6 +63,6 @@
    [{:server-name "Aidbox Sandbox"
      :box-url     "https://dfiudgkdea.edge.aidbox.app"
      :sandbox true
-     :headers     {:Authorization "Basic YmFzaWM6dmlld2RlZmluaXRpb25z"}}]})
+     :headers     {:Authorization "Basic YmFzaWM6c2VjcmV0"}}]})
 
 (defonce ^:private __set-default-log-level (set-min-log-level! (:log-level config)))
