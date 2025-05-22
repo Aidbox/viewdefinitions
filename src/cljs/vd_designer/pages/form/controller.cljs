@@ -365,12 +365,11 @@
         select)))))
 
 (defn strip-empty-where-nodes [vd]
-  (let [blank? #(and (%1 %2) (str/blank? (%1 %2)))]
-    (update
-     vd
-     :where
-     (fn [where]
-       (remove #(blank? :path %) where)))))
+  (let [blank? #(and (%1 %2) (str/blank? (%1 %2)))
+        vd (update vd :where (fn [where] (remove #(blank? :path %) where)))]
+    (if (seq (:where vd))
+      vd
+      (dissoc vd :where))))
 
 (defn strip-empty-collections [vd]
   (medley/remove-kv
