@@ -55,9 +55,7 @@
 
 (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
-  (let [{:keys [vd]} (:body-params request)
-        vd (cond-> vd (:resource vd)
-             (update :resource str/lower-case))]
+  (let [{:keys [vd]} (:body-params request)]
     @(martian/response-for
        (aidbox-client/aidbox-client box-url)
        :rpc
@@ -102,7 +100,7 @@
                                :query-params (merge
                                               (uri/query-string->map search-params)
                                               {:_count 1})})
-        body (some-> response :body (json/parse-string keyword)) 
+        body (some-> response :body (json/parse-string keyword))
         status (:status response)]
     (cond
       (not= 200 status)
@@ -113,7 +111,7 @@
       {:status status
        :body []
        :headers {:content-type "application/json"}}
-      
+
       :else
       (let [resource (some-> body :entry first :resource)]
         {:status status
