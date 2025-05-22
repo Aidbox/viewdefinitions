@@ -1,0 +1,341 @@
+{
+  "name": "basic_columns",
+  "title": "01. Basic columns",
+  "status": "active",
+  "id": "be4b664b-aaee-4387-a6a6-c54a036c5b8a",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        },
+        {
+          "name": "last_name",
+          "path": "name.family.first()",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+}
+
+{
+  "where": [
+    {
+      "path": "birthDate > '2001-01-01'"
+    }
+  ],
+  "name": "basic_where",
+  "title": "02. Basic where",
+  "status": "active",
+  "id": "6b0d1a7f-d572-47bb-90a5-1c4c17ef383e",
+  "resource": "Patient",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        }
+      ]
+    }
+  ]
+}
+{
+  "name": "fhirpath_join",
+  "title": "03. Fhirpath join",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        },
+        {
+          "name": "given",
+          "path": "name.given.join(' ')",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "status": "active",
+  "resource": "Patient",
+  "id": "d510ccf4-40cc-4f81-b2ff-957f45134e57"
+}
+
+{
+  "name": "foreach",
+  "title": "04. Basic forEach",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        }
+      ]
+    },
+    {
+      "column": [
+        {
+          "name": "family",
+          "path": "family",
+          "type": "string"
+        }
+      ],
+      "forEach": "name"
+    }
+  ],
+  "status": "active",
+  "resource": "Patient",
+  "id": "87bd8532-0122-4841-a38f-320d31da6689"
+}
+
+{
+  "name": "foreach_nested",
+  "title": "05. Nested forEach",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        }
+      ]
+    },
+    {
+      "select": [
+        {
+          "column": [
+            {
+              "name": "contact_type",
+              "path": "telecom.system",
+              "type": "code"
+            }
+          ]
+        },
+        {
+          "column": [
+            {
+              "name": "name",
+              "path": "$this",
+              "type": "string"
+            }
+          ],
+          "forEach": "name.given"
+        }
+      ],
+      "forEach": "contact"
+    }
+  ],
+  "status": "active",
+  "resource": "Patient",
+  "id": "31d9c1cc-c303-48b2-8093-1dd481806f03"
+}
+
+{
+  "name": "basic_union",
+  "title": "06. Basic union",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        }
+      ]
+    },
+    {
+      "unionAll": [
+        {
+          "column": [
+            {
+              "name": "tel",
+              "path": "value",
+              "type": "string"
+            },
+            {
+              "name": "sys",
+              "path": "system",
+              "type": "code"
+            }
+          ],
+          "forEach": "telecom"
+        },
+        {
+          "column": [
+            {
+              "name": "tel",
+              "path": "value",
+              "type": "string"
+            },
+            {
+              "name": "sys",
+              "path": "system",
+              "type": "code"
+            }
+          ],
+          "forEach": "contact.telecom"
+        }
+      ]
+    }
+  ],
+  "status": "active",
+  "resource": "Patient",
+  "id": "ab2fc865-fa8e-4387-b961-88a2ea9889c0"
+}
+
+{
+  "name": "union_foreach",
+  "title": "07. forEach & unionAll",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "id",
+          "path": "id",
+          "type": "id"
+        }
+      ]
+    },
+    {
+      "forEach": "contact",
+      "unionAll": [
+        {
+          "column": [
+            {
+              "name": "name",
+              "path": "name.family",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "column": [
+            {
+              "name": "name",
+              "path": "$this",
+              "type": "string"
+            }
+          ],
+          "forEach": "name.given"
+        }
+      ]
+    }
+  ],
+  "status": "active",
+  "resource": "Patient",
+  "id": "2e054ed7-7946-44a5-982a-1c393fe0010e"
+}
+
+{
+  "where": [
+    {
+      "path": "name.where(use = %name_use).exists()"
+    }
+  ],
+  "name": "constants",
+  "constant": [
+    {
+      "name": "name_use",
+      "valueString": "official"
+    }
+  ],
+  "title": "08. Constants",
+  "status": "active",
+  "id": "f1eadb6d-87f7-4b06-9632-e487124d85a4",
+  "resource": "Patient",
+  "select": [
+    {
+      "select": [
+        {
+          "column": [
+            {
+              "name": "official_name",
+              "path": "family",
+              "type": "string"
+            }
+          ]
+        }
+      ],
+      "forEach": "name.where(use = %name_use)"
+    }
+  ]
+}
+
+{
+  "where": [
+    {
+      "path": "status = 'active'"
+    }
+  ],
+  "name": "claim_view",
+  "title": "09. Big example",
+  "status": "active",
+  "id": "claim_view",
+  "resource": "Claim",
+  "select": [
+    {
+      "column": [
+        {
+          "name": "created",
+          "path": "created"
+        },
+        {
+          "name": "status",
+          "path": "status"
+        },
+        {
+          "name": "patient",
+          "path": "patient.getReferenceKey(Patient)"
+        },
+        {
+          "name": "type",
+          "path": "type.coding.code"
+        },
+        {
+          "name": "total",
+          "path": "total.value"
+        },
+        {
+          "name": "priority",
+          "path": "priority.coding.code"
+        }
+      ]
+    },
+    {
+      "select": [
+        {
+          "column": [
+            {
+              "name": "item_sequence",
+              "path": "sequence"
+            },
+            {
+              "name": "billed_amount",
+              "path": "net.value"
+            },
+            {
+              "name": "encounter",
+              "path": "encounter.getReferenceKey(Encounter)"
+            },
+            {
+              "name": "service",
+              "path": "productOrService.coding.display"
+            }
+          ]
+        }
+      ],
+      "forEach": "item"
+    }
+  ]
+}
