@@ -342,169 +342,33 @@
 
 
 
-engine: matcho
-matcho:
-  uri: '#/ViewDefinition.*'
-  request-method:
-    $enum:
-      - get
-id: crud-for-view-definitions
-resourceType: AccessPolicy
-meta:
-  lastUpdated: '2024-04-16T11:29:22.355574Z'
-  createdAt: '2024-04-05T07:21:46.843928Z'
-  versionId: '103'
+{
+  "engine" : "matcho",
+  "matcho" : {
+    "uri" : "#/ViewDefinition.*",
+    "request-method" : {
+      "$enum" : [ "get" ]
+    }
+  },
+  "id" : "crud-for-view-definitions",
+  "resourceType" : "AccessPolicy"
+}
 
 
-rpc:
-  sof/eval-view:
-    params:
-      view:
-        resource:
-          $enum:
-            - account
-            - activitydefinition
-            - adverseevent
-            - allergyintolerance
-            - appointment
-            - appointmentresponse
-            - auditevent
-            - basic
-            - binary
-            - biologicallyderivedproduct
-            - bodystructure
-            - bundle
-            - careplan
-            - careteam
-            - catalogentry
-            - chargeitem
-            - chargeitemdefinition
-            - claim
-            - claimresponse
-            - clinicalimpression
-            - communication
-            - communicationrequest
-            - compartmentdefinition
-            - composition
-            - condition
-            - consent
-            - contract
-            - coverage
-            - coverageeligibilityrequest
-            - coverageeligibilityresponse
-            - detectedissue
-            - device
-            - devicedefinition
-            - devicemetric
-            - devicerequest
-            - deviceusestatement
-            - diagnosticreport
-            - documentmanifest
-            - documentreference
-            - effectevidencesynthesis
-            - encounter
-            - endpoint
-            - enrollmentrequest
-            - enrollmentresponse
-            - episodeofcare
-            - eventdefinition
-            - evidence
-            - evidencevariable
-            - examplescenario
-            - explanationofbenefit
-            - familymemberhistory
-            - flag
-            - goal
-            - graphdefinition
-            - group
-            - guidanceresponse
-            - healthcareservice
-            - imagingstudy
-            - immunization
-            - immunizationevaluation
-            - immunizationrecommendation
-            - implementationguide
-            - insuranceplan
-            - invoice
-            - library
-            - linkage
-            - list
-            - location
-            - measure
-            - measurereport
-            - media
-            - medication
-            - medicationadministration
-            - medicationdispense
-            - medicationknowledge
-            - medicationrequest
-            - medicationstatement
-            - medicinalproduct
-            - medicinalproductauthorization
-            - medicinalproductcontraindication
-            - medicinalproductindication
-            - medicinalproductingredient
-            - medicinalproductinteraction
-            - medicinalproductmanufactured
-            - medicinalproductpackaged
-            - medicinalproductpharmaceutical
-            - medicinalproductundesirableeffect
-            - messagedefinition
-            - messageheader
-            - molecularsequence
-            - namingsystem
-            - nutritionorder
-            - observation
-            - observationdefinition
-            - operationdefinition
-            - operationoutcome
-            - organization
-            - organizationaffiliation
-            - parameters
-            - patient
-            - paymentnotice
-            - paymentreconciliation
-            - person
-            - plandefinition
-            - practitioner
-            - practitionerrole
-            - procedure
-            - provenance
-            - questionnaire
-            - questionnaireresponse
-            - relatedperson
-            - requestgroup
-            - researchdefinition
-            - researchelementdefinition
-            - researchstudy
-            - researchsubject
-            - riskassessment
-            - riskevidencesynthesis
-            - schedule
-            - servicerequest
-            - slot
-            - specimen
-            - specimendefinition
-            - structuremap
-            - subscription
-            - substance
-            - substancenucleicacid
-            - substancepolymer
-            - substanceprotein
-            - substancereferenceinformation
-            - substancesourcematerial
-            - substancespecification
-            - supplydelivery
-            - supplyrequest
-            - task
-            - valueset
-            - verificationresult
-            - visionprescription
-type: rpc
-engine: matcho-rpc
-id: eval-view-definitions
-resourceType: AccessPolicy
-meta:
-  lastUpdated: '2024-06-10T13:11:50.164525Z'
-  createdAt: '2024-04-05T07:23:56.939050Z'
-  versionId: '118'
+{
+  "rpc" : {
+    "sof/eval-view" : {
+      "params" : {
+        "view" : {
+          "resource" : {
+            "$enum" : [ "account", "activitydefinition", "adverseevent", "allergyintolerance", "appointment", "appointmentresponse", "auditevent", "basic", "binary", "biologicallyderivedproduct", "bodystructure", "bundle", "careplan", "careteam", "catalogentry", "chargeitem", "chargeitemdefinition", "claim", "claimresponse", "clinicalimpression", "communication", "communicationrequest", "compartmentdefinition", "composition", "condition", "consent", "contract", "coverage", "coverageeligibilityrequest", "coverageeligibilityresponse", "detectedissue", "device", "devicedefinition", "devicemetric", "devicerequest", "deviceusestatement", "diagnosticreport", "documentmanifest", "documentreference", "effectevidencesynthesis", "encounter", "endpoint", "enrollmentrequest", "enrollmentresponse", "episodeofcare", "eventdefinition", "evidence", "evidencevariable", "examplescenario", "explanationofbenefit", "familymemberhistory", "flag", "goal", "graphdefinition", "group", "guidanceresponse", "healthcareservice", "imagingstudy", "immunization", "immunizationevaluation", "immunizationrecommendation", "implementationguide", "insuranceplan", "invoice", "library", "linkage", "list", "location", "measure", "measurereport", "media", "medication", "medicationadministration", "medicationdispense", "medicationknowledge", "medicationrequest", "medicationstatement", "medicinalproduct", "medicinalproductauthorization", "medicinalproductcontraindication", "medicinalproductindication", "medicinalproductingredient", "medicinalproductinteraction", "medicinalproductmanufactured", "medicinalproductpackaged", "medicinalproductpharmaceutical", "medicinalproductundesirableeffect", "messagedefinition", "messageheader", "molecularsequence", "namingsystem", "nutritionorder", "observation", "observationdefinition", "operationdefinition", "operationoutcome", "organization", "organizationaffiliation", "parameters", "patient", "paymentnotice", "paymentreconciliation", "person", "plandefinition", "practitioner", "practitionerrole", "procedure", "provenance", "questionnaire", "questionnaireresponse", "relatedperson", "requestgroup", "researchdefinition", "researchelementdefinition", "researchstudy", "researchsubject", "riskassessment", "riskevidencesynthesis", "schedule", "servicerequest", "slot", "specimen", "specimendefinition", "structuremap", "subscription", "substance", "substancenucleicacid", "substancepolymer", "substanceprotein", "substancereferenceinformation", "substancesourcematerial", "substancespecification", "supplydelivery", "supplyrequest", "task", "valueset", "verificationresult", "visionprescription" ]
+          }
+        }
+      }
+    }
+  },
+  "type" : "rpc",
+  "engine" : "matcho-rpc",
+  "id" : "eval-view-definitions",
+  "resourceType" : "AccessPolicy"
+}

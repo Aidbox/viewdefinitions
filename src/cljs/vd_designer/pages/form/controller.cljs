@@ -401,15 +401,13 @@
    (tag-manager/data-layer
     {:dataLayer {:event         "vd_run"
                  :resource-type (get (:current-vd db) :resource "")}})
-   (let [sandbox? (settings-model/in-sandbox? db)
-         view-definition (-> (:current-vd db)
+   (let [view-definition (-> (:current-vd db)
                              decoration/remove-decoration
                              (input-references/replace-inputs-with-values (::m/tree-inputs db))
                              strip-empty-collections
                              remove-meta
                              strip-empty-select-nodes
-                             strip-empty-where-nodes
-                             (lower-case-resource-in-sandbox sandbox?))
+                             strip-empty-where-nodes)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
@@ -444,8 +442,7 @@
                              yaml/try-parse
                              (js->clj :keywordize-keys true)
                              strip-empty-select-nodes
-                             strip-empty-where-nodes
-                             (lower-case-resource-in-sandbox sandbox?))
+                             strip-empty-where-nodes)
          missing-required-fields (missing-required-fields view-definition)]
      (cond
        (seq missing-required-fields)
