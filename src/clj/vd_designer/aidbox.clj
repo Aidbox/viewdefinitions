@@ -56,13 +56,12 @@
 (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [vd]} (:body-params request)]
-    @(martian/response-for
-       (aidbox-client/aidbox-client box-url)
-       :rpc
-       (merge {:method 'sof/eval-view
-               :params {:limit 100
-                        :view  vd}}
-              fhir-server-headers))))
+    @(martian/response-for (aidbox-client/aidbox-client box-url)
+                           :view-definition-run
+                           (merge {:body {:resourceType "Parameters"
+                                          :parameter [{:name "_format" :valueCode "json"}
+                                                      {:name "viewResource" :resource vd}]}}
+                                  fhir-server-headers))))
 
 (defn save-view-definition
   [{:keys [box-url request fhir-server-headers]}]
