@@ -52,6 +52,15 @@
     :consumes       ["application/json"]
     :method         :delete}
 
+   {:route-name     :view-definition-run
+    :path-parts     ["/fhir/ViewDefinition/$run"]
+    :headers-schema {(s/optional-key :Cookie)        s/Str
+                     (s/optional-key :Authorization) s/Str}
+    :produces       ["application/json"]
+    :consumes       ["application/json"]
+    :method         :post
+    :body-schema    {:body s/Any}}
+
    {:route-name     :rpc
     :path-parts     ["/rpc"]
     :method         :post

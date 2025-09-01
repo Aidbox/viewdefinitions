@@ -478,7 +478,7 @@
  ::on-eval-view-definition-success
  (fn [db [_ result]]
    (assoc db
-          ::m/resource-data (:result result)
+          ::m/resource-data {:data result}
           ::m/eval-loading false)))
 
 (reg-event-fx

@@ -9,7 +9,7 @@ To run the client, you'll need to have Clojure, Node.js and npm installed on you
 
 1. Install the dependencies: `npm install`
 2. Install postcss globally - `npm install -g postcss postcss-cli`
-3. Start the development server: `make client-rep`
+3. Start the development server: `make client-repl`
 
 The client should now be running at `http://localhost:8280`.
 
@@ -17,9 +17,8 @@ The client should now be running at `http://localhost:8280`.
 
 To run server, you need to have Clojure and Docker installed on your machine. Once you have it, follow these steps:
 
-1. Source `.env` dev environment variables.
-2. Start local DB `docker compose --profile local up`
-3. Start the server: `make server-repl`
+1. Start local DB `make up`
+1. Start the server: `make server-repl`
 
 The server should now be running at `http://localhost:8080`.
 
