@@ -44,11 +44,16 @@
  (fn [{:keys [db authentication-token chosen-server]} _]
    (if (seq db)
      {:db db}
-     {:db {:view-definitions    []
-           :onboarding          {:sandbox 0
-                                 :aidbox  0}
-           :authorized?         (boolean authentication-token)
-           :cfg/fhir-servers    {:chosen-server chosen-server}}})))
+     {:db {:view-definitions []
+           :onboarding       {:sandbox 0
+                              :aidbox  0}
+           :authorized?      (boolean authentication-token)
+           :cfg/fhir-servers {:chosen-server (or chosen-server
+                                                 {:server-name "Aidbox Sandbox"
+                                                  :box-url     "https://dfiudgkdea.edge.aidbox.app"
+                                                  :type        :public-servers
+                                                  :sandbox     true
+                                                  :headers     {:Authorization "Basic YmFzaWM6c2VjcmV0"}})}}})))
 
 (defn wrap-view-layout [route view]
   (let [breadcrumbs {:breadcrumbs (breadcrumbs route)}]
