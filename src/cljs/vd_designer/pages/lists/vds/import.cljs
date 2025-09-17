@@ -8,7 +8,7 @@
             [vd-designer.components.tabs :as tabs]
             [vd-designer.pages.lists.vds.controller :as c]
             [vd-designer.pages.lists.vds.model :as m]
-            [vd-designer.utils.yaml :refer [str->yaml]]))
+            [vd-designer.utils.yaml :refer [try-parse json-parse]]))
 
 (def supported-extensions
   [".json" ".yaml" ".yml"])
@@ -31,10 +31,12 @@
         false))))
 
 (defn try-parse-vd [^String content]
-  (try
-    (str->yaml content)
-    (catch js/Error _
-      (js/JSON.parse content))))
+  (let [yaml-res (try-parse content)
+        json-res (json-parse content)]
+    (cond (and yaml-res (not (string? yaml-res)))
+          yaml-res
+          (and json-res (not (string? json-res)))
+          json-res)))
 
 (defn parse-vd [^String content]
   (js->clj (try-parse-vd content) :keywordize-keys true))

@@ -435,8 +435,11 @@
     {:dataLayer {:event         "vd_run"
                  :resource-type (get (:current-vd db) :resource "")}})
    (let [sandbox? (settings-model/in-sandbox? db)
+         parse (if (= :language/json (::m/language db))
+                 yaml/json-parse
+                 yaml/try-parse)
          view-definition (-> (::m/view-definition-code db)
-                             yaml/try-parse
+                             parse
                              (js->clj :keywordize-keys true)
                              strip-empty-select-nodes
                              strip-empty-where-nodes)
@@ -481,7 +484,6 @@
 (reg-event-fx
  ::on-eval-view-definition-error
  (fn [{:keys [db]} [_ result]]
-   (prn result)
    {:db (assoc db ::m/eval-loading false)
     :notification-error (str (get-in result [:response :text :div] "Error") ": "
                              (->> (get-in result [:response :issue])
@@ -702,7 +704,7 @@
 
 (defn format-vd-code [code lang]
   (case lang
-    :language/yaml (-> code js/JSON.parse yaml/stringify)
+    :language/yaml (-> code yaml/json-parse yaml/stringify)
     :language/json (-> code yaml/str->yaml (js/JSON.stringify nil 2))
     ""))
 
