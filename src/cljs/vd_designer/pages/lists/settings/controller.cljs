@@ -1,5 +1,6 @@
 (ns vd-designer.pages.lists.settings.controller
-  (:require [medley.core :as medley]
+  (:require [cljs.reader :as reader]
+            [medley.core :as medley]
             [re-frame.core :refer [reg-cofx reg-event-fx reg-fx reg-event-db inject-cofx]]
             [vd-designer.auth.controller :as auth]
             [vd-designer.http.backend :as backend]
@@ -118,7 +119,7 @@
  (fn [coeffects]
    (assoc coeffects
           chosen-server-kv
-          (js->clj (.getItem js/localStorage chosen-server-kv)))))
+          (reader/read-string (.getItem js/localStorage chosen-server-kv)))))
 
 (reg-event-fx
  ::use-sandbox-if-not-selected

@@ -67,7 +67,7 @@
                    {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
-      :fx (cond-> (if (-> db :cfg/fhir-servers  empty?)
+      :fx (cond-> (if (-> db :cfg/fhir-servers (dissoc :chosen-server) empty?)
                     [[:dispatch [::fetch-user-servers vd-id]]]
                     (ready-server-event-fx vd-id))
 
@@ -89,11 +89,7 @@
  ::got-server-list
   ;; TODO: decide what if expected server is not in the list?
  (fn [{:keys [db]} [_ vd-id user-server-list]]
-    ;; TODO: remove code duplication
-   {:db (->> user-server-list
-             (group-by :server-name)
-             (medley/map-vals first)
-             (assoc-in db [:cfg/fhir-servers ]))
+   {:db (update db :cfg/fhir-servers merge user-server-list)
     :fx (ready-server-event-fx vd-id)}))
 
 (reg-event-fx
