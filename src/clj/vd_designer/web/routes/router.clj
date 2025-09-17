@@ -81,7 +81,12 @@
         {:post
          {:parameters {:body {:box-url string?
                               :vd      string?}}
-          :handler    #'aidbox/eval-view-definition}}]]
+          :handler    #'aidbox/eval-view-definition}}]
+       ["/sql"
+        {:post
+         {:parameters {:body {:box-url string?
+                              :vd      string?}}
+          :handler    #'aidbox/get-view-definition-sql}}]]
       ["/Resource"
        {:get
         {:parameters {:query {:vd-id   string?

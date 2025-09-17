@@ -63,6 +63,16 @@
                                                       {:name "viewResource" :resource vd}]}}
                                   fhir-server-headers))))
 
+(defn get-view-definition-sql
+  [{:keys [box-url request fhir-server-headers]}]
+  (let [{:keys [vd]} (:body-params request)]
+    @(martian/response-for (aidbox-client/aidbox-client box-url)
+                           :get-view-definition-sql
+                           (merge {:body {:resourceType "Parameters"
+                                          :parameter [{:name "_format" :valueCode "json"}
+                                                      {:name "viewResource" :resource vd}]}}
+                                  fhir-server-headers))))
+
 (defn save-view-definition
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [vd vd-id]} (:body-params request)]

@@ -8,7 +8,7 @@
 
 (defn sql []
   (let [sql @(subscribe [::m/sql])
-        formatted-sql (sqlf/format sql (clj->js {:language "postgresql"}))]
+        formatted-sql (if sql (sqlf/format sql (clj->js {:language "postgresql"})) "")]
     [:div {:style {:height        "100%"
                    :padding-right "8px"}}
      [monaco {:id       "vd-sql"

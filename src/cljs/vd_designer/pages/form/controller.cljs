@@ -422,14 +422,15 @@
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
 
-        :dispatch   [::auth/with-authentication
-                     (fn [authentication-token]
-                       (-> (http.fhir-server/eval-view-definition-user-server
-                            authentication-token
-                            (http.fhir-server/active-server db)
-                            view-definition)
-                           (assoc :on-success [::on-eval-view-definition-success]
-                                  :on-failure [::on-eval-view-definition-error])))]}))))
+        :dispatch-n   [[::auth/with-authentication
+                        (fn [authentication-token]
+                          (-> (http.fhir-server/eval-view-definition-user-server
+                               authentication-token
+                               (http.fhir-server/active-server db)
+                               view-definition)
+                              (assoc :on-success [::on-eval-view-definition-success]
+                                     :on-failure [::on-eval-view-definition-error])))]
+                       [::on-sql-tab-clicked]]}))))
 
 (reg-event-fx
  ::eval-view-definition-code
@@ -936,10 +937,40 @@
                       (input-references/replace-inputs-with-values (::m/tree-inputs db))
                       (format-code language))))))))
 
-(reg-event-db
+(reg-event-fx
+ ::get-vd-sql-success
+ (fn [{:keys [db]} [_ response]]
+   {:db (assoc-in db
+                  [::m/vd-sql :sql]
+                  (->> response
+                       :parameter
+                       (filter #(= (:name %) "sql"))
+                       first
+                       :valueString))}))
+
+(reg-event-fx
+ ::get-vd-sql-failure
+ (fn [{:keys [_db]} [_ _response]]
+   nil))
+
+(reg-event-fx
  ::on-sql-tab-clicked
- (fn [db _]
-   (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)))
+ (fn [{:keys [db]} _]
+   {:fx [[:dispatch [::auth/with-authentication
+                     (fn [authentication-token]
+                       (assoc (http.fhir-server/get-view-definition-sql-user-server
+                               authentication-token
+                               (http.fhir-server/active-server db)
+                               (-> (:current-vd db)
+                                   decoration/remove-decoration
+                                   (input-references/replace-inputs-with-values (::m/tree-inputs db))
+                                   strip-empty-collections
+                                   remove-meta
+                                   strip-empty-select-nodes
+                                   strip-empty-where-nodes))
+                              :on-success [::get-vd-sql-success]
+                              :on-failure [::get-vd-sql-failure]))]]]
+    :db (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)}))
 
 (reg-event-db
  ::set-code-dirty

@@ -25,3 +25,9 @@ server-repl:
 
 up:
 	docker compose --profile local up -d
+
+down:
+	docker compose --profile local down
+
+down-v:
+	docker compose --profile local down -v
