@@ -8,9 +8,8 @@
 (defn stringify [js]
   (y/stringify js))
 
-(defn str->yaml [^String str]
-  (let [wo-comments (str/replace str #"//.*|#.*|/\*[\s\S]*?\*/" "")]
-    (y/parse wo-comments)))
+(defn str->yaml [^String s]
+  (y/parse s))
 
 (defn yaml->edn [yaml]
   (y/parse yaml))

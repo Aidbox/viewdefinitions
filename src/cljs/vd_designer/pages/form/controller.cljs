@@ -481,8 +481,12 @@
 (reg-event-fx
  ::on-eval-view-definition-error
  (fn [{:keys [db]} [_ result]]
+   (prn result)
    {:db (assoc db ::m/eval-loading false)
-    :notification-error (str "Error on run: " (u/response->error result))}))
+    :notification-error (str (get-in result [:response :text :div] "Error") ": "
+                             (->> (get-in result [:response :issue])
+                                  (keep #(get-in % [:diagnostics]))
+                                  (str/join ", ")))}))
 
 (reg-event-db
  ::change-input-value
