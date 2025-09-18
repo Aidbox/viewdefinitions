@@ -485,9 +485,9 @@
  ::on-eval-view-definition-error
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/eval-loading false)
-    :notification-error (str (get-in result [:response :text :div] "Error") ": "
+    :notification-error (str (u/response->error result) ": "
                              (->> (get-in result [:response :issue])
-                                  (keep #(get-in % [:diagnostics]))
+                                  (keep :diagnostics)
                                   (str/join ", ")))}))
 
 (reg-event-db
