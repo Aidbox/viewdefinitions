@@ -67,7 +67,7 @@
                    {:uri "/viewdefinition_jsonschema.json"
                     :fileMatch ["*"]
                     :schema vd-jsonschema/schema}))
-      :fx (cond-> (if (-> db :cfg/fhir-servers  empty?)
+      :fx (cond-> (if (-> db :cfg/fhir-servers (dissoc :chosen-server) empty?)
                     [[:dispatch [::fetch-user-servers vd-id]]]
                     (ready-server-event-fx vd-id))
 
@@ -89,11 +89,7 @@
  ::got-server-list
   ;; TODO: decide what if expected server is not in the list?
  (fn [{:keys [db]} [_ vd-id user-server-list]]
-    ;; TODO: remove code duplication
-   {:db (->> user-server-list
-             (group-by :server-name)
-             (medley/map-vals first)
-             (assoc-in db [:cfg/fhir-servers ]))
+   {:db (update db :cfg/fhir-servers merge user-server-list)
     :fx (ready-server-event-fx vd-id)}))
 
 (reg-event-fx
@@ -422,14 +418,15 @@
        {:db         (-> (assoc db ::m/eval-loading true)
                         (dissoc ::m/empty-inputs?))
 
-        :dispatch   [::auth/with-authentication
-                     (fn [authentication-token]
-                       (-> (http.fhir-server/eval-view-definition-user-server
-                            authentication-token
-                            (http.fhir-server/active-server db)
-                            view-definition)
-                           (assoc :on-success [::on-eval-view-definition-success]
-                                  :on-failure [::on-eval-view-definition-error])))]}))))
+        :dispatch-n   [[::auth/with-authentication
+                        (fn [authentication-token]
+                          (-> (http.fhir-server/eval-view-definition-user-server
+                               authentication-token
+                               (http.fhir-server/active-server db)
+                               view-definition)
+                              (assoc :on-success [::on-eval-view-definition-success]
+                                     :on-failure [::on-eval-view-definition-error])))]
+                       [::on-sql-tab-clicked]]}))))
 
 (reg-event-fx
  ::eval-view-definition-code
@@ -438,8 +435,11 @@
     {:dataLayer {:event         "vd_run"
                  :resource-type (get (:current-vd db) :resource "")}})
    (let [sandbox? (settings-model/in-sandbox? db)
+         parse (if (= :language/json (::m/language db))
+                 yaml/json-parse
+                 yaml/try-parse)
          view-definition (-> (::m/view-definition-code db)
-                             yaml/try-parse
+                             parse
                              (js->clj :keywordize-keys true)
                              strip-empty-select-nodes
                              strip-empty-where-nodes)
@@ -485,7 +485,10 @@
  ::on-eval-view-definition-error
  (fn [{:keys [db]} [_ result]]
    {:db (assoc db ::m/eval-loading false)
-    :notification-error (str "Error on run: " (u/response->error result))}))
+    :notification-error (str (u/response->error result) ": "
+                             (->> (get-in result [:response :issue])
+                                  (keep :diagnostics)
+                                  (str/join ", ")))}))
 
 (reg-event-db
  ::change-input-value
@@ -701,7 +704,7 @@
 
 (defn format-vd-code [code lang]
   (case lang
-    :language/yaml (-> code js/JSON.parse yaml/stringify)
+    :language/yaml (-> code yaml/json-parse yaml/stringify)
     :language/json (-> code yaml/str->yaml (js/JSON.stringify nil 2))
     ""))
 
@@ -936,10 +939,40 @@
                       (input-references/replace-inputs-with-values (::m/tree-inputs db))
                       (format-code language))))))))
 
-(reg-event-db
+(reg-event-fx
+ ::get-vd-sql-success
+ (fn [{:keys [db]} [_ response]]
+   {:db (assoc-in db
+                  [::m/vd-sql :sql]
+                  (->> response
+                       :parameter
+                       (filter #(= (:name %) "sql"))
+                       first
+                       :valueString))}))
+
+(reg-event-fx
+ ::get-vd-sql-failure
+ (fn [{:keys [_db]} [_ _response]]
+   nil))
+
+(reg-event-fx
  ::on-sql-tab-clicked
- (fn [db _]
-   (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)))
+ (fn [{:keys [db]} _]
+   {:fx [[:dispatch [::auth/with-authentication
+                     (fn [authentication-token]
+                       (assoc (http.fhir-server/get-view-definition-sql-user-server
+                               authentication-token
+                               (http.fhir-server/active-server db)
+                               (-> (:current-vd db)
+                                   decoration/remove-decoration
+                                   (input-references/replace-inputs-with-values (::m/tree-inputs db))
+                                   strip-empty-collections
+                                   remove-meta
+                                   strip-empty-select-nodes
+                                   strip-empty-where-nodes))
+                              :on-success [::get-vd-sql-success]
+                              :on-failure [::get-vd-sql-failure]))]]]
+    :db (assoc db ::m/left-panel-active-tab :left-panel-tab/sql)}))
 
 (reg-event-db
  ::set-code-dirty

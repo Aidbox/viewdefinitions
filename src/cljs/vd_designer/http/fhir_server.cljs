@@ -39,14 +39,25 @@
    :params           {:box-url box-url :vd view-definition}
    :headers          (authorization-header authentication-token)})
 
+(defn get-view-definition-sql-user-server [authentication-token {:keys [box-url]} view-definition]
+  {:uri              "/api/aidbox/ViewDefinition/sql"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format
+                      {:keywords? true})
+   :with-credentials true
+   :method           :post
+   :params           {:box-url box-url :vd view-definition}
+   :headers          (authorization-header authentication-token)})
+
 (defn get-metadata [{:keys [box-url]}]
- {:uri              "/api/metadata"
-  :timeout          8000
-  :format           (ajax/json-request-format)
-  :response-format  (ajax/json-response-format {:keywords? true})
-  :with-credentials false
-  :method           :get
-  :params           {:box-url box-url}})
+  {:uri              "/api/metadata"
+   :timeout          8000
+   :format           (ajax/json-request-format)
+   :response-format  (ajax/json-response-format {:keywords? true})
+   :with-credentials false
+   :method           :get
+   :params           {:box-url box-url}})
 
 (defn delete-view-definition [authentication-token {:keys [box-url]} vd-id]
   {:uri              "/api/aidbox/ViewDefinition"

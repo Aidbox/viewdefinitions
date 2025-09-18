@@ -49,7 +49,7 @@
 (reg-sub
  ::sql
  (fn [db _]
-   (-> db ::resource-data :sql)))
+   (-> db ::vd-sql :sql)))
 
 (reg-sub
  ::eval-loading
@@ -131,7 +131,7 @@
        (get input-id)
        (get :type))))
 
-(reg-sub 
+(reg-sub
  ::view-definition-code
  :-> ::view-definition-code)
 

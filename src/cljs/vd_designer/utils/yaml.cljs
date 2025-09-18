@@ -1,6 +1,6 @@
 (ns vd-designer.utils.yaml
   (:require ["yaml" :as y]
-            [clojure.string :as str]))
+            ["comment-json" :as json]))
 
 (defn edn->yaml [edn]
   (y/stringify (clj->js edn)))
@@ -8,9 +8,8 @@
 (defn stringify [js]
   (y/stringify js))
 
-(defn str->yaml [^String str]
-  (let [wo-comments (str/replace str #"//.*|#.*|/\*[\s\S]*?\*/" "")]
-    (y/parse wo-comments)))
+(defn str->yaml [^String s]
+  (y/parse s))
 
 (defn yaml->edn [yaml]
   (y/parse yaml))
@@ -19,4 +18,10 @@
   (try
     (str->yaml content)
     (catch js/Error _
-      (js/JSON.parse content))))
+      nil)))
+
+(defn json-parse [^String content]
+  (try
+    (json/parse content nil true)
+    (catch js/Error _
+      nil)))
