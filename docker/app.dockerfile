@@ -15,7 +15,7 @@ RUN npx shadow-cljs release app
 RUN clj -T:server:server-build uber
 
 
-FROM openjdk:23-slim-bullseye
+FROM eclipse-temurin:25-jre-jammy
 
 COPY --from=builder /app/out/vd-designer.jar ./server.jar
 
