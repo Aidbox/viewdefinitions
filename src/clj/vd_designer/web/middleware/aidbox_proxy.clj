@@ -19,7 +19,7 @@
     ;; Verify that user has access to the server
     (when-let [user-server (user-server/get-by-account-id-and-box-url db (:id user) box-url)]
       (if (:user_servers/is_custom user-server)
-        (:user_servers/headers user-server)
+        (merge {} (:user_servers/headers user-server))
         {:Cookie (->> user-server
                       :user_servers/aidbox_auth_token
                       (format "aidbox-auth-token=%s;"))}))))

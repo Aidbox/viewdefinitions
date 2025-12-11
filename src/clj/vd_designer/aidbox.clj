@@ -29,7 +29,8 @@
   [{:keys [box-url fhir-server-headers]}]
   (let [response @(martian/response-for (aidbox-client/aidbox-client box-url)
                                         :connect
-                                        fhir-server-headers)]
+                                        fhir-server-headers)
+        response (update response :body (fn [b] (if (string? b) (json/parse-string b true) b)))]
     (cond
       (= 503 (:status response))
       {:status 400
@@ -38,6 +39,13 @@
       (= 400 (:status response))
       {:status 400
        :body {:error (str "Can't connect to " box-url)}}
+
+      (= "OperationOutcome" (get-in response [:body :resourceType]))
+      {:status 404
+       :body {:error (->> (get-in response [:body :issue])
+                          (map :diagnostics)
+                          (interpose "; ")
+                          (apply str))}}
 
       :else
       (cond-> response
