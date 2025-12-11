@@ -72,9 +72,6 @@ spec:
               cpu: 500m
               memory: 512Mi
 
-      imagePullSecrets:
-        - name: github-registry
-
   volumeClaimTemplates:
     - metadata:
         name: vd-designer-data
