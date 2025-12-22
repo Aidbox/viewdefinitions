@@ -92,15 +92,15 @@
           (m/in-any-order
             [#:user_servers{:account_id        account-id
                             :server_name       "<license-1-name>"
-                            :box_url           "https://box-url-1.com"
+                            :box_url           "https://box-url-1.com/fhir"
                             :aidbox_auth_token (:token valid-access-token)}
              #:user_servers{:account_id        account-id
                             :server_name       "<license-2-name>"
-                            :box_url           "https://box-url-2.com"
+                            :box_url           "https://box-url-2.com/fhir"
                             :aidbox_auth_token (:token valid-access-token)}
              #:user_servers{:account_id        account-id
                             :server_name       "<license-3-name>"
-                            :box_url           "https://box-url-3.com"
+                            :box_url           "https://box-url-3.com/fhir"
                             :aidbox_auth_token (:token valid-access-token)}])
           (user-server/get-all db))))
 
