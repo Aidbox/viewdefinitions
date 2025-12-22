@@ -61,7 +61,7 @@
 
    :public-fhir-servers
    [{:server-name "Aidbox Sandbox"
-     :box-url     "https://dfiudgkdea.edge.aidbox.app"
+     :box-url     "https://dfiudgkdea.edge.aidbox.app/fhir"
      :sandbox true
      :headers     {:Authorization "Basic YmFzaWM6c2VjcmV0"}}]})
 

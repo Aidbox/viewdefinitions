@@ -36,7 +36,7 @@
       (select-keys [:name :box-url :project-id])
       (assoc :aidbox-auth-token (aidbox-auth-token (:box-url license))
              :account-id account-id)
-      (update :box-url truncate-box-url)
+      (update :box-url #(str (truncate-box-url %) "/fhir"))
       (set/rename-keys {:name :server-name})))
 
 (defn license-url [project cfg]
