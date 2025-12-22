@@ -415,18 +415,16 @@
            "Missing field%s: %s" (if (> (count fields) 1) "s" "") fields-str))}
 
        :else
-       {:db         (-> (assoc db ::m/eval-loading true)
-                        (dissoc ::m/empty-inputs?))
-
-        :dispatch-n   [[::auth/with-authentication
-                        (fn [authentication-token]
-                          (-> (http.fhir-server/eval-view-definition-user-server
-                               authentication-token
-                               (http.fhir-server/active-server db)
-                               view-definition)
-                              (assoc :on-success [::on-eval-view-definition-success]
-                                     :on-failure [::on-eval-view-definition-error])))]
-                       [::on-sql-tab-clicked]]}))))
+       {:db       (-> (assoc db ::m/eval-loading true)
+                      (dissoc ::m/empty-inputs?))
+        :dispatch [::auth/with-authentication
+                   (fn [authentication-token]
+                     (-> (http.fhir-server/eval-view-definition-user-server
+                          authentication-token
+                          (http.fhir-server/active-server db)
+                          view-definition)
+                         (assoc :on-success [::on-eval-view-definition-success]
+                                :on-failure [::on-eval-view-definition-error])))]}))))
 
 (reg-event-fx
  ::eval-view-definition-code
