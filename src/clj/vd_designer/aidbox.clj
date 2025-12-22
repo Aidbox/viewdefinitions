@@ -122,10 +122,12 @@
   [{:keys [box-url request fhir-server-headers]}]
   (let [{:keys [resource-type]} (:query-params request)
         search-params (-> request :query-params :search-params)
+        search-params-map (when (and search-params (not= "null" search-params))
+                            (uri/query-string->map search-params))
         response @(client/get (str box-url "/" resource-type)
                               {:headers (clojure.walk/stringify-keys fhir-server-headers)
                                :query-params (merge
-                                              (uri/query-string->map search-params)
+                                              search-params-map
                                               {:_count 1})})
         body (some-> response :body (json/parse-string keyword))
         status (:status response)]
