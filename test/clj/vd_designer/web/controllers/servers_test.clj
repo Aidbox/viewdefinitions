@@ -67,12 +67,12 @@
                      :id some?
                      :new-license-url string?
                      :boxes
-                     [{:box-url "https://box-url-3.com",
+                     [{:box-url "https://box-url-3.com/fhir",
                        :project-id some?
                        :aidbox-auth-token "<valid-access-token>",
                        :account-id 1,
                        :server-name "<license-3-name>"}
-                      {:box-url "https://box-url-2.com",
+                      {:box-url "https://box-url-2.com/fhir",
                        :project-id some?
                        :aidbox-auth-token "<valid-access-token>",
                        :account-id 1,
@@ -81,7 +81,7 @@
                      :name "<project-1-name>",
                      :new-license-url string?
                      :boxes
-                     [{:box-url "https://box-url-1.com",
+                     [{:box-url "https://box-url-1.com/fhir",
                        :project-id some?
                        :aidbox-auth-token "<valid-access-token>",
                        :account-id 1,
