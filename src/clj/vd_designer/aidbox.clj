@@ -61,9 +61,18 @@
                             (merge {:vd-id vd-id}
                                    fhir-server-headers)))))
 
+(defn- strip-empty-collections
+  "Remove empty constant, where, and select from ViewDefinition"
+  [vd]
+  (cond-> vd
+    (empty? (:constant vd)) (dissoc :constant)
+    (empty? (:where vd))    (dissoc :where)
+    (empty? (:select vd))   (dissoc :select)))
+
 (defn eval-view-definition
   [{:keys [box-url request fhir-server-headers]}]
-  (let [{:keys [vd]} (:body-params request)]
+  (let [{:keys [vd]} (:body-params request)
+        vd (strip-empty-collections vd)]
     @(martian/response-for (aidbox-client/aidbox-client box-url)
                            :view-definition-run
                            (merge {:body {:resourceType "Parameters"
@@ -73,7 +82,8 @@
 
 (defn get-view-definition-sql
   [{:keys [box-url request fhir-server-headers]}]
-  (let [{:keys [vd]} (:body-params request)]
+  (let [{:keys [vd]} (:body-params request)
+        vd (strip-empty-collections vd)]
     @(martian/response-for (aidbox-client/aidbox-client box-url)
                            :get-view-definition-sql
                            (merge {:body {:resourceType "Parameters"
